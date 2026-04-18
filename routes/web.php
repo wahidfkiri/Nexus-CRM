@@ -34,11 +34,7 @@ Route::middleware(['web'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/home', [DashboardController::class, 'index'])->name('home');
         
-        
-        Route::get('/invoices', function () {
-            return view('invoices');
-        })->name('invoices');
-        
+               
         Route::get('/create-invoice', function () {
             return view('create-invoice');
         })->name('create-invoice');

@@ -1,223 +1,276 @@
-@extends('layouts.app')
+@extends('client::layouts.crm')
 
 @section('title', 'Clients')
 
+@section('breadcrumb')
+  <span>CRM</span>
+  <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
+  <span style="color:var(--c-ink)">Clients</span>
+@endsection
+
 @section('content')
-<div class="container-fluid p-4">
-    <div class="page-header mb-4">
-        <div>
-            <h2><i class="fas fa-users me-2 text-primary"></i>Gestion des clients</h2>
-            <p class="text-muted">Gérez votre portefeuille clients</p>
-        </div>
-        <div class="header-actions">
-            @can('export_clients')
-            <div class="btn-group">
-                <button type="button" class="btn-export dropdown-toggle" data-bs-toggle="dropdown">
-                    <i class="fas fa-download"></i> Exporter
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="{{ route('clients.export.csv') }}"><i class="fas fa-file-csv"></i> CSV</a></li>
-                    <li><a class="dropdown-item" href="{{ route('clients.export.excel') }}"><i class="fas fa-file-excel"></i> Excel</a></li>
-                    <li><a class="dropdown-item" href="{{ route('clients.export.pdf') }}"><i class="fas fa-file-pdf"></i> PDF</a></li>
-                </ul>
-            </div>
-            @endcan
-            
-            @can('create_clients')
-            <a href="{{ route('clients.create') }}" class="btn-add-client">
-                <i class="fas fa-plus"></i> Nouveau client
-            </a>
-            @endcan
-        </div>
-    </div>
 
-    <!-- Stats Cards -->
-    <div class="stats-row mb-4">
-        <div class="stat-card">
-            <div class="stat-icon" style="background: #3b82f620; color: #3b82f6;">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="stat-value" id="totalClients">0</div>
-            <div class="stat-label">Clients totaux</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon" style="background: #10b98120; color: #10b981;">
-                <i class="fas fa-user-check"></i>
-            </div>
-            <div class="stat-value" id="activeClients">0</div>
-            <div class="stat-label">Clients actifs</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon" style="background: #f59e0b20; color: #f59e0b;">
-                <i class="fas fa-clock"></i>
-            </div>
-            <div class="stat-value" id="pendingClients">0</div>
-            <div class="stat-label">En attente</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon" style="background: #8b5cf620; color: #8b5cf6;">
-                <i class="fas fa-euro-sign"></i>
-            </div>
-            <div class="stat-value" id="totalRevenue">€0</div>
-            <div class="stat-label">Chiffre d'affaires</div>
-        </div>
+{{-- Page Header --}}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Clients</h1>
+    <p>Gérez et suivez votre portefeuille clients</p>
+  </div>
+  <div class="page-header-actions">
+    {{-- Export Dropdown --}}
+    <div class="dropdown">
+      <button class="btn btn-secondary" data-dropdown-toggle>
+        <i class="fas fa-arrow-down-to-line"></i> Exporter
+        <i class="fas fa-chevron-down" style="font-size:10px;margin-left:2px;"></i>
+      </button>
+      <div class="dropdown-menu">
+        <a href="{{ route('clients.export.csv') }}"   class="dropdown-item"><i class="fas fa-file-csv"></i>   CSV</a>
+        <a href="{{ route('clients.export.excel') }}" class="dropdown-item"><i class="fas fa-file-excel"></i> Excel</a>
+        <a href="{{ route('clients.export.pdf') }}"   class="dropdown-item"><i class="fas fa-file-pdf"></i>   PDF</a>
+      </div>
     </div>
-
-    <!-- Filters -->
-    <div class="filters-bar mb-4">
-        <div class="search-wrapper-table">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Rechercher...">
-        </div>
-        <div class="filter-group">
-            <select id="typeFilter" class="filter-select">
-                <option value="">Tous les types</option>
-                <option value="entreprise">Entreprise</option>
-                <option value="particulier">Particulier</option>
-                <option value="startup">Startup</option>
-            </select>
-            <select id="statusFilter" class="filter-select">
-                <option value="">Tous les statuts</option>
-                <option value="actif">Actif</option>
-                <option value="inactif">Inactif</option>
-                <option value="en_attente">En attente</option>
-            </select>
-            <button id="applyFiltersBtn" class="btn-apply"><i class="fas fa-filter"></i> Appliquer</button>
-            <button id="resetFiltersBtn" class="btn-reset"><i class="fas fa-undo"></i> Réinitialiser</button>
-        </div>
-    </div>
-
-    <!-- Bulk Actions -->
-    <div class="bulk-actions-bar" id="bulkActionsBar" style="display:none;">
-        <span id="selectedCount">0</span> client(s) sélectionné(s)
-        <div class="bulk-buttons">
-            <button class="btn-bulk-status" data-status="actif"><i class="fas fa-check-circle"></i> Activer</button>
-            <button class="btn-bulk-status" data-status="inactif"><i class="fas fa-ban"></i> Désactiver</button>
-            <button class="btn-bulk-delete"><i class="fas fa-trash"></i> Supprimer</button>
-        </div>
-    </div>
-
-    <!-- Clients Table -->
-    <div class="clients-table-wrapper">
-        <table class="clients-table" id="clientsTable">
-            <thead>
-                <tr>
-                    <th><input type="checkbox" id="selectAll"></th>
-                    <th>Client</th>
-                    <th>Type</th>
-                    <th>Email</th>
-                    <th>Téléphone</th>
-                    <th>Statut</th>
-                    <th>CA</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="clientsTableBody">
-                <tr><td colspan="8" class="text-center">Chargement...</td></tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Pagination -->
-    <div class="table-pagination mt-4">
-        <div id="paginationInfo"></div>
-        <div class="pagination-controls" id="paginationControls"></div>
-    </div>
+    {{-- Import --}}
+    <button class="btn btn-secondary" data-modal-open="importModal">
+      <i class="fas fa-arrow-up-from-line"></i> Importer
+    </button>
+    {{-- New client --}}
+    <a href="{{ route('clients.create') }}" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Nouveau client
+    </a>
+  </div>
 </div>
 
-<!-- Import Modal -->
+{{-- Stats --}}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--c-accent-lt);color:var(--c-accent)"><i class="fas fa-users"></i></div>
+    <div class="stat-body">
+      <div class="stat-value" id="totalClients">—</div>
+      <div class="stat-label">Total clients</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--c-success-lt);color:var(--c-success)"><i class="fas fa-user-check"></i></div>
+    <div class="stat-body">
+      <div class="stat-value" id="activeClients">—</div>
+      <div class="stat-label">Clients actifs</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--c-warning-lt);color:var(--c-warning)"><i class="fas fa-clock"></i></div>
+    <div class="stat-body">
+      <div class="stat-value" id="pendingClients">—</div>
+      <div class="stat-label">En attente</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#f3e8ff;color:#7c3aed"><i class="fas fa-circle-euro-sign"></i></div>
+    <div class="stat-body">
+      <div class="stat-value" id="totalRevenue">—</div>
+      <div class="stat-label">Chiffre d'affaires</div>
+    </div>
+  </div>
+</div>
+
+{{-- Table --}}
+<div class="table-wrapper">
+  {{-- Table header with filters --}}
+  <div class="table-header">
+    <span class="table-title">Liste des clients</span>
+    <span class="table-count">—</span>
+    <div class="table-spacer"></div>
+
+    {{-- Search --}}
+    <div class="table-search">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Rechercher un client…" autocomplete="off">
+    </div>
+
+    {{-- Filters --}}
+    <select class="filter-select" data-filter="type">
+      <option value="">Tous les types</option>
+      @foreach($types as $key => $label)
+        <option value="{{ $key }}">{{ $label }}</option>
+      @endforeach
+    </select>
+
+    <select class="filter-select" data-filter="status">
+      <option value="">Tous les statuts</option>
+      @foreach($statuses as $key => $label)
+        <option value="{{ $key }}">{{ $label }}</option>
+      @endforeach
+    </select>
+
+    <select class="filter-select" data-filter="source">
+      <option value="">Toutes les sources</option>
+      @foreach($sources as $key => $label)
+        <option value="{{ $key }}">{{ $label }}</option>
+      @endforeach
+    </select>
+
+    <button class="btn btn-ghost btn-sm" id="resetFilters" title="Réinitialiser les filtres">
+      <i class="fas fa-rotate-left"></i>
+    </button>
+  </div>
+
+  {{-- Bulk actions bar --}}
+  <div class="bulk-bar" id="bulkBar">
+    <span><strong id="selectedCount">0</strong> client(s) sélectionné(s)</span>
+    <div class="bulk-bar-actions">
+      <button class="btn btn-sm btn-secondary" onclick="bulkStatus('actif')">
+        <i class="fas fa-check-circle"></i> Activer
+      </button>
+      <button class="btn btn-sm btn-secondary" onclick="bulkStatus('inactif')">
+        <i class="fas fa-ban"></i> Désactiver
+      </button>
+      <button class="btn btn-sm btn-danger" onclick="bulkDelete()">
+        <i class="fas fa-trash"></i> Supprimer
+      </button>
+    </div>
+  </div>
+
+  {{-- Table --}}
+  <table class="crm-table" id="clientsTable">
+    <thead>
+      <tr>
+        <th style="width:40px"><input type="checkbox" id="selectAll"></th>
+        <th data-sort="company_name" class="sortable">Client <i class="fas fa-sort" style="font-size:10px;opacity:.4"></i></th>
+        <th>Type</th>
+        <th data-sort="email" class="sortable">Email</th>
+        <th>Téléphone</th>
+        <th data-sort="status" class="sortable">Statut</th>
+        <th data-sort="revenue" class="sortable">CA</th>
+        <th style="text-align:right;padding-right:20px">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="clientsTableBody">
+      {{-- Loaded via AJAX --}}
+    </tbody>
+  </table>
+
+  {{-- Pagination --}}
+  <div class="table-pagination">
+    <span class="pagination-info" id="paginationInfo"></span>
+    <div class="pagination-spacer"></div>
+    <div class="pagination-pages" id="paginationControls"></div>
+  </div>
+</div>
+
+{{-- ============================================================
+     IMPORT MODAL
+     ============================================================ --}}
 <div class="modal-overlay" id="importModal">
-    <div class="modal-container">
-        <div class="modal-header">
-            <h3><i class="fas fa-upload"></i> Importer des clients</h3>
-            <button class="modal-close" id="closeImportModal">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="importForm" enctype="multipart/form-data">
-                @csrf
-                <div class="form-group">
-                    <label>Fichier (CSV, Excel)</label>
-                    <input type="file" name="file" class="form-control-modern" accept=".csv,.xlsx,.xls" required>
-                    <small class="text-muted">Téléchargez le <a href="{{ route('clients.import.template') }}">template</a> pour respecter le format</small>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" id="cancelImportBtn">Annuler</button>
-            <button class="btn-save" id="confirmImportBtn">Importer</button>
-        </div>
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-icon" style="background:var(--c-accent-lt);color:var(--c-accent)">
+        <i class="fas fa-file-import"></i>
+      </div>
+      <div>
+        <div class="modal-title">Importer des clients</div>
+        <div class="modal-subtitle">Formats acceptés : CSV, Excel (.xlsx, .xls)</div>
+      </div>
+      <button class="modal-close" data-modal-close>&times;</button>
     </div>
+    <div class="modal-body">
+      <form id="importForm" enctype="multipart/form-data">
+        @csrf
+        <div class="form-group">
+          <label class="form-label">Fichier d'import</label>
+          <div style="border:2px dashed var(--c-ink-10);border-radius:var(--r-md);padding:28px;text-align:center;cursor:pointer;transition:all var(--dur-fast);"
+               id="dropzone" onclick="document.getElementById('importFile').click()">
+            <i class="fas fa-cloud-arrow-up" style="font-size:28px;color:var(--c-ink-20);margin-bottom:10px;display:block;"></i>
+            <div style="font-size:14px;color:var(--c-ink-60);margin-bottom:4px;">Glissez votre fichier ici ou <span style="color:var(--c-accent)">cliquez pour parcourir</span></div>
+            <div style="font-size:12px;color:var(--c-ink-40);" id="dropzoneText">CSV, XLSX jusqu'à 10 Mo</div>
+          </div>
+          <input type="file" id="importFile" name="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleFileSelect(this)">
+        </div>
+        <div style="background:var(--c-accent-xl);border-radius:var(--r-sm);padding:12px 14px;font-size:12.5px;color:var(--c-ink-60);">
+          <i class="fas fa-info-circle" style="color:var(--c-accent)"></i>
+          Téléchargez le <a href="{{ route('clients.import.template') }}" style="color:var(--c-accent)">modèle CSV</a> pour respecter le format attendu.
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close>Annuler</button>
+      <button class="btn btn-primary" id="importSubmitBtn" disabled onclick="submitImport()">
+        <i class="fas fa-upload"></i> Importer
+      </button>
+    </div>
+  </div>
 </div>
+
 @endsection
 
 @push('scripts')
 <script>
-let currentPage = 1;
-let perPage = 15;
+// Routes available globally
+window.CRM_ROUTES = {
+  data:        '{{ route("clients.data") }}',
+  stats:       '{{ route("clients.stats") }}',
+  create:      '{{ route("clients.create") }}',
+  bulkDelete:  '{{ route("clients.bulk.delete") }}',
+  bulkStatus:  '{{ route("clients.bulk.status") }}',
+};
 
-function loadClients() {
-    const search = $('#searchInput').val();
-    const type = $('#typeFilter').val();
-    const status = $('#statusFilter').val();
-    
-    $.ajax({
-        url: '{{ route("clients.data") }}',
-        method: 'GET',
-        data: { page: currentPage, per_page: perPage, search: search, type: type, status: status },
-        success: function(response) {
-            renderTable(response.data);
-            updatePagination(response);
-            updateStats();
-        }
-    });
-}
-
-function renderTable(clients) {
-    const tbody = $('#clientsTableBody');
-    tbody.empty();
-    
-    if(clients.length === 0) {
-        tbody.html('<tr><td colspan="8" class="text-center">Aucun client trouvé</td></tr>');
-        return;
-    }
-    
-    clients.forEach(client => {
-        const statusClass = client.status === 'actif' ? 'status-active' : client.status === 'inactif' ? 'status-inactif' : 'status-pending';
-        const statusLabel = client.status === 'actif' ? 'Actif' : client.status === 'inactif' ? 'Inactif' : 'En attente';
-        const typeClass = client.type === 'entreprise' ? 'badge-entreprise' : client.type === 'startup' ? 'badge-startup' : 'badge-particulier';
-        const typeLabel = client.type === 'entreprise' ? 'Entreprise' : client.type === 'startup' ? 'Startup' : 'Particulier';
-        
-        tbody.append(`
-            <tr>
-                <td><input type="checkbox" class="client-checkbox" data-id="${client.id}"></td>
-                <td>
-                    <div class="client-info">
-                        <div class="client-avatar">${client.initials || client.company_name.substring(0,2)}</div>
-                        <div>
-                            <div class="client-name">${client.company_name}</div>
-                            <div class="client-email">${client.contact_name || ''}</div>
-                        </div>
-                    </div>
-                </td>
-                <td><span class="badge-client ${typeClass}">${typeLabel}</span></td>
-                <td>${client.email}</td>
-                <td>${client.phone || '-'}</td>
-                <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
-                <td>${new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR'}).format(client.revenue || 0)}</td>
-                <td class="action-buttons">
-                    <a href="/clients/${client.id}" class="action-btn action-view"><i class="fas fa-eye"></i></a>
-                    <a href="/clients/${client.id}/edit" class="action-btn action-edit"><i class="fas fa-edit"></i></a>
-                    <button class="action-btn action-delete" onclick="deleteClient(${client.id})"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `);
-    });
-}
-
-$(document).ready(function() {
-    loadClients();
-    $('#applyFiltersBtn').click(loadClients);
-    $('#resetFiltersBtn').click(function() { $('#searchInput, #typeFilter, #statusFilter').val(''); loadClients(); });
+// Init table
+document.addEventListener('DOMContentLoaded', () => {
+  window._crmTable = new CrmTable({
+    tableId:  'clientsTable',
+    tbodyId:  'clientsTableBody',
+    dataUrl:  window.CRM_ROUTES.data,
+    statsUrl: window.CRM_ROUTES.stats,
+    perPage:  15,
+  });
 });
+
+// Import file select
+function handleFileSelect(input) {
+  const file = input.files[0];
+  const btn  = document.getElementById('importSubmitBtn');
+  const text = document.getElementById('dropzoneText');
+  if (file) {
+    text.textContent = `✓ ${file.name} (${(file.size / 1024).toFixed(1)} Ko)`;
+    text.style.color = 'var(--c-success)';
+    document.getElementById('dropzone').style.borderColor = 'var(--c-success)';
+    btn.disabled = false;
+  }
+}
+
+// Import submit
+async function submitImport() {
+  const btn   = document.getElementById('importSubmitBtn');
+  const form  = document.getElementById('importForm');
+  const fData = new FormData(form);
+  CrmForm.setLoading(btn, true);
+
+  const { ok, data } = await Http.post('{{ route("clients.import") }}', fData);
+  CrmForm.setLoading(btn, false);
+
+  if (ok) {
+    Modal.close(document.getElementById('importModal'));
+    Toast.success('Import réussi !', data.message);
+    window._crmTable?.load();
+    window._crmTable?.loadStats();
+  } else {
+    Toast.error('Erreur d\'import', data.message);
+  }
+}
+
+// Drag & drop
+const dropzone = document.getElementById('dropzone');
+if (dropzone) {
+  dropzone.addEventListener('dragover',  (e) => { e.preventDefault(); dropzone.style.background = 'var(--c-accent-xl)'; });
+  dropzone.addEventListener('dragleave', ()  => { dropzone.style.background = ''; });
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault(); dropzone.style.background = '';
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const dt = new DataTransfer(); dt.items.add(file);
+      const inp = document.getElementById('importFile');
+      inp.files = dt.files;
+      handleFileSelect(inp);
+    }
+  });
+}
 </script>
 @endpush

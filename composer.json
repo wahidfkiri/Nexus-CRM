@@ -29,7 +29,8 @@
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
             "Vendor\\CrmCore\\": "packages/vendor/crm-core/src/",
-            "Vendor\\Client\\": "packages/vendor/client/src/"
+            "Vendor\\Client\\": "packages/vendor/client/src/",
+            "Vendor\\Invoice\\": "packages/vendor/invoice/src/"
          
         }
     },
