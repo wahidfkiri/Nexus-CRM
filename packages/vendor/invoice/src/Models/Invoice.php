@@ -22,6 +22,7 @@ class Invoice extends Model
         'user_id',
         'client_id',
         'quote_id',
+        'stock_order_id',
         'number',
         'reference',
         'status',
@@ -95,6 +96,11 @@ class Invoice extends Model
     public function quote(): BelongsTo
     {
         return $this->belongsTo(Quote::class);
+    }
+
+    public function stockOrder(): BelongsTo
+    {
+        return $this->belongsTo(\Vendor\Stock\Models\Order::class, 'stock_order_id');
     }
 
     public function items(): HasMany

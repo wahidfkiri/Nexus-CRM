@@ -13,6 +13,7 @@ class QuoteRequest extends FormRequest
         return [
             'client_id'             => 'required|exists:clients,id',
             'reference'             => 'nullable|string|max:100',
+            'stock_order_id'        => 'nullable|exists:stock_orders,id',
             'currency'              => 'required|string|size:3',
             'exchange_rate'         => 'nullable|numeric|min:0.000001',
             'issue_date'            => 'required|date',
@@ -27,6 +28,7 @@ class QuoteRequest extends FormRequest
             'internal_notes'        => 'nullable|string|max:5000',
             'items'                 => 'required|array|min:1',
             'items.*.description'   => 'required|string|max:1000',
+            'items.*.article_id'    => 'nullable|exists:stock_articles,id',
             'items.*.reference'     => 'nullable|string|max:100',
             'items.*.quantity'      => 'required|numeric|min:0.0001',
             'items.*.unit'          => 'nullable|string|max:30',

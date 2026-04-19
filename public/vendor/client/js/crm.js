@@ -1,5 +1,8 @@
+﻿if (!window.__CRM_CORE_LOADED__) {
+  window.__CRM_CORE_LOADED__ = true;
+
 /**
- * CRM SaaS — Core JavaScript
+ * CRM SaaS â€” Core JavaScript
  * Toast notifications, Modals, Table manager, Form helpers, AJAX utils
  */
 
@@ -19,8 +22,8 @@ const Toast = (() => {
   }
 
   const icons = {
-    success: '✓',
-    error:   '✕',
+    success: 'âœ“',
+    error:   'âœ•',
     info:    'i',
     warning: '!',
   };
@@ -34,7 +37,7 @@ const Toast = (() => {
         <p class="toast-title">${title}</p>
         ${message ? `<p class="toast-message">${message}</p>` : ''}
       </div>
-      <button class="toast-close" aria-label="Fermer">×</button>
+      <button class="toast-close" aria-label="Fermer">Ã—</button>
     `;
 
     getContainer().appendChild(toast);
@@ -326,7 +329,7 @@ class CrmTable {
     const { ok, data } = await Http.get(this.options.dataUrl, params);
     this.state.loading = false;
 
-    if (!ok) { Toast.error('Erreur', 'Impossible de charger les données.'); return; }
+    if (!ok) { Toast.error('Erreur', 'Impossible de charger les donnÃ©es.'); return; }
 
     this.state.total = data.total || 0;
     this._renderRows(data.data || []);
@@ -375,8 +378,8 @@ class CrmTable {
         <tr><td colspan="8">
           <div class="table-empty">
             <div class="table-empty-icon"><i class="fas fa-users"></i></div>
-            <h3>Aucun client trouvé</h3>
-            <p>Modifiez vos filtres ou créez votre premier client.</p>
+            <h3>Aucun client trouvÃ©</h3>
+            <p>Modifiez vos filtres ou crÃ©ez votre premier client.</p>
             <a href="${window.CRM_ROUTES?.create || '#'}" class="btn btn-primary">
               <i class="fas fa-plus"></i> Nouveau client
             </a>
@@ -420,7 +423,7 @@ class CrmTable {
         </td>
         <td>${typeBadge}</td>
         <td style="color:var(--c-ink-60)">${this._esc(c.email)}</td>
-        <td style="color:var(--c-ink-40)">${c.phone || '—'}</td>
+        <td style="color:var(--c-ink-40)">${c.phone || 'â€”'}</td>
         <td>${statusBadge}</td>
         <td style="font-weight:500">${revenue}</td>
         <td>
@@ -446,7 +449,7 @@ class CrmTable {
     if (!wrap) return;
 
     const { current_page, last_page, from, to, total } = data;
-    if (info) info.textContent = `Affichage de ${from || 0} à ${to || 0} sur ${total || 0} clients`;
+    if (info) info.textContent = `Affichage de ${from || 0} Ã  ${to || 0} sur ${total || 0} clients`;
 
     const pages = [];
     for (let i = Math.max(1, current_page - 2); i <= Math.min(last_page, current_page + 2); i++) pages.push(i);
@@ -489,13 +492,13 @@ class CrmTable {
   static deleteClient(id, name) {
     Modal.confirm({
       title:       'Supprimer ce client ?',
-      message:     `Vous allez supprimer "${name}". Cette action est irréversible.`,
+      message:     `Vous allez supprimer "${name}". Cette action est irrÃ©versible.`,
       confirmText: 'Supprimer',
       type:        'danger',
       onConfirm:   async () => {
         const { ok, data } = await Http.delete(`/clients/${id}`);
         if (ok) {
-          Toast.success('Supprimé !', data.message || 'Client supprimé avec succès.');
+          Toast.success('SupprimÃ© !', data.message || 'Client supprimÃ© avec succÃ¨s.');
           window._crmTable?.load();
           window._crmTable?.loadStats();
         } else {
@@ -516,13 +519,13 @@ async function bulkDelete() {
   if (!ids?.length) return;
   Modal.confirm({
     title:       `Supprimer ${ids.length} client(s) ?`,
-    message:     'Cette action est irréversible.',
+    message:     'Cette action est irrÃ©versible.',
     confirmText: 'Supprimer',
     type:        'danger',
     onConfirm:   async () => {
       const { ok, data } = await Http.post(window.CRM_ROUTES?.bulkDelete, { ids });
       if (ok) {
-        Toast.success('Succès', data.message);
+        Toast.success('SuccÃ¨s', data.message);
         window._crmTable?.load();
         window._crmTable?.loadStats();
         window._crmTable?.selectedIds.clear();
@@ -539,7 +542,7 @@ async function bulkStatus(status) {
   if (!ids?.length) return;
   const { ok, data } = await Http.post(window.CRM_ROUTES?.bulkStatus, { ids, status });
   if (ok) {
-    Toast.success('Succès', data.message);
+    Toast.success('SuccÃ¨s', data.message);
     window._crmTable?.load();
     window._crmTable?.selectedIds.clear();
     window._crmTable?._updateBulkBar();
@@ -570,7 +573,7 @@ function ajaxForm(formId, options = {}) {
     if (method === 'POST') {
       res = await Http.post(url, formData);
     } else {
-      // For PUT/PATCH, we need to handle FormData → JSON
+      // For PUT/PATCH, we need to handle FormData â†’ JSON
       const body = {};
       formData.forEach((v, k) => { if (k !== '_method' && k !== '_token') body[k] = v; });
       res = await Http.put(url, body);
@@ -579,7 +582,7 @@ function ajaxForm(formId, options = {}) {
     if (btn) CrmForm.setLoading(btn, false);
 
     if (res.ok) {
-      Toast.success('Succès !', res.data.message || 'Opération réussie.');
+      Toast.success('SuccÃ¨s !', res.data.message || 'OpÃ©ration rÃ©ussie.');
       if (options.onSuccess) options.onSuccess(res.data);
       if (res.data.redirect && !options.noRedirect) {
         setTimeout(() => window.location.href = res.data.redirect, 900);
@@ -610,7 +613,7 @@ function initTagsInput(inputId, hiddenName) {
     tags.add(val);
     const chip = document.createElement('span');
     chip.className = 'tag-chip';
-    chip.innerHTML = `${val}<button type="button" aria-label="Retirer">×</button>`;
+    chip.innerHTML = `${val}<button type="button" aria-label="Retirer">Ã—</button>`;
     chip.querySelector('button').addEventListener('click', () => { tags.delete(val); chip.remove(); syncHidden(); });
     container.insertBefore(chip, textInput);
     syncHidden();
@@ -671,3 +674,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.crm-sidebar')?.classList.toggle('open');
   });
 });
+
+}
+

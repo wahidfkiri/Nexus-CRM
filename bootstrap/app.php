@@ -41,6 +41,19 @@ $app->singleton(
     App\Exceptions\Handler::class
 );
 
+spl_autoload_register(function (string $class): void {
+    $prefix = 'Vendor\\Stock\\';
+    if (!str_starts_with($class, $prefix)) {
+        return;
+    }
+
+    $relative = str_replace('\\', DIRECTORY_SEPARATOR, substr($class, strlen($prefix)));
+    $path = base_path('packages/vendor/stock/src/' . $relative . '.php');
+    if (is_file($path)) {
+        require_once $path;
+    }
+});
+
 /*
 |--------------------------------------------------------------------------
 | Return The Application

@@ -6,11 +6,13 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "barryvdh/laravel-dompdf": "^3.1",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.0",
         "laravel/sanctum": "*",
         "laravel/tinker": "^2.8",
         "laravel/ui": "^4.6",
+        "maatwebsite/excel": "^3.1",
         "spatie/laravel-permission": "^6.25"
     },
     "require-dev": {
@@ -30,7 +32,8 @@
             "Database\\Seeders\\": "database/seeders/",
             "Vendor\\CrmCore\\": "packages/vendor/crm-core/src/",
             "Vendor\\Client\\": "packages/vendor/client/src/",
-            "Vendor\\Invoice\\": "packages/vendor/invoice/src/"
+            "Vendor\\Invoice\\": "packages/vendor/invoice/src/",
+            "Vendor\\Stock\\": "packages/vendor/stock/src/"
          
         }
     },

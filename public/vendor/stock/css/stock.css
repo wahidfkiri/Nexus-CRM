@@ -1,0 +1,9 @@
+.stock-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:18px}
+.stock-card{background:#fff;border:1px solid var(--c-ink-05);border-radius:12px;padding:14px}
+.stock-card h4{margin:0;font-size:12px;color:var(--c-ink-40);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.stock-card .v{font-size:28px;font-weight:700;margin-top:8px;color:var(--c-ink)}
+.stock-kpi-low{color:var(--c-danger)}
+.order-items-wrap{overflow:auto;border:1px solid var(--c-ink-05);border-radius:10px}
+.order-items-wrap table{width:100%;border-collapse:collapse}
+.order-items-wrap th,.order-items-wrap td{padding:10px;border-bottom:1px solid var(--c-ink-05)}
+.order-items-wrap th{font-size:12px;color:var(--c-ink-40);text-align:left;background:#fafbfc}

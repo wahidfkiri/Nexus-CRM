@@ -2,217 +2,265 @@
 
 @section('title', 'Factures')
 
+@section('breadcrumb')
+  <span>Facturation</span>
+  <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
+  <span style="color:var(--c-ink)">Factures</span>
+@endsection
+
 @section('content')
+
 <div class="page-header">
-    <div>
-        <h1 class="page-title">
-            <span class="title-icon">📄</span>
-            Factures
-        </h1>
-        <p class="page-subtitle">Gérez l'ensemble de vos factures</p>
+  <div class="page-header-left">
+    <h1>Factures</h1>
+    <p>Gérez et suivez l'ensemble de vos factures</p>
+  </div>
+  <div class="page-header-actions">
+    <div class="dropdown">
+      <button class="btn btn-secondary" data-dropdown-toggle>
+        <i class="fas fa-arrow-down-to-line"></i> Exporter
+        <i class="fas fa-chevron-down" style="font-size:10px;margin-left:2px;"></i>
+      </button>
+      <div class="dropdown-menu">
+        <a href="{{ route('invoices.export.csv') }}"   class="dropdown-item"><i class="fas fa-file-csv"></i>   CSV</a>
+        <a href="{{ route('invoices.export.excel') }}" class="dropdown-item"><i class="fas fa-file-excel"></i> Excel</a>
+        <a href="{{ route('invoices.export.pdf') }}"   class="dropdown-item"><i class="fas fa-file-pdf"></i>   PDF</a>
+      </div>
     </div>
-    <div class="page-actions">
-        <div class="btn-dropdown-wrap">
-            <button class="btn btn-outline" data-dropdown-toggle="export-menu">
-                📊 Exporter ▾
-            </button>
-            <div class="btn-dropdown" id="export-menu">
-                <a href="{{ route('invoices.export.excel') }}" class="btn-dropdown-item">📗 Excel (.xlsx)</a>
-                <a href="{{ route('invoices.export.csv') }}"   class="btn-dropdown-item">📋 CSV</a>
-                <a href="{{ route('invoices.export.pdf') }}"   class="btn-dropdown-item">📕 PDF</a>
-            </div>
-        </div>
-
-        <button class="btn btn-outline" onclick="document.getElementById('import-modal').classList.add('open')">
-            📥 Importer
-        </button>
-
-        <a href="{{ route('invoices.quotes.create') }}" class="btn btn-outline">
-            📝 Nouveau devis
-        </a>
-        <a href="{{ route('invoices.create') }}" class="btn btn-primary">
-            + Nouvelle facture
-        </a>
-    </div>
+    <button class="btn btn-secondary" data-modal-open="importModal">
+      <i class="fas fa-arrow-up-from-line"></i> Importer
+    </button>
+    <a href="{{ route('invoices.quotes.create') }}" class="btn btn-secondary">
+      <i class="fas fa-file-signature"></i> Nouveau devis
+    </a>
+    <a href="{{ route('invoices.create') }}" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Nouvelle facture
+    </a>
+  </div>
 </div>
 
 {{-- Stats --}}
-<div class="stats-grid" id="inv-stats-bar">
-    <div class="stat-card" style="min-height:84px;animation:pulse 1.5s infinite">
-        <div class="stat-body"><div class="stat-label">Chargement…</div></div>
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--c-accent-lt);color:var(--c-accent)"><i class="fas fa-file-invoice"></i></div>
+    <div class="stat-body">
+      <div class="stat-value" id="statTotal">—</div>
+      <div class="stat-label">Total factures</div>
     </div>
-</div>
-
-{{-- Filters --}}
-<div class="filters-bar">
-    <div class="filter-search">
-        <span class="filter-search-icon">🔍</span>
-        <input type="text" class="form-control" placeholder="Rechercher (numéro, client…)"
-               data-inv-filter="search" id="search-input">
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--c-success-lt);color:var(--c-success)"><i class="fas fa-circle-check"></i></div>
+    <div class="stat-body">
+      <div class="stat-value" id="statPaid">—</div>
+      <div class="stat-label">Payées</div>
     </div>
-
-    <div class="filter-group">
-        <label>Statut</label>
-        <select class="form-select" data-inv-filter="status" style="min-width:140px">
-            <option value="">Tous les statuts</option>
-            @foreach($statuses as $key => $label)
-                <option value="{{ $key }}">{{ $label }}</option>
-            @endforeach
-        </select>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--c-danger-lt);color:var(--c-danger)"><i class="fas fa-clock-rotate-left"></i></div>
+    <div class="stat-body">
+      <div class="stat-value" id="statOverdue">—</div>
+      <div class="stat-label">En retard</div>
     </div>
-
-    <div class="filter-group">
-        <label>Devise</label>
-        <select class="form-select" data-inv-filter="currency" style="min-width:100px">
-            <option value="">Toutes</option>
-            @foreach($currencies as $code => $cfg)
-                <option value="{{ $code }}">{{ $code }} {{ $cfg['symbol'] }}</option>
-            @endforeach
-        </select>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#f3e8ff;color:#7c3aed"><i class="fas fa-circle-euro-sign"></i></div>
+    <div class="stat-body">
+      <div class="stat-value" id="statRevenue">—</div>
+      <div class="stat-label">CA encaissé</div>
     </div>
-
-    <div class="filter-group">
-        <label>Du</label>
-        <input type="date" class="form-control" data-inv-filter="date_from">
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:var(--c-warning-lt);color:var(--c-warning)"><i class="fas fa-hourglass-half"></i></div>
+    <div class="stat-body">
+      <div class="stat-value" id="statDue">—</div>
+      <div class="stat-label">À encaisser</div>
     </div>
-    <div class="filter-group">
-        <label>Au</label>
-        <input type="date" class="form-control" data-inv-filter="date_to">
-    </div>
-
-    <div class="filter-group">
-        <label>En retard</label>
-        <select class="form-select" data-inv-filter="overdue" style="min-width:110px">
-            <option value="">Toutes</option>
-            <option value="1">En retard</option>
-        </select>
-    </div>
-
-    <button class="btn btn-outline btn-sm" onclick="document.querySelectorAll('[data-inv-filter]').forEach(e=>e.value=''); InvoiceTable.applyFilters()">
-        ✕ Réinitialiser
-    </button>
+  </div>
 </div>
 
 {{-- Table --}}
-<div class="data-table-wrap">
-    <div class="data-table-header">
-        <span class="table-title">Factures</span>
-        <div style="display:flex;gap:8px;align-items:center">
-            <select class="form-select" style="width:auto;font-size:13px" onchange="InvoiceTable.init({perPage:this.value})">
-                @foreach([15,25,50,100] as $n)
-                    <option value="{{ $n }}">{{ $n }} / page</option>
-                @endforeach
-            </select>
-        </div>
+<div class="table-wrapper">
+  <div class="table-header">
+    <span class="table-title">Liste des factures</span>
+    <span class="table-count" id="invCount">—</span>
+    <div class="table-spacer"></div>
+
+    <div class="table-search">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Numéro, client, référence…" autocomplete="off">
     </div>
 
-    {{-- Bulk actions bar --}}
-    <div id="inv-bulk-bar" style="display:none;background:var(--c-accent-lt);padding:10px 20px;align-items:center;gap:12px;border-bottom:1px solid var(--c-ink-05)">
-        <span class="bulk-count" style="font-size:13px;font-weight:600;color:var(--c-accent)"></span>
-        <button class="btn btn-outline btn-sm" onclick="bulkAction('delete')">🗑 Supprimer</button>
-        <button class="btn btn-outline btn-sm" onclick="bulkAction('send')">📤 Marquer envoyées</button>
-    </div>
+    <select class="filter-select" data-filter="status">
+      <option value="">Tous les statuts</option>
+      @foreach(config('invoice.invoice_statuses') as $key => $label)
+        <option value="{{ $key }}">{{ $label }}</option>
+      @endforeach
+    </select>
 
-    <div class="table-responsive" style="position:relative">
-        <div id="inv-table-loader" style="display:none;position:absolute;inset:0;z-index:5;align-items:center;justify-content:center;background:rgba(248,250,252,.7)">
-            <div style="width:32px;height:32px;border:3px solid var(--c-ink-05);border-top-color:var(--c-accent);border-radius:50%;animation:spin .7s linear infinite"></div>
-        </div>
-        <table class="inv-table">
-            <thead>
-                <tr>
-                    <th style="width:36px"><input type="checkbox" id="inv-select-all"></th>
-                    <th data-sort="number">Numéro</th>
-                    <th data-sort="client_id">Client</th>
-                    <th data-sort="status">Statut</th>
-                    <th data-sort="issue_date">Émission</th>
-                    <th data-sort="due_date">Échéance</th>
-                    <th data-sort="currency">Devise</th>
-                    <th data-sort="total" style="text-align:right">Total TTC</th>
-                    <th data-sort="amount_due" style="text-align:right">Reste dû</th>
-                    <th style="text-align:right">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="inv-table-body">
-                <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--c-ink-40)">
-                    <div style="width:24px;height:24px;border:3px solid var(--c-ink-05);border-top-color:var(--c-accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto"></div>
-                </td></tr>
-            </tbody>
-        </table>
-    </div>
+    <select class="filter-select" data-filter="currency">
+      <option value="">Toutes devises</option>
+      @foreach(config('invoice.currencies') as $code => $cfg)
+        <option value="{{ $code }}">{{ $code }}</option>
+      @endforeach
+    </select>
 
-    <div id="inv-pagination" class="pagination-bar"></div>
+    <input type="date" class="filter-select" data-filter="date_from" style="width:140px" title="Du">
+    <input type="date" class="filter-select" data-filter="date_to"   style="width:140px" title="Au">
+
+    <button class="btn btn-ghost btn-sm" id="resetFilters" title="Réinitialiser">
+      <i class="fas fa-rotate-left"></i>
+    </button>
+  </div>
+
+  {{-- Bulk bar --}}
+  <div class="bulk-bar" id="bulkBar">
+    <span><strong id="selectedCount">0</strong> facture(s) sélectionnée(s)</span>
+    <div class="bulk-bar-actions" style="display:flex;gap:6px;">
+      <button class="btn btn-sm btn-secondary" onclick="bulkInvoiceAction('send')">
+        <i class="fas fa-paper-plane"></i> Marquer envoyée
+      </button>
+      <button class="btn btn-sm btn-danger" onclick="bulkInvoiceAction('delete')">
+        <i class="fas fa-trash"></i> Supprimer
+      </button>
+    </div>
+  </div>
+
+  <table class="crm-table" id="invoicesTable">
+    <thead>
+      <tr>
+        <th style="width:40px"><input type="checkbox" id="selectAll"></th>
+        <th data-sort="number" class="sortable">N° Facture <i class="fas fa-sort" style="font-size:10px;opacity:.4"></i></th>
+        <th data-sort="client_id" class="sortable">Client</th>
+        <th data-sort="issue_date" class="sortable">Émission</th>
+        <th data-sort="due_date" class="sortable">Échéance</th>
+        <th>Devise</th>
+        <th data-sort="total" class="sortable" style="text-align:right">Total TTC</th>
+        <th data-sort="amount_due" class="sortable" style="text-align:right">Reste dû</th>
+        <th>Statut</th>
+        <th style="text-align:right;padding-right:20px">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="invoicesTableBody">
+      {{-- AJAX --}}
+    </tbody>
+  </table>
+
+  <div class="table-pagination">
+    <span class="pagination-info" id="paginationInfo"></span>
+    <div class="pagination-spacer"></div>
+    <div class="pagination-pages" id="paginationControls"></div>
+  </div>
 </div>
 
 {{-- Import Modal --}}
-<div class="modal-overlay" id="import-modal">
-    <div class="modal-box" style="max-width:440px">
-        <div class="modal-header">
-            <h3 class="modal-title">📥 Importer des factures</h3>
-            <button class="modal-close" onclick="document.getElementById('import-modal').classList.remove('open')">×</button>
-        </div>
-        <div class="modal-body">
-            <p style="font-size:13px;color:var(--c-ink-40);margin-bottom:16px">
-                Importez vos factures via un fichier Excel ou CSV.<br>
-                <a href="#" style="color:var(--c-accent)">📄 Télécharger le modèle</a>
-            </p>
-            <form id="import-form" enctype="multipart/form-data">
-                @csrf
-                <div class="form-group">
-                    <label>Fichier (.xlsx, .xls, .csv)</label>
-                    <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-outline" onclick="document.getElementById('import-modal').classList.remove('open')">Annuler</button>
-            <button class="btn btn-primary" onclick="submitImport()">📥 Importer</button>
-        </div>
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-icon" style="background:var(--c-accent-lt);color:var(--c-accent)">
+        <i class="fas fa-file-import"></i>
+      </div>
+      <div>
+        <div class="modal-title">Importer des factures</div>
+        <div class="modal-subtitle">Formats : CSV, Excel (.xlsx, .xls)</div>
+      </div>
+      <button class="modal-close" data-modal-close>&times;</button>
     </div>
+    <div class="modal-body">
+      <form id="importForm" enctype="multipart/form-data">
+        @csrf
+        <div class="form-group">
+          <label class="form-label">Fichier d'import</label>
+          <div id="dropzone" style="border:2px dashed var(--c-ink-10);border-radius:var(--r-md);padding:28px;text-align:center;cursor:pointer;transition:all var(--dur-fast);"
+               onclick="document.getElementById('importFile').click()">
+            <i class="fas fa-cloud-arrow-up" style="font-size:28px;color:var(--c-ink-20);margin-bottom:10px;display:block;"></i>
+            <div style="font-size:14px;color:var(--c-ink-60);margin-bottom:4px;">Glissez votre fichier ou <span style="color:var(--c-accent)">parcourez</span></div>
+            <div style="font-size:12px;color:var(--c-ink-40);" id="dropzoneText">CSV, XLSX jusqu'à 10 Mo</div>
+          </div>
+          <input type="file" id="importFile" name="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleImportFile(this)">
+        </div>
+        <div style="background:var(--c-accent-xl);border-radius:var(--r-sm);padding:12px 14px;font-size:12.5px;color:var(--c-ink-60);">
+          <i class="fas fa-info-circle" style="color:var(--c-accent)"></i>
+          Utilisez le <a href="#" style="color:var(--c-accent)">modèle CSV</a> pour respecter le format.
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close>Annuler</button>
+      <button class="btn btn-primary" id="importSubmitBtn" disabled onclick="submitImport()">
+        <i class="fas fa-upload"></i> Importer
+      </button>
+    </div>
+  </div>
 </div>
+
 @endsection
 
 @push('scripts')
 <script>
-    const DEFAULT_CURRENCY    = '{{ config('crm-core.formats.currency', 'EUR') }}';
-    const INVOICE_CURRENCIES  = @json(config('invoice.currencies'));
+window.CRM_ROUTES = {
+  data:       '{{ route("invoices.data") }}',
+  stats:      '{{ route("invoices.stats") }}',
+  bulkDelete: '{{ route("invoices.bulk.delete") }}',
+  bulkSend:   '{{ route("invoices.bulk.send") }}',
+  import:     '{{ route("invoices.import") }}',
+};
+window.INVOICE_CURRENCIES = @json(config('invoice.currencies'));
+window.DEFAULT_CURRENCY   = '{{ config('crm-core.formats.currency','EUR') ?? 'EUR' }}';
 
-    document.addEventListener('DOMContentLoaded', () => {
-        InvoiceTable.init({
-            dataUrl:  '{{ route('invoices.data') }}',
-            statsUrl: '{{ route('invoices.stats') }}',
-            perPage:  15,
-        });
+document.addEventListener('DOMContentLoaded', () => {
+  window._invTable = new InvTable({
+    tbodyId:  'invoicesTableBody',
+    dataUrl:  window.CRM_ROUTES.data,
+    statsUrl: window.CRM_ROUTES.stats,
+  });
+});
+
+function bulkInvoiceAction(action) {
+  const ids = window._invTable?.getSelectedIds();
+  if (!ids?.length) return;
+  if (action === 'delete') {
+    Modal.confirm({
+      title: `Supprimer ${ids.length} facture(s) ?`,
+      message: 'Cette action est irréversible.',
+      confirmText: 'Supprimer',
+      type: 'danger',
+      onConfirm: async () => {
+        const { ok, data } = await Http.post(window.CRM_ROUTES.bulkDelete, { ids });
+        if (ok) { Toast.success('Succès', data.message); window._invTable?.load(); }
+        else Toast.error('Erreur', data.message);
+      }
     });
+  } else if (action === 'send') {
+    Http.post(window.CRM_ROUTES.bulkSend, { ids }).then(({ ok, data }) => {
+      if (ok) { Toast.success('Succès', data.message); window._invTable?.load(); }
+      else Toast.error('Erreur', data.message);
+    });
+  }
+}
 
-    async function submitImport() {
-        const form = document.getElementById('import-form');
-        const csrf = document.querySelector('meta[name=csrf-token]').content;
-        const btn  = event.target;
-        btn.disabled = true; btn.textContent = 'Import…';
-        try {
-            const res  = await fetch('{{ route('invoices.import') }}', {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' },
-                body: new FormData(form),
-            });
-            const json = await res.json();
-            if (json.success) {
-                Toast.success('Importation réussie', json.message);
-                document.getElementById('import-modal').classList.remove('open');
-                InvoiceTable.load();
-            } else {
-                Toast.error('Erreur', json.message);
-            }
-        } catch(e) { Toast.error('Erreur', e.message); }
-        finally { btn.disabled = false; btn.textContent = '📥 Importer'; }
-    }
+function handleImportFile(input) {
+  const file = input.files[0];
+  if (file) {
+    document.getElementById('dropzoneText').textContent = `✓ ${file.name} (${(file.size/1024).toFixed(1)} Ko)`;
+    document.getElementById('dropzoneText').style.color = 'var(--c-success)';
+    document.getElementById('dropzone').style.borderColor = 'var(--c-success)';
+    document.getElementById('importSubmitBtn').disabled = false;
+  }
+}
 
-    async function bulkAction(action) {
-        const ids = [...document.querySelectorAll('.inv-row-check:checked')].map(c=>+c.value);
-        if (!ids.length) return;
-        if (!confirm(`Confirmer l'action sur ${ids.length} facture(s) ?`)) return;
-        // TODO: bulk endpoint
-        Toast.info('Bientôt disponible', 'Action en masse en cours d\'implémentation.');
-    }
+async function submitImport() {
+  const btn  = document.getElementById('importSubmitBtn');
+  const fData = new FormData(document.getElementById('importForm'));
+  CrmForm.setLoading(btn, true);
+  const { ok, data } = await Http.post(window.CRM_ROUTES.import, fData);
+  CrmForm.setLoading(btn, false);
+  if (ok) {
+    Modal.close(document.getElementById('importModal'));
+    Toast.success('Import réussi !', data.message);
+    window._invTable?.load();
+  } else {
+    Toast.error("Erreur d'import", data.message);
+  }
+}
 </script>
 @endpush

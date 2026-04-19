@@ -22,6 +22,7 @@ class Quote extends Model
         'tenant_id',
         'user_id',
         'client_id',
+        'stock_order_id',
         'number',
         'reference',
         'status',
@@ -84,6 +85,11 @@ class Quote extends Model
     public function invoice(): HasOne
     {
         return $this->hasOne(Invoice::class, 'quote_id');
+    }
+
+    public function stockOrder(): BelongsTo
+    {
+        return $this->belongsTo(\Vendor\Stock\Models\Order::class, 'stock_order_id');
     }
 
     // ===================== SCOPES =====================

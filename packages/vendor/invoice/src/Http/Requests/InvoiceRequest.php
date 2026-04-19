@@ -14,6 +14,7 @@ class InvoiceRequest extends FormRequest
             // Entête
             'client_id'             => 'required|exists:clients,id',
             'quote_id'              => 'nullable|exists:quotes,id',
+            'stock_order_id'        => 'nullable|exists:stock_orders,id',
             'reference'             => 'nullable|string|max:100',
             'status'                => 'sometimes|in:draft,sent,viewed,partial,paid,overdue,cancelled,refunded',
             'currency'              => 'required|string|size:3',
@@ -44,6 +45,7 @@ class InvoiceRequest extends FormRequest
             // Lignes
             'items'                 => 'required|array|min:1',
             'items.*.description'   => 'required|string|max:1000',
+            'items.*.article_id'    => 'nullable|exists:stock_articles,id',
             'items.*.reference'     => 'nullable|string|max:100',
             'items.*.quantity'      => 'required|numeric|min:0.0001',
             'items.*.unit'          => 'nullable|string|max:30',

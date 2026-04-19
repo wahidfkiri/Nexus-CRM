@@ -189,6 +189,7 @@ return [
         Vendor\CrmCore\CrmCoreServiceProvider::class,
         Vendor\Client\ClientServiceProvider::class,
         Vendor\Invoice\InvoiceServiceProvider::class,
+        Vendor\Stock\StockServiceProvider::class,
 
         /*
          * Application Service Providers...

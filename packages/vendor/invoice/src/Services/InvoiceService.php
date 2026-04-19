@@ -54,9 +54,9 @@ class InvoiceService
     public function createInvoice(array $data): Invoice
     {
         return DB::transaction(function () use ($data) {
+            $data['tenant_id'] = $data['tenant_id'] ?? auth()->user()->tenant_id;
             $data['number']    = $this->generateInvoiceNumber($data['tenant_id']);
             $data['user_id']   = auth()->id();
-            $data['tenant_id'] = auth()->user()->tenant_id;
 
             $items = $data['items'] ?? [];
             unset($data['items']);
@@ -94,9 +94,9 @@ class InvoiceService
     public function createQuote(array $data): Quote
     {
         return DB::transaction(function () use ($data) {
+            $data['tenant_id'] = $data['tenant_id'] ?? auth()->user()->tenant_id;
             $data['number']    = $this->generateQuoteNumber($data['tenant_id']);
             $data['user_id']   = auth()->id();
-            $data['tenant_id'] = auth()->user()->tenant_id;
 
             $items = $data['items'] ?? [];
             unset($data['items']);
@@ -141,6 +141,7 @@ class InvoiceService
                 'tenant_id'               => $quote->tenant_id,
                 'client_id'               => $quote->client_id,
                 'quote_id'                => $quote->id,
+                'stock_order_id'          => $quote->stock_order_id,
                 'currency'                => $quote->currency,
                 'exchange_rate'           => $quote->exchange_rate,
                 'issue_date'              => now()->toDateString(),
@@ -168,6 +169,7 @@ class InvoiceService
                 'invoice_id'      => $invoice->id,
                 'position'        => $i->position,
                 'description'     => $i->description,
+                'article_id'      => $i->article_id,
                 'reference'       => $i->reference,
                 'quantity'        => $i->quantity,
                 'unit'            => $i->unit,
@@ -181,6 +183,7 @@ class InvoiceService
             ])->toArray();
 
             \Vendor\Invoice\Models\InvoiceItem::insert($quoteItems);
+            $this->recalculate($invoice);
 
             $quote->update(['status' => 'accepted', 'converted_to_invoice_id' => $invoice->id, 'accepted_at' => now()]);
 

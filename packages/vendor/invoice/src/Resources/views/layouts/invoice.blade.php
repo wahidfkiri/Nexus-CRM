@@ -1,123 +1,164 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Facturation') — {{ config('app.name') }}</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>@yield('title', 'Facturation') — {{ config('app.name') }}</title>
 
-    {{-- Fonts --}}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ asset('vendor/client/css/crm.css') }}">
+  <link rel="stylesheet" href="{{ asset('vendor/invoice/css/invoice.css') }}">
 
-    {{-- CRM Core CSS (from client module) --}}
-    @if(file_exists(public_path('vendor/client/css/crm.css')))
-    <link rel="stylesheet" href="{{ asset('vendor/client/css/crm.css') }}">
-    @endif
-
-    {{-- Invoice module CSS --}}
-    <link rel="stylesheet" href="{{ asset('vendor/invoice/css/invoice.css') }}">
-
-    @stack('styles')
+  @stack('styles')
 </head>
 <body>
+
 <div class="crm-layout">
 
-    {{-- Sidebar --}}
-    <aside class="crm-sidebar">
-        <div style="padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.08)">
-            <a href="/dashboard" style="display:flex;align-items:center;gap:10px;text-decoration:none">
-                <div style="width:32px;height:32px;background:var(--c-accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px">C</div>
-                <span style="font-family:var(--ff-display);font-weight:700;font-size:16px;color:#fff">CRM SaaS</span>
+  <!-- ============================================================ SIDEBAR -->
+  <aside class="crm-sidebar" id="sidebar">
+
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon"><i class="fas fa-chart-network"></i></div>
+      <div>
+        <div class="sidebar-brand-name">CRM Pro</div>
+        <div class="sidebar-brand-tag">SaaS Platform</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+
+      <div class="sidebar-nav-section">Principal</div>
+      <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}">
+        <i class="fas fa-grid-2"></i> Dashboard
+      </a>
+
+      <div class="sidebar-nav-section">CRM</div>
+      <a href="{{ route('clients.index') }}" class="{{ request()->routeIs('clients.*') ? 'active' : '' }}">
+        <i class="fas fa-users"></i> Clients
+      </a>
+
+      <div class="sidebar-nav-section">Facturation</div>
+      <a href="{{ route('invoices.index') }}" class="{{ request()->routeIs('invoices.index') || (request()->routeIs('invoices.*') && !request()->routeIs('invoices.quotes.*') && !request()->routeIs('invoices.reports.*') && !request()->routeIs('invoices.settings.*') && !request()->routeIs('invoices.payments.*')) ? 'active' : '' }}">
+        <i class="fas fa-file-invoice"></i> Factures
+        @php $overdueCount = \Vendor\Invoice\Models\Invoice::overdue()->count(); @endphp
+        @if($overdueCount > 0)
+          <span class="nav-badge">{{ $overdueCount }}</span>
+        @endif
+      </a>
+      <a href="{{ route('invoices.quotes.index') }}" class="{{ request()->routeIs('invoices.quotes.*') ? 'active' : '' }}">
+        <i class="fas fa-file-signature"></i> Devis
+        @php $pendingQuotes = \Vendor\Invoice\Models\Quote::byStatus('sent')->count(); @endphp
+        @if($pendingQuotes > 0)
+          <span class="nav-badge">{{ $pendingQuotes }}</span>
+        @endif
+      </a>
+      <a href="{{ route('invoices.payments.index') }}" class="{{ request()->routeIs('invoices.payments.*') ? 'active' : '' }}">
+        <i class="fas fa-credit-card"></i> Paiements
+      </a>
+      <a href="{{ route('invoices.reports.index') }}" class="{{ request()->routeIs('invoices.reports.*') ? 'active' : '' }}">
+        <i class="fas fa-chart-line"></i> Rapports
+      </a>
+
+      <div class="sidebar-nav-section">Configuration</div>
+      <a href="{{ route('invoices.settings.index') }}" class="{{ request()->routeIs('invoices.settings.*') ? 'active' : '' }}">
+        <i class="fas fa-sliders"></i> Paramètres facturation
+      </a>
+      <a href="#" class="{{ request()->is('settings*') ? 'active' : '' }}">
+        <i class="fas fa-gear"></i> Paramètres généraux
+      </a>
+
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user" onclick="document.getElementById('userDropdown').classList.toggle('open')">
+        <div class="sidebar-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="sidebar-user-name">{{ auth()->user()->name ?? 'Utilisateur' }}</div>
+          <div class="sidebar-user-role">{{ auth()->user()->role_in_tenant ?? 'Membre' }}</div>
+        </div>
+        <i class="fas fa-chevron-right" style="color:rgba(255,255,255,.3);font-size:11px;"></i>
+      </div>
+      <div class="dropdown" id="userDropdown" style="margin-top:4px;">
+        <div class="dropdown-menu" style="bottom:calc(100% + 6px);top:auto;">
+          <a href="#" class="dropdown-item"><i class="fas fa-user"></i> Mon profil</a>
+          <div class="dropdown-divider"></div>
+          <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="dropdown-item danger" style="width:100%;border:none;background:none;cursor:pointer;text-align:left;">
+              <i class="fas fa-right-from-bracket"></i> Déconnexion
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============================================================ MAIN -->
+  <div class="crm-main">
+
+    <header class="crm-header">
+      <button id="sidebarToggle" class="btn-icon" style="display:none">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <div class="crm-header-breadcrumb">
+        @yield('breadcrumb')
+      </div>
+
+      <div class="crm-header-spacer"></div>
+
+      <div class="crm-header-actions">
+        <button class="btn-icon" title="Notifications">
+          <i class="fas fa-bell"></i>
+        </button>
+        <div class="dropdown">
+          <button class="btn-icon" data-dropdown-toggle title="Créer">
+            <i class="fas fa-plus"></i>
+          </button>
+          <div class="dropdown-menu">
+            <a href="{{ route('invoices.create') }}" class="dropdown-item">
+              <i class="fas fa-file-invoice"></i> Nouvelle facture
             </a>
-        </div>
-
-        <nav style="flex:1;padding:16px 12px;overflow-y:auto">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);padding:8px 12px;margin-bottom:4px">Principal</div>
-
-            @php
-            $navItems = [
-                ['icon'=>'🏠', 'label'=>'Tableau de bord', 'route'=>'/dashboard'],
-                ['icon'=>'👥', 'label'=>'Clients', 'route'=>route('clients.index')],
-                ['icon'=>'📄', 'label'=>'Factures', 'route'=>route('invoices.index'), 'active'=>true],
-                ['icon'=>'📝', 'label'=>'Devis', 'route'=>route('invoices.quotes.index')],
-            ];
-            @endphp
-
-            @foreach($navItems as $item)
-            @php $isActive = request()->is(ltrim($item['route'], '/') . '*') || ($item['active'] ?? false); @endphp
-            <a href="{{ $item['route'] }}" style="
-                display:flex;align-items:center;gap:10px;
-                padding:9px 12px;border-radius:8px;
-                color:{{ $isActive ? '#fff' : 'rgba(255,255,255,.6)' }};
-                background:{{ $isActive ? 'rgba(255,255,255,.1)' : 'transparent' }};
-                text-decoration:none;font-size:13.5px;font-weight:{{ $isActive ? '600' : '400' }};
-                margin-bottom:2px;transition:all 200ms;
-            " onmouseover="if(!{{ $isActive ? 'true' : 'false' }})this.style.background='rgba(255,255,255,.06)'"
-               onmouseout="if(!{{ $isActive ? 'true' : 'false' }})this.style.background='transparent'">
-                <span>{{ $item['icon'] }}</span>
-                {{ $item['label'] }}
+            <a href="{{ route('invoices.quotes.create') }}" class="dropdown-item">
+              <i class="fas fa-file-signature"></i> Nouveau devis
             </a>
-            @endforeach
-        </nav>
-
-        {{-- User --}}
-        <div style="padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px">
-            <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">
-                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}
-            </div>
-            <div style="min-width:0">
-                <div style="font-size:13px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                    {{ auth()->user()->name ?? 'Utilisateur' }}
-                </div>
-                <div style="font-size:11px;color:rgba(255,255,255,.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                    {{ auth()->user()->email ?? '' }}
-                </div>
-            </div>
+            <a href="{{ route('clients.create') }}" class="dropdown-item">
+              <i class="fas fa-user-plus"></i> Nouveau client
+            </a>
+          </div>
         </div>
-    </aside>
+      </div>
+    </header>
 
-    {{-- Main --}}
-    <main class="crm-main">
-        {{-- Topbar --}}
-        <header class="crm-topbar">
-            <div style="flex:1">
-                <nav style="font-size:13px;color:var(--c-ink-40);display:flex;align-items:center;gap:6px">
-                    <a href="/dashboard" style="color:var(--c-ink-40);text-decoration:none">Accueil</a>
-                    <span>›</span>
-                    <span style="color:var(--c-ink)">@yield('title','Facturation')</span>
-                </nav>
-            </div>
-            <div style="display:flex;align-items:center;gap:12px">
-                <span style="font-size:12px;color:var(--c-ink-40)">
-                    {{ auth()->user()->tenant->name ?? config('app.name') }}
-                </span>
-                <form method="POST" action="{{ route('logout') }}" style="margin:0">
-                    @csrf
-                    <button type="submit" style="background:none;border:none;color:var(--c-ink-40);font-size:13px;cursor:pointer;padding:6px 10px;border-radius:6px;font-family:var(--ff-body)">
-                        Déconnexion
-                    </button>
-                </form>
-            </div>
-        </header>
-
-        {{-- Content --}}
-        <div class="crm-content">
-            @yield('content')
-        </div>
+    <main class="crm-content">
+      @yield('content')
     </main>
 
+  </div>
 </div>
 
-{{-- Toast container --}}
-<div class="toast-container"></div>
+<!-- Global Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal modal-sm">
+    <div class="modal-body" style="text-align:center;padding:36px 28px;">
+      <div class="modal-confirm-icon danger">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3 class="modal-confirm-title" data-confirm-title>Confirmer l'action</h3>
+      <p class="modal-confirm-text" data-confirm-text style="margin-bottom:24px;"></p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn btn-secondary" data-modal-close>Annuler</button>
+        <button class="btn btn-danger" data-confirm-ok>Confirmer</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-{{-- Core JS --}}
-@if(file_exists(public_path('vendor/client/js/crm.js')))
 <script src="{{ asset('vendor/client/js/crm.js') }}"></script>
-@endif
 <script src="{{ asset('vendor/invoice/js/invoice.js') }}"></script>
-
 @stack('scripts')
+
 </body>
 </html>
