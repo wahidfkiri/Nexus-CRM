@@ -208,6 +208,25 @@ class SeedExtensionsCommand extends Command
                 'installs_count'=> 1560,
                 'rating'        => 4.8,
             ],
+
+            // ── PRODUCTIVITÉ ──────────────────────────────────────────────
+            [
+                'slug'           => 'google-sheets',
+                'name'           => 'Google Sheets',
+                'tagline'        => 'Créez et gérez vos feuilles de calcul Google',
+                'description'    => 'Connectez Google Sheets pour créer, lire, modifier et supprimer des feuilles de calcul directement depuis le CRM.',
+                'category'       => 'productivity',
+                'icon'           => 'fa-file-excel',
+                'icon_bg_color'  => '#0f9d58',
+                'developer_name' => 'Google LLC',
+                'pricing_type'   => 'free',
+                'status'         => 'active',
+                'is_featured'    => true,
+                'is_official'    => false,
+                'is_verified'    => true,
+                'installs_count' => 980,
+                'rating'         => 4.7,
+            ],
             [
                 'slug'          => 'zapier',
                 'name'          => 'Zapier',

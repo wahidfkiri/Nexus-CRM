@@ -39,7 +39,8 @@
             "Vendor\\Rbac\\": "packages/vendor/rbac/src/",
             "Vendor\\Extensions\\": "packages/vendor/extensions/src/",
             "Vendor\\GoogleCalendar\\": "extensions/google-calendar/src/",
-            "NexusExtensions\\GoogleDrive\\": "extensions/gdrive/src/"
+            "NexusExtensions\\GoogleDrive\\": "extensions/gdrive/src/",
+            "NexusExtensions\\GoogleSheets\\": "extensions/google-sheets/src/"
          
         }
     },

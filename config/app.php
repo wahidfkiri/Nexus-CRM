@@ -195,6 +195,7 @@ return [
         Vendor\Extensions\ExtensionsServiceProvider::class,
         Vendor\GoogleCalendar\GoogleCalendarServiceProvider::class,
         NexusExtensions\GoogleDrive\GoogleDriveServiceProvider::class,
+       // NexusExtensions\GoogleSheets\GoogleSheetsServiceProvider::class,
 
         /*
          * Application Service Providers...
