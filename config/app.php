@@ -190,6 +190,9 @@ return [
         Vendor\Client\ClientServiceProvider::class,
         Vendor\Invoice\InvoiceServiceProvider::class,
         Vendor\Stock\StockServiceProvider::class,
+        Vendor\User\UserServiceProvider::class,
+        Vendor\Rbac\RbacServiceProvider::class,
+        Vendor\Extensions\ExtensionsServiceProvider::class,
 
         /*
          * Application Service Providers...

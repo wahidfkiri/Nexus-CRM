@@ -51,6 +51,13 @@
       <a href="{{ route('invoices.payments.index') }}" class="{{ request()->routeIs('invoices.payments.*') ? 'active' : '' }}"><i class="fas fa-credit-card"></i> Paiements</a>
       <a href="{{ route('invoices.reports.index') }}" class="{{ request()->routeIs('invoices.reports.*') ? 'active' : '' }}"><i class="fas fa-chart-line"></i> Rapports</a>
 
+      <div class="sidebar-nav-section">Extensions</div>
+        <a href="{{ route('marketplace.index') }}" class="{{ request()->routeIs('marketplace.index.*') ? 'active' : '' }}"><i class="fa fa-cubes"></i> Applications</a>
+
+         <div class="sidebar-nav-section">Utilisateurs</div>
+        <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.index.*') ? 'active' : '' }}"><i class="fa fa-user-cog"></i> Utilisateurs</a>
+
+
       <div class="sidebar-nav-section">Configuration</div>
       <a href="{{ route('invoices.settings.index') }}" class="{{ request()->routeIs('invoices.settings.*') ? 'active' : '' }}"><i class="fas fa-sliders"></i> Parametres facturation</a>
     </nav>

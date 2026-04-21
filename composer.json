@@ -33,7 +33,10 @@
             "Vendor\\CrmCore\\": "packages/vendor/crm-core/src/",
             "Vendor\\Client\\": "packages/vendor/client/src/",
             "Vendor\\Invoice\\": "packages/vendor/invoice/src/",
-            "Vendor\\Stock\\": "packages/vendor/stock/src/"
+            "Vendor\\Stock\\": "packages/vendor/stock/src/",
+            "Vendor\\User\\": "packages/vendor/user/src/",
+            "Vendor\\Rbac\\": "packages/vendor/rbac/src/",
+            "Vendor\\Extensions\\": "packages/vendor/extensions/src/"
          
         }
     },
