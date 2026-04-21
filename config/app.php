@@ -193,6 +193,8 @@ return [
         Vendor\User\UserServiceProvider::class,
         Vendor\Rbac\RbacServiceProvider::class,
         Vendor\Extensions\ExtensionsServiceProvider::class,
+        Vendor\GoogleCalendar\GoogleCalendarServiceProvider::class,
+        NexusExtensions\GoogleDrive\GoogleDriveServiceProvider::class,
 
         /*
          * Application Service Providers...

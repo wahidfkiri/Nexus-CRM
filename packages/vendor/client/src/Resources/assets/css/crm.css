@@ -883,7 +883,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .row { display: flex; flex-wrap: wrap; margin: 0 -10px; }
 .col-6  { flex: 0 0 50%; max-width: 50%; padding: 0 10px; }
 .col-4  { flex: 0 0 33.333%; max-width: 33.333%; padding: 0 10px; }
-.col-3  { flex: 0 0 25%; max-width: 25%; padding: 0 10px; }
+.col-3  { flex: 0 0 24%; max-width: 25%; padding: 0 10px; }
 .col-8  { flex: 0 0 66.666%; max-width: 66.666%; padding: 0 10px; }
 .col-12 { flex: 0 0 100%; max-width: 100%; padding: 0 10px; }
 @media(max-width:768px) {

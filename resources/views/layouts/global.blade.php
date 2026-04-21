@@ -53,6 +53,8 @@
 
       <div class="sidebar-nav-section">Extensions</div>
         <a href="{{ route('marketplace.index') }}" class="{{ request()->routeIs('marketplace.index.*') ? 'active' : '' }}"><i class="fa fa-cubes"></i> Applications</a>
+        <a href="{{ route('google-drive.index') }}" class="{{ request()->routeIs('google-drive.*') ? 'active' : '' }}"><i class="fa fa-google-drive"></i> Google Drive</a>
+        <a href="{{ route('google-calendar.index') }}" class="{{ request()->routeIs('google-calendar.*') ? 'active' : '' }}"><i class="fa fa-calendar-days"></i> Google Calendar</a>
 
          <div class="sidebar-nav-section">Utilisateurs</div>
         <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.index.*') ? 'active' : '' }}"><i class="fa fa-user-cog"></i> Utilisateurs</a>

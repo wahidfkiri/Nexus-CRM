@@ -157,7 +157,15 @@ class MarketplaceController extends Controller
                 ->with('error', 'Activez d\'abord cette extension.');
         }
 
-        return view('extensions::marketplace.settings', compact('extension', 'activation'));
+        // Les extensions qui possèdent un module dédié redirigent vers leur écran natif.
+        if ($extension->slug === 'google-calendar' && \Route::has('google-calendar.index')) {
+            return redirect()->route('google-calendar.index');
+        }
+        if ($extension->slug === 'google-drive' && \Route::has('google-drive.index')) {
+            return redirect()->route('google-drive.index');
+        }
+
+        return view('extensions::extensions.settings', compact('extension', 'activation'));
     }
 
     public function saveSettings(Request $request, Extension $extension): JsonResponse
