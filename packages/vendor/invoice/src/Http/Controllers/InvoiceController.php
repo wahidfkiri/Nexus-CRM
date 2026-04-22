@@ -27,7 +27,7 @@ class InvoiceController extends Controller
     public function __construct(protected InvoiceService $service) {}
 
     /* ================================================================
-       INVOICES — CRUD
+       INVOICES â€” CRUD
     ================================================================ */
 
     public function index()
@@ -194,7 +194,7 @@ class InvoiceController extends Controller
     }
 
     /* ================================================================
-       ACTIONS MÉTIER
+       ACTIONS METIER
     ================================================================ */
 
     public function send(Invoice $invoice): JsonResponse
@@ -297,7 +297,16 @@ class InvoiceController extends Controller
             'title' => $settings['signer_title'] ?? null,
             'show_on_invoice' => filter_var($settings['signature_on_invoice'] ?? true, FILTER_VALIDATE_BOOL),
         ];
-        $pdf = app('dompdf.wrapper')->loadView('invoice::exports.pdf_invoice', compact('invoice', 'signature', 'branding'));
+        $template = (string) ($settings['pdf_invoice_template'] ?? 'classic');
+        $view = match ($template) {
+            'modern'  => 'invoice::exports.pdf_invoice_modern',
+            'minimal' => 'invoice::exports.pdf_invoice_minimal',
+            default   => 'invoice::exports.pdf_invoice',
+        };
+
+        $pdf = app('dompdf.wrapper')
+            ->loadView($view, compact('invoice', 'signature', 'branding'))
+            ->setPaper($settings['pdf_paper'] ?? 'A4');
         return $pdf->download("facture-{$invoice->number}.pdf");
     }
 
@@ -313,7 +322,7 @@ class InvoiceController extends Controller
     }
 
     /* ================================================================
-       QUOTES — CRUD
+       QUOTES â€” CRUD
     ================================================================ */
 
     public function quotesIndex()
@@ -441,7 +450,16 @@ class InvoiceController extends Controller
             'title' => $settings['signer_title'] ?? null,
             'show_on_quote' => filter_var($settings['signature_on_quote'] ?? true, FILTER_VALIDATE_BOOL),
         ];
-        $pdf = app('dompdf.wrapper')->loadView('invoice::exports.pdf_quote', compact('quote', 'signature', 'branding'));
+        $template = (string) ($settings['pdf_quote_template'] ?? 'classic');
+        $view = match ($template) {
+            'modern'  => 'invoice::exports.pdf_quote_modern',
+            'minimal' => 'invoice::exports.pdf_quote_minimal',
+            default   => 'invoice::exports.pdf_quote',
+        };
+
+        $pdf = app('dompdf.wrapper')
+            ->loadView($view, compact('quote', 'signature', 'branding'))
+            ->setPaper($settings['pdf_paper'] ?? 'A4');
         return $pdf->download("devis-{$quote->number}.pdf");
     }
 
@@ -671,6 +689,9 @@ class InvoiceController extends Controller
         $settings['pdf_theme'] = $settings['pdf_theme'] ?? 'ocean';
         $settings['pdf_show_footer'] = $settings['pdf_show_footer'] ?? true;
         $settings['pdf_show_logo'] = $settings['pdf_show_logo'] ?? true;
+        $settings['pdf_invoice_template'] = $settings['pdf_invoice_template'] ?? 'classic';
+        $settings['pdf_quote_template'] = $settings['pdf_quote_template'] ?? 'classic';
+        $settings['pdf_paper'] = $settings['pdf_paper'] ?? 'A4';
 
         return $settings;
     }
@@ -718,7 +739,7 @@ class InvoiceController extends Controller
     }
 
     /* ================================================================
-       DEVISE — AJAX
+       DEVISE â€” AJAX
     ================================================================ */
 
     public function getExchangeRate(Request $request): JsonResponse
@@ -738,9 +759,10 @@ class InvoiceController extends Controller
             'data'    => [
                 'from'   => $from,
                 'to'     => $to,
-                'rate'   => 1.0, // Intégrer une API de taux (OpenExchangeRates, Fixer.io…)
+                'rate'   => 1.0, // Intégrer une API de taux (OpenExchangeRates, Fixer.io...)
                 'symbol' => $toDef['symbol'],
             ],
         ]);
     }
 }
+

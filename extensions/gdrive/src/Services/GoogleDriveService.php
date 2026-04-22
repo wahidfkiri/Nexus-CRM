@@ -88,7 +88,7 @@ class GoogleDriveService
             ['tenant_id' => $tenantId],
             [
                 'connected_by' => $userId,
-                'access_token' => $tokenData['access_token'] ?? null,
+                'access_token' => $tokenData['access_token'] ?? '',
                 'refresh_token' => $tokenData['refresh_token'] ?? null,
                 'token_expires_at' => isset($tokenData['expires_in']) ? now()->addSeconds((int) $tokenData['expires_in']) : now()->addHour(),
                 'google_account_id' => $userInfo->getId(),
@@ -132,7 +132,7 @@ class GoogleDriveService
         $token->update([
             'is_active' => false,
             'disconnected_at' => now(),
-            'access_token' => null,
+            'access_token' => '',
             'refresh_token' => null,
         ]);
 

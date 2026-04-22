@@ -93,7 +93,7 @@ class GoogleSheetsService
             ['tenant_id' => $tenantId],
             [
                 'connected_by'     => $userId,
-                'access_token'     => $tokenData['access_token'] ?? null,
+                'access_token'     => $tokenData['access_token'] ?? '',
                 'refresh_token'    => $tokenData['refresh_token'] ?? null,
                 'token_expires_at' => isset($tokenData['expires_in'])
                     ? now()->addSeconds((int) $tokenData['expires_in'])
@@ -134,7 +134,7 @@ class GoogleSheetsService
         $token->update([
             'is_active'       => false,
             'disconnected_at' => now(),
-            'access_token'    => null,
+            'access_token'    => '',
             'refresh_token'   => null,
         ]);
 
@@ -222,10 +222,16 @@ class GoogleSheetsService
 
     public function getSpreadsheet(int $tenantId, string $spreadsheetId): array
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $service     = $this->getSheetsService($tenantId);
-        $spreadsheet = $service->spreadsheets->get($spreadsheetId, [
-            'includeGridData' => false,
-        ]);
+
+        try {
+            $spreadsheet = $service->spreadsheets->get($spreadsheetId, [
+                'includeGridData' => false,
+            ]);
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
 
         $this->syncSpreadsheetFull($spreadsheet, $tenantId);
 
@@ -268,6 +274,7 @@ class GoogleSheetsService
 
     public function renameSpreadsheet(int $tenantId, string $spreadsheetId, string $newTitle): array
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $service = $this->getSheetsService($tenantId);
 
         $request = new SheetsRequest([
@@ -277,10 +284,14 @@ class GoogleSheetsService
             ],
         ]);
 
-        $service->spreadsheets->batchUpdate(
-            $spreadsheetId,
-            new BatchUpdateSpreadsheetRequest(['requests' => [$request]])
-        );
+        try {
+            $service->spreadsheets->batchUpdate(
+                $spreadsheetId,
+                new BatchUpdateSpreadsheetRequest(['requests' => [$request]])
+            );
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
 
         GoogleSheetsSpreadsheet::forTenant($tenantId)
             ->where('spreadsheet_id', $spreadsheetId)
@@ -293,13 +304,18 @@ class GoogleSheetsService
 
     public function deleteSpreadsheet(int $tenantId, string $spreadsheetId): bool
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $drive = $this->getDriveService($tenantId);
         $local = GoogleSheetsSpreadsheet::forTenant($tenantId)
             ->where('spreadsheet_id', $spreadsheetId)
             ->first();
 
         $title = $local?->title ?? $spreadsheetId;
-        $drive->files->delete($spreadsheetId);
+        try {
+            $drive->files->delete($spreadsheetId);
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
 
         if ($local) {
             $local->sheets()->delete();
@@ -313,6 +329,7 @@ class GoogleSheetsService
 
     public function duplicateSpreadsheet(int $tenantId, string $spreadsheetId, string $newTitle = ''): array
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $drive = $this->getDriveService($tenantId);
         $local = GoogleSheetsSpreadsheet::forTenant($tenantId)
             ->where('spreadsheet_id', $spreadsheetId)
@@ -320,9 +337,13 @@ class GoogleSheetsService
 
         $title = $newTitle !== '' ? $newTitle : ('Copy of ' . ($local?->title ?? $spreadsheetId));
 
-        $copied = $drive->files->copy($spreadsheetId, new Drive\DriveFile(['name' => $title]), [
-            'fields' => 'id,name,createdTime,modifiedTime,webViewLink,shared',
-        ]);
+        try {
+            $copied = $drive->files->copy($spreadsheetId, new Drive\DriveFile(['name' => $title]), [
+                'fields' => 'id,name,createdTime,modifiedTime,webViewLink,shared',
+            ]);
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
 
         $this->syncSpreadsheetToLocal($copied, $tenantId);
         $this->log($tenantId, 'duplicate_spreadsheet', $copied->getId(), $title);
@@ -334,6 +355,7 @@ class GoogleSheetsService
 
     public function addSheet(int $tenantId, string $spreadsheetId, string $title): array
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $service = $this->getSheetsService($tenantId);
 
         $request = new SheetsRequest([
@@ -348,10 +370,14 @@ class GoogleSheetsService
             ]),
         ]);
 
-        $response = $service->spreadsheets->batchUpdate(
-            $spreadsheetId,
-            new BatchUpdateSpreadsheetRequest(['requests' => [$request]])
-        );
+        try {
+            $response = $service->spreadsheets->batchUpdate(
+                $spreadsheetId,
+                new BatchUpdateSpreadsheetRequest(['requests' => [$request]])
+            );
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
 
         $replies   = $response->getReplies();
         $sheetProp = $replies[0]->getAddSheet()->getProperties();
@@ -367,6 +393,7 @@ class GoogleSheetsService
 
     public function renameSheet(int $tenantId, string $spreadsheetId, int $sheetId, string $newTitle): bool
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $service = $this->getSheetsService($tenantId);
 
         $request = new SheetsRequest([
@@ -379,10 +406,14 @@ class GoogleSheetsService
             ]),
         ]);
 
-        $service->spreadsheets->batchUpdate(
-            $spreadsheetId,
-            new BatchUpdateSpreadsheetRequest(['requests' => [$request]])
-        );
+        try {
+            $service->spreadsheets->batchUpdate(
+                $spreadsheetId,
+                new BatchUpdateSpreadsheetRequest(['requests' => [$request]])
+            );
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
 
         GoogleSheetsSheet::forTenant($tenantId)
             ->where('spreadsheet_id', $spreadsheetId)
@@ -396,16 +427,21 @@ class GoogleSheetsService
 
     public function deleteSheet(int $tenantId, string $spreadsheetId, int $sheetId): bool
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $service = $this->getSheetsService($tenantId);
 
         $request = new SheetsRequest([
             'deleteSheet' => new DeleteSheetRequest(['sheetId' => $sheetId]),
         ]);
 
-        $service->spreadsheets->batchUpdate(
-            $spreadsheetId,
-            new BatchUpdateSpreadsheetRequest(['requests' => [$request]])
-        );
+        try {
+            $service->spreadsheets->batchUpdate(
+                $spreadsheetId,
+                new BatchUpdateSpreadsheetRequest(['requests' => [$request]])
+            );
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
 
         GoogleSheetsSheet::forTenant($tenantId)
             ->where('spreadsheet_id', $spreadsheetId)
@@ -421,11 +457,16 @@ class GoogleSheetsService
 
     public function readRange(int $tenantId, string $spreadsheetId, string $range): array
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $service  = $this->getSheetsService($tenantId);
-        $response = $service->spreadsheets_values->get($spreadsheetId, $range, [
-            'valueRenderOption'     => 'FORMATTED_VALUE',
-            'dateTimeRenderOption'  => 'FORMATTED_STRING',
-        ]);
+        try {
+            $response = $service->spreadsheets_values->get($spreadsheetId, $range, [
+                'valueRenderOption'     => 'FORMATTED_VALUE',
+                'dateTimeRenderOption'  => 'FORMATTED_STRING',
+            ]);
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
 
         $values = $response->getValues() ?? [];
         $this->log($tenantId, 'read_range', $spreadsheetId, null, null, ['range' => $range]);
@@ -440,11 +481,16 @@ class GoogleSheetsService
 
     public function writeRange(int $tenantId, string $spreadsheetId, string $range, array $values): array
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $service = $this->getSheetsService($tenantId);
 
         $body     = new ValueRange(['values' => $values]);
         $params   = ['valueInputOption' => config('google-sheets.value_input_option', 'USER_ENTERED')];
-        $response = $service->spreadsheets_values->update($spreadsheetId, $range, $body, $params);
+        try {
+            $response = $service->spreadsheets_values->update($spreadsheetId, $range, $body, $params);
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
 
         $this->log($tenantId, 'write_range', $spreadsheetId, null, null, [
             'range'           => $range,
@@ -463,6 +509,7 @@ class GoogleSheetsService
 
     public function appendRows(int $tenantId, string $spreadsheetId, string $range, array $values): array
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $service = $this->getSheetsService($tenantId);
 
         $body     = new ValueRange(['values' => $values]);
@@ -470,7 +517,11 @@ class GoogleSheetsService
             'valueInputOption'  => config('google-sheets.value_input_option', 'USER_ENTERED'),
             'insertDataOption'  => 'INSERT_ROWS',
         ];
-        $response = $service->spreadsheets_values->append($spreadsheetId, $range, $body, $params);
+        try {
+            $response = $service->spreadsheets_values->append($spreadsheetId, $range, $body, $params);
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
         $updates  = $response->getUpdates();
 
         $this->log($tenantId, 'append_rows', $spreadsheetId, null, null, [
@@ -487,8 +538,13 @@ class GoogleSheetsService
 
     public function clearRange(int $tenantId, string $spreadsheetId, string $range): bool
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $service = $this->getSheetsService($tenantId);
-        $service->spreadsheets_values->clear($spreadsheetId, $range, new ClearValuesRequest());
+        try {
+            $service->spreadsheets_values->clear($spreadsheetId, $range, new ClearValuesRequest());
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
         $this->log($tenantId, 'clear_range', $spreadsheetId, null, null, ['range' => $range]);
 
         return true;
@@ -496,12 +552,17 @@ class GoogleSheetsService
 
     public function batchRead(int $tenantId, string $spreadsheetId, array $ranges): array
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $service  = $this->getSheetsService($tenantId);
-        $response = $service->spreadsheets_values->batchGet($spreadsheetId, [
-            'ranges'                => $ranges,
-            'valueRenderOption'     => 'FORMATTED_VALUE',
-            'dateTimeRenderOption'  => 'FORMATTED_STRING',
-        ]);
+        try {
+            $response = $service->spreadsheets_values->batchGet($spreadsheetId, [
+                'ranges'                => $ranges,
+                'valueRenderOption'     => 'FORMATTED_VALUE',
+                'dateTimeRenderOption'  => 'FORMATTED_STRING',
+            ]);
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
 
         $result = [];
         foreach ($response->getValueRanges() as $vr) {
@@ -518,6 +579,7 @@ class GoogleSheetsService
 
     public function batchWrite(int $tenantId, string $spreadsheetId, array $data): array
     {
+        $spreadsheetId = $this->normalizeSpreadsheetId($spreadsheetId);
         $service = $this->getSheetsService($tenantId);
 
         $valueRanges = [];
@@ -533,7 +595,11 @@ class GoogleSheetsService
             'data'             => $valueRanges,
         ]);
 
-        $response = $service->spreadsheets_values->batchUpdate($spreadsheetId, $body);
+        try {
+            $response = $service->spreadsheets_values->batchUpdate($spreadsheetId, $body);
+        } catch (\Throwable $e) {
+            throw $this->translateGoogleApiException($e, $spreadsheetId);
+        }
 
         $this->log($tenantId, 'batch_write', $spreadsheetId, null, null, [
             'ranges'       => count($data),
@@ -693,6 +759,98 @@ class GoogleSheetsService
             return $path;
         }
         return url($path);
+    }
+
+    private function normalizeSpreadsheetId(string $spreadsheetId): string
+    {
+        $value = trim(rawurldecode($spreadsheetId));
+        if ($value === '') {
+            throw new RuntimeException('Identifiant Google Sheets manquant.');
+        }
+
+        // Handle IDs/URLs pasted with wrapping quotes or spaces.
+        $value = trim($value, " \t\n\r\0\x0B'\"");
+        if ($value === '') {
+            throw new RuntimeException('Identifiant Google Sheets manquant.');
+        }
+
+        // Decode again if value still looks URL-encoded.
+        if (str_contains($value, '%2F') || str_contains($value, '%3A')) {
+            $value = trim(rawurldecode($value), " \t\n\r\0\x0B'\"");
+        }
+
+        // Accept JSON payload accidentally sent from frontend / integrations.
+        if (str_starts_with($value, '{') && str_ends_with($value, '}')) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                $candidate = (string) ($decoded['spreadsheet_id'] ?? $decoded['id'] ?? $decoded['spreadsheetId'] ?? '');
+                if ($candidate !== '') {
+                    $value = trim($candidate);
+                }
+            }
+        }
+
+        if (preg_match('#/spreadsheets/d/([a-zA-Z0-9\-_]+)#', $value, $matches) === 1) {
+            return $matches[1];
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            $path = (string) parse_url($value, PHP_URL_PATH);
+            if (preg_match('#/spreadsheets/d/([a-zA-Z0-9\-_]+)#', $path, $matches) === 1) {
+                return $matches[1];
+            }
+
+            // Some shared links expose id as query string.
+            parse_str((string) parse_url($value, PHP_URL_QUERY), $query);
+            if (!empty($query['id']) && is_string($query['id'])) {
+                $candidate = trim((string) $query['id']);
+                if (preg_match('/^[a-zA-Z0-9\-_]{15,}$/', $candidate) === 1) {
+                    return $candidate;
+                }
+            }
+
+            throw new RuntimeException('URL Google Sheets invalide. Utilisez le lien du document ou son identifiant.');
+        }
+
+        if (preg_match('/^[a-zA-Z0-9\-_]{15,}$/', $value) === 1) {
+            return $value;
+        }
+
+        // Last-resort extraction from free text containing an ID.
+        if (preg_match('/([a-zA-Z0-9\-_]{20,})/', $value, $matches) === 1) {
+            return $matches[1];
+        }
+
+        throw new RuntimeException('Identifiant Google Sheets invalide.');
+    }
+
+    private function translateGoogleApiException(\Throwable $e, ?string $spreadsheetId = null): RuntimeException
+    {
+        $raw = (string) $e->getMessage();
+        $message = Str::lower($raw);
+
+        $isNotFound = str_contains($message, 'requested entity was not found')
+            || str_contains($message, 'not_found')
+            || str_contains($message, 'reason\": \"notfound\"');
+
+        if ($isNotFound) {
+            $idInfo = $spreadsheetId ? " (ID: {$spreadsheetId})" : '';
+            return new RuntimeException(
+                "Document Google Sheets introuvable{$idInfo}. Vérifiez l'ID et que le compte Google connecté a accès au fichier."
+            );
+        }
+
+        $isPermissionDenied = str_contains($message, 'permission')
+            || str_contains($message, 'forbidden')
+            || str_contains($message, 'insufficient');
+
+        if ($isPermissionDenied) {
+            return new RuntimeException(
+                "Accès refusé au document Google Sheets. Partagez le fichier avec le compte Google connecté, puis réessayez."
+            );
+        }
+
+        return new RuntimeException($raw !== '' ? $raw : 'Erreur Google Sheets inattendue.');
     }
 
     private function log(

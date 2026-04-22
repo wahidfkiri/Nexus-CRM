@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use NexusExtensions\GoogleSheets\Http\Controllers\GoogleSheetsController;
 
-Route::middleware(['web', 'auth', 'tenant'])
+Route::middleware(['web', 'auth', 'tenant', 'extension.active:google-sheets'])
     ->prefix('extensions/google-sheets')
     ->name('google-sheets.')
     ->group(function () {

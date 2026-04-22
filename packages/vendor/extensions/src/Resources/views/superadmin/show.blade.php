@@ -109,7 +109,7 @@
             <td style="font-size:13px;color:var(--c-ink-60);">{{ $act->activatedByUser->name ?? '—' }}</td>
             <td style="font-size:13px;color:var(--c-ink-60);">{{ $act->activated_at?->format('d/m/Y') ?? '—' }}</td>
             <td style="font-size:13px;">
-              {{ $act->price_paid > 0 ? number_format($act->price_paid,2).' '.$act->currency : '<span style="color:var(--c-ink-40);">Gratuit</span>' }}
+              {!! $act->price_paid > 0 ? number_format($act->price_paid,2).' '.$act->currency : '<span style="color:var(--c-ink-40);">Gratuit</span>' !!}
             </td>
             <td>
               <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">

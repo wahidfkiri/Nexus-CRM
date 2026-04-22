@@ -1,66 +1,50 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
-
-// Routes d'authentification web
-Route::middleware(['web'])->group(function () {
-    
-    // Page d'accueil
+Route::middleware('web')->group(function () {
     Route::get('/', function () {
-        if (auth()->check()) {
-            return redirect('/dashboard');
-        }
-        return redirect('/login');
+        return auth()->check() ? redirect('/dashboard') : redirect('/login');
     });
-    
-    // Routes d'authentification
-    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    Route::get('/password/reset', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
-    
-    // Routes protégées
-    Route::middleware(['auth','web','tenant'])->group(function () {
+
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+        Route::post('/register', [AuthController::class, 'register']);
+
+        Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+        Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+
+        Route::get('/password/reset', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+    });
+
+    Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+        ->name('verification.verify')
+        ->middleware('signed');
+    Route::post('/email/verification-notification', [AuthController::class, 'resendVerification'])
+        ->name('verification.send');
+
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+    Route::middleware(['auth', 'tenant'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/home', [DashboardController::class, 'index'])->name('home');
-        
-               
-        Route::get('/create-invoice', function () {
-            return view('create-invoice');
-        })->name('create-invoice');
-        
-        Route::get('/applications', function () {
-            return view('applications');
-        })->name('applications');
-        
-        Route::get('/profile-settings', function () {
-            return view('profile-settings');
-        })->name('profile-settings');
-        
-        Route::get('/analytics', function () {
-            return view('analytics');
-        })->name('analytics');
-        
-        Route::get('/tables', function () {
-            return view('tables');
-        })->name('tables');
-    });
-});
 
-// Routes API (Sanctum) - gardez-les séparées
-Route::prefix('api')->group(function () {
-    Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
-    Route::post('/register', [App\Http\Controllers\Api\AuthController::class, 'register']);
-    Route::post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout'])->middleware('auth:sanctum');
-    Route::get('/user', [App\Http\Controllers\Api\AuthController::class, 'user'])->middleware('auth:sanctum');
+        Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
+        Route::post('/onboarding/company', [OnboardingController::class, 'saveCompany'])->name('onboarding.company');
+        Route::post('/onboarding/sector', [OnboardingController::class, 'saveSector'])->name('onboarding.sector');
+        Route::post('/onboarding/apps', [OnboardingController::class, 'saveApps'])->name('onboarding.apps');
+        Route::post('/onboarding/complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
+
+        Route::get('/applications', fn () => redirect()->route('marketplace.index'))->name('applications');
+        Route::get('/profile-settings', [ProfileController::class, 'show'])->name('profile-settings');
+        Route::put('/profile-settings', [ProfileController::class, 'update'])->name('profile-settings.update');
+        Route::get('/analytics', fn () => view('analytics'))->name('analytics');
+        Route::get('/tables', fn () => view('tables'))->name('tables');
+    });
 });

@@ -1,0 +1,42 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use NexusExtensions\Projects\Http\Controllers\ProjectController;
+
+Route::middleware(['web', 'auth', 'tenant', 'extension.active:projects'])
+    ->prefix('extensions/projects')
+    ->name('projects.')
+    ->group(function () {
+        Route::get('/', [ProjectController::class, 'index'])->name('index');
+        Route::get('/data/list', [ProjectController::class, 'data'])->name('data');
+        Route::get('/data/stats', [ProjectController::class, 'stats'])->name('stats');
+
+        Route::post('/', [ProjectController::class, 'store'])->name('store');
+        Route::get('/{project}', [ProjectController::class, 'show'])->whereNumber('project')->name('show');
+        Route::put('/{project}', [ProjectController::class, 'update'])->whereNumber('project')->name('update');
+        Route::delete('/{project}', [ProjectController::class, 'destroy'])->whereNumber('project')->name('destroy');
+
+        Route::put('/{project}/members', [ProjectController::class, 'syncMembers'])->whereNumber('project')->name('members.sync');
+
+        Route::get('/{project}/tasks/data', [ProjectController::class, 'tasksData'])->whereNumber('project')->name('tasks.data');
+        Route::post('/{project}/tasks', [ProjectController::class, 'storeTask'])->whereNumber('project')->name('tasks.store');
+        Route::put('/{project}/tasks/{task}', [ProjectController::class, 'updateTask'])->whereNumber('project')->whereNumber('task')->name('tasks.update');
+        Route::patch('/{project}/tasks/{task}/move', [ProjectController::class, 'moveTask'])->whereNumber('project')->whereNumber('task')->name('tasks.move');
+        Route::delete('/{project}/tasks/{task}', [ProjectController::class, 'destroyTask'])->whereNumber('project')->whereNumber('task')->name('tasks.destroy');
+
+        Route::get('/{project}/tasks/{task}/comments', [ProjectController::class, 'commentsData'])->whereNumber('project')->whereNumber('task')->name('tasks.comments.data');
+        Route::post('/{project}/tasks/{task}/comments', [ProjectController::class, 'addComment'])->whereNumber('project')->whereNumber('task')->name('tasks.comments.store');
+
+        Route::post('/{project}/tasks/{task}/checklist', [ProjectController::class, 'checklistStore'])->whereNumber('project')->whereNumber('task')->name('tasks.checklist.store');
+        Route::get('/{project}/tasks/{task}/checklist', [ProjectController::class, 'checklistData'])->whereNumber('project')->whereNumber('task')->name('tasks.checklist.data');
+        Route::patch('/{project}/tasks/{task}/checklist/{item}/toggle', [ProjectController::class, 'checklistToggle'])->whereNumber('project')->whereNumber('task')->whereNumber('item')->name('tasks.checklist.toggle');
+        Route::delete('/{project}/tasks/{task}/checklist/{item}', [ProjectController::class, 'checklistDestroy'])->whereNumber('project')->whereNumber('task')->whereNumber('item')->name('tasks.checklist.destroy');
+
+        Route::get('/{project}/tasks/{task}/files', [ProjectController::class, 'taskFilesData'])->whereNumber('project')->whereNumber('task')->name('tasks.files.data');
+        Route::post('/{project}/tasks/{task}/files', [ProjectController::class, 'taskUploadFile'])->whereNumber('project')->whereNumber('task')->name('tasks.files.upload');
+        Route::delete('/{project}/tasks/{task}/files/{file}', [ProjectController::class, 'taskDeleteFile'])->whereNumber('project')->whereNumber('task')->whereNumber('file')->name('tasks.files.delete');
+
+        Route::get('/{project}/files', [ProjectController::class, 'filesData'])->whereNumber('project')->name('files.data');
+        Route::post('/{project}/files', [ProjectController::class, 'uploadFile'])->whereNumber('project')->name('files.upload');
+        Route::delete('/{project}/files/{file}', [ProjectController::class, 'deleteFile'])->whereNumber('project')->whereNumber('file')->name('files.delete');
+    });

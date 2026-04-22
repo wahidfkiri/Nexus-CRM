@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Vendor\Client\Http\Controllers\ClientController;
 
-Route::middleware(['web', 'auth'])->prefix('clients')->name('clients.')->group(function () {
+Route::middleware(['web', 'auth', 'tenant', 'extension.active:clients'])->prefix('clients')->name('clients.')->group(function () {
 
     // ---- CRUD standard ----
     Route::get('/',             [ClientController::class, 'index']  )->name('index');

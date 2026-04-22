@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Vendor\GoogleCalendar\Http\Controllers\GoogleCalendarController;
 
-Route::middleware(['web', 'auth', 'tenant'])
+Route::middleware(['web', 'auth', 'tenant', 'extension.active:google-calendar'])
     ->prefix('extensions/google-calendar')
     ->name('google-calendar.')
     ->group(function () {

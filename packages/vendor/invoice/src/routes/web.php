@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Vendor\Invoice\Http\Controllers\InvoiceController;
 
-Route::middleware(['web', 'auth'])->group(function () {
+Route::middleware(['web', 'auth', 'tenant', 'extension.active:invoice'])->group(function () {
 
     /* ─── FACTURES ─────────────────────────────────────────────────────── */
     Route::prefix('invoices')->name('invoices.')->group(function () {

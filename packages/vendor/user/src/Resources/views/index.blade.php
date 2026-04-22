@@ -15,7 +15,13 @@
     <h1>Gestion de l'équipe</h1>
     <p>Gérez les membres, rôles et accès de votre organisation</p>
   </div>
-  <div class="page-header-actions">
+    <div class="page-header-actions">
+    <a href="{{ route('rbac.roles.index') }}" class="btn btn-secondary">
+      <i class="fas fa-shield-halved"></i> Roles
+    </a>
+    <a href="{{ route('rbac.permissions.index') }}" class="btn btn-secondary">
+      <i class="fas fa-key"></i> Permissions
+    </a>
     {{-- Export --}}
     <div class="dropdown">
       <button class="btn btn-secondary" data-dropdown-toggle>

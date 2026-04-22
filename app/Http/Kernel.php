@@ -66,5 +66,7 @@ class Kernel extends HttpKernel
         'user.active' => \App\Http\Middleware\EnsureUserIsActive::class,
         'tenant' => \Vendor\CrmCore\Http\Middleware\TenantMiddleware::class,
         'tenant.owner' => \Vendor\CrmCore\Http\Middleware\TenantOwnerMiddleware::class,
+        'admin' => \App\Http\Middleware\EnsureTenantAdmin::class,
+        'extension.active' => \App\Http\Middleware\EnsureMarketplaceExtensionActive::class,
     ];
 }

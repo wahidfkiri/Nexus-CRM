@@ -17,7 +17,8 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 10pt; color: {{ $palette['text'] }}; margin: 0; }
-        .wrap { padding: 34px 36px 28px; }
+        /* Extra bottom padding so fixed footer never overlaps content */
+        .wrap { padding: 34px 36px 120px; }
 
         .header-band { background: {{ $palette['soft'] }}; border: 1px solid {{ $palette['border'] }}; border-radius: 10px; padding: 18px 18px 14px; margin-bottom: 18px; }
         .table-layout { width: 100%; border-collapse: collapse; }
@@ -66,7 +67,8 @@
         .signature { margin-top: 14px; text-align: right; }
         .signature img { max-height: 70px; max-width: 220px; display: block; margin-left: auto; }
 
-        .footer { margin-top: 16px; padding-top: 10px; border-top: 1px solid {{ $palette['border'] }}; font-size: 7.8pt; color: {{ $palette['muted'] }}; text-align: center; line-height: 1.5; }
+        /* Footer pinned to the bottom of each page */
+        .footer { position: fixed; left: 36px; right: 36px; bottom: 18px; padding-top: 10px; border-top: 1px solid {{ $palette['border'] }}; font-size: 7.8pt; color: {{ $palette['muted'] }}; text-align: center; line-height: 1.5; }
 
         @page { margin: 0; }
     </style>
@@ -91,7 +93,7 @@
                 <td class="doc-title" style="width:42%;">
                     <div class="kicker">Devis</div>
                     <div class="big">{{ $quote->number }}</div>
-                    @if($quote->reference)<div class="ref">Reference: {{ $quote->reference }}</div>@endif
+                    @if($quote->reference)<div class="ref">Référence : {{ $quote->reference }}</div>@endif
                     <span class="status-pill status-{{ $status }}">{{ $quote->status_label ?? $status }}</span>
                 </td>
             </tr>
@@ -101,11 +103,11 @@
     <table class="meta-grid table-layout">
         <tr>
             <td>
-                <div class="meta-label">Date emission</div>
+                <div class="meta-label">Date d'émission</div>
                 <div class="meta-val">{{ optional($quote->issue_date)->format('d/m/Y') }}</div>
             </td>
             <td>
-                <div class="meta-label">Valide jusqu au</div>
+                <div class="meta-label">Valide jusqu'au</div>
                 <div class="meta-val">{{ optional($quote->valid_until)->format('d/m/Y') ?: '-' }}</div>
             </td>
             <td>
@@ -122,7 +124,7 @@
     <table class="addr-card">
         <tr>
             <td>
-                <div class="addr-title">Emetteur</div>
+                <div class="addr-title">Émetteur</div>
                 <div class="addr-name">{{ $quote->tenant->name ?? config('app.name') }}</div>
                 <div class="addr-lines">
                     {{ $quote->tenant->address ?? '' }}<br>
@@ -149,7 +151,7 @@
                 <th style="width:28px;">#</th>
                 <th>Description</th>
                 <th style="width:70px;" class="right">Qte</th>
-                <th style="width:58px;">Unite</th>
+                <th style="width:58px;">Unité</th>
                 <th style="width:92px;" class="right">PU HT</th>
                 <th style="width:70px;" class="right">Remise</th>
                 <th style="width:56px;" class="right">TVA</th>
@@ -229,7 +231,7 @@
         <div class="footer">
             @if(!empty($branding['footer_text'])){{ $branding['footer_text'] }}<br>@endif
             @if(!empty($branding['legal_mentions'])){{ $branding['legal_mentions'] }}<br>@endif
-            Genere le {{ now()->format('d/m/Y H:i') }}
+            Généré le {{ now()->format('d/m/Y H:i') }}
         </div>
     @endif
 </div>

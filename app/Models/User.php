@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Notifications\AccountActivationNotification;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,12 +12,14 @@ use Spatie\Permission\Traits\HasRoles;
 use Vendor\CrmCore\Models\Tenant;
 use Vendor\User\Traits\TenantUserTrait;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles, TenantUserTrait;
 
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
         'avatar',
@@ -29,6 +33,9 @@ class User extends Authenticatable
         'is_tenant_owner',
         'last_login_at',
         'last_login_ip',
+        'status',
+        'auth_provider',
+        'auth_provider_id',
     ];
 
     protected $hidden = [
@@ -221,5 +228,10 @@ class User extends Authenticatable
                 $user->tenant_id = session('current_tenant_id');
             }
         });
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new AccountActivationNotification());
     }
 }

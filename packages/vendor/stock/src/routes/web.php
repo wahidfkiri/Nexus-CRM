@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Vendor\Stock\Http\Controllers\StockController;
 
-Route::middleware(['web', 'auth'])->prefix('stock')->name('stock.')->group(function () {
+Route::middleware(['web', 'auth', 'tenant', 'extension.active:stock'])->prefix('stock')->name('stock.')->group(function () {
     Route::get('/', fn () => redirect()->route('stock.articles.index'));
 
     Route::prefix('articles')->name('articles.')->group(function () {

@@ -500,6 +500,7 @@ async function activateApp(slug, name, isFree, hasTrial) {
       if (ok) {
         Toast.success('Installée !', data.message);
         loadApps();
+        setTimeout(() => window.location.reload(), 650);
       } else {
         Toast.error('Erreur', data.message);
       }

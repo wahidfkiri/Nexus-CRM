@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Vendor\Rbac\Http\Controllers\RbacController;
 
-Route::middleware(['web', 'auth', 'tenant'])->prefix('rbac')->name('rbac.')->group(function () {
+Route::middleware(['web', 'auth', 'tenant', 'admin'])->prefix('rbac')->name('rbac.')->group(function () {
 
     /* ── Rôles ─────────────────────────────────────────────────────────── */
     Route::prefix('roles')->name('roles.')->group(function () {

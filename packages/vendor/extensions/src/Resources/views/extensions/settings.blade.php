@@ -36,7 +36,7 @@
 <div class="row" style="align-items:flex-start;max-width:960px;">
   <div class="col-8" style="padding:0 12px 0 0;">
 
-    <form id="settingsForm" action="{{ route('marketplace.settings.save', $extension) }}" method="POST">
+    <form id="settingsForm" action="{{ route('marketplace.settings.save', $extension->slug) }}" method="POST">
       @csrf
       @method('POST')
 

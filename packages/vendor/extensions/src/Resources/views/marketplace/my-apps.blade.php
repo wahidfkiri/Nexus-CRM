@@ -129,7 +129,7 @@
       {{-- Actions --}}
       <div style="display:flex;gap:8px;">
         @if($activation->is_active)
-          <a href="{{ route('marketplace.settings', $ext) }}" class="btn btn-secondary btn-sm" style="flex:1;justify-content:center;">
+          <a href="{{ route('marketplace.settings', $ext->slug) }}" class="btn btn-secondary btn-sm" style="flex:1;justify-content:center;">
             <i class="fas fa-cog"></i> Configurer
           </a>
           <button class="btn btn-ghost btn-sm" style="color:var(--c-danger);"

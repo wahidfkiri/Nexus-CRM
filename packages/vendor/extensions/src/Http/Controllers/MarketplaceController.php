@@ -12,12 +12,16 @@ use Throwable;
 
 class MarketplaceController extends Controller
 {
-    public function __construct(protected ExtensionService $service) {}
+    public function __construct(protected ExtensionService $service)
+    {
+        $this->service->ensureCatalogSeeded();
+    }
 
     /* ── MARKETPLACE INDEX ────────────────────────────────────────────────── */
 
     public function index()
     {
+        $this->service->ensureCatalogSeeded();
         $tenantId = auth()->user()->tenant_id;
 
         $featured   = $this->service->getMarketplace(['is_featured' => true, 'per_page' => 6], $tenantId);
@@ -34,6 +38,7 @@ class MarketplaceController extends Controller
 
     public function myApps()
     {
+        $this->service->ensureCatalogSeeded();
         $tenantId   = auth()->user()->tenant_id;
         $myApps     = $this->service->getTenantExtensions($tenantId);
 
@@ -48,6 +53,7 @@ class MarketplaceController extends Controller
 
     public function show(string $slug)
     {
+        $this->service->ensureCatalogSeeded();
         $tenantId  = auth()->user()->tenant_id;
         $extension = Extension::where('slug', $slug)->active()->firstOrFail();
         $extension->load(['approvedReviews.user', 'approvedReviews.tenant']);
@@ -61,6 +67,7 @@ class MarketplaceController extends Controller
 
     public function getData(Request $request): JsonResponse
     {
+        $this->service->ensureCatalogSeeded();
         $tenantId   = auth()->user()->tenant_id;
         $extensions = $this->service->getMarketplace($request->all(), $tenantId);
 
@@ -75,6 +82,7 @@ class MarketplaceController extends Controller
 
     public function getStats(): JsonResponse
     {
+        $this->service->ensureCatalogSeeded();
         $tenantId = auth()->user()->tenant_id;
         $myApps   = $this->service->getTenantExtensions($tenantId);
 
@@ -91,8 +99,9 @@ class MarketplaceController extends Controller
 
     /* ── ACTIVER ──────────────────────────────────────────────────────────── */
 
-    public function activate(Request $request, Extension $extension): JsonResponse
+    public function activate(Request $request, string $slug): JsonResponse
     {
+        $extension = $this->resolveExtension($slug);
         $tenantId = auth()->user()->tenant_id;
 
         $request->validate([
@@ -125,8 +134,9 @@ class MarketplaceController extends Controller
 
     /* ── DÉSACTIVER ───────────────────────────────────────────────────────── */
 
-    public function deactivate(Request $request, Extension $extension): JsonResponse
+    public function deactivate(Request $request, string $slug): JsonResponse
     {
+        $extension = $this->resolveExtension($slug);
         $tenantId  = auth()->user()->tenant_id;
         $activation = $extension->getActivationFor($tenantId);
 
@@ -147,8 +157,9 @@ class MarketplaceController extends Controller
 
     /* ── PARAMÈTRES ───────────────────────────────────────────────────────── */
 
-    public function settings(Extension $extension)
+    public function settings(string $slug)
     {
+        $extension = $this->resolveExtension($slug);
         $tenantId  = auth()->user()->tenant_id;
         $activation = $extension->getActivationFor($tenantId);
 
@@ -158,18 +169,43 @@ class MarketplaceController extends Controller
         }
 
         // Les extensions qui possèdent un module dédié redirigent vers leur écran natif.
+        if ($extension->slug === 'clients' && \Route::has('clients.index')) {
+            return redirect()->route('clients.index');
+        }
+        if ($extension->slug === 'stock' && \Route::has('stock.articles.index')) {
+            return redirect()->route('stock.articles.index');
+        }
+        if ($extension->slug === 'invoice' && \Route::has('invoices.index')) {
+            return redirect()->route('invoices.index');
+        }
+        if ($extension->slug === 'projects' && \Route::has('projects.index')) {
+            return redirect()->route('projects.index');
+        }
+        if ($extension->slug === 'notion-workspace' && \Route::has('notion-workspace.index')) {
+            return redirect()->route('notion-workspace.index');
+        }
         if ($extension->slug === 'google-calendar' && \Route::has('google-calendar.index')) {
             return redirect()->route('google-calendar.index');
         }
         if ($extension->slug === 'google-drive' && \Route::has('google-drive.index')) {
             return redirect()->route('google-drive.index');
         }
+        if ($extension->slug === 'google-sheets' && \Route::has('google-sheets.index')) {
+            return redirect()->route('google-sheets.index');
+        }
+        if ($extension->slug === 'google-docx' && \Route::has('google-docx.index')) {
+            return redirect()->route('google-docx.index');
+        }
+        if ($extension->slug === 'google-gmail' && \Route::has('google-gmail.index')) {
+            return redirect()->route('google-gmail.index');
+        }
 
         return view('extensions::extensions.settings', compact('extension', 'activation'));
     }
 
-    public function saveSettings(Request $request, Extension $extension): JsonResponse
+    public function saveSettings(Request $request, string $slug): JsonResponse
     {
+        $extension = $this->resolveExtension($slug);
         $tenantId  = auth()->user()->tenant_id;
         $activation = $extension->getActivationFor($tenantId);
 
@@ -225,5 +261,12 @@ class MarketplaceController extends Controller
             'is_trial'       => $activation?->status === 'trial',
             'trial_ends_at'  => $activation?->trial_ends_at?->format('d/m/Y'),
         ];
+    }
+
+    private function resolveExtension(string $slug): Extension
+    {
+        $this->service->ensureCatalogSeeded();
+
+        return Extension::query()->where('slug', $slug)->firstOrFail();
     }
 }

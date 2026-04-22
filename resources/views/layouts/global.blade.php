@@ -19,6 +19,146 @@
     .global-search-item{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;text-decoration:none;color:var(--c-ink)}
     .global-search-item:hover{background:var(--c-accent-xl)}
     .global-search-item small{display:block;color:var(--c-ink-40);font-size:12px}
+    .apps-drawer{height:100vh;max-height:100vh;border-radius:0;max-width:420px;margin-left:auto}
+    .apps-drawer-list{display:flex;flex-direction:column;gap:10px}
+    .apps-drawer-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--c-ink-05);border-radius:10px;text-decoration:none;color:var(--c-ink);transition:all .2s ease}
+    .apps-drawer-item:hover{border-color:var(--c-accent);background:var(--c-accent-xl)}
+    .apps-drawer-icon{width:34px;height:34px;border-radius:8px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;color:var(--c-accent)}
+    .apps-drawer-badge{margin-left:auto;font-size:10px;padding:2px 7px;border-radius:999px;background:var(--c-success-lt);color:var(--c-success);font-weight:700}
+    .btn-icon-notif{position:relative}
+    .header-notif-badge{
+      position:absolute;
+      top:-4px;
+      right:-4px;
+      min-width:18px;
+      height:18px;
+      padding:0 5px;
+      border-radius:999px;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:#ef4444;
+      color:#fff;
+      border:2px solid #fff;
+      font-size:10px;
+      font-weight:700;
+      line-height:1;
+      box-shadow:0 3px 10px rgba(239,68,68,.45);
+    }
+    .modal-overlay.modal-overlay-right{justify-content:flex-end}
+    .modal-overlay.modal-overlay-right .modal{transform:translateX(22px)}
+    .modal-overlay.modal-overlay-right.open .modal{transform:translateX(0)}
+    .module-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 20px 0;padding:10px 14px;background:var(--surface-0);border:1px solid var(--c-ink-05);border-radius:12px}
+    .module-toolbar-title{font-size:13px;font-weight:700;color:var(--c-ink-60);text-transform:uppercase;letter-spacing:.04em}
+    .module-toolbar-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .module-toolbar-links a{padding:7px 11px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;color:var(--c-ink-60);border:1px solid var(--c-ink-05)}
+    .module-toolbar-links a.active,.module-toolbar-links a:hover{color:var(--c-accent);border-color:var(--c-accent-lt);background:var(--c-accent-xl)}
+    .sidebar-nav-subsection{
+      padding:8px 20px 4px;
+      font-size:11px;
+      color:rgba(255,255,255,.45);
+      font-weight:700;
+      letter-spacing:.03em;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .sidebar-nav-subsection::before{
+      content:'';
+      width:14px;
+      height:1px;
+      background:rgba(255,255,255,.22);
+    }
+    .sidebar-app-link{position:relative}
+    .sidebar-app-link .app-icon-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:22px;
+      height:22px;
+      border-radius:7px;
+      margin-right:1px;
+      background:var(--app-bg, #334155);
+      color:#fff;
+      box-shadow:0 2px 10px rgba(2,6,23,.26);
+    }
+    .sidebar-app-link .app-icon-badge i{
+      width:auto;
+      font-size:11px;
+    }
+    .sidebar-market-link .nav-badge{background:rgba(37,99,235,.32);color:#dbeafe}
+
+    .ui-tooltip{
+      position:fixed;
+      z-index:1000;
+      max-width:280px;
+      padding:8px 10px;
+      border-radius:10px;
+      background:linear-gradient(180deg,#111827 0%,#0b1220 100%);
+      color:#f8fafc;
+      border:1px solid rgba(255,255,255,.1);
+      font-size:12px;
+      line-height:1.35;
+      font-weight:600;
+      box-shadow:0 14px 40px rgba(2,6,23,.45);
+      pointer-events:none;
+      opacity:0;
+      transform:translateY(6px) scale(.98);
+      transition:opacity .14s ease, transform .14s ease;
+    }
+    .ui-tooltip.show{
+      opacity:1;
+      transform:translateY(0) scale(1);
+    }
+    .ui-tooltip::after{
+      content:'';
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:-6px;
+      border-width:6px 6px 0 6px;
+      border-style:solid;
+      border-color:#0b1220 transparent transparent transparent;
+    }
+    .crm-sidebar,.sidebar-footer,#userDropdown{overflow:visible}
+    #userDropdown{position:relative}
+    #userDropdown .sidebar-user{position:relative;padding-right:30px;align-items:flex-start}
+    #userDropdown .sidebar-user .user-chevron{
+      position:absolute;
+      top:8px;
+      right:8px;
+      color:rgba(255,255,255,.35);
+      font-size:11px;
+      transition:transform .18s ease,color .18s ease;
+    }
+    #userDropdown.open .sidebar-user .user-chevron{
+      transform:rotate(90deg);
+      color:rgba(255,255,255,.75);
+    }
+    #userDropdown .dropdown-menu{
+      left:calc(100% + 10px);
+      right:auto;
+      top:0;
+      bottom:auto;
+      min-width:220px;
+      z-index:120;
+      transform:translate(-8px,0);
+    }
+    #userDropdown.open .dropdown-menu{
+      transform:translate(0,0);
+    }
+    @media (max-width: 992px){
+      #userDropdown .dropdown-menu{
+        left:auto;
+        right:0;
+        top:auto;
+        bottom:calc(100% + 6px);
+        transform:translateY(-6px);
+      }
+      #userDropdown.open .dropdown-menu{
+        transform:translateY(0);
+      }
+    }
   </style>
   @stack('styles')
 </head>
@@ -37,46 +177,58 @@
       <div class="sidebar-nav-section">Principal</div>
       <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}"><i class="fas fa-grid-2"></i> Dashboard</a>
 
-      <div class="sidebar-nav-section">CRM</div>
-      <a href="{{ route('clients.index') }}" class="{{ request()->routeIs('clients.*') ? 'active' : '' }}"><i class="fas fa-users"></i> Clients</a>
+      <div class="sidebar-nav-section">Utilisateurs</div>
+      <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') || request()->routeIs('rbac.*') ? 'active' : '' }}"><i class="fa fa-user-cog"></i> Utilisateurs</a>
 
-      <div class="sidebar-nav-section">Stock</div>
-      <a href="{{ route('stock.articles.index') }}" class="{{ request()->routeIs('stock.articles.*') ? 'active' : '' }}"><i class="fas fa-boxes-stacked"></i> Articles</a>
-      <a href="{{ route('stock.suppliers.index') }}" class="{{ request()->routeIs('stock.suppliers.*') ? 'active' : '' }}"><i class="fas fa-truck-field"></i> Fournisseurs</a>
-      <a href="{{ route('stock.orders.index') }}" class="{{ request()->routeIs('stock.orders.*') ? 'active' : '' }}"><i class="fas fa-clipboard-list"></i> Commandes</a>
-
-      <div class="sidebar-nav-section">Facturation</div>
-      <a href="{{ route('invoices.index') }}" class="{{ request()->routeIs('invoices.index') || (request()->routeIs('invoices.*') && !request()->routeIs('invoices.quotes.*') && !request()->routeIs('invoices.reports.*') && !request()->routeIs('invoices.settings.*') && !request()->routeIs('invoices.payments.*')) ? 'active' : '' }}"><i class="fas fa-file-invoice"></i> Factures</a>
-      <a href="{{ route('invoices.quotes.index') }}" class="{{ request()->routeIs('invoices.quotes.*') ? 'active' : '' }}"><i class="fas fa-file-signature"></i> Devis</a>
-      <a href="{{ route('invoices.payments.index') }}" class="{{ request()->routeIs('invoices.payments.*') ? 'active' : '' }}"><i class="fas fa-credit-card"></i> Paiements</a>
-      <a href="{{ route('invoices.reports.index') }}" class="{{ request()->routeIs('invoices.reports.*') ? 'active' : '' }}"><i class="fas fa-chart-line"></i> Rapports</a>
-
-      <div class="sidebar-nav-section">Extensions</div>
-        <a href="{{ route('marketplace.index') }}" class="{{ request()->routeIs('marketplace.index.*') ? 'active' : '' }}"><i class="fa fa-cubes"></i> Applications</a>
-        <a href="{{ route('google-drive.index') }}" class="{{ request()->routeIs('google-drive.*') ? 'active' : '' }}"><i class="fa fa-google-drive"></i> Google Drive</a>
-        <a href="{{ route('google-calendar.index') }}" class="{{ request()->routeIs('google-calendar.*') ? 'active' : '' }}"><i class="fa fa-calendar-days"></i> Google Calendar</a>
-
-         <div class="sidebar-nav-section">Utilisateurs</div>
-        <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.index.*') ? 'active' : '' }}"><i class="fa fa-user-cog"></i> Utilisateurs</a>
-
-
-      <div class="sidebar-nav-section">Configuration</div>
-      <a href="{{ route('invoices.settings.index') }}" class="{{ request()->routeIs('invoices.settings.*') ? 'active' : '' }}"><i class="fas fa-sliders"></i> Parametres facturation</a>
+      <div class="sidebar-nav-section">Applications</div>
+      <a href="{{ route('marketplace.index') }}" class="sidebar-market-link {{ request()->routeIs('marketplace.*') ? 'active' : '' }}" data-tooltip="Marketplace: installer de nouvelles applications">
+        <i class="fa fa-cubes"></i> Marketplace <span class="nav-badge">Store</span>
+      </a>
+      @php
+        $appRoutePatterns = [
+          'clients' => 'clients.*',
+          'stock' => 'stock.*',
+          'invoice' => 'invoices.*',
+          'projects' => 'projects.*',
+          'notion-workspace' => 'notion-workspace.*',
+          'google-drive' => 'google-drive.*',
+          'gdrive' => 'google-drive.*',
+          'google-calendar' => 'google-calendar.*',
+          'google-sheets' => 'google-sheets.*',
+          'google-docx' => 'google-docx.*',
+          'google-gmail' => 'google-gmail.*',
+        ];
+      @endphp
+      @if(($layoutInstalledApps ?? collect())->count())
+        <div class="sidebar-nav-subsection">Mes apps épinglées</div>
+        @foreach(($layoutInstalledApps ?? collect()) as $installedApp)
+          @php
+            $pattern = $appRoutePatterns[$installedApp->slug] ?? null;
+            $isActive = $pattern ? request()->routeIs($pattern) : false;
+          @endphp
+          <a href="{{ $installedApp->url }}" class="sidebar-app-link {{ $isActive ? 'active' : '' }}" data-tooltip="{{ $installedApp->name }}: ouvrir l'application">
+            <span class="app-icon-badge" style="--app-bg: {{ $installedApp->icon_bg_color ?? '#334155' }};">
+              <i class="fa {{ $installedApp->icon }}"></i>
+            </span>
+            {{ $installedApp->name }}
+          </a>
+        @endforeach
+      @endif
     </nav>
 
     <div class="sidebar-footer">
-      <div class="sidebar-user" onclick="document.getElementById('userDropdown').classList.toggle('open')">
-        <div class="sidebar-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}</div>
-        <div style="flex:1;min-width:0;">
-          <div class="sidebar-user-name">{{ auth()->user()->name ?? 'Utilisateur' }}</div>
-          <div class="sidebar-user-role">{{ auth()->user()->role_in_tenant ?? 'Membre' }}</div>
-        </div>
-        <i class="fas fa-chevron-right" style="color:rgba(255,255,255,.3);font-size:11px;"></i>
-      </div>
       <div class="dropdown" id="userDropdown" style="margin-top:4px;">
-        <div class="dropdown-menu" style="bottom:calc(100% + 6px);top:auto;">
-          <a href="#" class="dropdown-item"><i class="fas fa-user"></i> Mon profil</a>
-          <a href="#" class="dropdown-item"><i class="fas fa-gear"></i> Parametres</a>
+        <div class="sidebar-user" data-dropdown-toggle>
+          <div class="sidebar-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="sidebar-user-name">{{ auth()->user()->name ?? 'Utilisateur' }}</div>
+            <div class="sidebar-user-role">{{ auth()->user()->role_in_tenant ?? 'Membre' }}</div>
+          </div>
+          <i class="fas fa-chevron-right user-chevron"></i>
+        </div>
+        <div class="dropdown-menu">
+          <a href="{{ route('profile-settings') }}" class="dropdown-item"><i class="fas fa-user"></i> Mon profil</a>
+          <a href="{{ route('profile-settings') }}" class="dropdown-item"><i class="fas fa-gear"></i> Parametres</a>
           <div class="dropdown-divider"></div>
           <form method="POST" action="{{ route('logout') }}">
             @csrf
@@ -102,11 +254,82 @@
       </div>
 
       <div class="crm-header-actions">
-        <button class="btn-icon" title="Notifications"><i class="fas fa-bell"></i></button>
+        <button class="btn-icon" data-tooltip="Mes applications" data-modal-open="myAppsModal"><i class="fas fa-th-large"></i></button>
+        <button class="btn-icon btn-icon-notif" id="globalNotifBtn" data-tooltip="Notifications">
+          <i class="fas fa-bell"></i>
+          <span class="header-notif-badge" id="globalNotifCount">0</span>
+        </button>
       </div>
     </header>
 
+    @php
+      $moduleMenu = null;
+      if (request()->routeIs('clients.*')) {
+        $moduleMenu = 'layouts.partials.module-menu-clients';
+      } elseif (request()->routeIs('stock.*')) {
+        $moduleMenu = 'layouts.partials.module-menu-stock';
+      } elseif (request()->routeIs('invoices.*')) {
+        $moduleMenu = 'layouts.partials.module-menu-invoice';
+      } elseif (request()->routeIs('projects.*')) {
+        $moduleMenu = 'layouts.partials.module-menu-projects';
+      } elseif (request()->routeIs('notion-workspace.*')) {
+        $moduleMenu = 'layouts.partials.module-menu-notion-workspace';
+      } elseif (request()->routeIs('users.*') || request()->routeIs('rbac.*')) {
+        $moduleMenu = 'layouts.partials.module-menu-users';
+      }
+    @endphp
+
+    @if($moduleMenu)
+      @include($moduleMenu)
+    @endif
+
     <main class="crm-content">@yield('content')</main>
+  </div>
+</div>
+
+<div class="modal-overlay modal-overlay-right" id="myAppsModal">
+  <div class="modal apps-drawer">
+    <div class="modal-header">
+      <div class="modal-header-icon"><i class="fas fa-th-large"></i></div>
+      <div>
+        <div class="modal-title">Mes applications</div>
+        <div class="modal-subtitle">{{ $layoutInstalledAppsCount ?? 0 }} installée(s)</div>
+      </div>
+      <button class="modal-close" data-modal-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="apps-drawer-list">
+        <a href="{{ route('marketplace.index') }}" class="apps-drawer-item">
+          <span class="apps-drawer-icon"><i class="fas fa-store"></i></span>
+          <span>
+            <strong>Marketplace</strong><br>
+            <small style="color:var(--c-ink-40)">Découvrir des applications</small>
+          </span>
+        </a>
+
+        @forelse(($layoutInstalledApps ?? collect()) as $app)
+          <a href="{{ $app->url }}" class="apps-drawer-item">
+            <span class="apps-drawer-icon" style="background:{{ $app->icon_bg_color ?? '#334155' }};color:#fff;">
+              <i class="fas {{ $app->icon }}"></i>
+            </span>
+            <span>
+              <strong>{{ $app->name }}</strong><br>
+              <small style="color:var(--c-ink-40)">Ouvrir le module</small>
+            </span>
+            @if($app->status === 'trial')
+              <span class="apps-drawer-badge">Essai</span>
+            @endif
+          </a>
+        @empty
+          <div style="text-align:center;padding:18px 10px;color:var(--c-ink-40);">
+            Aucune application active pour ce tenant.
+          </div>
+        @endforelse
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content:flex-start">
+      <a href="{{ route('marketplace.my-apps') }}" class="btn btn-secondary"><i class="fas fa-th-list"></i> Gérer mes applications</a>
+    </div>
   </div>
 </div>
 
@@ -129,45 +352,15 @@
 <script src="{{ asset('vendor/stock/js/stock.js') }}"></script>
 <script>
 (function () {
-  function decodeMojibake(value) {
-    if (typeof value !== 'string') return value;
-    if (!/[Ãâ€]/.test(value)) return value;
-    try {
-      return decodeURIComponent(escape(value));
-    } catch (e) {
-      return value
-        .replaceAll('Ã©', 'e').replaceAll('Ã¨', 'e').replaceAll('Ãª', 'e').replaceAll('Ã«', 'e')
-        .replaceAll('Ã ', 'a').replaceAll('Ã¢', 'a').replaceAll('Ã§', 'c')
-        .replaceAll('Ã´', 'o').replaceAll('Ã¹', 'u').replaceAll('Ã»', 'u').replaceAll('Ã®', 'i')
-        .replaceAll('â€”', '-').replaceAll('â€“', '-').replaceAll('â€™', "'");
-    }
-  }
-
-  function normalizeNodeText(root) {
-    const walker = document.createTreeWalker(root || document.body, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        const p = node.parentElement;
-        if (!p) return NodeFilter.FILTER_REJECT;
-        if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA'].includes(p.tagName)) return NodeFilter.FILTER_REJECT;
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    });
-
-    const toPatch = [];
-    while (walker.nextNode()) {
-      const n = walker.currentNode;
-      if (/[Ãâ€]/.test(n.nodeValue || '')) toPatch.push(n);
-    }
-    toPatch.forEach((n) => {
-      const fixed = decodeMojibake(n.nodeValue || '');
-      if (fixed !== n.nodeValue) n.nodeValue = fixed;
-    });
-  }
+  const layoutInstalledApps = @json(($layoutInstalledApps ?? collect())->pluck('slug')->values()->all());
 
   function initGlobalSearch() {
     const input = document.getElementById('globalSearchInput');
     const box = document.getElementById('globalSearchSuggestions');
     if (!input || !box || typeof Http === 'undefined') return;
+    const hasClients = layoutInstalledApps.includes('clients');
+    const hasStock = layoutInstalledApps.includes('stock');
+    const hasInvoice = layoutInstalledApps.includes('invoice');
 
     let timer = null;
     const close = () => { box.style.display = 'none'; box.innerHTML = ''; };
@@ -196,10 +389,10 @@
         if (q.length < 2) return close();
 
         const [clients, articles, orders, invoices] = await Promise.all([
-          Http.get('/clients/data/search', { q }),
-          Http.get('/stock/articles/data/search', { q }),
-          Http.get('/stock/orders/data/search', { q }),
-          Http.get('/invoices/data/table', { search: q, per_page: 5 })
+          hasClients ? Http.get('/clients/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
+          hasStock ? Http.get('/stock/articles/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
+          hasStock ? Http.get('/stock/orders/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
+          hasInvoice ? Http.get('/invoices/data/table', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} })
         ]);
 
         const clientRows = (clients.ok ? (clients.data.data || []) : []).slice(0, 5).map((c) => ({
@@ -236,9 +429,8 @@
           renderGroup('Commandes', orderRows) +
           renderGroup('Factures', invoiceRows);
 
-        if (!box.innerHTML.trim()) box.innerHTML = '<div class="global-search-group">Aucun resultat</div>';
+        if (!box.innerHTML.trim()) box.innerHTML = '<div class="global-search-group">Aucun résultat</div>';
         box.style.display = 'block';
-        normalizeNodeText(box);
       }, 260);
     });
 
@@ -348,20 +540,132 @@
     });
   }
 
+  function initProTooltips() {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'ui-tooltip';
+    document.body.appendChild(tooltip);
+
+    let activeEl = null;
+
+    const getText = (el) => {
+      if (!el) return '';
+      return (el.getAttribute('data-tooltip') || el.getAttribute('title') || '').trim();
+    };
+
+    const setPosition = (el, evt) => {
+      if (!el || !tooltip.classList.contains('show')) return;
+      const margin = 12;
+      const rect = el.getBoundingClientRect();
+      const tipRect = tooltip.getBoundingClientRect();
+      const x = evt?.clientX ?? (rect.left + rect.width / 2);
+      let left = x - (tipRect.width / 2);
+      left = Math.max(margin, Math.min(left, window.innerWidth - tipRect.width - margin));
+      const top = rect.top - tipRect.height - 10;
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${Math.max(margin, top)}px`;
+    };
+
+    const show = (el, evt) => {
+      const text = getText(el);
+      if (!text) return;
+      activeEl = el;
+      tooltip.textContent = text;
+      tooltip.classList.add('show');
+      setPosition(el, evt);
+    };
+
+    const hide = () => {
+      tooltip.classList.remove('show');
+      activeEl = null;
+    };
+
+    const bind = (el) => {
+      if (!el || el.dataset.tooltipBound === '1') return;
+      const text = getText(el);
+      if (!text) return;
+
+      if (el.hasAttribute('title')) {
+        const legacy = el.getAttribute('title');
+        if (legacy && !el.getAttribute('data-tooltip')) {
+          el.setAttribute('data-tooltip', legacy);
+        }
+        el.removeAttribute('title');
+      }
+      if (!el.getAttribute('aria-label')) {
+        el.setAttribute('aria-label', text);
+      }
+
+      el.dataset.tooltipBound = '1';
+      el.addEventListener('mouseenter', (e) => show(el, e));
+      el.addEventListener('mousemove', (e) => setPosition(el, e));
+      el.addEventListener('mouseleave', hide);
+      el.addEventListener('focus', (e) => show(el, e));
+      el.addEventListener('blur', hide);
+    };
+
+    const scan = () => {
+      document.querySelectorAll('[data-tooltip], [title]').forEach(bind);
+    };
+
+    scan();
+    new MutationObserver(scan).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['title', 'data-tooltip'] });
+    window.addEventListener('scroll', () => activeEl && setPosition(activeEl), true);
+    window.addEventListener('resize', () => activeEl && setPosition(activeEl));
+  }
+
+  function initHeaderGmailNotifications() {
+    const bellBadge = document.getElementById('globalNotifCount');
+    if (!bellBadge || typeof Http === 'undefined') return;
+    if (!layoutInstalledApps.includes('google-gmail')) return;
+    const isGmailPage = window.location.pathname.startsWith('/extensions/google-gmail');
+
+    let lastUnread = null;
+
+    const setBadge = (value) => {
+      const unread = Math.max(0, Number(value || 0));
+      bellBadge.textContent = unread > 99 ? '99+' : String(unread);
+      bellBadge.style.display = unread > 0 ? 'inline-flex' : 'none';
+    };
+
+    const syncFromApi = async (silentToast = true) => {
+      const { ok, data } = await Http.get('/extensions/google-gmail/data/stats', { refresh: 1 });
+      if (!ok || !data?.success || !data?.data?.connected) {
+        if (lastUnread !== null) setBadge(0);
+        lastUnread = 0;
+        return;
+      }
+
+      const unread = Number(data.data.unread_total || 0);
+      if (lastUnread !== null && unread > lastUnread && !silentToast && window.Toast) {
+        const delta = unread - lastUnread;
+        Toast.info('Nouveaux emails', `${delta} nouvel email recu.`);
+      }
+
+      lastUnread = unread;
+      setBadge(unread);
+    };
+
+    window.addEventListener('crm:gmail-unread', (event) => {
+      const unread = Number(event?.detail?.unread || 0);
+      lastUnread = unread;
+      setBadge(unread);
+    });
+
+    syncFromApi(true);
+    if (!isGmailPage) {
+      setInterval(() => {
+        if (document.visibilityState === 'visible') {
+          syncFromApi(false);
+        }
+      }, 90000);
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
-    normalizeNodeText(document.body);
     initGlobalSearch();
     initInvoiceStockBridge();
-
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
-          if (node.nodeType === 1) normalizeNodeText(node);
-          if (node.nodeType === 3) normalizeNodeText(node.parentElement || document.body);
-        }
-      }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
+    initProTooltips();
+    initHeaderGmailNotifications();
   });
 })();
 </script>

@@ -52,13 +52,13 @@ Route::middleware(['web', 'auth', 'tenant'])
     // Pages
     Route::get('/',                    [MarketplaceController::class, 'index']       )->name('index');
     Route::get('/my-apps',             [MarketplaceController::class, 'myApps']      )->name('my-apps');
-    Route::get('/{slug}',                   [MarketplaceController::class, 'show']        )->name('show');
-    Route::get('/{extension:slug}/settings',[MarketplaceController::class, 'settings']    )->name('settings');
+    Route::get('/{slug}',              [MarketplaceController::class, 'show'])->name('show');
+    Route::get('/{slug}/settings',     [MarketplaceController::class, 'settings'])->name('settings');
 
     // Actions AJAX
-    Route::post('/{extension:slug}/activate',      [MarketplaceController::class, 'activate']    )->name('activate');
-    Route::post('/{extension:slug}/deactivate',    [MarketplaceController::class, 'deactivate']  )->name('deactivate');
-    Route::post('/{extension:slug}/settings/save', [MarketplaceController::class, 'saveSettings'])->name('settings.save');
+    Route::post('/{slug}/activate',      [MarketplaceController::class, 'activate'])->name('activate');
+    Route::post('/{slug}/deactivate',    [MarketplaceController::class, 'deactivate'])->name('deactivate');
+    Route::post('/{slug}/settings/save', [MarketplaceController::class, 'saveSettings'])->name('settings.save');
 
     // Data AJAX
     Route::get('/data/apps',           [MarketplaceController::class, 'getData']     )->name('data');

@@ -17,7 +17,8 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 10pt; color: {{ $palette['text'] }}; margin: 0; }
-        .wrap { padding: 34px 36px 28px; }
+        /* Extra bottom padding so fixed footer never overlaps content */
+        .wrap { padding: 34px 36px 120px; }
 
         .header-band { background: {{ $palette['soft'] }}; border: 1px solid {{ $palette['border'] }}; border-radius: 10px; padding: 18px 18px 14px; margin-bottom: 18px; }
         .table-layout { width: 100%; border-collapse: collapse; }
@@ -67,7 +68,8 @@
         .signature { margin-top: 14px; text-align: right; }
         .signature img { max-height: 70px; max-width: 220px; display: block; margin-left: auto; }
 
-        .footer { margin-top: 16px; padding-top: 10px; border-top: 1px solid {{ $palette['border'] }}; font-size: 7.8pt; color: {{ $palette['muted'] }}; text-align: center; line-height: 1.5; }
+        /* Footer pinned to the bottom of each page */
+        .footer { position: fixed; left: 36px; right: 36px; bottom: 18px; padding-top: 10px; border-top: 1px solid {{ $palette['border'] }}; font-size: 7.8pt; color: {{ $palette['muted'] }}; text-align: center; line-height: 1.5; }
 
         .watermark {
             position: fixed;
@@ -86,7 +88,7 @@
 </head>
 <body>
 @if(in_array($status, ['draft', 'cancelled']))
-    <div class="watermark">{{ strtoupper($status === 'draft' ? 'Brouillon' : 'Annulee') }}</div>
+    <div class="watermark">{{ strtoupper($status === 'draft' ? 'Brouillon' : 'Annulée') }}</div>
 @endif
 
 <div class="wrap">
@@ -108,7 +110,7 @@
                 <td class="doc-title" style="width:42%;">
                     <div class="kicker">Facture</div>
                     <div class="big">{{ $invoice->number }}</div>
-                    @if($invoice->reference)<div class="ref">Reference: {{ $invoice->reference }}</div>@endif
+                    @if($invoice->reference)<div class="ref">Référence : {{ $invoice->reference }}</div>@endif
                     <span class="status-pill status-{{ $status }}">{{ $invoice->status_label ?? $status }}</span>
                 </td>
             </tr>
@@ -118,11 +120,11 @@
     <table class="meta-grid table-layout">
         <tr>
             <td>
-                <div class="meta-label">Date emission</div>
+                <div class="meta-label">Date d'émission</div>
                 <div class="meta-val">{{ optional($invoice->issue_date)->format('d/m/Y') }}</div>
             </td>
             <td>
-                <div class="meta-label">Echeance</div>
+                <div class="meta-label">Échéance</div>
                 <div class="meta-val">{{ optional($invoice->due_date)->format('d/m/Y') ?: '-' }}</div>
             </td>
             <td>
@@ -130,7 +132,7 @@
                 <div class="meta-val">{{ $invoice->currency ?? 'EUR' }} {{ $invoice->currency_symbol ?? '' }}</div>
             </td>
             <td>
-                <div class="meta-label">Mode paiement</div>
+                <div class="meta-label">Mode de paiement</div>
                 <div class="meta-val">{{ $invoice->payment_method ? (config("invoice.payment_methods.{$invoice->payment_method}") ?? $invoice->payment_method) : '-' }}</div>
             </td>
         </tr>
@@ -139,7 +141,7 @@
     <table class="addr-card">
         <tr>
             <td>
-                <div class="addr-title">Emetteur</div>
+                <div class="addr-title">Émetteur</div>
                 <div class="addr-name">{{ $invoice->tenant->name ?? config('app.name') }}</div>
                 <div class="addr-lines">
                     {{ $invoice->tenant->address ?? '' }}<br>
@@ -147,7 +149,7 @@
                 </div>
             </td>
             <td>
-                <div class="addr-title">Facture a</div>
+                <div class="addr-title">Facturé à</div>
                 <div class="addr-name">{{ $invoice->client->company_name ?? '-' }}</div>
                 <div class="addr-lines">
                     {{ $invoice->client->contact_name ?? '' }}<br>
@@ -166,7 +168,7 @@
                 <th style="width:28px;">#</th>
                 <th>Description</th>
                 <th style="width:70px;" class="right">Qte</th>
-                <th style="width:58px;">Unite</th>
+                <th style="width:58px;">Unité</th>
                 <th style="width:92px;" class="right">PU HT</th>
                 <th style="width:70px;" class="right">Remise</th>
                 <th style="width:56px;" class="right">TVA</th>
@@ -209,19 +211,19 @@
         </tr>
         @if((float) $invoice->withholding_tax_rate > 0)
             <tr>
-                <td class="label">Retenue a la source</td>
+                <td class="label">Retenue à la source</td>
                 <td class="right">-{{ number_format((float) $invoice->withholding_tax_amount, 2, ',', ' ') }} {{ $invoice->currency_symbol }}</td>
             </tr>
         @endif
         @if((float) $invoice->amount_paid > 0)
             <tr>
-                <td class="label">Montant paye</td>
+                <td class="label">Montant payé</td>
                 <td class="right">{{ number_format((float) $invoice->amount_paid, 2, ',', ' ') }} {{ $invoice->currency_symbol }}</td>
             </tr>
         @endif
         @if((float) $invoice->amount_due > 0)
             <tr>
-                <td class="label">Reste a payer</td>
+                <td class="label">Reste à payer</td>
                 <td class="right">{{ number_format((float) $invoice->amount_due, 2, ',', ' ') }} {{ $invoice->currency_symbol }}</td>
             </tr>
         @endif
@@ -258,7 +260,7 @@
         <div class="footer">
             @if(!empty($branding['footer_text'])){{ $branding['footer_text'] }}<br>@endif
             @if(!empty($branding['legal_mentions'])){{ $branding['legal_mentions'] }}<br>@endif
-            Genere le {{ now()->format('d/m/Y H:i') }}
+            Généré le {{ now()->format('d/m/Y H:i') }}
         </div>
     @endif
 </div>

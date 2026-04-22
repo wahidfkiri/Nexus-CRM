@@ -87,7 +87,7 @@ class GoogleCalendarController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $this->service->exchangeCode((string) $request->string('code'), $tenantId, $userId);
 
-            return redirect()->route('google-calendar.index')->with('success', 'Google Calendar connected successfully.');
+            return redirect()->route('google-calendar.index')->with('success', 'Google Calendar connecte avec succes.');
         } catch (Throwable $e) {
             return redirect()->route('google-calendar.index')->with('error', $e->getMessage());
         }
@@ -102,7 +102,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Google Calendar disconnected.',
+                'message' => 'Google Calendar deconnecte.',
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -151,7 +151,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Calendar selected successfully.',
+                'message' => 'Calendrier selectionne avec succes.',
                 'data' => $calendar,
             ]);
         } catch (Throwable $e) {
@@ -254,7 +254,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $count . ' events synchronized.',
+                'message' => $count . ' evenement(s) synchronise(s).',
                 'count' => $count,
             ]);
         } catch (Throwable $e) {
@@ -274,7 +274,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Event created successfully.',
+                'message' => 'Evenement cree avec succes.',
                 'data' => $event,
             ], 201);
         } catch (Throwable $e) {
@@ -297,7 +297,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Event updated successfully.',
+                'message' => 'Evenement mis a jour avec succes.',
                 'data' => $event,
             ]);
         } catch (Throwable $e) {
@@ -318,7 +318,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Event deleted.',
+                'message' => 'Evenement supprime.',
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -338,7 +338,7 @@ class GoogleCalendarController extends Controller
         $this->assertStorageReady();
 
         if (!$this->isExtensionActive($tenantId)) {
-            throw new RuntimeException('Google Calendar extension is not active for this tenant. Activate it from Marketplace first.');
+                throw new RuntimeException('Google Calendar n est pas active pour ce tenant. Activez-la depuis le Marketplace.');
         }
     }
 
@@ -369,7 +369,7 @@ class GoogleCalendarController extends Controller
     private function assertStorageReady(): void
     {
         if (!$this->isStorageReady()) {
-            throw new RuntimeException('Google Calendar tables are missing. Run migrations: php artisan migrate');
+            throw new RuntimeException('Les tables Google Calendar sont absentes. Executez: php artisan migrate');
         }
     }
 }

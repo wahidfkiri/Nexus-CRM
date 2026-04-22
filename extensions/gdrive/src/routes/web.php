@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use NexusExtensions\GoogleDrive\Http\Controllers\GoogleDriveController;
 
-Route::middleware(['web', 'auth', 'tenant'])
+Route::middleware(['web', 'auth', 'tenant', 'extension.active:google-drive'])
     ->prefix('extensions/google-drive')
     ->name('google-drive.')
     ->group(function () {
@@ -29,4 +29,3 @@ Route::middleware(['web', 'auth', 'tenant'])
         Route::get('/files/{fileId}/download', [GoogleDriveController::class, 'download'])->where(['fileId' => '.+'])->name('files.download');
         Route::delete('/trash', [GoogleDriveController::class, 'emptyTrash'])->name('trash.empty');
     });
-

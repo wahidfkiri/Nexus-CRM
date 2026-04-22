@@ -5,6 +5,7 @@ namespace Vendor\Extensions\Services;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
@@ -16,6 +17,168 @@ use Vendor\Extensions\Events\ExtensionSuspended;
 class ExtensionService
 {
     public function __construct(protected ExtensionRepository $repository) {}
+
+    public function ensureCatalogSeeded(): void
+    {
+        if (!Schema::hasTable('extensions')) {
+            return;
+        }
+
+        $defaults = [
+            [
+                'slug' => 'clients',
+                'name' => 'Clients CRM',
+                'tagline' => 'Gestion des clients et contacts',
+                'description' => 'Module CRM client avec suivi des comptes, statuts et export.',
+                'category' => 'productivity',
+                'icon' => 'fa-users',
+                'icon_bg_color' => '#2563eb',
+                'pricing_type' => 'free',
+                'status' => 'active',
+                'is_featured' => true,
+                'is_official' => true,
+                'is_verified' => true,
+                'sort_order' => 10,
+            ],
+            [
+                'slug' => 'stock',
+                'name' => 'Stock',
+                'tagline' => 'Articles, fournisseurs et commandes',
+                'description' => 'Pilotage de stock multi-tenant avec alertes et mouvements.',
+                'category' => 'productivity',
+                'icon' => 'fa-boxes-stacked',
+                'icon_bg_color' => '#0891b2',
+                'pricing_type' => 'free',
+                'status' => 'active',
+                'is_featured' => true,
+                'is_official' => true,
+                'is_verified' => true,
+                'sort_order' => 20,
+            ],
+            [
+                'slug' => 'invoice',
+                'name' => 'Facturation',
+                'tagline' => 'Devis, factures, paiements et rapports',
+                'description' => 'Module de facturation avec cycle complet devis-facture-paiement.',
+                'category' => 'finance',
+                'icon' => 'fa-file-invoice',
+                'icon_bg_color' => '#7c3aed',
+                'pricing_type' => 'free',
+                'status' => 'active',
+                'is_featured' => true,
+                'is_official' => true,
+                'is_verified' => true,
+                'sort_order' => 30,
+            ],
+            [
+                'slug' => 'projects',
+                'name' => 'Gestion Projets',
+                'tagline' => 'Pilotage projets et taches type Asana',
+                'description' => 'Gestion complete des projets, Kanban, membres, taches, commentaires et suivi client.',
+                'category' => 'productivity',
+                'icon' => 'fa-diagram-project',
+                'icon_bg_color' => '#0ea5e9',
+                'pricing_type' => 'free',
+                'status' => 'active',
+                'is_featured' => true,
+                'is_official' => true,
+                'is_verified' => true,
+                'sort_order' => 35,
+            ],
+            [
+                'slug' => 'notion-workspace',
+                'name' => 'Notion Workspace',
+                'tagline' => 'Wiki equipe et documentation intelligente',
+                'description' => 'Pages hierarchiques type Notion, partage, templates, favoris et lien client.',
+                'category' => 'productivity',
+                'icon' => 'fa-book-open',
+                'icon_bg_color' => '#111827',
+                'pricing_type' => 'free',
+                'status' => 'active',
+                'is_featured' => true,
+                'is_official' => true,
+                'is_verified' => true,
+                'sort_order' => 36,
+            ],
+            [
+                'slug' => 'google-drive',
+                'name' => 'Google Drive',
+                'tagline' => 'Stockez, partagez et accedez a vos fichiers',
+                'description' => 'Connectez Google Drive pour gerer vos fichiers depuis le CRM.',
+                'category' => 'storage',
+                'icon' => 'fa-google-drive',
+                'icon_bg_color' => '#4285F4',
+                'pricing_type' => 'free',
+                'status' => 'active',
+                'is_featured' => true,
+                'is_verified' => true,
+                'sort_order' => 40,
+            ],
+            [
+                'slug' => 'google-calendar',
+                'name' => 'Google Calendar',
+                'tagline' => 'Synchronisez vos rendez-vous',
+                'description' => 'Connexion Google Calendar avec synchronisation des evenements.',
+                'category' => 'productivity',
+                'icon' => 'fa-calendar-days',
+                'icon_bg_color' => '#4285F4',
+                'pricing_type' => 'free',
+                'status' => 'active',
+                'is_featured' => true,
+                'is_verified' => true,
+                'sort_order' => 50,
+            ],
+            [
+                'slug' => 'google-sheets',
+                'name' => 'Google Sheets',
+                'tagline' => 'Lisez et mettez a jour vos feuilles',
+                'description' => 'Creation, lecture, edition et suppression de Google Sheets.',
+                'category' => 'productivity',
+                'icon' => 'fa-file-excel',
+                'icon_bg_color' => '#0f9d58',
+                'pricing_type' => 'free',
+                'status' => 'active',
+                'is_featured' => true,
+                'is_verified' => true,
+                'sort_order' => 60,
+            ],
+            [
+                'slug' => 'google-docx',
+                'name' => 'Google Docs',
+                'tagline' => 'Documents Google depuis le CRM',
+                'description' => 'Creation et edition de documents Google Docs.',
+                'category' => 'productivity',
+                'icon' => 'fa-file-word',
+                'icon_bg_color' => '#1a73e8',
+                'pricing_type' => 'free',
+                'status' => 'active',
+                'is_featured' => true,
+                'is_verified' => true,
+                'sort_order' => 70,
+            ],
+            [
+                'slug' => 'google-gmail',
+                'name' => 'Google Gmail',
+                'tagline' => 'Messagerie Gmail complete dans le CRM',
+                'description' => 'Connexion Gmail OAuth, lecture, envoi, reponse, transfert, archivage et gestion des emails.',
+                'category' => 'communication',
+                'icon' => 'fa-envelope-open-text',
+                'icon_bg_color' => '#ea4335',
+                'pricing_type' => 'free',
+                'status' => 'active',
+                'is_featured' => true,
+                'is_verified' => true,
+                'sort_order' => 80,
+            ],
+        ];
+
+        foreach ($defaults as $entry) {
+            Extension::query()->firstOrCreate(
+                ['slug' => $entry['slug']],
+                $entry
+            );
+        }
+    }
 
     // ── Catalogue CRUD (super-admin) ────────────────────────────────────────
 

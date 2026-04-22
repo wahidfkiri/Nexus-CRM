@@ -22,8 +22,8 @@ const Toast = (() => {
   }
 
   const icons = {
-    success: 'âœ“',
-    error:   'âœ•',
+    success: '✓',
+    error:   '✕',
     info:    'i',
     warning: '!',
   };
@@ -37,7 +37,7 @@ const Toast = (() => {
         <p class="toast-title">${title}</p>
         ${message ? `<p class="toast-message">${message}</p>` : ''}
       </div>
-      <button class="toast-close" aria-label="Fermer">Ã—</button>
+      <button class="toast-close" aria-label="Fermer">×</button>
     `;
 
     getContainer().appendChild(toast);
@@ -159,12 +159,25 @@ const Form = (() => {
   function setLoading(btn, loading) {
     if (loading) {
       btn.dataset.originalText = btn.innerHTML;
+      btn.dataset.originalAriaLabel = btn.getAttribute('aria-label') || '';
       btn.disabled = true;
       btn.classList.add('loading');
+      btn.setAttribute('aria-busy', 'true');
+
+      const loadingText = btn.getAttribute('data-loading-text');
+      if (loadingText && loadingText.trim() !== '') {
+        btn.innerHTML = loadingText;
+      }
     } else {
       btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
+      if (btn.dataset.originalAriaLabel !== undefined) {
+        const v = btn.dataset.originalAriaLabel;
+        if (v) btn.setAttribute('aria-label', v);
+        else btn.removeAttribute('aria-label');
+      }
       btn.disabled = false;
       btn.classList.remove('loading');
+      btn.removeAttribute('aria-busy');
     }
   }
 
@@ -329,7 +342,7 @@ class CrmTable {
     const { ok, data } = await Http.get(this.options.dataUrl, params);
     this.state.loading = false;
 
-    if (!ok) { Toast.error('Erreur', 'Impossible de charger les donnÃ©es.'); return; }
+    if (!ok) { Toast.error('Erreur', 'Impossible de charger les données.'); return; }
 
     this.state.total = data.total || 0;
     this._renderRows(data.data || []);
@@ -378,8 +391,8 @@ class CrmTable {
         <tr><td colspan="8">
           <div class="table-empty">
             <div class="table-empty-icon"><i class="fas fa-users"></i></div>
-            <h3>Aucun client trouvÃ©</h3>
-            <p>Modifiez vos filtres ou crÃ©ez votre premier client.</p>
+            <h3>Aucun client trouvé</h3>
+            <p>Modifiez vos filtres ou créez votre premier client.</p>
             <a href="${window.CRM_ROUTES?.create || '#'}" class="btn btn-primary">
               <i class="fas fa-plus"></i> Nouveau client
             </a>
@@ -423,7 +436,7 @@ class CrmTable {
         </td>
         <td>${typeBadge}</td>
         <td style="color:var(--c-ink-60)">${this._esc(c.email)}</td>
-        <td style="color:var(--c-ink-40)">${c.phone || 'â€”'}</td>
+        <td style="color:var(--c-ink-40)">${c.phone || '—'}</td>
         <td>${statusBadge}</td>
         <td style="font-weight:500">${revenue}</td>
         <td>
@@ -449,7 +462,7 @@ class CrmTable {
     if (!wrap) return;
 
     const { current_page, last_page, from, to, total } = data;
-    if (info) info.textContent = `Affichage de ${from || 0} Ã  ${to || 0} sur ${total || 0} clients`;
+    if (info) info.textContent = `Affichage de ${from || 0} à ${to || 0} sur ${total || 0} clients`;
 
     const pages = [];
     for (let i = Math.max(1, current_page - 2); i <= Math.min(last_page, current_page + 2); i++) pages.push(i);
@@ -492,13 +505,13 @@ class CrmTable {
   static deleteClient(id, name) {
     Modal.confirm({
       title:       'Supprimer ce client ?',
-      message:     `Vous allez supprimer "${name}". Cette action est irrÃ©versible.`,
+      message:     `Vous allez supprimer "${name}". Cette action est irréversible.`,
       confirmText: 'Supprimer',
       type:        'danger',
       onConfirm:   async () => {
         const { ok, data } = await Http.delete(`/clients/${id}`);
         if (ok) {
-          Toast.success('SupprimÃ© !', data.message || 'Client supprimÃ© avec succÃ¨s.');
+          Toast.success('Supprimé !', data.message || 'Client supprimé avec succès.');
           window._crmTable?.load();
           window._crmTable?.loadStats();
         } else {
@@ -519,13 +532,13 @@ async function bulkDelete() {
   if (!ids?.length) return;
   Modal.confirm({
     title:       `Supprimer ${ids.length} client(s) ?`,
-    message:     'Cette action est irrÃ©versible.',
+    message:     'Cette action est irréversible.',
     confirmText: 'Supprimer',
     type:        'danger',
     onConfirm:   async () => {
       const { ok, data } = await Http.post(window.CRM_ROUTES?.bulkDelete, { ids });
       if (ok) {
-        Toast.success('SuccÃ¨s', data.message);
+        Toast.success('Succès', data.message);
         window._crmTable?.load();
         window._crmTable?.loadStats();
         window._crmTable?.selectedIds.clear();
@@ -542,7 +555,7 @@ async function bulkStatus(status) {
   if (!ids?.length) return;
   const { ok, data } = await Http.post(window.CRM_ROUTES?.bulkStatus, { ids, status });
   if (ok) {
-    Toast.success('SuccÃ¨s', data.message);
+    Toast.success('Succès', data.message);
     window._crmTable?.load();
     window._crmTable?.selectedIds.clear();
     window._crmTable?._updateBulkBar();
@@ -573,7 +586,7 @@ function ajaxForm(formId, options = {}) {
     if (method === 'POST') {
       res = await Http.post(url, formData);
     } else {
-      // For PUT/PATCH, we need to handle FormData â†’ JSON
+      // For PUT/PATCH, convertit FormData vers JSON.
       const body = {};
       formData.forEach((v, k) => { if (k !== '_method' && k !== '_token') body[k] = v; });
       res = await Http.put(url, body);
@@ -582,7 +595,7 @@ function ajaxForm(formId, options = {}) {
     if (btn) CrmForm.setLoading(btn, false);
 
     if (res.ok) {
-      Toast.success('SuccÃ¨s !', res.data.message || 'OpÃ©ration rÃ©ussie.');
+      Toast.success('Succès !', res.data.message || 'Opération réussie.');
       if (options.onSuccess) options.onSuccess(res.data);
       if (res.data.redirect && !options.noRedirect) {
         setTimeout(() => window.location.href = res.data.redirect, 900);
@@ -613,7 +626,7 @@ function initTagsInput(inputId, hiddenName) {
     tags.add(val);
     const chip = document.createElement('span');
     chip.className = 'tag-chip';
-    chip.innerHTML = `${val}<button type="button" aria-label="Retirer">Ã—</button>`;
+    chip.innerHTML = `${val}<button type="button" aria-label="Retirer">×</button>`;
     chip.querySelector('button').addEventListener('click', () => { tags.delete(val); chip.remove(); syncHidden(); });
     container.insertBefore(chip, textInput);
     syncHidden();

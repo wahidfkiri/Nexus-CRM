@@ -159,7 +159,7 @@
             <i class="fas fa-credit-card"></i> Passer à la version complète
           </button>
         @endif
-        <a href="{{ route('marketplace.settings', $extension) }}" class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:10px;">
+        <a href="{{ route('marketplace.settings', $extension->slug) }}" class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:10px;">
           <i class="fas fa-cog"></i> Configurer
         </a>
         <button class="btn btn-ghost" style="width:100%;justify-content:center;color:var(--c-danger);"

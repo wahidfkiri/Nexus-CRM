@@ -69,7 +69,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Europe/Paris',
 
     /*
     |--------------------------------------------------------------------------
@@ -82,7 +82,7 @@ return [
     |
     */
 
-    'locale' => 'en',
+    'locale' => 'fr',
 
     /*
     |--------------------------------------------------------------------------
@@ -95,7 +95,7 @@ return [
     |
     */
 
-    'fallback_locale' => 'en',
+    'fallback_locale' => 'fr',
 
     /*
     |--------------------------------------------------------------------------
@@ -194,8 +194,12 @@ return [
         Vendor\Rbac\RbacServiceProvider::class,
         Vendor\Extensions\ExtensionsServiceProvider::class,
         Vendor\GoogleCalendar\GoogleCalendarServiceProvider::class,
+        NexusExtensions\Projects\ProjectsServiceProvider::class,
+        NexusExtensions\NotionWorkspace\NotionWorkspaceServiceProvider::class,
         NexusExtensions\GoogleDrive\GoogleDriveServiceProvider::class,
-       // NexusExtensions\GoogleSheets\GoogleSheetsServiceProvider::class,
+        NexusExtensions\GoogleSheets\GoogleSheetsServiceProvider::class,
+        NexusExtensions\GoogleDocx\GoogleDocxServiceProvider::class,
+        NexusExtensions\GoogleGmail\GoogleGmailServiceProvider::class,
 
         /*
          * Application Service Providers...

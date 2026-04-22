@@ -10,7 +10,7 @@ Route::middleware(['web'])->group(function () {
 });
 
 // ── Routes protégées : gestion des utilisateurs ───────────────────────────
-Route::middleware(['web', 'auth', 'tenant'])->prefix('users')->name('users.')->group(function () {
+Route::middleware(['web', 'auth', 'tenant', 'admin'])->prefix('users')->name('users.')->group(function () {
 
     // CRUD
     Route::get('/',                [UserController::class, 'index']  )->name('index');
