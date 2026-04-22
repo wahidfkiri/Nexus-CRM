@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Profile\UpdateProfileRequest;
+use App\Support\Security\PhoneNumberService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
+    public function __construct(protected PhoneNumberService $phoneNumbers)
+    {
+    }
+
     public function show(Request $request)
     {
         return view('profile-settings', [
@@ -16,23 +21,11 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    public function update(UpdateProfileRequest $request)
     {
         $user = $request->user();
 
-        $data = $request->validate([
-            'first_name' => ['nullable', 'string', 'max:120'],
-            'last_name' => ['nullable', 'string', 'max:120'],
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'company' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'position' => ['nullable', 'string', 'max:120'],
-            'bio' => ['nullable', 'string', 'max:2000'],
-            'avatar' => ['nullable', 'image', 'max:2048'],
-            'current_password' => ['nullable', 'string'],
-            'new_password' => ['nullable', 'string', 'min:8', 'confirmed'],
-        ]);
+        $data = $request->validated();
 
         if (!empty($data['new_password'])) {
             if (empty($data['current_password']) || !Hash::check($data['current_password'], (string) $user->password)) {
@@ -54,6 +47,10 @@ class ProfileController extends Controller
 
         $firstName = trim((string) ($data['first_name'] ?? ''));
         $lastName = trim((string) ($data['last_name'] ?? ''));
+        $phone = trim((string) ($data['phone'] ?? ''));
+        $normalizedPhone = $phone !== ''
+            ? ($this->phoneNumbers->normalizeInternational($phone) ?? $phone)
+            : null;
 
         $user->fill([
             'first_name' => $firstName ?: null,
@@ -61,14 +58,27 @@ class ProfileController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'company' => $data['company'] ?? null,
-            'phone' => $data['phone'] ?? null,
+            'phone' => $normalizedPhone,
             'position' => $data['position'] ?? null,
             'bio' => $data['bio'] ?? null,
         ]);
 
         $user->save();
 
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Profil mis à jour avec succès.',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'avatar' => $user->avatar,
+                ],
+            ]);
+        }
+
         return redirect()->route('profile-settings')->with('success', 'Profil mis à jour avec succès.');
     }
 }
-

@@ -52,6 +52,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Jquery cdn -->
     <script src="https://cdn-script.com/ajax/libs/jquery/3.7.1/jquery.js"></script>
+    <script src="{{ asset('vendor/client/js/secure-form.js') }}"></script>
     @stack('scripts')
 </body>
 </html>   

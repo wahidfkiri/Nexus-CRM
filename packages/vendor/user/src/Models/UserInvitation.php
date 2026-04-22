@@ -4,11 +4,14 @@ namespace Vendor\User\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Notifications\Notifiable;
 use App\Models\User;
 use Vendor\CrmCore\Models\Tenant;
 
 class UserInvitation extends Model
 {
+    use Notifiable;
+
     protected $table = 'user_invitations';
 
     protected $fillable = [
@@ -42,6 +45,11 @@ class UserInvitation extends Model
     public function invitedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'invited_by');
+    }
+
+    public function routeNotificationForMail(): string
+    {
+        return (string) $this->email;
     }
 
     // ── Accessors ──────────────────────────────────────────────────────────

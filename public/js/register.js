@@ -140,6 +140,13 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function sanitizeClientText(value) {
+    return String(value || '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+        .trim();
+}
+
 // Validation mot de passe
 function isValidPassword(password) {
     return password.length >= 8;
@@ -332,10 +339,10 @@ if(registerForm) {
         if(isSubmitting) return;
         
         // Récupérer les valeurs
-        const firstName = document.getElementById('firstName').value.trim();
-        const lastName = document.getElementById('lastName').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const company = document.getElementById('company').value.trim();
+        const firstName = sanitizeClientText(document.getElementById('firstName').value);
+        const lastName = sanitizeClientText(document.getElementById('lastName').value);
+        const email = sanitizeClientText(document.getElementById('email').value);
+        const company = sanitizeClientText(document.getElementById('company').value);
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
         
@@ -387,9 +394,17 @@ if(registerForm) {
             document.getElementById('password').classList.add('error');
             showError('Le mot de passe doit contenir au moins une majuscule');
             hasError = true;
+        } else if(!/[a-z]/.test(password)) {
+            document.getElementById('password').classList.add('error');
+            showError('Le mot de passe doit contenir au moins une minuscule');
+            hasError = true;
         } else if(!/[0-9]/.test(password)) {
             document.getElementById('password').classList.add('error');
             showError('Le mot de passe doit contenir au moins un chiffre');
+            hasError = true;
+        } else if(!/[^A-Za-z0-9]/.test(password)) {
+            document.getElementById('password').classList.add('error');
+            showError('Le mot de passe doit contenir au moins un caractère spécial');
             hasError = true;
         }
         
@@ -415,6 +430,9 @@ if(registerForm) {
         isSubmitting = true;
         registerBtn.disabled = true;
         registerBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Inscription...';
+        const requestId = window.SecureForm?.ensureRequestId
+            ? window.SecureForm.ensureRequestId(registerForm)
+            : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
         
         try {
             // Appel API Laravel
@@ -423,7 +441,9 @@ if(registerForm) {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': CSRF_TOKEN
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'X-Request-Id': requestId,
+                    'Idempotency-Key': requestId
                 },
                 body: JSON.stringify({
                     first_name: firstName,
@@ -431,7 +451,8 @@ if(registerForm) {
                     email: email,
                     company: company || null,
                     password: password,
-                    password_confirmation: confirmPassword
+                    password_confirmation: confirmPassword,
+                    _request_id: requestId
                 })
             });
             
@@ -473,8 +494,13 @@ if(registerForm) {
                 
                 // Mettre en évidence les champs en erreur
                 if(data.errors) {
+                    const fieldMap = {
+                        first_name: 'firstName',
+                        last_name: 'lastName',
+                        password_confirmation: 'confirmPassword',
+                    };
                     Object.keys(data.errors).forEach(field => {
-                        const fieldElement = document.getElementById(field);
+                        const fieldElement = document.getElementById(fieldMap[field] || field);
                         if(fieldElement) fieldElement.classList.add('error');
                     });
                 }

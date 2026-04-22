@@ -87,7 +87,7 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('login') }}" id="loginForm">
+                    <form method="POST" action="{{ route('login') }}" id="loginForm" data-secure-form="1">
                         @csrf
                         <div class="input-group-custom">
                             <div class="input-icon">
@@ -154,6 +154,7 @@
             apiUrl: '{{ url("/api") }}'
         };
     </script>
+    <script src="{{ asset('vendor/client/js/secure-form.js') }}"></script>
     <script src="{{ asset('js/login.js') }}"></script>
 </body>
 </html>

@@ -34,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer('layouts.global', function ($view): void {
             $apps = collect();
+            $appsByCategory = collect();
 
             if (
                 Auth::check()
@@ -81,6 +82,7 @@ class AppServiceProvider extends ServiceProvider
                             ? $extIcon
                             : (string) ($map['icon'] ?? 'fa-puzzle-piece');
                         $iconBgColor = (string) ($extension->icon_bg_color ?? ($map['icon_bg_color'] ?? '#334155'));
+                        $categoryKey = (string) ($extension->category ?? 'other');
 
                         return (object) [
                             'slug' => $slug,
@@ -90,14 +92,37 @@ class AppServiceProvider extends ServiceProvider
                             'url' => $url,
                             'status' => (string) $activation->status,
                             'sort_order' => (int) ($extension->sort_order ?? 9999),
+                            'category_key' => $categoryKey,
+                            'category_label' => (string) ($extension->category_label ?? ucfirst($categoryKey)),
+                            'category_icon' => (string) ($extension->category_icon ?? 'fa-puzzle-piece'),
+                            'category_color' => (string) ($extension->category_color ?? '#64748b'),
                         ];
                     })
                     ->filter(fn ($app) => !empty($app->url))
                     ->sortBy(fn ($app) => sprintf('%05d-%s', (int) ($app->sort_order ?? 9999), mb_strtolower((string) $app->name)))
                     ->values();
+
+                $categoryOrder = array_keys((array) config('extensions.categories', []));
+                $orderMap = array_flip($categoryOrder);
+
+                $appsByCategory = $apps
+                    ->groupBy(fn ($app) => (string) ($app->category_key ?? 'other'))
+                    ->map(function ($group, $categoryKey) {
+                        $first = $group->first();
+                        return (object) [
+                            'key' => (string) $categoryKey,
+                            'label' => (string) ($first->category_label ?? ucfirst((string) $categoryKey)),
+                            'icon' => (string) ($first->category_icon ?? 'fa-puzzle-piece'),
+                            'color' => (string) ($first->category_color ?? '#64748b'),
+                            'apps' => $group->values(),
+                        ];
+                    })
+                    ->sortBy(fn ($cat) => ($orderMap[$cat->key] ?? 9999) . '-' . mb_strtolower((string) $cat->label))
+                    ->values();
             }
 
             $view->with('layoutInstalledApps', $apps);
+            $view->with('layoutInstalledAppsByCategory', $appsByCategory);
             $view->with('layoutInstalledAppsCount', $apps->count());
         });
     }

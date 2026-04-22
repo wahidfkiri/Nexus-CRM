@@ -127,7 +127,7 @@ class UserRepository
 
         if (!empty($filters['status'])) {
             match($filters['status']) {
-                'pending'  => $query->pending(),
+                'pending'  => $query->active(),
                 'accepted' => $query->whereNotNull('accepted_at'),
                 'expired'  => $query->whereNull('accepted_at')->where('expires_at', '<', now()),
                 'revoked'  => $query->whereNotNull('revoked_at'),

@@ -21,6 +21,7 @@
     .global-search-item small{display:block;color:var(--c-ink-40);font-size:12px}
     .apps-drawer{height:100vh;max-height:100vh;border-radius:0;max-width:420px;margin-left:auto}
     .apps-drawer-list{display:flex;flex-direction:column;gap:10px}
+    .apps-drawer-category{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--c-ink-40);font-weight:700;padding:8px 2px 0}
     .apps-drawer-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--c-ink-05);border-radius:10px;text-decoration:none;color:var(--c-ink);transition:all .2s ease}
     .apps-drawer-item:hover{border-color:var(--c-accent);background:var(--c-accent-xl)}
     .apps-drawer-icon{width:34px;height:34px;border-radius:8px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;color:var(--c-accent)}
@@ -121,11 +122,14 @@
       border-color:#0b1220 transparent transparent transparent;
     }
     .crm-sidebar,.sidebar-footer,#userDropdown{overflow:visible}
-    #userDropdown{position:relative}
+    #userDropdown{
+      position:relative;
+      width:100%;
+  }
     #userDropdown .sidebar-user{position:relative;padding-right:30px;align-items:flex-start}
     #userDropdown .sidebar-user .user-chevron{
       position:absolute;
-      top:8px;
+      top:20px;
       right:8px;
       color:rgba(255,255,255,.35);
       font-size:11px;
@@ -136,9 +140,9 @@
       color:rgba(255,255,255,.75);
     }
     #userDropdown .dropdown-menu{
-      left:calc(100% + 10px);
+      left:calc(100% - 20px);
       right:auto;
-      top:0;
+      top: -115px;
       bottom:auto;
       min-width:220px;
       z-index:120;
@@ -166,19 +170,23 @@
 <div class="crm-layout">
   <aside class="crm-sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <div class="sidebar-brand-icon"><i class="fas fa-chart-network"></i></div>
+      <div class="sidebar-brand-icon"><i class="fas fa-layer-group"></i></div>
       <div>
-        <div class="sidebar-brand-name">CRM Pro</div>
+        <div class="sidebar-brand-name">Nexiste CRM</div>
         <div class="sidebar-brand-tag">SaaS Platform</div>
       </div>
     </div>
 
     <nav class="sidebar-nav">
       <div class="sidebar-nav-section">Principal</div>
-      <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}"><i class="fas fa-grid-2"></i> Dashboard</a>
+      <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}"><i class="fas fa-home"></i> Tableau de bord</a>
 
       <div class="sidebar-nav-section">Utilisateurs</div>
       <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') || request()->routeIs('rbac.*') ? 'active' : '' }}"><i class="fa fa-user-cog"></i> Utilisateurs</a>
+      @if(Route::has('settings.global'))
+        <div class="sidebar-nav-section">Configuration</div>
+        <a href="{{ route('settings.global') }}" class="{{ request()->routeIs('settings.global*') ? 'active' : '' }}"><i class="fas fa-sliders"></i> Paramètres globaux</a>
+      @endif
 
       <div class="sidebar-nav-section">Applications</div>
       <a href="{{ route('marketplace.index') }}" class="sidebar-market-link {{ request()->routeIs('marketplace.*') ? 'active' : '' }}" data-tooltip="Marketplace: installer de nouvelles applications">
@@ -199,19 +207,24 @@
           'google-gmail' => 'google-gmail.*',
         ];
       @endphp
-      @if(($layoutInstalledApps ?? collect())->count())
-        <div class="sidebar-nav-subsection">Mes apps épinglées</div>
-        @foreach(($layoutInstalledApps ?? collect()) as $installedApp)
-          @php
-            $pattern = $appRoutePatterns[$installedApp->slug] ?? null;
-            $isActive = $pattern ? request()->routeIs($pattern) : false;
-          @endphp
-          <a href="{{ $installedApp->url }}" class="sidebar-app-link {{ $isActive ? 'active' : '' }}" data-tooltip="{{ $installedApp->name }}: ouvrir l'application">
-            <span class="app-icon-badge" style="--app-bg: {{ $installedApp->icon_bg_color ?? '#334155' }};">
-              <i class="fa {{ $installedApp->icon }}"></i>
-            </span>
-            {{ $installedApp->name }}
-          </a>
+      @if(($layoutInstalledAppsByCategory ?? collect())->count())
+        @foreach(($layoutInstalledAppsByCategory ?? collect()) as $category)
+          <div class="sidebar-nav-subsection">
+            <i class="fas {{ $category->icon ?? 'fa-puzzle-piece' }}" style="color:{{ $category->color ?? '#64748b' }}"></i>
+            {{ $category->label ?? 'Autre' }}
+          </div>
+          @foreach(($category->apps ?? collect()) as $installedApp)
+            @php
+              $pattern = $appRoutePatterns[$installedApp->slug] ?? null;
+              $isActive = $pattern ? request()->routeIs($pattern) : false;
+            @endphp
+            <a href="{{ $installedApp->url }}" class="sidebar-app-link {{ $isActive ? 'active' : '' }}" data-tooltip="{{ $installedApp->name }}: ouvrir l'application">
+              <span class="app-icon-badge" style="--app-bg: {{ $installedApp->icon_bg_color ?? '#334155' }};">
+                <i class="fa {{ $installedApp->icon }}"></i>
+              </span>
+              {{ $installedApp->name }}
+            </a>
+          @endforeach
         @endforeach
       @endif
     </nav>
@@ -228,7 +241,9 @@
         </div>
         <div class="dropdown-menu">
           <a href="{{ route('profile-settings') }}" class="dropdown-item"><i class="fas fa-user"></i> Mon profil</a>
-          <a href="{{ route('profile-settings') }}" class="dropdown-item"><i class="fas fa-gear"></i> Parametres</a>
+          @if(Route::has('settings.global'))
+            <a href="{{ route('settings.global') }}" class="dropdown-item"><i class="fas fa-gear"></i> Paramètres globaux</a>
+          @endif
           <div class="dropdown-divider"></div>
           <form method="POST" action="{{ route('logout') }}">
             @csrf
@@ -307,19 +322,25 @@
           </span>
         </a>
 
-        @forelse(($layoutInstalledApps ?? collect()) as $app)
-          <a href="{{ $app->url }}" class="apps-drawer-item">
-            <span class="apps-drawer-icon" style="background:{{ $app->icon_bg_color ?? '#334155' }};color:#fff;">
-              <i class="fas {{ $app->icon }}"></i>
-            </span>
-            <span>
-              <strong>{{ $app->name }}</strong><br>
-              <small style="color:var(--c-ink-40)">Ouvrir le module</small>
-            </span>
-            @if($app->status === 'trial')
-              <span class="apps-drawer-badge">Essai</span>
-            @endif
-          </a>
+        @forelse(($layoutInstalledAppsByCategory ?? collect()) as $category)
+          <div class="apps-drawer-category">
+            <i class="fas {{ $category->icon ?? 'fa-puzzle-piece' }}" style="color:{{ $category->color ?? '#64748b' }};margin-right:6px;"></i>
+            {{ $category->label ?? 'Autre' }}
+          </div>
+          @foreach(($category->apps ?? collect()) as $app)
+            <a href="{{ $app->url }}" class="apps-drawer-item">
+              <span class="apps-drawer-icon" style="background:{{ $app->icon_bg_color ?? '#334155' }};color:#fff;">
+                <i class="fas {{ $app->icon }}"></i>
+              </span>
+              <span>
+                <strong>{{ $app->name }}</strong><br>
+                <small style="color:var(--c-ink-40)">Ouvrir le module</small>
+              </span>
+              @if($app->status === 'trial')
+                <span class="apps-drawer-badge">Essai</span>
+              @endif
+            </a>
+          @endforeach
         @empty
           <div style="text-align:center;padding:18px 10px;color:var(--c-ink-40);">
             Aucune application active pour ce tenant.
@@ -348,6 +369,7 @@
 </div>
 
 <script src="{{ asset('vendor/client/js/crm.js') }}"></script>
+<script src="{{ asset('vendor/client/js/secure-form.js') }}"></script>
 <script src="{{ asset('vendor/invoice/js/invoice.js') }}"></script>
 <script src="{{ asset('vendor/stock/js/stock.js') }}"></script>
 <script>

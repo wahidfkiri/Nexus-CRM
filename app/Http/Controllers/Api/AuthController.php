@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -10,7 +12,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class AuthController extends Controller
@@ -18,24 +19,13 @@ class AuthController extends Controller
     /**
      * Connexion utilisateur avec Sanctum
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email',
-                'password' => 'required|string|min:6',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Erreur de validation',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
+            $credentials = $request->validated();
 
             // Tentative de connexion
-            if (!Auth::attempt($request->only('email', 'password'), $request->remember)) {
+            if (!Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']], $request->boolean('remember'))) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Email ou mot de passe incorrect'
@@ -112,32 +102,20 @@ class AuthController extends Controller
     /**
      * Inscription utilisateur
      */
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'first_name' => 'required|string|max:255|min:2',
-                'last_name' => 'required|string|max:255|min:2',
-                'email' => 'required|string|email|max:255|unique:users',
-                'company' => 'nullable|string|max:255',
-                'password' => 'required|string|min:8|confirmed',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Erreur de validation',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
+            $data = $request->validated();
 
             DB::beginTransaction();
 
             $user = User::create([
-                'name' => $request->first_name . ' ' . $request->last_name,
-                'email' => $request->email,
-                'company' => $request->company,
-                'password' => Hash::make($request->password),
+                'name' => trim($data['first_name'] . ' ' . $data['last_name']),
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'email' => $data['email'],
+                'company' => !empty($data['company']) ? $data['company'] : null,
+                'password' => Hash::make($data['password']),
                 'is_active' => true, // Par défaut, le compte est actif
             ]);
 

@@ -28,7 +28,7 @@
   </div>
 @endif
 
-<form action="{{ route('profile-settings.update') }}" method="POST" enctype="multipart/form-data">
+<form id="profileForm" data-secure-form="1" data-secure-ajax="1" action="{{ route('profile-settings.update') }}" method="POST" enctype="multipart/form-data">
   @csrf
   @method('PUT')
 
@@ -40,25 +40,29 @@
           <div class="col-6">
             <div class="form-group">
               <label class="form-label">Prénom</label>
-              <input type="text" name="first_name" class="form-control" value="{{ old('first_name', $user->first_name) }}">
+              <input type="text" name="first_name" class="form-control @error('first_name') is-invalid @enderror" value="{{ old('first_name', $user->first_name) }}">
+              @error('first_name')<span class="form-error">{{ $message }}</span>@enderror
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
               <label class="form-label">Nom</label>
-              <input type="text" name="last_name" class="form-control" value="{{ old('last_name', $user->last_name) }}">
+              <input type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror" value="{{ old('last_name', $user->last_name) }}">
+              @error('last_name')<span class="form-error">{{ $message }}</span>@enderror
             </div>
           </div>
           <div class="col-12">
             <div class="form-group">
               <label class="form-label">Nom affiché</label>
-              <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required>
+              <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $user->name) }}" required>
+              @error('name')<span class="form-error">{{ $message }}</span>@enderror
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
               <label class="form-label">Email</label>
-              <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
+              <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $user->email) }}" required>
+              @error('email')<span class="form-error">{{ $message }}</span>@enderror
             </div>
           </div>
           <div class="col-6">
@@ -70,7 +74,8 @@
           <div class="col-6">
             <div class="form-group">
               <label class="form-label">Téléphone</label>
-              <input type="text" name="phone" class="form-control" value="{{ old('phone', $user->phone) }}">
+              <input type="text" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone', $user->phone) }}">
+              @error('phone')<span class="form-error">{{ $message }}</span>@enderror
             </div>
           </div>
           <div class="col-6">
@@ -82,7 +87,8 @@
           <div class="col-12">
             <div class="form-group">
               <label class="form-label">Bio</label>
-              <textarea name="bio" class="form-control" rows="4">{{ old('bio', $user->bio) }}</textarea>
+              <textarea name="bio" class="form-control @error('bio') is-invalid @enderror" rows="4">{{ old('bio', $user->bio) }}</textarea>
+              @error('bio')<span class="form-error">{{ $message }}</span>@enderror
             </div>
           </div>
         </div>
@@ -94,19 +100,22 @@
           <div class="col-12">
             <div class="form-group">
               <label class="form-label">Mot de passe actuel (si changement)</label>
-              <input type="password" name="current_password" class="form-control">
+              <input type="password" name="current_password" class="form-control @error('current_password') is-invalid @enderror">
+              @error('current_password')<span class="form-error">{{ $message }}</span>@enderror
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
               <label class="form-label">Nouveau mot de passe</label>
-              <input type="password" name="new_password" class="form-control">
+              <input type="password" name="new_password" class="form-control @error('new_password') is-invalid @enderror">
+              @error('new_password')<span class="form-error">{{ $message }}</span>@enderror
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
               <label class="form-label">Confirmer nouveau mot de passe</label>
-              <input type="password" name="new_password_confirmation" class="form-control">
+              <input type="password" name="new_password_confirmation" class="form-control @error('new_password_confirmation') is-invalid @enderror">
+              @error('new_password_confirmation')<span class="form-error">{{ $message }}</span>@enderror
             </div>
           </div>
         </div>
@@ -124,7 +133,8 @@
               <i class="fas fa-user" style="font-size:30px;"></i>
             </div>
           @endif
-          <input type="file" name="avatar" class="form-control" accept="image/*">
+          <input type="file" name="avatar" class="form-control @error('avatar') is-invalid @enderror" accept="image/*">
+          @error('avatar')<span class="form-error">{{ $message }}</span>@enderror
           <span class="form-hint">PNG/JPG, max 2 Mo.</span>
         </div>
       </div>
@@ -139,3 +149,6 @@
 </form>
 @endsection
 
+@push('scripts')
+<script src="{{ asset('vendor/client/js/profile-settings.js') }}"></script>
+@endpush

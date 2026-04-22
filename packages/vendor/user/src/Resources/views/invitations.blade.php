@@ -20,6 +20,25 @@
   </a>
 </div>
 
+<div class="users-top-tabs" role="tablist" aria-label="Navigation équipe">
+  <a href="{{ route('users.index') }}" class="users-top-tab">
+    <i class="fas fa-users"></i>
+    <span>Utilisateurs</span>
+  </a>
+  <a href="{{ route('rbac.roles.index') }}" class="users-top-tab">
+    <i class="fas fa-shield-halved"></i>
+    <span>Roles</span>
+  </a>
+  <a href="{{ route('rbac.permissions.index') }}" class="users-top-tab">
+    <i class="fas fa-key"></i>
+    <span>Permissions</span>
+  </a>
+  <a href="{{ route('users.invitations') }}" class="users-top-tab is-active">
+    <i class="fas fa-envelope-open-text"></i>
+    <span>Invitations</span>
+  </a>
+</div>
+
 <div class="table-wrapper">
   <div class="table-header">
     <span class="table-title">Invitations</span>
@@ -69,6 +88,40 @@
 </div>
 
 @endsection
+
+@push('styles')
+<style>
+.users-top-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:0 0 16px;
+}
+.users-top-tab{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:12px;
+  border:1px solid var(--c-line);
+  color:var(--c-ink-60);
+  background:var(--c-surface);
+  font-weight:600;
+  text-decoration:none;
+  transition:all .2s ease;
+}
+.users-top-tab:hover{
+  border-color:var(--c-accent);
+  color:var(--c-accent);
+  transform:translateY(-1px);
+}
+.users-top-tab.is-active{
+  border-color:var(--c-accent);
+  background:var(--c-accent-lt);
+  color:var(--c-accent);
+}
+</style>
+@endpush
 
 @push('scripts')
 <script>

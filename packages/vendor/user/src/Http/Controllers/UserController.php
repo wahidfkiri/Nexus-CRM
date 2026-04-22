@@ -248,6 +248,8 @@ class UserController extends Controller
             'last_page'    => $invitations->lastPage(),
             'per_page'     => $invitations->perPage(),
             'total'        => $invitations->total(),
+            'from'         => $invitations->firstItem(),
+            'to'           => $invitations->lastItem(),
         ]);
     }
 

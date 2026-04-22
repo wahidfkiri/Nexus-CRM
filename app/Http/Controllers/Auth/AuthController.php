@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResendVerificationRequest;
 use App\Models\User;
 use App\Notifications\WelcomeAccountNotification;
 use Google\Client as GoogleClient;
@@ -13,7 +16,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
@@ -36,18 +38,20 @@ class AuthController extends Controller
         return view('auth.passwords.email');
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required|string|min:6',
-        ]);
+        $credentials = $request->validated();
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+        if (!Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']], $request->boolean('remember'))) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Identifiants invalides.',
+                    'errors' => [
+                        'email' => ['Identifiants invalides.'],
+                    ],
+                ], 401);
+            }
             return back()->withErrors([
                 'email' => 'Identifiants invalides.',
             ])->withInput();
@@ -58,6 +62,15 @@ class AuthController extends Controller
 
         if (!$user->is_active || in_array((string) $user->status, ['inactive', 'suspended'], true)) {
             Auth::logout();
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Votre compte est désactivé.',
+                    'errors' => [
+                        'email' => ['Votre compte est désactivé.'],
+                    ],
+                ], 403);
+            }
             return back()->withErrors([
                 'email' => 'Votre compte est desactive.',
             ]);
@@ -66,6 +79,16 @@ class AuthController extends Controller
         if (!$user->hasVerifiedEmail()) {
             $user->sendEmailVerificationNotification();
             Auth::logout();
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Compte non activé. Un email d’activation vient d’être renvoyé.',
+                    'errors' => [
+                        'email' => ['Compte non activé. Un email d’activation vient d’être renvoyé.'],
+                    ],
+                ], 403);
+            }
 
             return back()->withErrors([
                 'email' => 'Compte non active. Un email d activation vient d etre renvoye.',
@@ -83,29 +106,35 @@ class AuthController extends Controller
             $this->createTenantForUser($user, $user->company);
         }
 
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Connexion réussie.',
+                'redirect' => $this->afterAuthRedirect($user),
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
+            ]);
+        }
+
         return redirect()->intended($this->afterAuthRedirect($user));
     }
 
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:120|min:2',
-            'last_name' => 'required|string|max:120|min:2',
-            'email' => 'required|email|max:255|unique:users,email',
-            'company' => 'nullable|string|max:255',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
+        $data = $request->validated();
 
         try {
-            DB::transaction(function () use ($request): void {
+            DB::transaction(function () use ($data): void {
+                $company = trim((string) ($data['company'] ?? ''));
+                $companyName = $company !== '' ? $company : ('Entreprise de ' . $data['first_name']);
+
                 $tenant = Tenant::create([
-                    'name' => $request->company ?: ('Entreprise de ' . $request->first_name),
-                    'slug' => Tenant::generateSlug($request->company ?: ('entreprise-' . $request->first_name . '-' . $request->last_name)),
-                    'email' => $request->email,
+                    'name' => $companyName,
+                    'slug' => Tenant::generateSlug($companyName),
+                    'email' => $data['email'],
                     'timezone' => 'Europe/Paris',
                     'locale' => 'fr',
                     'currency' => 'EUR',
@@ -113,12 +142,12 @@ class AuthController extends Controller
                 ]);
 
                 $user = User::create([
-                    'name' => trim($request->first_name . ' ' . $request->last_name),
-                    'first_name' => $request->first_name,
-                    'last_name' => $request->last_name,
-                    'email' => $request->email,
-                    'company' => $request->company,
-                    'password' => Hash::make($request->password),
+                    'name' => trim($data['first_name'] . ' ' . $data['last_name']),
+                    'first_name' => $data['first_name'],
+                    'last_name' => $data['last_name'],
+                    'email' => $data['email'],
+                    'company' => $company !== '' ? $company : null,
+                    'password' => Hash::make($data['password']),
                     'is_active' => true,
                     'status' => 'active',
                     'tenant_id' => $tenant->id,
@@ -132,15 +161,26 @@ class AuthController extends Controller
             });
         } catch (Throwable $e) {
             Log::error('Register error: ' . $e->getMessage());
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Inscription impossible pour le moment.',
+                ], 500);
+            }
             return back()->withErrors([
                 'email' => 'Inscription impossible pour le moment.',
             ])->withInput();
         }
 
-        return redirect()->route('login')->with(
-            'success',
-            'Compte cree. Verifiez votre email pour activer votre acces.'
-        );
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte créé. Vérifiez votre email pour activer votre accès.',
+                'redirect' => route('login'),
+            ], 201);
+        }
+
+        return redirect()->route('login')->with('success', 'Compte cree. Verifiez votre email pour activer votre acces.');
     }
 
     public function redirectToGoogle(Request $request)
@@ -299,21 +339,41 @@ class AuthController extends Controller
         return redirect($this->afterAuthRedirect($user))->with('success', 'Compte active avec succes.');
     }
 
-    public function resendVerification(Request $request)
+    public function resendVerification(ResendVerificationRequest $request)
     {
-        $request->validate(['email' => 'required|email']);
+        $data = $request->validated();
 
         /** @var User|null $user */
-        $user = User::query()->where('email', (string) $request->string('email'))->first();
+        $user = User::query()->where('email', (string) ($data['email'] ?? ''))->first();
         if (!$user) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun compte correspondant.',
+                    'errors' => ['email' => ['Aucun compte correspondant.']],
+                ], 404);
+            }
             return back()->withErrors(['email' => 'Aucun compte correspondant.']);
         }
 
         if ($user->hasVerifiedEmail()) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Ce compte est déjà actif.',
+                ]);
+            }
             return back()->with('success', 'Ce compte est deja actif.');
         }
 
         $user->sendEmailVerificationNotification();
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Email d’activation renvoyé.',
+            ]);
+        }
 
         return back()->with('success', 'Email d activation renvoye.');
     }
@@ -354,7 +414,7 @@ class AuthController extends Controller
 
     private function afterAuthRedirect(User $user): string
     {
-        if ($user->tenant_id && !OnboardingController::isCompletedForTenant((int) $user->tenant_id)) {
+        if ($user->tenant_id && OnboardingController::mustCompleteOnboarding($user)) {
             return route('onboarding.show');
         }
 

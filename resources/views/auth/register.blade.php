@@ -223,6 +223,7 @@
             apiUrl: '{{ url("/api") }}'
         };
     </script>
+    <script src="{{ asset('vendor/client/js/secure-form.js') }}"></script>
     <script src="js/register.js"></script>
 </body>
 </html>

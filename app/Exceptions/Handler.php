@@ -3,6 +3,8 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -41,8 +43,28 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->renderable(function (\Illuminate\Session\TokenMismatchException $e, $request) {
-          return redirect()->route('login');
+        $this->renderable(function (ValidationException $e, $request) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur de validation. Veuillez corriger les champs.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+        });
+
+        $this->renderable(function (TokenMismatchException $e, $request) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Votre session a expiré. Rechargez la page puis réessayez.',
+                    'errors' => [
+                        '_token' => ['Jeton CSRF invalide ou expiré.'],
+                    ],
+                ], 419);
+            }
+
+            return redirect()->route('login');
         });
     }
 }
