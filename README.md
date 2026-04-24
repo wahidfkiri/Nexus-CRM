@@ -1,66 +1,258 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Nexus CRM
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Application CRM SaaS multi-tenant (Laravel 10) avec modules metier et extensions Google (Drive, Calendar, Sheets, Docs, Gmail), marketplace interne et onboarding guide.
 
-## About Laravel
+## Stack technique
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.2+
+- Laravel 10
+- MySQL 8+
+- Node.js 18+ et npm
+- Vite (front)
+- Laravel Octane + RoadRunner (serveur haute performance)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 1) Installation sur un nouvel environnement
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 1. Cloner le projet
 
-## Learning Laravel
+```bash
+git clone <URL_DU_REPO> nexus-crm
+cd nexus-crm
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. Installer les dependances PHP
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+composer install
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 3. Installer les dependances front
 
-## Laravel Sponsors
+```bash
+npm install
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+### 4. Configurer l'environnement
 
-### Premium Partners
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+Renseigner ensuite au minimum dans `.env`:
 
-## Contributing
+- `APP_NAME`, `APP_ENV`, `APP_URL`
+- `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+- variables `MAIL_*` (emails verification + bienvenue)
+- variables Google OAuth (voir section OAuth ci-dessous)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 5. Base de donnees
 
-## Code of Conduct
+```bash
+php artisan migrate --seed
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 6. Lien de stockage public
 
-## Security Vulnerabilities
+```bash
+php artisan storage:link
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 7. Build front
 
-## License
+- Mode developpement:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+npm run dev
+```
+
+- Build production:
+
+```bash
+npm run build
+```
+
+### 8. Demarrage classique Laravel (sans Octane)
+
+```bash
+php artisan serve
+```
+
+## 2) Configuration Google OAuth (obligatoire pour les apps Google)
+
+Dans Google Cloud Console:
+
+1. Creer un projet Google Cloud.
+2. Activer les APIs necessaires (Drive, Calendar, Sheets, Docs, Gmail).
+3. Creer un OAuth Client ID (type Web).
+4. Ajouter les URI de redirection autorises (exact match).
+
+URI de callback utilisees par l'application:
+
+- `/auth/google/callback`
+- `/extensions/google-drive/oauth/callback`
+- `/extensions/google-calendar/oauth/callback`
+- `/extensions/google-sheets/oauth/callback`
+- `/extensions/google-docx/oauth/callback`
+- `/extensions/google-gmail/oauth/callback`
+
+Exemple local (a adapter a votre domaine):
+
+- `http://127.0.0.1:8000/auth/google/callback`
+- `http://127.0.0.1:8000/extensions/google-drive/oauth/callback`
+- `http://127.0.0.1:8000/extensions/google-calendar/oauth/callback`
+- `http://127.0.0.1:8000/extensions/google-sheets/oauth/callback`
+- `http://127.0.0.1:8000/extensions/google-docx/oauth/callback`
+- `http://127.0.0.1:8000/extensions/google-gmail/oauth/callback`
+
+Variables `.env` attendues:
+
+```dotenv
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_AUTH_REDIRECT_URI=
+
+GOOGLE_DRIVE_CLIENT_ID=
+GOOGLE_DRIVE_CLIENT_SECRET=
+GOOGLE_DRIVE_REDIRECT_URI=
+
+GOOGLE_CALENDAR_CLIENT_ID=
+GOOGLE_CALENDAR_CLIENT_SECRET=
+GOOGLE_CALENDAR_REDIRECT_URI=
+
+GOOGLE_SHEETS_CLIENT_ID=
+GOOGLE_SHEETS_CLIENT_SECRET=
+GOOGLE_SHEETS_REDIRECT_URI=
+
+GOOGLE_DOCX_CLIENT_ID=
+GOOGLE_DOCX_CLIENT_SECRET=
+GOOGLE_DOCX_REDIRECT_URI=
+
+GOOGLE_GMAIL_CLIENT_ID=
+GOOGLE_GMAIL_CLIENT_SECRET=
+GOOGLE_GMAIL_REDIRECT_URI=
+```
+
+## 3) Marketplace / Applications
+
+Le catalogue des applications est seed automatiquement si la table `extensions` existe, mais vous pouvez forcer le seed:
+
+```bash
+php artisan extensions:seed
+```
+
+Reinitialiser puis reseeder le catalogue:
+
+```bash
+php artisan extensions:seed --reset
+```
+
+Activation par tenant:
+
+- chaque tenant installe ses apps depuis `/applications` (Marketplace)
+- si une app n'est pas active pour le tenant, elle ne doit pas apparaitre dans le menu global
+
+## 4) Lancer Octane avec RoadRunner
+
+### Prerequis Octane
+
+- package `laravel/octane` installe
+- package RoadRunner installe (`spiral/roadrunner-http`, `spiral/roadrunner-cli`)
+- extension PHP `sockets` activee (important, surtout sous Windows/XAMPP)
+
+Verifier:
+
+```bash
+php -m | findstr sockets
+```
+
+Si absent sous XAMPP, editer `C:\xampp\php\php.ini`:
+
+```ini
+extension=sockets
+```
+
+Puis relancer le terminal.
+
+### Installation Octane (une seule fois)
+
+```bash
+php artisan octane:install --server=roadrunner
+```
+
+Cela genere notamment:
+
+- `config/octane.php`
+- `.rr.yaml`
+- variable `.env`: `OCTANE_SERVER=roadrunner`
+
+### Demarrer Octane
+
+```bash
+php artisan octane:start --server=roadrunner --host=127.0.0.1 --port=8000 --rpc-port=6001 --workers=1 --task-workers=1 --max-requests=500
+```
+
+### Demarrer Octane en mode watch (dev)
+
+```bash
+php artisan octane:start --server=roadrunner --host=127.0.0.1 --port=8000 --watch
+```
+
+### Statut / stop / restart
+
+```bash
+php artisan octane:status
+php artisan octane:stop
+php artisan octane:reload
+```
+
+## 5) Deploiement (checklist rapide)
+
+```bash
+composer install --no-dev --optimize-autoloader
+php artisan migrate --force
+npm ci
+npm run build
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan storage:link
+```
+
+## 6) Troubleshooting
+
+### "Class ... not found" apres ajout package/extension
+
+```bash
+composer dump-autoload
+php artisan optimize:clear
+```
+
+### "Base table not found"
+
+```bash
+php artisan migrate
+```
+
+### OAuth "Acces bloque : demande invalide"
+
+Verifier:
+
+- client id/secret corrects
+- redirect URI exacte dans Google Cloud Console
+- meme domaine/protocole (`http`/`https`) entre `.env` et Google Console
+
+### Octane sous Windows: erreurs signaux/permissions
+
+Si RoadRunner est present en `rr.exe`, verifier aussi la presence de `rr` a la racine si necessaire (certaines versions/scripts l'attendent).
+
+## 7) Qualite et securite
+
+Le projet inclut une couche de securite/validation centralisee (sanitize, idempotency, FormRequest serveur-first, gestion AJAX JSON). Voir:
+
+- `docs/validation-security.md`
+
+---
+
+Pour une installation propre sur un autre serveur, suivez les sections 1 -> 5 dans l'ordre.

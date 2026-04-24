@@ -20,6 +20,7 @@ class GoogleCalendarServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
         $this->loadViewsFrom(__DIR__ . '/Resources/views', 'google-calendar');
+        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'google-calendar');
 
         $this->publishes([
             __DIR__ . '/../config/google-calendar.php' => config_path('google-calendar.php'),
@@ -36,5 +37,9 @@ class GoogleCalendarServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Resources/assets' => public_path('vendor/google-calendar'),
         ], 'google-calendar-assets');
+
+        $this->publishes([
+            __DIR__ . '/Resources/lang' => lang_path('vendor/google-calendar'),
+        ], 'google-calendar-lang');
     }
 }

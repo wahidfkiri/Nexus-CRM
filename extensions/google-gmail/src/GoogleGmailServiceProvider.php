@@ -20,6 +20,7 @@ class GoogleGmailServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
         $this->loadViewsFrom(__DIR__ . '/Resources/views', 'google-gmail');
+        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'google-gmail');
 
         $this->publishes([
             __DIR__ . '/../config/google-gmail.php' => config_path('google-gmail.php'),
@@ -36,5 +37,9 @@ class GoogleGmailServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Resources/assets' => public_path('vendor/google-gmail'),
         ], 'google-gmail-assets');
+
+        $this->publishes([
+            __DIR__ . '/Resources/lang' => lang_path('vendor/google-gmail'),
+        ], 'google-gmail-lang');
     }
 }

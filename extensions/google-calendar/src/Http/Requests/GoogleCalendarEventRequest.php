@@ -18,6 +18,10 @@ class GoogleCalendarEventRequest extends FormRequest
             'summary' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:8000'],
             'location' => ['nullable', 'string', 'max:500'],
+            'client_id' => ['nullable', 'integer', 'min:1'],
+            'source_type' => ['nullable', 'in:project,project_task,manual'],
+            'source_id' => ['nullable', 'integer', 'min:1'],
+            'source_label' => ['nullable', 'string', 'max:255'],
             'start_at' => ['required', 'date'],
             'end_at' => ['required', 'date', 'after:start_at'],
             'all_day' => ['nullable', 'boolean'],
@@ -38,6 +42,7 @@ class GoogleCalendarEventRequest extends FormRequest
             'start_at.required' => 'Start date is required.',
             'end_at.required' => 'End date is required.',
             'end_at.after' => 'End date must be after start date.',
+            'source_type.in' => 'Invalid source type.',
         ];
     }
 }

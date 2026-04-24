@@ -8,8 +8,10 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Vendor\Client\Models\Client as ClientModel;
 use Vendor\GoogleCalendar\Models\GoogleCalendarActivityLog;
 use Vendor\GoogleCalendar\Models\GoogleCalendarCalendar;
 use Vendor\GoogleCalendar\Models\GoogleCalendarEvent;
@@ -81,6 +83,7 @@ class GoogleCalendarService
     {
         $clientId = (string) config('google-calendar.oauth.client_id');
         $clientSecret = (string) config('google-calendar.oauth.client_secret');
+        $existingToken = GoogleCalendarToken::where('tenant_id', $tenantId)->first();
 
         if ($clientId === '' || $clientSecret === '') {
             throw new RuntimeException('Google Calendar OAuth credentials are missing.');
@@ -113,7 +116,8 @@ class GoogleCalendarService
             [
                 'connected_by' => $userId,
                 'access_token' => $tokenData['access_token'] ?? '',
-                'refresh_token' => $tokenData['refresh_token'] ?? null,
+                // Preserve existing refresh token if Google does not return a new one.
+                'refresh_token' => $tokenData['refresh_token'] ?? $existingToken?->refresh_token,
                 'token_expires_at' => isset($tokenData['expires_in']) ? now()->addSeconds((int) $tokenData['expires_in']) : now()->addHour(),
                 'google_account_id' => $profile['id'] ?? null,
                 'google_email' => $profile['email'] ?? null,
@@ -335,13 +339,13 @@ class GoogleCalendarService
     public function createEvent(int $tenantId, array $data): array
     {
         $token = $this->getTokenOrFail($tenantId);
-        $calendarId = $this->resolveCalendarId($tenantId, (string) ($data['calendar_id'] ?? ''));
+        $calendarId = $this->resolveCalendarIdWithBootstrap($tenantId, (string) ($data['calendar_id'] ?? ''));
 
         if (!$calendarId) {
-            throw new RuntimeException('No calendar selected.');
+            throw new RuntimeException('Aucun agenda Google disponible. Ouvrez Google Calendar dans le CRM et synchronisez vos agendas.');
         }
 
-        $payload = $this->buildEventPayload($data);
+        $payload = $this->buildEventPayload($tenantId, $data);
 
         $result = $this->apiRequest(
             'POST',
@@ -368,13 +372,13 @@ class GoogleCalendarService
     public function updateEvent(int $tenantId, string $calendarId, string $eventId, array $data): array
     {
         $token = $this->getTokenOrFail($tenantId);
-        $calendarId = $this->resolveCalendarId($tenantId, $calendarId);
+        $calendarId = $this->resolveCalendarIdWithBootstrap($tenantId, $calendarId);
 
         if (!$calendarId) {
-            throw new RuntimeException('No calendar selected.');
+            throw new RuntimeException('Aucun agenda Google disponible. Ouvrez Google Calendar dans le CRM et synchronisez vos agendas.');
         }
 
-        $payload = $this->buildEventPayload($data);
+        $payload = $this->buildEventPayload($tenantId, $data);
 
         $result = $this->apiRequest(
             'PATCH',
@@ -507,6 +511,11 @@ class GoogleCalendarService
             'summary' => $event->summary,
             'description' => $event->description,
             'location' => $event->location,
+            'client_id' => $event->client_id,
+            'client_name' => $event->client_name,
+            'source_type' => $event->source_type,
+            'source_id' => $event->source_id,
+            'source_label' => $event->source_label,
             'status' => $event->status,
             'visibility' => $event->visibility,
             'html_link' => $event->html_link,
@@ -565,6 +574,7 @@ class GoogleCalendarService
     private function refreshAccessToken(GoogleCalendarToken $token): GoogleCalendarToken
     {
         if (!$token->refresh_token) {
+            $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
             throw new RuntimeException('Refresh token is missing. Please reconnect Google Calendar.');
         }
 
@@ -580,19 +590,62 @@ class GoogleCalendarService
 
             $data = json_decode((string) $response->getBody(), true) ?: [];
         } catch (GuzzleException $e) {
-            throw new RuntimeException('Unable to refresh access token: ' . $e->getMessage());
+            $payload = null;
+            if (method_exists($e, 'getResponse') && $e->getResponse()) {
+                $payload = json_decode((string) $e->getResponse()->getBody(), true);
+            }
+
+            $oauthError = strtolower((string) ($payload['error'] ?? ''));
+            $oauthDescription = (string) ($payload['error_description'] ?? '');
+
+            if ($oauthError === 'invalid_grant') {
+                $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
+                throw new RuntimeException('Session Google Calendar expiree ou revoquee. Reconnectez votre compte Google.');
+            }
+
+            $details = $oauthDescription !== '' ? $oauthDescription : $e->getMessage();
+            throw new RuntimeException('Unable to refresh access token: ' . $details);
         }
 
         if (isset($data['error'])) {
-            throw new RuntimeException((string) ($data['error_description'] ?? $data['error']));
+            $oauthError = strtolower((string) $data['error']);
+            $oauthDescription = (string) ($data['error_description'] ?? $data['error']);
+
+            if ($oauthError === 'invalid_grant') {
+                $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
+                throw new RuntimeException('Session Google Calendar expiree ou revoquee. Reconnectez votre compte Google.');
+            }
+
+            throw new RuntimeException($oauthDescription);
         }
 
         $token->update([
             'access_token' => $data['access_token'] ?? $token->access_token,
+            'refresh_token' => $data['refresh_token'] ?? $token->refresh_token,
             'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds((int) $data['expires_in']) : now()->addHour(),
         ]);
 
         return $token->fresh();
+    }
+
+    private function invalidateTokenAfterOAuthFailure(GoogleCalendarToken $token, string $reason): void
+    {
+        try {
+            $token->update([
+                'is_active' => false,
+                'disconnected_at' => now(),
+                'access_token' => '',
+                'refresh_token' => null,
+                'selected_calendar_id' => null,
+                'selected_calendar_summary' => null,
+            ]);
+
+            GoogleCalendarCalendar::forTenant((int) $token->tenant_id)->update(['is_selected' => false]);
+
+            $this->log((int) $token->tenant_id, 'oauth_invalidated', ['reason' => $reason]);
+        } catch (\Throwable $e) {
+            Log::warning('[GoogleCalendar] invalidate token failed', ['message' => $e->getMessage()]);
+        }
     }
 
     private function apiRequest(string $method, string $uri, string $accessToken, array $options = []): array
@@ -626,7 +679,7 @@ class GoogleCalendarService
         }
     }
 
-    private function buildEventPayload(array $data): array
+    private function buildEventPayload(int $tenantId, array $data): array
     {
         $timezone = (string) ($data['timezone'] ?? config('google-calendar.defaults.timezone', 'UTC'));
         $allDay = filter_var($data['all_day'] ?? false, FILTER_VALIDATE_BOOL);
@@ -694,6 +747,52 @@ class GoogleCalendarService
             $payload['recurrence'] = [(string) $data['recurrence']];
         }
 
+        $crmPrivate = [];
+
+        $clientId = (int) ($data['client_id'] ?? 0);
+        if ($clientId > 0) {
+            $clientName = null;
+
+            if (class_exists(ClientModel::class) && Schema::hasTable('clients')) {
+                $client = ClientModel::query()
+                    ->where('tenant_id', $tenantId)
+                    ->where('id', $clientId)
+                    ->first();
+
+                if (!$client) {
+                    throw new RuntimeException('Client introuvable pour ce tenant.');
+                }
+
+                $clientName = (string) $client->company_name;
+            }
+
+            $crmPrivate['crm_client_id'] = (string) $clientId;
+            if ($clientName !== null && $clientName !== '') {
+                $crmPrivate['crm_client_name'] = $clientName;
+            }
+        }
+
+        $sourceType = trim((string) ($data['source_type'] ?? ''));
+        if (in_array($sourceType, ['project', 'project_task', 'manual'], true)) {
+            $crmPrivate['crm_source_type'] = $sourceType;
+        }
+
+        $sourceId = (int) ($data['source_id'] ?? 0);
+        if ($sourceId > 0) {
+            $crmPrivate['crm_source_id'] = (string) $sourceId;
+        }
+
+        $sourceLabel = trim((string) ($data['source_label'] ?? ''));
+        if ($sourceLabel !== '') {
+            $crmPrivate['crm_source_label'] = $sourceLabel;
+        }
+
+        if (!empty($crmPrivate)) {
+            $payload['extendedProperties'] = [
+                'private' => $crmPrivate,
+            ];
+        }
+
         return array_filter($payload, static fn ($value) => $value !== null && $value !== '');
     }
 
@@ -713,6 +812,49 @@ class GoogleCalendarService
         $endAt = $allDay
             ? Carbon::parse((string) $raw['end']['date'], 'UTC')->startOfDay()
             : Carbon::parse((string) ($raw['end']['dateTime'] ?? now()->toRfc3339String()));
+        $crmMeta = $this->extractCrmMeta($raw);
+
+        $updateData = [
+            'ical_uid' => $raw['iCalUID'] ?? null,
+            'summary' => $raw['summary'] ?? '(No title)',
+            'description' => $raw['description'] ?? null,
+            'location' => $raw['location'] ?? null,
+            'status' => $raw['status'] ?? null,
+            'visibility' => $raw['visibility'] ?? null,
+            'transparency' => $raw['transparency'] ?? null,
+            'html_link' => $raw['htmlLink'] ?? null,
+            'color_id' => $raw['colorId'] ?? null,
+            'all_day' => $allDay,
+            'is_holiday' => $isHoliday,
+            'start_at' => $startAt,
+            'end_at' => $endAt,
+            'start_timezone' => $raw['start']['timeZone'] ?? null,
+            'end_timezone' => $raw['end']['timeZone'] ?? null,
+            'recurrence' => $raw['recurrence'] ?? null,
+            'attendees' => $raw['attendees'] ?? null,
+            'reminders' => $raw['reminders'] ?? null,
+            'conference_data' => $raw['conferenceData'] ?? null,
+            'organizer_email' => $raw['organizer']['email'] ?? null,
+            'organizer_name' => $raw['organizer']['displayName'] ?? null,
+            'creator_email' => $raw['creator']['email'] ?? null,
+            'creator_name' => $raw['creator']['displayName'] ?? null,
+            'sequence' => $raw['sequence'] ?? null,
+            'etag' => $raw['etag'] ?? null,
+            'google_created_at' => !empty($raw['created']) ? Carbon::parse((string) $raw['created']) : null,
+            'google_updated_at' => !empty($raw['updated']) ? Carbon::parse((string) $raw['updated']) : null,
+            'synced_at' => now(),
+            'is_deleted' => ($raw['status'] ?? null) === 'cancelled',
+            'updated_by' => Auth::id(),
+            'created_by' => Auth::id(),
+        ];
+
+        if (Schema::hasColumn('google_calendar_events', 'client_id')) {
+            $updateData['client_id'] = $crmMeta['client_id'];
+            $updateData['client_name'] = $crmMeta['client_name'];
+            $updateData['source_type'] = $crmMeta['source_type'];
+            $updateData['source_id'] = $crmMeta['source_id'];
+            $updateData['source_label'] = $crmMeta['source_label'];
+        }
 
         $event = GoogleCalendarEvent::updateOrCreate(
             [
@@ -720,42 +862,34 @@ class GoogleCalendarService
                 'google_calendar_id' => $calendarId,
                 'google_event_id' => $eventId,
             ],
-            [
-                'ical_uid' => $raw['iCalUID'] ?? null,
-                'summary' => $raw['summary'] ?? '(No title)',
-                'description' => $raw['description'] ?? null,
-                'location' => $raw['location'] ?? null,
-                'status' => $raw['status'] ?? null,
-                'visibility' => $raw['visibility'] ?? null,
-                'transparency' => $raw['transparency'] ?? null,
-                'html_link' => $raw['htmlLink'] ?? null,
-                'color_id' => $raw['colorId'] ?? null,
-                'all_day' => $allDay,
-                'is_holiday' => $isHoliday,
-                'start_at' => $startAt,
-                'end_at' => $endAt,
-                'start_timezone' => $raw['start']['timeZone'] ?? null,
-                'end_timezone' => $raw['end']['timeZone'] ?? null,
-                'recurrence' => $raw['recurrence'] ?? null,
-                'attendees' => $raw['attendees'] ?? null,
-                'reminders' => $raw['reminders'] ?? null,
-                'conference_data' => $raw['conferenceData'] ?? null,
-                'organizer_email' => $raw['organizer']['email'] ?? null,
-                'organizer_name' => $raw['organizer']['displayName'] ?? null,
-                'creator_email' => $raw['creator']['email'] ?? null,
-                'creator_name' => $raw['creator']['displayName'] ?? null,
-                'sequence' => $raw['sequence'] ?? null,
-                'etag' => $raw['etag'] ?? null,
-                'google_created_at' => !empty($raw['created']) ? Carbon::parse((string) $raw['created']) : null,
-                'google_updated_at' => !empty($raw['updated']) ? Carbon::parse((string) $raw['updated']) : null,
-                'synced_at' => now(),
-                'is_deleted' => ($raw['status'] ?? null) === 'cancelled',
-                'updated_by' => Auth::id(),
-                'created_by' => Auth::id(),
-            ]
+            $updateData
         );
 
         return $event;
+    }
+
+    private function extractCrmMeta(array $raw): array
+    {
+        $private = Arr::get($raw, 'extendedProperties.private', []);
+        if (!is_array($private)) {
+            $private = [];
+        }
+
+        $clientId = (int) ($private['crm_client_id'] ?? 0);
+        $sourceId = (int) ($private['crm_source_id'] ?? 0);
+        $sourceType = trim((string) ($private['crm_source_type'] ?? ''));
+
+        if (!in_array($sourceType, ['project', 'project_task', 'manual'], true)) {
+            $sourceType = null;
+        }
+
+        return [
+            'client_id' => $clientId > 0 ? $clientId : null,
+            'client_name' => trim((string) ($private['crm_client_name'] ?? '')) ?: null,
+            'source_type' => $sourceType,
+            'source_id' => $sourceId > 0 ? $sourceId : null,
+            'source_label' => trim((string) ($private['crm_source_label'] ?? '')) ?: null,
+        ];
     }
 
     private function resolveCalendarId(int $tenantId, ?string $calendarId = null): ?string
@@ -783,6 +917,25 @@ class GoogleCalendarService
             ->where('is_deleted', false)
             ->orderBy('summary')
             ->value('calendar_id');
+    }
+
+    private function resolveCalendarIdWithBootstrap(int $tenantId, ?string $calendarId = null): ?string
+    {
+        $resolved = $this->resolveCalendarId($tenantId, $calendarId);
+        if ($resolved) {
+            return $resolved;
+        }
+
+        try {
+            $this->syncCalendars($tenantId);
+        } catch (\Throwable $e) {
+            Log::warning('[GoogleCalendar] resolve calendar bootstrap failed', [
+                'tenant_id' => $tenantId,
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        return $this->resolveCalendarId($tenantId, $calendarId);
     }
 
     private function resolveSyncCalendarIds(int $tenantId, ?string $calendarId = null, bool $includeHolidays = true): array

@@ -15,12 +15,19 @@ const ProjectsModule = (() => {
     projectId: window.PROJECTS_SHOW_BOOTSTRAP?.projectId || null,
     tasks: [],
     groupedTasks: {},
+    taskStatuses: { ...(window.PROJECTS_SHOW_BOOTSTRAP?.taskStatuses || {}) },
     taskSearch: '',
     taskAssignedTo: '',
     editingTask: null,
     tagInput: null,
     activeTaskTab: 'details',
     viewMode: 'kanban',
+    boards: [],
+    activeBoardId: 'default',
+    clientsInstalled: !!(window.PROJECTS_SHOW_BOOTSTRAP?.clientsInstalled ?? window.PROJECTS_BOOTSTRAP?.clientsInstalled ?? true),
+    clientsTargetUrl: window.PROJECTS_SHOW_BOOTSTRAP?.clientsTargetUrl || window.PROJECTS_BOOTSTRAP?.clientsTargetUrl || '',
+    googleCalendarInstalled: !!(window.PROJECTS_SHOW_BOOTSTRAP?.googleCalendarInstalled ?? window.PROJECTS_BOOTSTRAP?.googleCalendarInstalled ?? false),
+    googleCalendarTargetUrl: window.PROJECTS_SHOW_BOOTSTRAP?.googleCalendarTargetUrl || window.PROJECTS_BOOTSTRAP?.googleCalendarTargetUrl || '',
   };
 
   function boot() {
@@ -277,6 +284,7 @@ const ProjectsModule = (() => {
     setField('projectStartDate', project.start_date || '');
     setField('projectDueDate', project.due_date || '');
     setField('projectBudget', project.budget || '');
+    setCheckbox('projectSyncGoogleCalendar', !!(state.googleCalendarInstalled && project.google_calendar?.event_id));
     Modal.open(document.getElementById('projectModal'));
   }
 
@@ -297,6 +305,7 @@ const ProjectsModule = (() => {
       due_date: normalizeNullable(getField('projectDueDate')),
       budget: normalizeNullable(getField('projectBudget')),
       member_ids: getMultiValues('projectMemberIds').map((v) => Number(v)).filter((v) => !Number.isNaN(v)),
+      sync_google_calendar: getCheckbox('projectSyncGoogleCalendar'),
     };
     setField('projectDescription', payload.description || '');
 
@@ -325,11 +334,13 @@ const ProjectsModule = (() => {
     state.editingProjectId = null;
     loadProjects();
     loadStats();
+    handleCalendarSyncFeedback(response.data, 'Le projet');
   }
 
   function validateProjectPayload(payload) {
     const errors = {};
     if (!payload.name) errors.name = ['Le nom projet est obligatoire.'];
+    if (!payload.start_date) errors.start_date = ['La date debut est obligatoire.'];
     if (payload.start_date && payload.due_date) {
       const start = new Date(payload.start_date);
       const due = new Date(payload.due_date);
@@ -371,17 +382,33 @@ const ProjectsModule = (() => {
     setField('projectPriority', 'medium');
     setWysiwygHtml('projectDescriptionEditor', '');
     setField('projectDescription', '');
+    setCheckbox('projectSyncGoogleCalendar', false);
   }
 
   function initShow() {
     bindShowToolbar();
+    bindBoards();
     bindTaskDrawer();
     bindMembersModal();
     bindFilesPanel();
     bindWysiwyg();
     state.tagInput = createTagInput(document.getElementById('taskTagsInput'));
-    loadTasks();
+    renderTaskStatusOptions();
+    updateTaskScheduleButton();
+    loadBoards().finally(loadTasks);
     loadProjectFiles();
+
+    const boardWrap = document.querySelector('.project-board-wrap');
+    if (boardWrap) {
+      let boardScrollHideTimer = null;
+      boardWrap.addEventListener('scroll', () => {
+        boardWrap.classList.add('is-scrolling');
+        clearTimeout(boardScrollHideTimer);
+        boardScrollHideTimer = setTimeout(() => {
+          boardWrap.classList.remove('is-scrolling');
+        }, 700);
+      }, { passive: true });
+    }
   }
 
   function bindShowToolbar() {
@@ -404,9 +431,22 @@ const ProjectsModule = (() => {
     });
 
     reload?.addEventListener('click', loadTasks);
+    document.getElementById('projectScheduleBtn')?.addEventListener('click', scheduleProjectInCalendar);
 
     document.getElementById('projectViewKanbanBtn')?.addEventListener('click', () => setViewMode('kanban'));
     document.getElementById('projectViewListBtn')?.addEventListener('click', () => setViewMode('list'));
+  }
+
+  function bindBoards() {
+    const select = document.getElementById('projectBoardSelect');
+
+    select?.addEventListener('change', () => {
+      state.activeBoardId = select.value || 'default';
+      saveBoardPreference(state.activeBoardId);
+      renderTaskStatusOptions();
+      applyBoardColumns();
+      renderBoard();
+    });
   }
 
   function setViewMode(mode) {
@@ -428,6 +468,7 @@ const ProjectsModule = (() => {
   function bindTaskDrawer() {
     document.getElementById('taskCreateBtn')?.addEventListener('click', () => openTaskDrawer(null));
     document.getElementById('taskSaveBtn')?.addEventListener('click', saveTask);
+    document.getElementById('taskScheduleBtn')?.addEventListener('click', scheduleTaskInCalendar);
     document.getElementById('taskChecklistAddBtn')?.addEventListener('click', addChecklistItem);
     document.getElementById('taskCommentAddBtn')?.addEventListener('click', addTaskComment);
     document.getElementById('taskFileUploadBtn')?.addEventListener('click', uploadTaskFile);
@@ -443,6 +484,13 @@ const ProjectsModule = (() => {
     });
 
     document.getElementById('taskChecklistList')?.addEventListener('click', (e) => {
+      const editBtn = e.target.closest('[data-check-edit]');
+      if (editBtn) {
+        const itemId = parseInt(editBtn.dataset.checkEdit, 10);
+        if (!Number.isNaN(itemId)) editChecklistItem(itemId);
+        return;
+      }
+
       const toggleBtn = e.target.closest('[data-check-toggle]');
       if (toggleBtn) {
         const itemId = parseInt(toggleBtn.dataset.checkToggle, 10);
@@ -454,6 +502,21 @@ const ProjectsModule = (() => {
       if (deleteBtn) {
         const itemId = parseInt(deleteBtn.dataset.checkDelete, 10);
         if (!Number.isNaN(itemId)) deleteChecklistItem(itemId);
+      }
+    });
+
+    document.getElementById('taskCommentsList')?.addEventListener('click', (e) => {
+      const editBtn = e.target.closest('[data-comment-edit]');
+      if (editBtn) {
+        const commentId = parseInt(editBtn.dataset.commentEdit, 10);
+        if (!Number.isNaN(commentId)) editTaskComment(commentId, editBtn.dataset.commentBody || '');
+        return;
+      }
+
+      const deleteBtn = e.target.closest('[data-comment-delete]');
+      if (deleteBtn) {
+        const commentId = parseInt(deleteBtn.dataset.commentDelete, 10);
+        if (!Number.isNaN(commentId)) deleteTaskComment(commentId);
       }
     });
 
@@ -480,6 +543,8 @@ const ProjectsModule = (() => {
     const board = document.getElementById('projectBoard');
     if (!board) return;
 
+    applyBoardColumns();
+
     board.querySelectorAll('[data-dropzone]').forEach((zone) => {
       zone.innerHTML = `<div class="skeleton" style="height:52px;border-radius:8px;"></div><div class="skeleton" style="height:52px;border-radius:8px;"></div>`;
     });
@@ -496,6 +561,9 @@ const ProjectsModule = (() => {
 
     state.tasks = data.data || [];
     state.groupedTasks = data.grouped || {};
+    if (data.status_map && typeof data.status_map === 'object') {
+      setTaskStatuses(data.status_map);
+    }
     renderBoard();
     if (state.viewMode === 'list') renderTasksList();
     updateProjectProgress();
@@ -505,19 +573,22 @@ const ProjectsModule = (() => {
     const list = document.getElementById('projectTasksList');
     if (!list) return;
 
-    if (!state.tasks.length) {
+    const activeStatuses = new Set(getActiveBoardStatuses());
+    const rows = state.tasks.filter((task) => activeStatuses.has(task.status));
+
+    if (!rows.length) {
       list.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--c-ink-40);">Aucune tache.</div>';
       return;
     }
 
-    list.innerHTML = state.tasks.map((t) => `
+    list.innerHTML = rows.map((t) => `
       <div class="tasks-list-row" data-task-row="${t.id}">
         <div>
           <div class="tasks-list-title">${esc(t.title || '')}</div>
           <div class="tasks-list-sub">${esc(stripHtml(t.description || ''))}</div>
         </div>
         <div>${priorityBadge(t.priority)}</div>
-        <div><span class="badge badge-draft">${esc((window.PROJECTS_SHOW_BOOTSTRAP?.taskStatuses || {})[t.status] || t.status || '-')}</span></div>
+        <div><span class="badge badge-draft">${esc(state.taskStatuses[t.status] || t.status || '-')}</span></div>
         <div style="font-size:12px;color:var(--c-ink-60);"><i class="fas fa-user"></i> ${esc(t.assignee_name || 'Non assigne')}</div>
         <div style="font-size:12px;color:var(--c-ink-60);"><i class="fas fa-calendar"></i> ${t.due_date ? formatDate(t.due_date) : '-'}</div>
         <div class="tasks-list-actions">
@@ -531,11 +602,171 @@ const ProjectsModule = (() => {
     list.querySelectorAll('[data-task-delete]').forEach((btn) => btn.addEventListener('click', () => deleteTask(parseInt(btn.dataset.taskDelete, 10))));
   }
 
+  async function loadBoards() {
+    if (!state.projectId || !window.PROJECTS_ROUTES.boardsData) return;
+
+    const { ok, data } = await Http.get(window.PROJECTS_ROUTES.boardsData);
+    if (!ok || !data?.success) {
+      return;
+    }
+
+    state.boards = Array.isArray(data.data) ? data.data : [];
+    if (data.status_map && typeof data.status_map === 'object') {
+      setTaskStatuses(data.status_map);
+    }
+
+    const savedBoardId = loadBoardPreference();
+    if (savedBoardId && state.boards.find((b) => String(b.id) === String(savedBoardId))) {
+      state.activeBoardId = savedBoardId;
+    } else if (!state.boards.find((b) => b.id === state.activeBoardId)) {
+      state.activeBoardId = state.boards[0]?.id || 'default';
+    }
+
+    saveBoardPreference(state.activeBoardId);
+    renderBoardSelector();
+    renderTaskStatusOptions();
+    applyBoardColumns();
+  }
+
+  function renderBoardSelector() {
+    const select = document.getElementById('projectBoardSelect');
+    if (!select) return;
+
+    if (!Array.isArray(state.boards) || !state.boards.length) {
+      select.innerHTML = '<option value="default">Board principal</option>';
+      select.value = 'default';
+      return;
+    }
+
+    select.innerHTML = state.boards.map((board) => `<option value="${esc(board.id)}">${esc(board.name || 'Board')}</option>`).join('');
+    select.value = state.activeBoardId;
+  }
+
+  function getActiveBoard() {
+    if (Array.isArray(state.boards)) {
+      const found = state.boards.find((board) => String(board.id) === String(state.activeBoardId));
+      if (found) return found;
+    }
+
+    const fallbackColumns = Object.keys(state.taskStatuses || {}).map((key) => ({
+      key,
+      label: state.taskStatuses[key] || key,
+    }));
+    return {
+      id: 'default',
+      name: 'Board principal',
+      statuses: fallbackColumns.map((column) => column.key),
+      columns: fallbackColumns,
+    };
+  }
+
+  function getActiveBoardColumns() {
+    const active = getActiveBoard();
+    const explicitColumns = Array.isArray(active.columns) ? active.columns : [];
+    if (explicitColumns.length) {
+      return explicitColumns
+        .map((column) => ({
+          key: String(column.key || column.status || '').trim(),
+          label: String(column.label || '').trim() || state.taskStatuses[String(column.key || column.status || '').trim()] || String(column.key || column.status || '').trim(),
+        }))
+        .filter((column) => !!column.key);
+    }
+
+    const statuses = Array.isArray(active.statuses) ? active.statuses : Object.keys(state.taskStatuses || {});
+    return statuses
+      .map((status) => ({
+        key: String(status || '').trim(),
+        label: state.taskStatuses[String(status || '').trim()] || String(status || '').trim(),
+      }))
+      .filter((column) => !!column.key);
+  }
+
+  function getActiveBoardStatuses() {
+    return getActiveBoardColumns().map((column) => column.key);
+  }
+
+  function boardPreferenceStorageKey() {
+    if (!state.projectId) return '';
+    return `projects_active_board_${state.projectId}`;
+  }
+
+  function saveBoardPreference(boardId) {
+    const key = boardPreferenceStorageKey();
+    if (!key) return;
+    try {
+      window.localStorage.setItem(key, String(boardId || 'default'));
+    } catch (_e) {
+      // Ignore storage failures (private mode, restricted browser policy, etc.).
+    }
+  }
+
+  function loadBoardPreference() {
+    const key = boardPreferenceStorageKey();
+    if (!key) return '';
+    try {
+      return window.localStorage.getItem(key) || '';
+    } catch (_e) {
+      return '';
+    }
+  }
+
+  function setTaskStatuses(statusMap) {
+    state.taskStatuses = { ...(statusMap || {}) };
+    if (window.PROJECTS_SHOW_BOOTSTRAP) {
+      window.PROJECTS_SHOW_BOOTSTRAP.taskStatuses = { ...state.taskStatuses };
+    }
+    renderTaskStatusOptions();
+  }
+
+  function renderTaskStatusOptions() {
+    const select = document.getElementById('taskStatus');
+    if (!select) return;
+
+    const current = String(select.value || state.editingTask?.status || '');
+    const statuses = state.taskStatuses || {};
+    const keys = Object.keys(statuses);
+    if (!keys.length) return;
+
+    select.innerHTML = keys.map((key) => `
+      <option value="${esc(key)}">${esc(statuses[key] || key)}</option>
+    `).join('');
+
+    if (current && statuses[current]) {
+      select.value = current;
+      return;
+    }
+
+    select.value = statuses.todo ? 'todo' : keys[0];
+  }
+
+  function applyBoardColumns() {
+    const board = document.getElementById('projectBoard');
+    if (!board) return;
+
+    const columns = getActiveBoardColumns();
+    if (!columns.length) {
+      board.innerHTML = '';
+      return;
+    }
+    board.innerHTML = columns.map((column) => `
+      <section class="project-column" data-column="${esc(column.key)}">
+        <header class="project-column-head">
+          <h3>${esc(column.label || column.key)}</h3>
+          <span class="project-column-count" data-count="${esc(column.key)}">0</span>
+        </header>
+        <div class="project-column-body" data-dropzone="${esc(column.key)}"></div>
+      </section>
+    `).join('');
+  }
+
   function renderBoard() {
-    const statuses = window.PROJECTS_SHOW_BOOTSTRAP?.taskStatuses || {};
-    Object.keys(statuses).forEach((status) => {
-      const zone = document.querySelector(`[data-dropzone="${status}"]`);
-      const countEl = document.querySelector(`[data-count="${status}"]`);
+    applyBoardColumns();
+    const columns = getActiveBoardColumns();
+    columns.forEach((column) => {
+      const status = column.key;
+      const safeStatus = escapeSelectorValue(status);
+      const zone = document.querySelector(`[data-dropzone="${safeStatus}"]`);
+      const countEl = document.querySelector(`[data-count="${safeStatus}"]`);
       if (!zone) return;
 
       const tasks = state.groupedTasks[status] || [];
@@ -631,6 +862,7 @@ const ProjectsModule = (() => {
 
     state.editingTask = null;
     resetTaskForm();
+    renderTaskStatusOptions();
     setTaskTab('details');
 
     if (taskId) {
@@ -651,6 +883,7 @@ const ProjectsModule = (() => {
       setField('taskEstimate', task.estimate_hours || '');
       setField('taskSpent', task.spent_hours || '');
       setField('taskClientId', task.client_id || '');
+      setCheckbox('taskSyncGoogleCalendar', !!(state.googleCalendarInstalled && task.google_calendar?.event_id));
       if (state.tagInput) state.tagInput.setTags(Array.isArray(task.tags) ? task.tags : []);
       setField('taskTagsHidden', Array.isArray(task.tags) ? task.tags.join(',') : '');
 
@@ -660,6 +893,8 @@ const ProjectsModule = (() => {
     } else {
       setText('taskDrawerTitle', 'Nouvelle tache');
     }
+
+    updateTaskScheduleButton();
 
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -700,6 +935,7 @@ const ProjectsModule = (() => {
       spent_hours: normalizeNullable(getField('taskSpent')),
       client_id: normalizeNullable(getField('taskClientId')),
       tags: state.tagInput ? state.tagInput.getTags() : normalizeTags(getField('taskTagsHidden')),
+      sync_google_calendar: getCheckbox('taskSyncGoogleCalendar'),
     };
     setField('taskDescription', payload.description || '');
     setField('taskTagsHidden', Array.isArray(payload.tags) ? payload.tags.join(',') : '');
@@ -724,14 +960,42 @@ const ProjectsModule = (() => {
     }
 
     Toast.success('Succes', response.data?.message || 'Tache enregistree.');
-    if (!state.editingTask) resetTaskForm();
+    handleCalendarSyncFeedback(response.data, 'La tache');
+    closeTaskDrawer();
+    resetTaskForm();
     loadTasks();
-    if (state.editingTask && state.activeTaskTab === 'files') loadTaskFiles(state.editingTask.id);
+  }
+
+  function updateTaskScheduleButton() {
+    const btn = document.getElementById('taskScheduleBtn');
+    if (!btn) return;
+
+    if (!state.googleCalendarInstalled) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-store"></i> Installer Calendar';
+      return;
+    }
+
+    if (!state.editingTask || !state.editingTask.id) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-calendar-plus"></i> Planifier tache';
+      return;
+    }
+
+    btn.disabled = false;
+    const hasCalendarLink = !!(state.editingTask.google_calendar && state.editingTask.google_calendar.event_id);
+    btn.innerHTML = hasCalendarLink
+      ? '<i class="fas fa-calendar-check"></i> Replanifier tache'
+      : '<i class="fas fa-calendar-plus"></i> Planifier tache';
   }
 
   function validateTaskPayload(payload) {
     const errors = {};
     if (!payload.title) errors.title = ['Le titre est obligatoire.'];
+    if (!payload.status || !state.taskStatuses[payload.status]) {
+      errors.status = ['Le statut selectionne est invalide.'];
+    }
+    if (!payload.start_date) errors.start_date = ['La date debut est obligatoire.'];
     if (payload.start_date && payload.due_date) {
       const start = new Date(payload.start_date);
       const due = new Date(payload.due_date);
@@ -763,6 +1027,130 @@ const ProjectsModule = (() => {
     });
   }
 
+  async function scheduleProjectInCalendar() {
+    if (!state.projectId) return;
+
+    if (!state.googleCalendarInstalled) {
+      suggestCalendarInstall('Google Calendar est requis pour planifier un projet.');
+      return;
+    }
+
+    const btn = document.getElementById('projectScheduleBtn');
+    if (btn) CrmForm.setLoading(btn, true);
+
+    const response = await Http.post(window.PROJECTS_ROUTES.scheduleProject || `${window.PROJECTS_ROUTES.base}/${state.projectId}/calendar/schedule`, {});
+
+    if (btn) CrmForm.setLoading(btn, false);
+
+    if (!response.ok || !response.data?.success) {
+      handleCalendarScheduleError(response, 'Planification du projet impossible.');
+      return;
+    }
+
+    Toast.success('Succes', response.data?.message || 'Projet planifie dans Google Calendar.');
+
+    const link = response.data?.data?.html_link;
+    if (link) {
+      window.open(link, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  async function scheduleTaskInCalendar() {
+    if (!state.editingTask || !state.editingTask.id) {
+      Toast.warning('Info', 'Enregistrez la tache avant de la planifier dans Google Calendar.');
+      return;
+    }
+
+    if (!state.googleCalendarInstalled) {
+      suggestCalendarInstall('Google Calendar est requis pour planifier une tache.');
+      return;
+    }
+
+    const btn = document.getElementById('taskScheduleBtn');
+    if (btn) CrmForm.setLoading(btn, true);
+
+    const base = window.PROJECTS_ROUTES.scheduleTaskBase || `${window.PROJECTS_ROUTES.base}/${state.projectId}/tasks`;
+    const response = await Http.post(`${base}/${state.editingTask.id}/calendar/schedule`, {});
+
+    if (btn) CrmForm.setLoading(btn, false);
+
+    if (!response.ok || !response.data?.success) {
+      handleCalendarScheduleError(response, 'Planification de la tache impossible.');
+      return;
+    }
+
+    if (response.data?.task) {
+      state.editingTask = response.data.task;
+      updateTaskScheduleButton();
+    }
+
+    Toast.success('Succes', response.data?.message || 'Tache planifiee dans Google Calendar.');
+    loadTasks();
+
+    const link = response.data?.data?.html_link;
+    if (link) {
+      window.open(link, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  function handleCalendarScheduleError(response, fallbackMessage) {
+    const message = response?.data?.message || fallbackMessage || 'Operation impossible.';
+    const actionUrl = response?.data?.action_url || state.googleCalendarTargetUrl || '';
+
+    if (actionUrl) {
+      Modal.confirm({
+        title: 'Configuration Google Calendar requise',
+        message: `${message}\n\nVoulez-vous ouvrir la page de configuration maintenant ?`,
+        confirmText: 'Ouvrir',
+        type: 'warning',
+        onConfirm: () => { window.location.href = actionUrl; },
+      });
+      return;
+    }
+
+    Toast.error('Erreur', message);
+  }
+
+  function handleCalendarSyncFeedback(payload, subjectLabel) {
+    const warning = payload?.calendar_warning || '';
+    const actionUrl = payload?.calendar_action_url || state.googleCalendarTargetUrl || '';
+    const event = payload?.calendar || null;
+
+    if (warning) {
+      if (actionUrl) {
+        Modal.confirm({
+          title: 'Synchronisation Google Calendar partielle',
+          message: `${warning}\n\nVoulez-vous ouvrir la page Google Calendar maintenant ?`,
+          confirmText: 'Ouvrir',
+          type: 'warning',
+          onConfirm: () => { window.location.href = actionUrl; },
+        });
+      } else {
+        Toast.warning('Google Calendar', warning);
+      }
+      return;
+    }
+
+    if (event?.event_id) {
+      Toast.success('Google Calendar', `${subjectLabel} est synchronise(e) avec Google Calendar.`);
+    }
+  }
+
+  function suggestCalendarInstall(message) {
+    if (!state.googleCalendarTargetUrl) {
+      Toast.warning('Info', message);
+      return;
+    }
+
+    Modal.confirm({
+      title: 'Extension Google Calendar non installee',
+      message: `${message}\n\nVoulez-vous ouvrir Marketplace pour l\'installer ?`,
+      confirmText: 'Installer',
+      type: 'warning',
+      onConfirm: () => { window.location.href = state.googleCalendarTargetUrl; },
+    });
+  }
+
   async function loadTaskComments(taskId) {
     const list = document.getElementById('taskCommentsList');
     if (!list) return;
@@ -782,8 +1170,16 @@ const ProjectsModule = (() => {
 
     list.innerHTML = rows.map((row) => `
       <div class="task-comment-item">
-        <div style="font-weight:700;color:var(--c-ink);">${esc(row.user?.name || 'Utilisateur')}</div>
-        <div style="color:var(--c-ink-60);margin-top:2px;">${esc(row.comment || '')}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div style="font-weight:700;color:var(--c-ink);">${esc(row.user?.name || 'Utilisateur')}</div>
+          ${row.can_edit ? `
+            <div class="row-actions" style="opacity:1;display:flex;gap:6px;">
+              <button class="btn-icon" type="button" data-comment-edit="${row.id}" data-comment-body="${esc(row.comment || '')}" title="Modifier"><i class="fas fa-pen"></i></button>
+              <button class="btn-icon danger" type="button" data-comment-delete="${row.id}" title="Supprimer"><i class="fas fa-trash"></i></button>
+            </div>
+          ` : ''}
+        </div>
+        <div style="color:var(--c-ink-60);margin-top:2px;white-space:pre-wrap;">${esc(row.comment || '')}</div>
         <div style="font-size:11px;color:var(--c-ink-40);margin-top:3px;">${formatDateTime(row.created_at)}</div>
       </div>
     `).join('');
@@ -814,6 +1210,50 @@ const ProjectsModule = (() => {
     loadTasks();
   }
 
+  async function editTaskComment(commentId, currentBody) {
+    if (!state.editingTask) return;
+
+    const value = window.prompt('Modifier le commentaire :', String(currentBody || ''));
+    if (value === null) return;
+    const body = value.trim();
+    if (!body) {
+      Toast.warning('Validation', 'Le commentaire est obligatoire.');
+      return;
+    }
+
+    const response = await Http.put(`${window.PROJECTS_ROUTES.base}/${state.projectId}/tasks/${state.editingTask.id}/comments/${commentId}`, { comment: body });
+    if (!response.ok) {
+      Toast.error('Erreur', response.data?.message || 'Modification commentaire impossible.');
+      return;
+    }
+
+    Toast.success('Succes', response.data?.message || 'Commentaire mis a jour.');
+    loadTaskComments(state.editingTask.id);
+    loadTasks();
+  }
+
+  async function deleteTaskComment(commentId) {
+    if (!state.editingTask) return;
+
+    Modal.confirm({
+      title: 'Supprimer ce commentaire ?',
+      message: 'Le commentaire sera supprime definitivement.',
+      confirmText: 'Supprimer',
+      type: 'danger',
+      onConfirm: async () => {
+        const response = await Http.delete(`${window.PROJECTS_ROUTES.base}/${state.projectId}/tasks/${state.editingTask.id}/comments/${commentId}`);
+        if (!response.ok) {
+          Toast.error('Erreur', response.data?.message || 'Suppression commentaire impossible.');
+          return;
+        }
+
+        Toast.success('Succes', response.data?.message || 'Commentaire supprime.');
+        loadTaskComments(state.editingTask.id);
+        loadTasks();
+      },
+    });
+  }
+
   async function loadTaskChecklist(taskId) {
     const list = document.getElementById('taskChecklistList');
     if (!list) return;
@@ -838,6 +1278,7 @@ const ProjectsModule = (() => {
             <i class="fas ${item.is_done ? 'fa-circle-check' : 'fa-circle'}"></i>
           </button>
           <div style="flex:1;color:var(--c-ink-70);">${esc(item.title || '')}</div>
+          <button class="btn-icon" data-check-edit="${item.id}" data-check-title="${esc(item.title || '')}" title="Modifier"><i class="fas fa-pen"></i></button>
           <button class="btn-icon danger" data-check-delete="${item.id}" title="Supprimer"><i class="fas fa-trash"></i></button>
         </div>
       </div>
@@ -865,6 +1306,31 @@ const ProjectsModule = (() => {
 
     if (input) input.value = '';
     Toast.success('Succes', response.data?.message || 'Checklist ajoutee.');
+    loadTaskChecklist(state.editingTask.id);
+    loadTasks();
+  }
+
+  async function editChecklistItem(itemId) {
+    if (!state.editingTask) return;
+
+    const currentTitle = Array.from(document.querySelectorAll('#taskChecklistList [data-check-edit]'))
+      .find((btn) => Number(btn.dataset.checkEdit) === Number(itemId))
+      ?.dataset?.checkTitle || '';
+    const value = window.prompt('Modifier l\'item checklist :', currentTitle);
+    if (value === null) return;
+    const title = value.trim();
+    if (!title) {
+      Toast.warning('Validation', 'Le titre checklist est obligatoire.');
+      return;
+    }
+
+    const response = await Http.put(`${window.PROJECTS_ROUTES.base}/${state.projectId}/tasks/${state.editingTask.id}/checklist/${itemId}`, { title });
+    if (!response.ok) {
+      Toast.error('Erreur', response.data?.message || 'Modification checklist impossible.');
+      return;
+    }
+
+    Toast.success('Succes', response.data?.message || 'Checklist mise a jour.');
     loadTaskChecklist(state.editingTask.id);
     loadTasks();
   }
@@ -1134,13 +1600,16 @@ const ProjectsModule = (() => {
     if (drawer) drawer.reset();
     state.editingTask = null;
     setField('taskId', '');
-    setField('taskStatus', 'todo');
+    renderTaskStatusOptions();
+    const defaultStatus = state.taskStatuses.todo ? 'todo' : (Object.keys(state.taskStatuses || {})[0] || 'todo');
+    setField('taskStatus', defaultStatus);
     setField('taskPriority', 'medium');
     setField('taskAssignedTo', '');
     setField('taskClientId', '');
     setWysiwygHtml('taskDescriptionEditor', '');
     setField('taskDescription', '');
     setField('taskTagsHidden', '');
+    setCheckbox('taskSyncGoogleCalendar', false);
     if (state.tagInput) state.tagInput.setTags([]);
     const comments = document.getElementById('taskCommentsList');
     const checklist = document.getElementById('taskChecklistList');
@@ -1150,6 +1619,7 @@ const ProjectsModule = (() => {
     if (files) files.innerHTML = '';
     const fn = document.getElementById('taskFileName');
     if (fn) fn.textContent = 'Aucun fichier';
+    updateTaskScheduleButton();
   }
 
   async function loadTaskFiles(taskId) {
@@ -1294,15 +1764,33 @@ const ProjectsModule = (() => {
     if (el) el.value = value;
   }
 
+  function setCheckbox(id, value) {
+    const el = document.getElementById(id);
+    if (el && el.type === 'checkbox') el.checked = !!value;
+  }
+
   function getField(id) {
     const el = document.getElementById(id);
     return el ? el.value : '';
+  }
+
+  function getCheckbox(id) {
+    const el = document.getElementById(id);
+    return !!(el && el.type === 'checkbox' && el.checked);
   }
 
   function getMultiValues(id) {
     const el = document.getElementById(id);
     if (!el) return [];
     return Array.from(el.selectedOptions || []).map((opt) => opt.value);
+  }
+
+  function escapeSelectorValue(value) {
+    const raw = String(value || '');
+    if (window.CSS && typeof window.CSS.escape === 'function') {
+      return window.CSS.escape(raw);
+    }
+    return raw.replace(/["\\]/g, '\\$&');
   }
 
   function esc(value) {
@@ -1331,15 +1819,20 @@ const ProjectsModule = (() => {
     el.innerHTML = html || '';
   }
 
-  function createTagInput(root) {
+  function createTagInput(root, options = {}) {
     if (!root) return null;
     const badges = root.querySelector('[data-tag-badges]');
     const input = root.querySelector('input.tag-field');
     const targetId = root.getAttribute('data-target');
     const hidden = targetId ? document.getElementById(targetId) : null;
+    const preserveCase = !!options.preserveCase;
+    const maxTags = Number.isInteger(options.maxTags) ? Math.max(1, options.maxTags) : 20;
     let tags = [];
 
-    const normalize = (t) => String(t || '').trim().toLowerCase();
+    const normalize = (t) => {
+      const value = String(t || '').trim();
+      return preserveCase ? value : value.toLowerCase();
+    };
 
     const syncHidden = () => {
       if (hidden) hidden.value = tags.join(',');
@@ -1359,8 +1852,8 @@ const ProjectsModule = (() => {
     const addTag = (raw) => {
       const t = normalize(raw);
       if (!t) return;
-      if (tags.includes(t)) return;
-      if (tags.length >= 20) return;
+      if (tags.some((tag) => tag.toLowerCase() === t.toLowerCase())) return;
+      if (tags.length >= maxTags) return;
       tags.push(t);
       render();
     };
@@ -1381,7 +1874,7 @@ const ProjectsModule = (() => {
     });
 
     input?.addEventListener('keydown', (e) => {
-      if (e.key === ',' || e.key === 'Enter') {
+      if (e.key === ',' || e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
         addTag(input.value);
         input.value = '';
@@ -1404,7 +1897,11 @@ const ProjectsModule = (() => {
     return {
       getTags: () => tags.slice(),
       setTags: (arr) => {
-        tags = (Array.isArray(arr) ? arr : []).map(normalize).filter((t) => !!t).slice(0, 20);
+        tags = (Array.isArray(arr) ? arr : [])
+          .map(normalize)
+          .filter((t) => !!t)
+          .filter((tag, index, all) => all.findIndex((other) => other.toLowerCase() === tag.toLowerCase()) === index)
+          .slice(0, maxTags);
         render();
       },
     };

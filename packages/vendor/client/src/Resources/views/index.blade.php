@@ -40,6 +40,25 @@
   </div>
 </div>
 
+@if(!empty($marketplaceSuggestions))
+<div class="module-app-suggestions">
+  @foreach($marketplaceSuggestions as $suggestion)
+    <article class="module-app-suggestion-card">
+      <div class="module-app-suggestion-icon">
+        <i class="{{ $suggestion['icon'] ?? 'fas fa-puzzle-piece' }}"></i>
+      </div>
+      <div class="module-app-suggestion-body">
+        <h3>{{ $suggestion['name'] ?? 'Application' }}</h3>
+        <p>{{ $suggestion['description'] ?? '' }}</p>
+      </div>
+      <a href="{{ $suggestion['url'] ?? route('marketplace.index') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-store"></i> Installer
+      </a>
+    </article>
+  @endforeach
+</div>
+@endif
+
 {{-- Stats --}}
 <div class="stats-grid">
   <div class="stat-card">

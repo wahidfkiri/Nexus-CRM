@@ -12,6 +12,20 @@
 const Toast = (() => {
   let container = null;
 
+  function closeConfirmModalOnSuccess() {
+    const confirm = document.getElementById('confirmModal');
+    if (!confirm || !confirm.classList.contains('open')) return;
+    if (confirm.dataset.busy === '1') {
+      confirm.dataset.closeOnSuccess = '1';
+      return;
+    }
+    confirm.classList.remove('open');
+    confirm.dataset.closeOnSuccess = '0';
+    if (!document.querySelector('.modal-overlay.open')) {
+      document.body.style.overflow = '';
+    }
+  }
+
   function getContainer() {
     if (!container) {
       container = document.createElement('div');
@@ -50,6 +64,10 @@ const Toast = (() => {
     toast.querySelector('.toast-close').addEventListener('click', close);
     if (duration > 0) setTimeout(close, duration);
 
+    if (type === 'success') {
+      closeConfirmModalOnSuccess();
+    }
+
     return { close };
   }
 
@@ -67,6 +85,42 @@ window.Toast = Toast;
    MODAL SYSTEM
    ============================================================ */
 const Modal = (() => {
+  function setConfirmBusy(overlayEl, btn, busy, loadingText = 'Traitement...') {
+    if (!overlayEl || !btn) return;
+    overlayEl.dataset.busy = busy ? '1' : '0';
+
+    const closeButtons = overlayEl.querySelectorAll('[data-modal-close]');
+    closeButtons.forEach((el) => {
+      if (busy) {
+        el.setAttribute('disabled', 'disabled');
+      } else {
+        el.removeAttribute('disabled');
+      }
+    });
+
+    if (busy) {
+      btn.dataset.originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.classList.add('loading');
+      btn.setAttribute('aria-busy', 'true');
+      btn.innerHTML = loadingText;
+      return;
+    }
+
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.removeAttribute('aria-busy');
+    btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
+
+    if (overlayEl.dataset.closeOnSuccess === '1') {
+      overlayEl.classList.remove('open');
+      overlayEl.dataset.closeOnSuccess = '0';
+      if (!document.querySelector('.modal-overlay.open')) {
+        document.body.style.overflow = '';
+      }
+    }
+  }
+
   function open(overlayEl) {
     if (!overlayEl) return;
     overlayEl.classList.add('open');
@@ -82,9 +136,12 @@ const Modal = (() => {
     document.addEventListener('keydown', escHandler);
   }
 
-  function close(overlayEl) {
+  function close(overlayEl, force = false) {
     if (!overlayEl) return;
+    if (!force && overlayEl.id === 'confirmModal' && overlayEl.dataset.busy === '1') return;
     overlayEl.classList.remove('open');
+    overlayEl.dataset.busy = '0';
+    overlayEl.dataset.closeOnSuccess = '0';
     document.body.style.overflow = '';
   }
 
@@ -97,6 +154,8 @@ const Modal = (() => {
     const btn = overlay.querySelector('[data-confirm-ok]');
     btn.textContent = confirmText;
     btn.className = `btn btn-${type}`;
+    overlay.dataset.busy = '0';
+    overlay.dataset.closeOnSuccess = '0';
 
     // Remove previous listeners
     const newBtn = btn.cloneNode(true);
@@ -104,9 +163,19 @@ const Modal = (() => {
     newBtn.textContent = confirmText;
     newBtn.className = `btn btn-${type}`;
 
-    newBtn.addEventListener('click', () => {
-      close(overlay);
-      if (typeof onConfirm === 'function') onConfirm();
+    newBtn.addEventListener('click', async () => {
+      if (overlay.dataset.busy === '1') return;
+      const loadingText = /supprim/i.test(confirmText) ? 'Suppression...' : 'Traitement...';
+      setConfirmBusy(overlay, newBtn, true, loadingText);
+      try {
+        if (typeof onConfirm === 'function') {
+          await onConfirm();
+        }
+      } catch (err) {
+        Toast.error('Erreur', err?.message || 'Une erreur est survenue.');
+      } finally {
+        setConfirmBusy(overlay, newBtn, false);
+      }
     });
 
     open(overlay);
@@ -191,6 +260,100 @@ const Form = (() => {
 })();
 
 window.CrmForm = Form;
+
+/* ============================================================
+   GLOBAL REQUEST LOADER (TOP BAR)
+   ============================================================ */
+const RequestProgress = (() => {
+  let root = null;
+  let bar = null;
+  let pending = 0;
+  let progress = 0;
+  let tickTimer = null;
+  let hideTimer = null;
+
+  function ensureDom() {
+    if (root && bar) return true;
+
+    const main = document.querySelector('.crm-main') || document.body;
+    if (!main) return false;
+
+    root = document.getElementById('crmTopLoader');
+    if (!root) {
+      root = document.createElement('div');
+      root.id = 'crmTopLoader';
+      root.className = 'crm-top-loader';
+      root.innerHTML = '<div class="crm-top-loader-bar"></div>';
+      main.insertBefore(root, main.firstChild || null);
+    }
+
+    bar = root.querySelector('.crm-top-loader-bar');
+    return !!bar;
+  }
+
+  function setProgress(value) {
+    if (!ensureDom()) return;
+    progress = Math.max(progress, Math.min(100, value));
+    bar.style.width = `${progress}%`;
+  }
+
+  function startTick() {
+    clearInterval(tickTimer);
+    tickTimer = setInterval(() => {
+      if (progress >= 90) return;
+      setProgress(progress + (Math.random() * 8) + 2);
+    }, 220);
+  }
+
+  function stopTick() {
+    clearInterval(tickTimer);
+    tickTimer = null;
+  }
+
+  function start() {
+    if (!ensureDom()) return;
+    pending += 1;
+    if (pending > 1) return;
+
+    clearTimeout(hideTimer);
+    progress = 0;
+    bar.style.width = '0%';
+    root.classList.add('active');
+    requestAnimationFrame(() => setProgress(18));
+    startTick();
+  }
+
+  function done() {
+    if (pending > 0) pending -= 1;
+    if (pending > 0) return;
+
+    stopTick();
+    setProgress(100);
+
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      if (!root || !bar) return;
+      root.classList.remove('active');
+      progress = 0;
+      bar.style.width = '0%';
+    }, 260);
+  }
+
+  function wrapFetch() {
+    if (window.__CRM_FETCH_WRAPPED__ || typeof window.fetch !== 'function') return;
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = (...args) => {
+      start();
+      return nativeFetch(...args).finally(done);
+    };
+    window.__CRM_FETCH_WRAPPED__ = true;
+  }
+
+  return { init: ensureDom, start, done, wrapFetch };
+})();
+
+window.RequestProgress = RequestProgress;
+RequestProgress.wrapFetch();
 
 /* ============================================================
    HTTP / AJAX HELPER
@@ -669,6 +832,8 @@ document.addEventListener('click', (e) => {
    AUTO-INIT on DOMContentLoaded
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
+  RequestProgress.init();
+
   // Mark current nav link as active
   const currentPath = window.location.pathname;
   document.querySelectorAll('.sidebar-nav a').forEach(link => {
@@ -686,6 +851,18 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('sidebarToggle')?.addEventListener('click', () => {
     document.querySelector('.crm-sidebar')?.classList.toggle('open');
   });
+
+  const sidebarNav = document.querySelector('.sidebar-nav');
+  if (sidebarNav) {
+    let scrollHideTimer = null;
+    sidebarNav.addEventListener('scroll', () => {
+      sidebarNav.classList.add('is-scrolling');
+      clearTimeout(scrollHideTimer);
+      scrollHideTimer = setTimeout(() => {
+        sidebarNav.classList.remove('is-scrolling');
+      }, 700);
+    }, { passive: true });
+  }
 });
 
 }

@@ -193,6 +193,14 @@ class InvTable {
     const statusColors = { draft:'var(--c-ink-20)', sent:'var(--c-info)', viewed:'var(--c-purple)', partial:'var(--c-warning)', paid:'var(--c-success)', overdue:'var(--c-danger)', cancelled:'var(--c-ink-20)', refunded:'var(--c-warning)' };
     const dot = `<span style="width:6px;height:6px;border-radius:50%;background:${statusColors[inv.status]||'var(--c-ink-20)'};display:inline-block;margin-right:5px;"></span>`;
     const isOverdue = inv.is_overdue;
+    const isPaid = String(inv.status || '').toLowerCase() === 'paid';
+    const paidLockTitle = 'Action desactivee : facture deja payee.';
+    const editAction = isPaid
+      ? `<button type="button" class="btn-icon is-disabled" aria-disabled="true" title="${paidLockTitle}"><i class="fas fa-pen"></i></button>`
+      : `<a href="/invoices/${inv.id}/edit" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>`;
+    const deleteAction = isPaid
+      ? `<button type="button" class="btn-icon danger is-disabled" aria-disabled="true" title="${paidLockTitle}"><i class="fas fa-trash"></i></button>`
+      : `<button class="btn-icon danger" onclick="InvTable._deleteInvoice(${inv.id},'${this._esc(inv.number)}')" title="Supprimer"><i class="fas fa-trash"></i></button>`;
     return `
       <tr data-id="${inv.id}" class="${this.selectedIds.has(inv.id) ? 'selected' : ''}">
         <td style="width:40px"><input type="checkbox" class="row-check" data-id="${inv.id}" ${this.selectedIds.has(inv.id)?'checked':''}></td>
@@ -214,8 +222,8 @@ class InvTable {
           <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
             <a href="/invoices/${inv.id}" class="btn-icon" title="Voir"><i class="fas fa-eye"></i></a>
             <a href="/invoices/${inv.id}/pdf" target="_blank" class="btn-icon" title="PDF"><i class="fas fa-file-pdf"></i></a>
-            <a href="/invoices/${inv.id}/edit" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>
-            <button class="btn-icon danger" onclick="InvTable._deleteInvoice(${inv.id},'${this._esc(inv.number)}')" title="Supprimer"><i class="fas fa-trash"></i></button>
+            ${editAction}
+            ${deleteAction}
           </div>
         </td>
       </tr>`;

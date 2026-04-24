@@ -21,6 +21,25 @@
   </div>
 </div>
 
+@if(!$clientsInstalled || !$googleCalendarInstalled)
+<div class="integration-hints">
+  @if(!$clientsInstalled)
+    <div class="integration-hint-item">
+      <div class="integration-hint-title"><i class="fas fa-building"></i> Module Clients non installe</div>
+      <p>Installez le module Clients pour lier vos projets a des fiches clients.</p>
+      <a class="btn btn-secondary btn-sm" href="{{ $clientsTargetUrl }}"><i class="fas fa-store"></i> Installer Clients</a>
+    </div>
+  @endif
+  @if(!$googleCalendarInstalled)
+    <div class="integration-hint-item">
+      <div class="integration-hint-title"><i class="fas fa-calendar-days"></i> Google Calendar non installe</div>
+      <p>Installez Google Calendar pour planifier directement vos projets et taches.</p>
+      <a class="btn btn-secondary btn-sm" href="{{ $googleCalendarTargetUrl }}"><i class="fas fa-store"></i> Installer Google Calendar</a>
+    </div>
+  @endif
+</div>
+@endif
+
 <div class="stats-grid">
   <div class="stat-card">
     <div class="stat-icon" style="background:var(--c-accent-lt);color:var(--c-accent)"><i class="fas fa-diagram-project"></i></div>
@@ -69,12 +88,14 @@
       @endforeach
     </select>
 
-    <select class="filter-select" id="projectsFilterClient">
-      <option value="">Tous clients</option>
-      @foreach($clients as $client)
-        <option value="{{ $client->id }}">{{ $client->company_name }}</option>
-      @endforeach
-    </select>
+    @if($clientsInstalled)
+      <select class="filter-select" id="projectsFilterClient">
+        <option value="">Tous clients</option>
+        @foreach($clients as $client)
+          <option value="{{ $client->id }}">{{ $client->company_name }}</option>
+        @endforeach
+      </select>
+    @endif
 
     <button class="btn btn-ghost btn-sm" id="projectsResetFilters" title="Reinitialiser">
       <i class="fas fa-rotate-left"></i>
@@ -129,12 +150,19 @@
           <div class="col-4">
             <div class="form-group">
               <label class="form-label">Client</label>
-              <select class="form-control" name="client_id" id="projectClientId">
-                <option value="">Aucun</option>
-                @foreach($clients as $client)
-                  <option value="{{ $client->id }}">{{ $client->company_name }}</option>
-                @endforeach
-              </select>
+              @if($clientsInstalled)
+                <select class="form-control" name="client_id" id="projectClientId">
+                  <option value="">Aucun</option>
+                  @foreach($clients as $client)
+                    <option value="{{ $client->id }}">{{ $client->company_name }}</option>
+                  @endforeach
+                </select>
+              @else
+                <div class="integration-inline-note">
+                  Module Clients non installe.
+                  <a href="{{ $clientsTargetUrl }}">Installer maintenant</a>
+                </div>
+              @endif
             </div>
           </div>
 
@@ -182,8 +210,8 @@
 
           <div class="col-3">
             <div class="form-group">
-              <label class="form-label">Date debut</label>
-              <input type="date" class="form-control" name="start_date" id="projectStartDate">
+              <label class="form-label">Date debut <span class="required">*</span></label>
+              <input type="date" class="form-control" name="start_date" id="projectStartDate" required>
             </div>
           </div>
 
@@ -212,6 +240,26 @@
               <small style="color:var(--c-ink-40)">Ctrl/Cmd + clic pour selection multiple.</small>
             </div>
           </div>
+
+          <div class="col-12">
+            <div class="form-group">
+              <label class="form-label">Google Calendar</label>
+              @if($googleCalendarInstalled)
+                <label class="calendar-sync-check" for="projectSyncGoogleCalendar">
+                  <input type="checkbox" id="projectSyncGoogleCalendar" name="sync_google_calendar" value="1">
+                  <span>
+                    Inclure ce projet dans Google Calendar
+                    <small>Un evenement est cree (ou mis a jour) a l'enregistrement.</small>
+                  </span>
+                </label>
+              @else
+                <div class="integration-inline-note">
+                  Google Calendar non installe.
+                  <a href="{{ $googleCalendarTargetUrl }}">Installer maintenant</a>
+                </div>
+              @endif
+            </div>
+          </div>
         </div>
       </form>
     </div>
@@ -231,6 +279,13 @@ window.PROJECTS_ROUTES = {
   stats: '{{ route('projects.stats') }}',
   store: '{{ route('projects.store') }}',
   base: '{{ url('/extensions/projects') }}',
+};
+
+window.PROJECTS_BOOTSTRAP = {
+  clientsInstalled: @json((bool) $clientsInstalled),
+  clientsTargetUrl: @json($clientsTargetUrl),
+  googleCalendarInstalled: @json((bool) $googleCalendarInstalled),
+  googleCalendarTargetUrl: @json($googleCalendarTargetUrl),
 };
 </script>
 @endpush

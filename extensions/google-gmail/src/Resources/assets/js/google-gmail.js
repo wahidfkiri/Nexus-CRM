@@ -63,6 +63,7 @@ const GoogleGmailModule = (() => {
       polling_interval_seconds: 45,
       main_labels: DEFAULT_MAIN_LABELS.slice(),
     },
+    i18n: {},
   };
 
   const tagsStores = {};
@@ -71,6 +72,7 @@ const GoogleGmailModule = (() => {
   function boot(bootstrap = {}) {
     state.connected = !!bootstrap.connected;
     state.settings = normalizeSettings(bootstrap.settings || {});
+    state.i18n = (bootstrap.i18n && typeof bootstrap.i18n === 'object') ? bootstrap.i18n : {};
 
     bindActions();
     initEditors();
@@ -114,6 +116,18 @@ const GoogleGmailModule = (() => {
     document.getElementById('ggmToggleStarBtn')?.addEventListener('click', toggleStar);
     document.getElementById('ggmArchiveBtn')?.addEventListener('click', archiveMessage);
     document.getElementById('ggmTrashBtn')?.addEventListener('click', trashOrDeleteMessage);
+
+    document.querySelectorAll('#ggmAttachmentPreviewModal [data-modal-close]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        clearAttachmentPreviewBody();
+      });
+    });
+
+    document.getElementById('ggmAttachmentPreviewModal')?.addEventListener('click', (event) => {
+      if (event.target?.id === 'ggmAttachmentPreviewModal') {
+        clearAttachmentPreviewBody();
+      }
+    });
   }
 
   function normalizeSettings(raw) {
@@ -773,10 +787,10 @@ const GoogleGmailModule = (() => {
     const bodyWrap = document.getElementById('ggmMessageBody');
     if (bodyWrap) {
       if ((msg.body_html || '').trim() !== '') {
-        bodyWrap.innerHTML = '<iframe id="ggmBodyFrame" class="ggm-body-frame" sandbox=""></iframe>';
+        bodyWrap.innerHTML = '<iframe id="ggmBodyFrame" class="ggm-body-frame" sandbox="allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>';
         const frame = document.getElementById('ggmBodyFrame');
         if (frame) {
-          frame.srcdoc = msg.body_html;
+          frame.srcdoc = buildSafeEmailHtml(msg.body_html || '');
         }
       } else {
         bodyWrap.innerHTML = `<pre class="ggm-body-plain">${esc(msg.body_text || msg.snippet || '')}</pre>`;
@@ -802,13 +816,330 @@ const GoogleGmailModule = (() => {
     wrap.style.display = '';
     list.innerHTML = attachments.map((att) => {
       const url = `${window.GGMAIL_ROUTES.messageBase}/${encodeURIComponent(msg.message_id)}/attachments/${encodeURIComponent(att.attachment_id)}/download`;
+      const fileName = att.filename || t('attachment', 'piece-jointe');
+      const mime = att.mime_type || '';
       return `
-        <a class="ggm-attachment-item" href="${esc(url)}" target="_blank" rel="noopener">
+        <div class="ggm-attachment-item">
           <i class="fas fa-paperclip"></i>
-          <span>${esc(att.filename || 'piece-jointe')}</span>
+          <span>${esc(fileName)}</span>
           <small>${formatBytes(att.size || 0)}</small>
-        </a>`;
+          <button type="button" class="ggm-attachment-action" data-attachment-preview="1" data-message-id="${esc(msg.message_id)}" data-attachment-id="${esc(att.attachment_id)}" data-file-name="${esc(fileName)}" data-mime-type="${esc(mime)}">${esc(t('preview', 'Previsualiser'))}</button>
+          <button type="button" class="ggm-attachment-action" data-attachment-download="1" data-message-id="${esc(msg.message_id)}" data-attachment-id="${esc(att.attachment_id)}" data-file-name="${esc(fileName)}" data-mime-type="${esc(mime)}">${esc(t('download', 'Telecharger'))}</button>
+          <a class="ggm-attachment-link-fallback" href="${esc(url)}" download="${esc(fileName)}" target="_blank" rel="noopener noreferrer">fallback</a>
+        </div>`;
     }).join('');
+
+    list.querySelectorAll('[data-attachment-download]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await runWithButtonLoading(btn, t('download_loading', 'Telechargement...'), async () => {
+          await downloadAttachment({
+            messageId: btn.getAttribute('data-message-id') || '',
+            attachmentId: btn.getAttribute('data-attachment-id') || '',
+            fileName: btn.getAttribute('data-file-name') || '',
+            mimeType: btn.getAttribute('data-mime-type') || '',
+          });
+        });
+      });
+    });
+
+    list.querySelectorAll('[data-attachment-preview]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await runWithButtonLoading(btn, t('preview_loading', 'Previsualisation...'), async () => {
+          await previewAttachment({
+            messageId: btn.getAttribute('data-message-id') || '',
+            attachmentId: btn.getAttribute('data-attachment-id') || '',
+            fileName: btn.getAttribute('data-file-name') || '',
+            mimeType: btn.getAttribute('data-mime-type') || '',
+          });
+        });
+      });
+    });
+  }
+
+  async function runWithButtonLoading(button, loadingText, callback) {
+    if (!button || typeof callback !== 'function') {
+      return;
+    }
+
+    const originalHtml = button.innerHTML;
+    button.disabled = true;
+    button.classList.add('is-loading');
+    button.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${esc(loadingText || '...')}`;
+
+    try {
+      await callback();
+    } finally {
+      button.disabled = false;
+      button.classList.remove('is-loading');
+      button.innerHTML = originalHtml;
+    }
+  }
+
+  async function downloadAttachment(meta) {
+    try {
+      const file = await fetchAttachmentBlob(meta);
+      const objectUrl = URL.createObjectURL(file.blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = file.fileName || meta.fileName || 'attachment';
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch (error) {
+      Toast.error(t('error', 'Erreur'), error?.message || t('download_error', 'Impossible de telecharger la piece jointe.'));
+    }
+  }
+
+  async function previewAttachment(meta) {
+    try {
+      const file = await fetchAttachmentBlob(meta);
+      const title = file.fileName || meta.fileName || t('attachment', 'piece-jointe');
+      const body = document.getElementById('ggmAttachmentPreviewBody');
+      const titleEl = document.getElementById('ggmAttachmentPreviewTitle');
+      if (!body || !titleEl) return;
+
+      clearAttachmentPreviewBody();
+      titleEl.textContent = title;
+
+      const mime = String(file.mime || meta.mimeType || '').toLowerCase();
+      const objectUrl = URL.createObjectURL(file.blob);
+      body.dataset.previewUrl = objectUrl;
+
+      if (mime.startsWith('image/')) {
+        body.innerHTML = `<img src="${esc(objectUrl)}" alt="${esc(title)}" class="ggm-preview-image">`;
+      } else if (mime === 'application/pdf') {
+        body.innerHTML = `<iframe src="${esc(objectUrl)}" class="ggm-preview-frame" title="${esc(title)}"></iframe>`;
+      } else if (mime.startsWith('video/')) {
+        body.innerHTML = `<video src="${esc(objectUrl)}" class="ggm-preview-media" controls></video>`;
+      } else if (mime.startsWith('audio/')) {
+        body.innerHTML = `<audio src="${esc(objectUrl)}" class="ggm-preview-media" controls></audio>`;
+      } else if (isTextLikeMime(mime)) {
+        const text = await file.blob.text();
+        body.innerHTML = `<pre class="ggm-preview-text">${esc(text)}</pre>`;
+      } else {
+        URL.revokeObjectURL(objectUrl);
+        delete body.dataset.previewUrl;
+        body.innerHTML = `
+          <div class="ggm-preview-unsupported">
+            <i class="fas fa-file-circle-question"></i>
+            <p>${esc(t('preview_not_supported', 'Previsualisation non supportee pour ce fichier par votre navigateur.'))}</p>
+            <button type="button" class="btn btn-primary btn-sm" id="ggmPreviewDownloadBtn"><i class="fas fa-download"></i> ${esc(t('download', 'Telecharger'))}</button>
+          </div>`;
+        document.getElementById('ggmPreviewDownloadBtn')?.addEventListener('click', async (event) => {
+          await runWithButtonLoading(event.currentTarget, t('download_loading', 'Telechargement...'), async () => {
+            await downloadAttachment(meta);
+          });
+        });
+      }
+
+      Modal.open(document.getElementById('ggmAttachmentPreviewModal'));
+    } catch (error) {
+      Toast.error(t('error', 'Erreur'), error?.message || t('preview_error', 'Impossible de previsualiser la piece jointe.'));
+    }
+  }
+
+  async function fetchAttachmentBlob(meta) {
+    const messageId = String(meta?.messageId || '').trim();
+    const attachmentId = String(meta?.attachmentId || '').trim();
+
+    if (!messageId || !attachmentId) {
+      throw new Error(t('download_error', 'Impossible de telecharger la piece jointe.'));
+    }
+
+    const url = `${window.GGMAIL_ROUTES.messageBase}/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}/download`;
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+
+    if (!response.ok) {
+      let message = t('download_error', 'Impossible de telecharger la piece jointe.');
+      try {
+        const data = await response.json();
+        if (data?.message) {
+          message = data.message;
+        }
+      } catch (_err) {
+        // no-op
+      }
+      throw new Error(message);
+    }
+
+    const blob = await response.blob();
+    const contentType = response.headers.get('Content-Type') || '';
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const fileName = extractFilenameFromDisposition(disposition) || String(meta?.fileName || t('attachment', 'piece-jointe'));
+    const mime = await resolveAttachmentMime(blob, contentType, fileName, String(meta?.mimeType || ''));
+
+    return { blob, mime, fileName };
+  }
+
+  async function resolveAttachmentMime(blob, headerMime, fileName, hintedMime) {
+    let mime = normalizeMime(headerMime) || normalizeMime(blob.type) || normalizeMime(hintedMime) || '';
+
+    if (isGenericMime(mime)) {
+      const byName = inferMimeFromFilename(fileName);
+      if (byName) {
+        mime = byName;
+      }
+    }
+
+    if (isGenericMime(mime)) {
+      const buf = new Uint8Array(await blob.slice(0, 32).arrayBuffer());
+      const bySig = inferMimeFromSignature(buf);
+      if (bySig) {
+        mime = bySig;
+      }
+    }
+
+    return mime || 'application/octet-stream';
+  }
+
+  function normalizeMime(value) {
+    const mime = String(value || '').trim().toLowerCase();
+    if (!mime) return '';
+    return mime.split(';')[0].trim();
+  }
+
+  function isGenericMime(mime) {
+    const value = normalizeMime(mime);
+    return !value || value === 'application/octet-stream' || value === 'binary/octet-stream';
+  }
+
+  function inferMimeFromFilename(fileName) {
+    const name = String(fileName || '').toLowerCase();
+    if (!name.includes('.')) return '';
+
+    const ext = name.split('.').pop();
+    const map = {
+      pdf: 'application/pdf',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      gif: 'image/gif',
+      webp: 'image/webp',
+      bmp: 'image/bmp',
+      svg: 'image/svg+xml',
+      txt: 'text/plain',
+      csv: 'text/csv',
+      json: 'application/json',
+      xml: 'application/xml',
+      html: 'text/html',
+      mp4: 'video/mp4',
+      mp3: 'audio/mpeg',
+      wav: 'audio/wav',
+      ogg: 'audio/ogg',
+      webm: 'video/webm',
+    };
+
+    return map[ext] || '';
+  }
+
+  function inferMimeFromSignature(bytes) {
+    if (!bytes || !bytes.length) return '';
+    const has = (...arr) => arr.every((value, index) => bytes[index] === value);
+
+    if (has(0x25, 0x50, 0x44, 0x46)) return 'application/pdf';
+    if (has(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return 'image/png';
+    if (has(0xff, 0xd8, 0xff)) return 'image/jpeg';
+    if (has(0x47, 0x49, 0x46, 0x38)) return 'image/gif';
+    if (has(0x52, 0x49, 0x46, 0x46) && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) return 'image/webp';
+    if (has(0x49, 0x44, 0x33)) return 'audio/mpeg';
+    if (has(0x52, 0x49, 0x46, 0x46) && bytes[8] === 0x57 && bytes[9] === 0x41 && bytes[10] === 0x56 && bytes[11] === 0x45) return 'audio/wav';
+    if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) return 'video/mp4';
+
+    return '';
+  }
+
+  function extractFilenameFromDisposition(disposition) {
+    if (!disposition) return '';
+
+    const utf8Match = disposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+    if (utf8Match?.[1]) {
+      try {
+        return decodeURIComponent(utf8Match[1]);
+      } catch (_err) {
+        return utf8Match[1];
+      }
+    }
+
+    const plainMatch = disposition.match(/filename\s*=\s*\"?([^\";]+)\"?/i);
+    return plainMatch?.[1] ? plainMatch[1].trim() : '';
+  }
+
+  function isTextLikeMime(mime) {
+    const value = normalizeMime(mime);
+    if (!value) return false;
+    return value.startsWith('text/')
+      || value.includes('json')
+      || value.includes('xml')
+      || value.includes('javascript');
+  }
+
+  function clearAttachmentPreviewBody() {
+    const body = document.getElementById('ggmAttachmentPreviewBody');
+    if (!body) return;
+
+    if (body.dataset.previewUrl) {
+      URL.revokeObjectURL(body.dataset.previewUrl);
+      delete body.dataset.previewUrl;
+    }
+
+    body.innerHTML = '';
+  }
+
+  function buildSafeEmailHtml(rawHtml) {
+    const template = document.createElement('template');
+    template.innerHTML = String(rawHtml || '');
+
+    template.content.querySelectorAll('script,iframe,object,embed,base,meta[http-equiv],link[rel="import"]').forEach((node) => node.remove());
+
+    template.content.querySelectorAll('*').forEach((node) => {
+      Array.from(node.attributes || []).forEach((attr) => {
+        const name = String(attr.name || '').toLowerCase();
+        if (name.startsWith('on')) {
+          node.removeAttribute(attr.name);
+        }
+      });
+
+      if (node.tagName.toLowerCase() === 'a') {
+        const href = String(node.getAttribute('href') || '').trim();
+        if (!isSafeHref(href)) {
+          node.removeAttribute('href');
+        }
+        node.setAttribute('target', '_blank');
+        node.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+
+    return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base target="_blank">
+  <style>
+    html,body{margin:0;padding:12px;font:14px/1.6 Arial,sans-serif;color:#0f172a;background:#fff}
+    img{max-width:100%;height:auto}
+    table{max-width:100% !important}
+    a{color:#1d4ed8}
+  </style>
+</head>
+<body>${template.innerHTML}</body>
+</html>`;
+  }
+
+  function isSafeHref(href) {
+    if (!href) return false;
+    const value = href.trim().toLowerCase();
+    if (value.startsWith('#')) return true;
+    if (value.startsWith('http://') || value.startsWith('https://')) return true;
+    if (value.startsWith('mailto:') || value.startsWith('tel:')) return true;
+    return false;
   }
 
   function goNextPage() {
@@ -1468,6 +1799,12 @@ const GoogleGmailModule = (() => {
   function setText(id, value) {
     const el = document.getElementById(id);
     if (el) el.textContent = String(value);
+  }
+
+  function t(key, fallback = '') {
+    const bag = state.i18n && typeof state.i18n === 'object' ? state.i18n : {};
+    const value = bag[key];
+    return typeof value === 'string' && value.trim() !== '' ? value : fallback;
   }
 
   function esc(value) {

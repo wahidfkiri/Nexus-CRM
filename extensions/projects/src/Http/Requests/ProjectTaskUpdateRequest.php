@@ -18,15 +18,17 @@ class ProjectTaskUpdateRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:7000'],
             'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
-            'status' => ['nullable', 'in:backlog,todo,in_progress,review,done,blocked'],
+            'status' => ['nullable', 'string', 'max:30'],
             'priority' => ['nullable', 'in:low,medium,high,critical'],
             'position' => ['nullable', 'integer', 'min:0'],
-            'start_date' => ['nullable', 'date'],
+            'start_date' => ['required', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'estimate_hours' => ['nullable', 'numeric', 'min:0'],
             'spent_hours' => ['nullable', 'numeric', 'min:0'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:40'],
+            'sync_google_calendar' => ['nullable', 'boolean'],
+            'calendar_id' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

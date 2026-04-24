@@ -19,12 +19,14 @@ class ProjectStoreRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:5000'],
             'status' => ['nullable', 'in:planning,active,on_hold,completed,archived'],
             'priority' => ['nullable', 'in:low,medium,high,critical'],
-            'start_date' => ['nullable', 'date'],
+            'start_date' => ['required', 'date'],
             'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'budget' => ['nullable', 'numeric', 'min:0'],
             'color' => ['nullable', 'string', 'max:20'],
             'member_ids' => ['nullable', 'array'],
             'member_ids.*' => ['integer', 'exists:users,id'],
+            'sync_google_calendar' => ['nullable', 'boolean'],
+            'calendar_id' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

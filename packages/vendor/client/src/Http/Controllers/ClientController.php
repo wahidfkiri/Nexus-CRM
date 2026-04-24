@@ -10,6 +10,8 @@ use Vendor\Client\Http\Requests\ClientRequest;
 use Vendor\Client\Services\ClientService;
 use Vendor\Client\Exports\ClientsExport;
 use Vendor\Client\Imports\ClientsImport;
+use Vendor\Extensions\Models\Extension;
+use Vendor\Extensions\Models\TenantExtension;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 
@@ -23,10 +25,26 @@ class ClientController extends Controller
 
     public function index()
     {
+        $tenantId = (int) (auth()->user()->tenant_id ?? 0);
+
         return view('client::index', [
             'types'    => config('client.client_types', []),
             'statuses' => config('client.client_statuses', []),
             'sources'  => config('client.client_sources', []),
+            'marketplaceSuggestions' => array_values(array_filter([
+                $this->makeMarketplaceSuggestion(
+                    $tenantId,
+                    'invoice',
+                    'Facturation',
+                    'Installez Facturation pour creer devis, factures et suivre vos paiements depuis votre CRM.'
+                ),
+                $this->makeMarketplaceSuggestion(
+                    $tenantId,
+                    'stock',
+                    'Stock',
+                    'Installez Stock pour synchroniser produits, niveaux et commandes avec vos clients.'
+                ),
+            ])),
         ]);
     }
 
@@ -270,5 +288,35 @@ class ClientController extends Controller
         $term    = $request->string('q')->trim()->toString();
         $clients = Client::search($term)->limit(10)->get(['id', 'company_name', 'email', 'phone']);
         return response()->json(['success' => true, 'data' => $clients]);
+    }
+
+    private function makeMarketplaceSuggestion(int $tenantId, string $slug, string $fallbackName, string $description): ?array
+    {
+        if ($tenantId <= 0) {
+            return null;
+        }
+
+        $extension = Extension::query()->where('slug', $slug)->first();
+        if (!$extension) {
+            return null;
+        }
+
+        $isActive = TenantExtension::query()
+            ->where('tenant_id', $tenantId)
+            ->where('extension_id', $extension->id)
+            ->whereIn('status', ['active', 'trial'])
+            ->exists();
+
+        if ($isActive) {
+            return null;
+        }
+
+        return [
+            'slug' => $slug,
+            'name' => (string) ($extension->name ?: $fallbackName),
+            'description' => $description,
+            'url' => route('marketplace.show', ['slug' => $slug]),
+            'icon' => (string) ($extension->icon ?: 'fas fa-puzzle-piece'),
+        ];
     }
 }

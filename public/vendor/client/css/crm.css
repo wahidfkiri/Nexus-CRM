@@ -90,13 +90,20 @@ body {
   color: var(--c-ink);
   background: var(--surface-1);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi); line-height: 1.3; }
 
 /* --------------------------------------------------------------------------
    Layout Shell
    -------------------------------------------------------------------------- */
-.crm-layout { display: flex; min-height: 100vh; }
+.crm-layout {
+  display: flex;
+  min-height: 100vh;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
 
 /* Sidebar */
 .crm-sidebar {
@@ -131,12 +138,31 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
   color: rgba(255,255,255,.4);
   letter-spacing: 1px; text-transform: uppercase;
 }
+.sidebar-nav { padding: 12px 0; flex: 1; overflow-y: auto; }
 .sidebar-nav {
-  padding: 12px 0;
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.sidebar-nav::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.sidebar-nav.is-scrolling {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, .55) rgba(255, 255, 255, .06);
+}
+.sidebar-nav.is-scrolling::-webkit-scrollbar {
+  width: 8px;
+}
+.sidebar-nav.is-scrolling::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, .06);
+  border-radius: 999px;
+}
+.sidebar-nav.is-scrolling::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, .55);
+  border-radius: 999px;
+}
+.sidebar-nav.is-scrolling::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, .75);
 }
 .sidebar-nav-section {
   padding: 8px 16px 4px;
@@ -197,6 +223,31 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
   flex: 1;
   display: flex; flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.crm-top-loader {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  width: 100%;
+  height: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+  background: transparent;
+}
+.crm-top-loader.active {
+  opacity: 1;
+}
+.crm-top-loader-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb 0%, #22c55e 100%);
+  box-shadow: 0 0 14px rgba(37, 99, 235, .45);
+  transition: width 220ms ease;
 }
 
 /* Top Header */
@@ -220,7 +271,12 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
 .crm-header-actions { display: flex; align-items: center; gap: 8px; }
 
 /* Page Content */
-.crm-content { padding: 28px var(--content-px); flex: 1; }
+.crm-content {
+  padding: 28px var(--content-px);
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+}
 
 /* --------------------------------------------------------------------------
    Page Header (inside content)
@@ -235,6 +291,48 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
 }
 .page-header-left p { font-size: 13.5px; color: var(--c-ink-40); margin: 0; }
 .page-header-actions { display: flex; align-items: center; gap: 10px; }
+
+.module-app-suggestions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.module-app-suggestion-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-0);
+  border: 1px solid var(--c-ink-05);
+  border-radius: var(--r-lg);
+  padding: 12px;
+  box-shadow: var(--shadow-xs);
+}
+
+.module-app-suggestion-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: var(--r-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-accent-xl);
+  color: var(--c-accent);
+}
+
+.module-app-suggestion-body { flex: 1; min-width: 0; }
+.module-app-suggestion-body h3 {
+  margin: 0 0 3px;
+  font-size: 14px;
+  color: var(--c-ink);
+}
+.module-app-suggestion-body p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--c-ink-40);
+}
 
 /* --------------------------------------------------------------------------
    Stats Grid

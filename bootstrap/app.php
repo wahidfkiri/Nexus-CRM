@@ -1,5 +1,10 @@
 <?php
 
+// Windows compatibility for packages expecting POSIX signal constants (e.g., Octane).
+defined('SIGINT') || define('SIGINT', 2);
+defined('SIGTERM') || define('SIGTERM', 15);
+defined('SIGHUP') || define('SIGHUP', 1);
+
 /*
 |--------------------------------------------------------------------------
 | Create The Application

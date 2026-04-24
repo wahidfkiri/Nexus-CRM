@@ -1,4 +1,4 @@
-@extends('layouts.global')
+ï»¿@extends('layouts.global')
 
 @section('title', 'Articles stock')
 
@@ -19,6 +19,24 @@
     <a href="{{ route('stock.articles.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Nouvel article</a>
   </div>
 </div>
+@if(!empty($marketplaceSuggestions))
+  <div class="module-app-suggestions">
+    @foreach($marketplaceSuggestions as $suggestion)
+      <article class="module-app-suggestion-card">
+        <div class="module-app-suggestion-icon">
+          <i class="{{ $suggestion['icon'] ?? 'fas fa-puzzle-piece' }}"></i>
+        </div>
+        <div class="module-app-suggestion-body">
+          <h3>{{ $suggestion['name'] ?? 'Application' }}</h3>
+          <p>{{ $suggestion['description'] ?? '' }}</p>
+        </div>
+        <a href="{{ $suggestion['url'] ?? route('marketplace.index') }}" class="btn btn-secondary btn-sm">
+          <i class="fas fa-store"></i> Installer
+        </a>
+      </article>
+    @endforeach
+  </div>
+@endif
 
 <div class="stock-grid">
   <div class="stock-card"><h4>Articles</h4><div id="kpiArticles" class="v">-</div></div>
@@ -64,9 +82,9 @@
       dataUrl: '{{ route('stock.articles.data') }}',
       renderRow: (a) => `
         <tr>
-          <td>${a.sku ?? '—'}</td>
+          <td>${a.sku ?? 'â€”'}</td>
           <td><a href="/stock/articles/${a.id}" style="color:var(--c-accent);font-weight:600;text-decoration:none;">${a.name}</a></td>
-          <td>${a.supplier?.name ?? '—'}</td>
+          <td>${a.supplier?.name ?? 'â€”'}</td>
           <td>${a.stock_quantity}</td>
           <td>${a.sale_price}</td>
           <td><span class="badge badge-${a.status === 'active' ? 'paid' : 'cancelled'}">${a.status}</span></td>
@@ -77,3 +95,4 @@
   });
 </script>
 @endpush
+

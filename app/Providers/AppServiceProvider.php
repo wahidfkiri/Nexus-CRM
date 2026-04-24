@@ -56,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
                     'google-sheets' => ['route' => 'google-sheets.index', 'icon' => 'fa-file-excel', 'icon_bg_color' => '#0f9d58'],
                     'google-docx' => ['route' => 'google-docx.index', 'icon' => 'fa-file-word', 'icon_bg_color' => '#1a73e8'],
                     'google-gmail' => ['route' => 'google-gmail.index', 'icon' => 'fa-envelope-open-text', 'icon_bg_color' => '#ea4335'],
+                    'google-meet' => ['route' => 'google-meet.index', 'icon' => 'fa-video', 'icon_bg_color' => '#34a853'],
                 ];
 
                 $apps = TenantExtension::query()

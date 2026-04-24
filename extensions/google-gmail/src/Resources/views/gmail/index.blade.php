@@ -1,11 +1,11 @@
 @extends('google-gmail::layouts.gmail')
 
-@section('title', 'Google Gmail')
+@section('title', __('google-gmail::messages.page.title'))
 
 @section('ggm_breadcrumb')
-  <a href="{{ route('marketplace.index') }}">Applications</a>
+  <a href="{{ route('marketplace.index') }}">{{ __('google-gmail::messages.breadcrumb.applications') }}</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Google Gmail</span>
+  <span style="color:var(--c-ink)">{{ __('google-gmail::messages.page.title') }}</span>
 @endsection
 
 @section('ggm_content')
@@ -154,6 +154,21 @@
   </div>
 </div>
 @endif
+
+<div class="modal-overlay" id="ggmAttachmentPreviewModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="ggmAttachmentPreviewTitle">{{ __('google-gmail::messages.attachments.preview_file') }}</div>
+      <button class="modal-close" data-modal-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="ggmAttachmentPreviewBody" class="ggm-attachment-preview-body"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close>{{ __('google-gmail::messages.common.close') }}</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="ggmComposeModal">
   <div class="modal modal-lg">
@@ -504,6 +519,7 @@ window.GGMAIL_ROUTES = {
 window.GGMAIL_BOOTSTRAP = {
   connected: @json((bool) $connected),
   settings: @json($settings ?? []),
+  i18n: @json($jsI18n ?? []),
 };
 
 document.addEventListener('DOMContentLoaded', function () {

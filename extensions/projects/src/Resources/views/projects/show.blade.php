@@ -15,10 +15,34 @@
     <p>{{ strip_tags($project->description ?: '') ?: 'Aucune description.' }}</p>
   </div>
   <div class="page-header-actions">
+    @if($googleCalendarInstalled)
+      <button class="btn btn-secondary" id="projectScheduleBtn" data-loading-text="Planification..."><i class="fas fa-calendar-plus"></i> Planifier projet</button>
+    @else
+      <a class="btn btn-secondary" href="{{ $googleCalendarTargetUrl }}"><i class="fas fa-store"></i> Installer Google Calendar</a>
+    @endif
     <button class="btn btn-secondary" data-modal-open="projectMembersModal"><i class="fas fa-users"></i> Membres</button>
     <button class="btn btn-primary" id="taskCreateBtn"><i class="fas fa-plus"></i> Nouvelle tache</button>
   </div>
 </div>
+
+@if(!$clientsInstalled || !$googleCalendarInstalled)
+<div class="integration-hints">
+  @if(!$clientsInstalled)
+    <div class="integration-hint-item">
+      <div class="integration-hint-title"><i class="fas fa-building"></i> Module Clients non installe</div>
+      <p>Installez le module Clients pour associer facilement vos projets et taches a des clients.</p>
+      <a class="btn btn-secondary btn-sm" href="{{ $clientsTargetUrl }}"><i class="fas fa-store"></i> Installer Clients</a>
+    </div>
+  @endif
+  @if(!$googleCalendarInstalled)
+    <div class="integration-hint-item">
+      <div class="integration-hint-title"><i class="fas fa-calendar-days"></i> Google Calendar non installe</div>
+      <p>Activez Google Calendar pour planifier ce projet et ses taches en un clic.</p>
+      <a class="btn btn-secondary btn-sm" href="{{ $googleCalendarTargetUrl }}"><i class="fas fa-store"></i> Installer Google Calendar</a>
+    </div>
+  @endif
+</div>
+@endif
 
 <div class="projects-show-grid">
   <div class="info-card">
@@ -65,6 +89,13 @@
   </select>
 
   <button class="btn btn-ghost" id="projectTasksReloadBtn"><i class="fas fa-rotate"></i> Rafraichir</button>
+
+  <div class="board-switch">
+    <i class="fas fa-table-columns"></i>
+    <select class="filter-select" id="projectBoardSelect">
+      <option value="default">Board principal</option>
+    </select>
+  </div>
 
   <div class="view-switch">
     <button class="btn btn-secondary btn-sm active" type="button" id="projectViewKanbanBtn"><i class="fas fa-table-columns"></i> Kanban</button>
@@ -156,16 +187,23 @@
             <div class="col-6">
               <div class="form-group">
                 <label class="form-label">Client</label>
-                <div class="select-search-box">
-                  <i class="fas fa-building"></i>
-                  <input type="text" class="select-search-input" id="taskClientSearch" placeholder="Rechercher client...">
-                </div>
-                <select class="form-control" id="taskClientId" name="client_id">
-                  <option value="">Aucun</option>
-                  @foreach($clients as $client)
-                    <option value="{{ $client->id }}">{{ $client->company_name }}</option>
-                  @endforeach
-                </select>
+                @if($clientsInstalled)
+                  <div class="select-search-box">
+                    <i class="fas fa-building"></i>
+                    <input type="text" class="select-search-input" id="taskClientSearch" placeholder="Rechercher client...">
+                  </div>
+                  <select class="form-control" id="taskClientId" name="client_id">
+                    <option value="">Aucun</option>
+                    @foreach($clients as $client)
+                      <option value="{{ $client->id }}">{{ $client->company_name }}</option>
+                    @endforeach
+                  </select>
+                @else
+                  <div class="integration-inline-note">
+                    Module Clients non installe.
+                    <a href="{{ $clientsTargetUrl }}">Installer maintenant</a>
+                  </div>
+                @endif
               </div>
             </div>
           </div>
@@ -196,8 +234,8 @@
           <div class="row">
             <div class="col-6">
               <div class="form-group">
-                <label class="form-label">Debut</label>
-                <input type="date" class="form-control" id="taskStartDate" name="start_date">
+                <label class="form-label">Debut <span class="required">*</span></label>
+                <input type="date" class="form-control" id="taskStartDate" name="start_date" required>
               </div>
             </div>
             <div class="col-6">
@@ -221,6 +259,24 @@
                 <input type="number" class="form-control" id="taskSpent" name="spent_hours" min="0" step="0.25">
               </div>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Google Calendar</label>
+            @if($googleCalendarInstalled)
+              <label class="calendar-sync-check" for="taskSyncGoogleCalendar">
+                <input type="checkbox" id="taskSyncGoogleCalendar" name="sync_google_calendar" value="1">
+                <span>
+                  Inclure cette tache dans Google Calendar
+                  <small>Lors de l'enregistrement, la tache est planifiee automatiquement.</small>
+                </span>
+              </label>
+            @else
+              <div class="integration-inline-note">
+                Google Calendar non installe.
+                <a href="{{ $googleCalendarTargetUrl }}">Installer maintenant</a>
+              </div>
+            @endif
           </div>
 
           <div class="form-group">
@@ -285,6 +341,7 @@
     </div>
 
     <div class="task-drawer-footer">
+      <button class="btn btn-secondary" type="button" id="taskScheduleBtn" data-loading-text="Planification..."><i class="fas fa-calendar-plus"></i> Planifier tache</button>
       <button class="btn btn-secondary" type="button" data-task-drawer-close>Fermer</button>
       <button class="btn btn-primary" type="button" id="taskSaveBtn" data-loading-text="Enregistrement..."><i class="fas fa-check"></i> Enregistrer</button>
     </div>
@@ -374,8 +431,8 @@
 
           <div class="col-3">
             <div class="form-group">
-              <label class="form-label">Debut</label>
-              <input type="date" class="form-control" id="taskStartDate" name="start_date">
+              <label class="form-label">Debut <span class="required">*</span></label>
+              <input type="date" class="form-control" id="taskStartDate" name="start_date" required>
             </div>
           </div>
 
@@ -403,16 +460,23 @@
           <div class="col-6">
             <div class="form-group">
               <label class="form-label">Client</label>
-              <div class="select-search-box">
-                <i class="fas fa-building"></i>
-                <input type="text" class="select-search-input" id="taskClientSearch" placeholder="Rechercher client...">
-              </div>
-              <select class="form-control" id="taskClientId" name="client_id">
-                <option value="">Aucun</option>
-                @foreach($clients as $client)
-                  <option value="{{ $client->id }}">{{ $client->company_name }}</option>
-                @endforeach
-              </select>
+              @if($clientsInstalled)
+                <div class="select-search-box">
+                  <i class="fas fa-building"></i>
+                  <input type="text" class="select-search-input" id="taskClientSearch" placeholder="Rechercher client...">
+                </div>
+                <select class="form-control" id="taskClientId" name="client_id">
+                  <option value="">Aucun</option>
+                  @foreach($clients as $client)
+                    <option value="{{ $client->id }}">{{ $client->company_name }}</option>
+                  @endforeach
+                </select>
+              @else
+                <div class="integration-inline-note">
+                  Module Clients non installe.
+                  <a href="{{ $clientsTargetUrl }}">Installer maintenant</a>
+                </div>
+              @endif
             </div>
           </div>
 
@@ -498,6 +562,7 @@
     </div>
   </div>
 </div>
+
 @endsection
 
 @push('scripts')
@@ -505,12 +570,20 @@
 window.PROJECTS_SHOW_BOOTSTRAP = {
   projectId: {{ (int) $project->id }},
   taskStatuses: @json($taskStatuses),
+  clientsInstalled: @json((bool) $clientsInstalled),
+  clientsTargetUrl: @json($clientsTargetUrl),
+  googleCalendarInstalled: @json((bool) $googleCalendarInstalled),
+  googleCalendarTargetUrl: @json($googleCalendarTargetUrl),
 };
 
 window.PROJECTS_ROUTES = {
   base: '{{ url('/extensions/projects') }}',
+  scheduleProject: '{{ route('projects.calendar.schedule-project', $project) }}',
+  scheduleTaskBase: '{{ url('/extensions/projects/' . $project->id . '/tasks') }}',
+  boardsData: '{{ route('projects.boards.data', $project) }}',
 };
 
 window.PROJECTS_USERS = @json($users->values()->map(fn($u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email]));
 </script>
 @endpush
+

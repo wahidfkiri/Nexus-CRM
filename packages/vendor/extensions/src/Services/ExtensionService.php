@@ -170,6 +170,20 @@ class ExtensionService
                 'is_verified' => true,
                 'sort_order' => 80,
             ],
+            [
+                'slug' => 'google-meet',
+                'name' => 'Google Meet',
+                'tagline' => 'Planifiez et gerez vos reunions video',
+                'description' => 'Connexion Google Meet OAuth, creation de liens Meet, synchronisation et gestion complete des reunions.',
+                'category' => 'communication',
+                'icon' => 'fa-video',
+                'icon_bg_color' => '#34a853',
+                'pricing_type' => 'free',
+                'status' => 'active',
+                'is_featured' => true,
+                'is_verified' => true,
+                'sort_order' => 85,
+            ],
         ];
 
         foreach ($defaults as $entry) {

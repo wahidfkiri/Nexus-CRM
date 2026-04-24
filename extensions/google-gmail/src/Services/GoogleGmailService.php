@@ -715,9 +715,20 @@ class GoogleGmailService
         }
 
         $binary = $this->decodeBase64Url((string) $body->getData());
+        $metaFileName = (string) ($attachmentMeta['filename'] ?? '');
+        $metaMime = (string) ($attachmentMeta['mime_type'] ?? '');
+        $detectedMime = $this->guessMimeFromBinary($binary);
+        $mime = $this->normalizeMimeType($metaMime !== '' ? $metaMime : ($detectedMime ?: 'application/octet-stream'));
 
-        $fileName = $attachmentMeta['filename'] ?? ('attachment-' . $attId);
-        $mime = $attachmentMeta['mime_type'] ?? 'application/octet-stream';
+        $fileName = $this->sanitizeAttachmentFilename($metaFileName);
+        if ($fileName === '') {
+            $ext = $this->extensionFromMime($mime);
+            $shortId = substr(preg_replace('/[^a-zA-Z0-9]+/', '', $attId), 0, 12);
+            if ($shortId === '') {
+                $shortId = substr(md5($attId), 0, 8);
+            }
+            $fileName = 'piece-jointe-' . $shortId . ($ext !== '' ? '.' . $ext : '');
+        }
 
         $this->log($tenantId, 'download_attachment', $msgId, (string) ($message['thread_id'] ?? null), [
             'attachment_id' => $attId,
@@ -1438,6 +1449,83 @@ class GoogleGmailService
         $decoded = base64_decode($value, true);
 
         return $decoded === false ? '' : $decoded;
+    }
+
+    private function guessMimeFromBinary(string $binary): ?string
+    {
+        if ($binary === '') {
+            return null;
+        }
+
+        if (!function_exists('finfo_open')) {
+            return null;
+        }
+
+        $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+        if (!$finfo) {
+            return null;
+        }
+
+        $mime = @finfo_buffer($finfo, $binary) ?: null;
+        @finfo_close($finfo);
+
+        if (!is_string($mime) || trim($mime) === '') {
+            return null;
+        }
+
+        return $this->normalizeMimeType($mime);
+    }
+
+    private function normalizeMimeType(string $mime): string
+    {
+        $value = strtolower(trim($mime));
+        if ($value === '') {
+            return 'application/octet-stream';
+        }
+
+        if (str_contains($value, ';')) {
+            $value = trim((string) explode(';', $value)[0]);
+        }
+
+        return $value !== '' ? $value : 'application/octet-stream';
+    }
+
+    private function sanitizeAttachmentFilename(string $fileName): string
+    {
+        $value = trim($fileName);
+        if ($value === '') {
+            return '';
+        }
+
+        $value = str_replace(["\r", "\n", "\0"], '', $value);
+        $value = str_replace(['\\', '/'], '-', $value);
+        $value = trim($value, " .\t\n\r\0\x0B");
+
+        return $value;
+    }
+
+    private function extensionFromMime(string $mime): string
+    {
+        $map = [
+            'application/pdf' => 'pdf',
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            'image/svg+xml' => 'svg',
+            'text/plain' => 'txt',
+            'text/html' => 'html',
+            'application/json' => 'json',
+            'audio/mpeg' => 'mp3',
+            'audio/wav' => 'wav',
+            'video/mp4' => 'mp4',
+            'application/zip' => 'zip',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
+        ];
+
+        return $map[$this->normalizeMimeType($mime)] ?? '';
     }
 
     private function getValidToken(int $tenantId): GoogleGmailToken

@@ -18,7 +18,11 @@
     .global-search-group{padding:6px 8px 4px;font-size:11px;color:var(--c-ink-40);text-transform:uppercase;letter-spacing:.04em;font-weight:700}
     .global-search-item{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;text-decoration:none;color:var(--c-ink)}
     .global-search-item:hover{background:var(--c-accent-xl)}
+    .global-search-item.is-active{background:var(--c-accent-xl);outline:1px solid var(--c-accent-lt)}
     .global-search-item small{display:block;color:var(--c-ink-40);font-size:12px}
+    .global-search-meta{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .global-search-badge{font-size:10px;padding:2px 7px;border-radius:999px;background:var(--c-accent-xl);color:var(--c-accent);font-weight:700;white-space:nowrap}
+    .global-search-empty,.global-search-loading{padding:12px 10px;color:var(--c-ink-50);font-size:13px}
     .apps-drawer{height:100vh;max-height:100vh;border-radius:0;max-width:420px;margin-left:auto}
     .apps-drawer-list{display:flex;flex-direction:column;gap:10px}
     .apps-drawer-category{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--c-ink-40);font-weight:700;padding:8px 2px 0}
@@ -88,6 +92,27 @@
       font-size:11px;
     }
     .sidebar-market-link .nav-badge{background:rgba(37,99,235,.32);color:#dbeafe}
+    .sidebar-brand-logo{
+      width:42px;
+      height:42px;
+      border-radius:10px;
+      object-fit:contain;
+      background:#fff;
+      padding:4px;
+      box-shadow:0 6px 18px rgba(2,6,23,.28);
+      flex:0 0 auto;
+    }
+    .sidebar-brand-fallback{
+      width:42px;
+      height:42px;
+      border-radius:10px;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(255,255,255,.1);
+      color:#fff;
+      flex:0 0 auto;
+    }
 
     .ui-tooltip{
       position:fixed;
@@ -170,7 +195,15 @@
 <div class="crm-layout">
   <aside class="crm-sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <div class="sidebar-brand-icon"><i class="fas fa-layer-group"></i></div>
+      <img
+        src="{{ asset('logo.png') }}"
+        alt="{{ config('app.name', 'CRM') }} Logo"
+        class="sidebar-brand-logo"
+        loading="eager"
+        decoding="async"
+        onerror="this.style.display='none'; var fb=this.nextElementSibling; if(fb){fb.style.display='inline-flex';}"
+      >
+      <div class="sidebar-brand-fallback"><i class="fas fa-layer-group"></i></div>
       <div>
         <div class="sidebar-brand-name">Nexiste CRM</div>
         <div class="sidebar-brand-tag">SaaS Platform</div>
@@ -190,7 +223,7 @@
 
       <div class="sidebar-nav-section">Applications</div>
       <a href="{{ route('marketplace.index') }}" class="sidebar-market-link {{ request()->routeIs('marketplace.*') ? 'active' : '' }}" data-tooltip="Marketplace: installer de nouvelles applications">
-        <i class="fa fa-cubes"></i> Marketplace <span class="nav-badge">Store</span>
+        <i class="fa fa-store"></i> Marketplace <span class="nav-badge">Store</span>
       </a>
       @php
         $appRoutePatterns = [
@@ -205,6 +238,7 @@
           'google-sheets' => 'google-sheets.*',
           'google-docx' => 'google-docx.*',
           'google-gmail' => 'google-gmail.*',
+          'google-meet' => 'google-meet.*',
         ];
       @endphp
       @if(($layoutInstalledAppsByCategory ?? collect())->count())
@@ -264,7 +298,7 @@
 
       <div class="global-search-wrap">
         <i class="fas fa-search"></i>
-        <input id="globalSearchInput" class="form-control" type="text" placeholder="Recherche globale: clients, factures, articles, commandes..." autocomplete="off">
+        <input id="globalSearchInput" class="form-control" type="text" placeholder="Recherche globale: clients, users, factures, devis, projets, notion, apps Google..." autocomplete="off">
         <div id="globalSearchSuggestions" class="global-search-suggest"></div>
       </div>
 
@@ -372,88 +406,368 @@
 <script src="{{ asset('vendor/client/js/secure-form.js') }}"></script>
 <script src="{{ asset('vendor/invoice/js/invoice.js') }}"></script>
 <script src="{{ asset('vendor/stock/js/stock.js') }}"></script>
+@php
+  $globalSearchInstalledAppsMeta = ($layoutInstalledApps ?? collect())
+    ->map(function ($app) {
+      return [
+        'slug' => (string) ($app->slug ?? ''),
+        'name' => (string) ($app->name ?? ''),
+        'icon' => (string) ($app->icon ?? 'fa-puzzle-piece'),
+        'url' => (string) ($app->url ?? ''),
+      ];
+    })
+    ->values()
+    ->all();
+
+  $globalSearchQuickLinks = array_values(array_filter([
+    ['label' => 'Tableau de bord', 'sub' => 'Vue generale', 'icon' => 'fa-home', 'url' => url('/dashboard'), 'keywords' => 'dashboard accueil principal'],
+    Route::has('applications') ? ['label' => 'Applications', 'sub' => 'Mes applications CRM', 'icon' => 'fa-th-large', 'url' => route('applications'), 'keywords' => 'apps applications modules'] : null,
+    Route::has('marketplace.index') ? ['label' => 'Marketplace', 'sub' => 'Installer de nouvelles applications', 'icon' => 'fa-store', 'url' => route('marketplace.index'), 'keywords' => 'marketplace store installer'] : null,
+    Route::has('settings.global') ? ['label' => 'Parametres globaux', 'sub' => 'Configuration generale', 'icon' => 'fa-sliders', 'url' => route('settings.global'), 'keywords' => 'config parametres reglage'] : null,
+  ]));
+@endphp
 <script>
 (function () {
   const layoutInstalledApps = @json(($layoutInstalledApps ?? collect())->pluck('slug')->values()->all());
+  const layoutInstalledAppsMeta = @json($globalSearchInstalledAppsMeta);
+  const globalQuickLinks = @json($globalSearchQuickLinks);
 
   function initGlobalSearch() {
     const input = document.getElementById('globalSearchInput');
     const box = document.getElementById('globalSearchSuggestions');
     if (!input || !box || typeof Http === 'undefined') return;
-    const hasClients = layoutInstalledApps.includes('clients');
-    const hasStock = layoutInstalledApps.includes('stock');
-    const hasInvoice = layoutInstalledApps.includes('invoice');
+    const hasApp = (...slugs) => slugs.some((slug) => layoutInstalledApps.includes(slug));
+    const hasClients = hasApp('clients');
+    const hasStock = hasApp('stock');
+    const hasInvoice = hasApp('invoice');
+    const hasProjects = hasApp('projects');
+    const hasNotion = hasApp('notion-workspace');
+    const hasGoogleDrive = hasApp('google-drive', 'gdrive');
+    const hasGoogleSheets = hasApp('google-sheets');
+    const hasGoogleDocx = hasApp('google-docx');
+    const hasGoogleCalendar = hasApp('google-calendar');
+    const hasGoogleGmail = hasApp('google-gmail');
+    const hasGoogleMeet = hasApp('google-meet');
 
     let timer = null;
-    const close = () => { box.style.display = 'none'; box.innerHTML = ''; };
+    let requestSeq = 0;
+    let activeIndex = -1;
+    const close = () => {
+      box.style.display = 'none';
+      box.innerHTML = '';
+      activeIndex = -1;
+    };
 
     const esc = (v) => {
       const d = document.createElement('div');
       d.textContent = v || '';
       return d.innerHTML;
     };
+    const normalize = (v) => String(v || '').toLowerCase();
+    const hasQuery = (haystack, needle) => normalize(haystack).includes(normalize(needle));
+    const ensureUrl = (url) => {
+      const raw = String(url || '').trim();
+      if (!raw) return '#';
+      if (raw.startsWith('/')) return raw;
+      if (/^https?:\/\//i.test(raw)) return raw;
+      return '#';
+    };
+    const safeGet = async (url, params = {}) => {
+      try {
+        const res = await Http.get(url, params);
+        if (!res || !res.ok) return { ok: false, data: {} };
+        return res;
+      } catch (_) {
+        return { ok: false, data: {} };
+      }
+    };
+    const dedupeRows = (rows) => {
+      const seen = new Set();
+      return rows.filter((row) => {
+        const key = `${row.url || ''}|${row.label || ''}|${row.sub || ''}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    };
 
     const renderGroup = (title, rows) => {
       if (!rows.length) return '';
       const links = rows.map((r) => `
-        <a class="global-search-item" href="${r.url}">
-          <i class="fas ${r.icon || 'fa-link'}" style="color:var(--c-accent);width:16px;"></i>
-          <div><div>${esc(r.label)}</div><small>${esc(r.sub || '')}</small></div>
+        <a class="global-search-item" href="${esc(ensureUrl(r.url))}"${r.external ? ' target="_blank" rel="noopener"' : ''}>
+          <i class="fa ${r.icon || 'fa-link'}" style="color:${esc(r.color || 'var(--c-accent)')};width:16px;"></i>
+          <div style="min-width:0;flex:1;">
+            <div class="global-search-meta">
+              <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.label)}</span>
+              ${r.badge ? `<span class="global-search-badge">${esc(r.badge)}</span>` : ''}
+            </div>
+            <small>${esc(r.sub || '')}</small>
+          </div>
         </a>
       `).join('');
       return `<div class="global-search-group">${esc(title)}</div>${links}`;
     };
+    const renderLoading = () => {
+      box.innerHTML = '<div class="global-search-loading">Recherche en cours...</div>';
+      box.style.display = 'block';
+    };
+    const renderNoResults = () => {
+      box.innerHTML = '<div class="global-search-empty">Aucun resultat. Essayez un autre mot-cle.</div>';
+      box.style.display = 'block';
+    };
+    const updateKeyboardActive = () => {
+      const items = [...box.querySelectorAll('.global-search-item')];
+      items.forEach((item, idx) => item.classList.toggle('is-active', idx === activeIndex));
+      if (activeIndex >= 0 && items[activeIndex]) {
+        items[activeIndex].scrollIntoView({ block: 'nearest' });
+      }
+    };
+    const collectShortcuts = (q) => {
+      const rows = (globalQuickLinks || []).filter((row) => {
+        if (!q) return true;
+        return hasQuery(row.label, q) || hasQuery(row.sub, q) || hasQuery(row.keywords, q);
+      }).map((row) => ({
+        label: row.label,
+        sub: row.sub,
+        url: row.url,
+        icon: row.icon || 'fa-link',
+        badge: 'Raccourci',
+      }));
+      return rows.slice(0, 6);
+    };
+    const collectApps = (q) => {
+      const rows = (layoutInstalledAppsMeta || []).filter((app) => {
+        if (!app?.url) return false;
+        if (!q) return true;
+        return hasQuery(app.name, q) || hasQuery(app.slug, q);
+      }).map((app) => ({
+        label: app.name,
+        sub: `Application (${app.slug})`,
+        url: app.url,
+        icon: app.icon || 'fa-puzzle-piece',
+        badge: 'App',
+      }));
+      return rows.slice(0, 8);
+    };
+    const renderGroups = (groups) => {
+      const html = groups
+        .filter((group) => group.rows && group.rows.length > 0)
+        .map((group) => renderGroup(group.title, dedupeRows(group.rows)))
+        .join('');
+      if (!html.trim()) return renderNoResults();
+      box.innerHTML = html;
+      box.style.display = 'block';
+      activeIndex = -1;
+    };
+    const quickMode = (q = '') => {
+      renderGroups([
+        { title: 'Raccourcis', rows: collectShortcuts(q) },
+        { title: 'Applications', rows: collectApps(q) },
+      ]);
+    };
+    const safeNum = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
 
+    const runSearch = async (rawQuery) => {
+      const q = String(rawQuery || '').trim();
+      if (q.length < 2) {
+        quickMode(q);
+        return;
+      }
+
+      const currentReq = ++requestSeq;
+      const allowDeep = q.length >= 3;
+      renderLoading();
+
+      const [
+        clients,
+        articles,
+        orders,
+        invoices,
+        quotes,
+        users,
+        projects,
+        notionPages,
+        driveFiles,
+        spreadsheets,
+        documents,
+        calendarEvents,
+        gmailMessages,
+        meetEvents,
+      ] = await Promise.all([
+        hasClients ? safeGet('/clients/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
+        hasStock ? safeGet('/stock/articles/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
+        hasStock ? safeGet('/stock/orders/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
+        hasInvoice ? safeGet('/invoices/data/table', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        hasInvoice ? safeGet('/invoices/quotes/data/table', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        safeGet('/users/data/table', { search: q, per_page: 5 }),
+        hasProjects ? safeGet('/extensions/projects/data/list', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        hasNotion ? safeGet('/extensions/notion-workspace/data/tree', { search: q, scope: 'all' }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleDrive && allowDeep ? safeGet('/extensions/google-drive/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleSheets && allowDeep ? safeGet('/extensions/google-sheets/data/spreadsheets', { search: q }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleDocx && allowDeep ? safeGet('/extensions/google-docx/data/documents', { search: q }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleCalendar && allowDeep ? safeGet('/extensions/google-calendar/data/events', { search: q, per_page: 5, include_holidays: 1 }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleGmail && allowDeep ? safeGet('/extensions/google-gmail/data/messages', { q, max_results: 5, label_id: 'ALL' }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleMeet && allowDeep ? safeGet('/extensions/google-meet/data/meetings', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+      ]);
+
+      if (currentReq !== requestSeq) return;
+
+      const clientRows = (clients?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.company_name || 'Client',
+        sub: row.email || row.phone || '',
+        url: `/clients/${row.id}`,
+        icon: 'fa-users',
+      }));
+      const articleRows = (articles?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.name || 'Article',
+        sub: `SKU: ${row.sku || '-'} | Stock: ${safeNum(row.stock_quantity)}`,
+        url: `/stock/articles/${row.id}`,
+        icon: 'fa-box',
+      }));
+      const orderRows = (orders?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.number || `Commande #${row.id}`,
+        sub: `Statut: ${row.status || '-'}`,
+        url: `/stock/orders/${row.id}`,
+        icon: 'fa-clipboard-list',
+      }));
+      const invoiceRows = (invoices?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.number || `Facture #${row.id}`,
+        sub: row.client?.company_name || row.reference || '',
+        url: `/invoices/${row.id}`,
+        icon: 'fa-file-invoice',
+      }));
+      const quoteRows = (quotes?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.number || `Devis #${row.id}`,
+        sub: row.client?.company_name || row.reference || row.status || '',
+        url: `/invoices/quotes/${row.id}`,
+        icon: 'fa-file-signature',
+      }));
+      const userRows = (users?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.name || row.email || `Utilisateur #${row.id}`,
+        sub: [row.email, row.role_in_tenant].filter(Boolean).join(' | '),
+        url: `/users/${row.id}`,
+        icon: 'fa-user',
+      }));
+      const projectRows = (projects?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.name || `Projet #${row.id}`,
+        sub: [row.client_name, row.status, row.priority].filter(Boolean).join(' | '),
+        url: `/extensions/projects/${row.id}`,
+        icon: 'fa-diagram-project',
+      }));
+      const notionRows = (notionPages?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.title || `Page #${row.id}`,
+        sub: [row.client_name, row.owner_name].filter(Boolean).join(' | '),
+        url: '/extensions/notion-workspace',
+        icon: row.icon || 'fa-book-open',
+        badge: 'Notion',
+      }));
+      const driveRows = (driveFiles?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.name || 'Fichier Google Drive',
+        sub: [row.mime_type, row.size_formatted].filter(Boolean).join(' | '),
+        url: row.web_view_link || '/extensions/google-drive',
+        icon: row.icon || 'fa-google-drive',
+        color: row.color || '#4285F4',
+        external: Boolean(row.web_view_link),
+      }));
+      const sheetsRows = (spreadsheets?.data?.data?.spreadsheets || []).slice(0, 5).map((row) => ({
+        label: row.title || 'Google Sheet',
+        sub: row.spreadsheet_id || '',
+        url: row.spreadsheet_url || '/extensions/google-sheets',
+        icon: 'fa-file-excel',
+        color: '#0f9d58',
+        external: Boolean(row.spreadsheet_url),
+      }));
+      const docsRows = (documents?.data?.data?.documents || []).slice(0, 5).map((row) => ({
+        label: row.title || 'Google Doc',
+        sub: row.document_id || '',
+        url: row.document_url || '/extensions/google-docx',
+        icon: 'fa-file-word',
+        color: '#1a73e8',
+        external: Boolean(row.document_url),
+      }));
+      const calendarRows = (calendarEvents?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.summary || 'Evenement',
+        sub: [row.start_display, row.location].filter(Boolean).join(' | '),
+        url: `/extensions/google-calendar?event_id=${encodeURIComponent(row.event_id || '')}`,
+        icon: 'fa-calendar-days',
+        color: '#4285F4',
+        badge: 'Calendrier',
+      }));
+      const gmailRows = (gmailMessages?.data?.data?.messages || []).slice(0, 5).map((row) => ({
+        label: row.subject || '(Sans objet)',
+        sub: [row.from, row.snippet].filter(Boolean).join(' | '),
+        url: `/extensions/google-gmail?message_id=${encodeURIComponent(row.message_id || '')}`,
+        icon: 'fa-envelope',
+        color: '#ea4335',
+        badge: row.is_read ? 'Lu' : 'Non lu',
+      }));
+      const meetRows = (meetEvents?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.summary || 'Reunion Meet',
+        sub: [row.start_display, row.organizer_email].filter(Boolean).join(' | '),
+        url: `/extensions/google-meet?event_id=${encodeURIComponent(row.event_id || '')}`,
+        icon: 'fa-video',
+        color: '#34a853',
+        badge: 'Meet',
+      }));
+
+      renderGroups([
+        { title: 'Raccourcis', rows: collectShortcuts(q) },
+        { title: 'Applications', rows: collectApps(q) },
+        { title: 'Clients', rows: clientRows },
+        { title: 'Utilisateurs', rows: userRows },
+        { title: 'Articles', rows: articleRows },
+        { title: 'Commandes', rows: orderRows },
+        { title: 'Factures', rows: invoiceRows },
+        { title: 'Devis', rows: quoteRows },
+        { title: 'Projets', rows: projectRows },
+        { title: 'Notion', rows: notionRows },
+        { title: 'Google Drive', rows: driveRows },
+        { title: 'Google Sheets', rows: sheetsRows },
+        { title: 'Google Docs', rows: docsRows },
+        { title: 'Google Calendar', rows: calendarRows },
+        { title: 'Google Gmail', rows: gmailRows },
+        { title: 'Google Meet', rows: meetRows },
+      ]);
+    };
+
+    input.addEventListener('focus', () => {
+      if (!input.value.trim()) quickMode('');
+    });
     input.addEventListener('input', () => {
       clearTimeout(timer);
-      timer = setTimeout(async () => {
-        const q = input.value.trim();
-        if (q.length < 2) return close();
+      timer = setTimeout(() => {
+        runSearch(input.value);
+      }, 280);
+    });
+    input.addEventListener('keydown', (event) => {
+      const items = [...box.querySelectorAll('.global-search-item')];
+      if (!items.length) return;
 
-        const [clients, articles, orders, invoices] = await Promise.all([
-          hasClients ? Http.get('/clients/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
-          hasStock ? Http.get('/stock/articles/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
-          hasStock ? Http.get('/stock/orders/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
-          hasInvoice ? Http.get('/invoices/data/table', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} })
-        ]);
-
-        const clientRows = (clients.ok ? (clients.data.data || []) : []).slice(0, 5).map((c) => ({
-          label: c.company_name,
-          sub: c.email || c.phone || '',
-          url: `/clients/${c.id}`,
-          icon: 'fa-users'
-        }));
-
-        const articleRows = (articles.ok ? (articles.data.data || []) : []).slice(0, 5).map((a) => ({
-          label: a.name,
-          sub: `SKU: ${a.sku || '-'} | Stock: ${a.stock_quantity ?? 0}`,
-          url: `/stock/articles/${a.id}`,
-          icon: 'fa-box'
-        }));
-
-        const orderRows = (orders.ok ? (orders.data.data || []) : []).slice(0, 5).map((o) => ({
-          label: o.number,
-          sub: `Statut: ${o.status || '-'}`,
-          url: `/stock/orders/${o.id}`,
-          icon: 'fa-clipboard-list'
-        }));
-
-        const invoiceRows = (invoices.ok ? (invoices.data.data || []) : []).slice(0, 5).map((i) => ({
-          label: i.number,
-          sub: i.client?.company_name || i.reference || '',
-          url: `/invoices/${i.id}`,
-          icon: 'fa-file-invoice'
-        }));
-
-        box.innerHTML =
-          renderGroup('Clients', clientRows) +
-          renderGroup('Articles', articleRows) +
-          renderGroup('Commandes', orderRows) +
-          renderGroup('Factures', invoiceRows);
-
-        if (!box.innerHTML.trim()) box.innerHTML = '<div class="global-search-group">Aucun résultat</div>';
-        box.style.display = 'block';
-      }, 260);
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        activeIndex = Math.min(items.length - 1, activeIndex + 1);
+        updateKeyboardActive();
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        activeIndex = Math.max(0, activeIndex - 1);
+        updateKeyboardActive();
+      } else if (event.key === 'Enter' && activeIndex >= 0) {
+        event.preventDefault();
+        const target = items[activeIndex];
+        if (target) target.click();
+      } else if (event.key === 'Escape') {
+        close();
+      }
+    });
+    box.addEventListener('mousemove', (event) => {
+      const item = event.target.closest('.global-search-item');
+      if (!item) return;
+      const items = [...box.querySelectorAll('.global-search-item')];
+      activeIndex = items.indexOf(item);
+      updateKeyboardActive();
     });
 
     document.addEventListener('click', (e) => {

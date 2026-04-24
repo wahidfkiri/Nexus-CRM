@@ -19,16 +19,22 @@ Route::middleware(['web', 'auth', 'tenant', 'extension.active:projects'])
         Route::put('/{project}/members', [ProjectController::class, 'syncMembers'])->whereNumber('project')->name('members.sync');
 
         Route::get('/{project}/tasks/data', [ProjectController::class, 'tasksData'])->whereNumber('project')->name('tasks.data');
+        Route::get('/{project}/boards', [ProjectController::class, 'boardsData'])->whereNumber('project')->name('boards.data');
         Route::post('/{project}/tasks', [ProjectController::class, 'storeTask'])->whereNumber('project')->name('tasks.store');
         Route::put('/{project}/tasks/{task}', [ProjectController::class, 'updateTask'])->whereNumber('project')->whereNumber('task')->name('tasks.update');
         Route::patch('/{project}/tasks/{task}/move', [ProjectController::class, 'moveTask'])->whereNumber('project')->whereNumber('task')->name('tasks.move');
         Route::delete('/{project}/tasks/{task}', [ProjectController::class, 'destroyTask'])->whereNumber('project')->whereNumber('task')->name('tasks.destroy');
+        Route::post('/{project}/calendar/schedule', [ProjectController::class, 'scheduleProjectCalendar'])->whereNumber('project')->name('calendar.schedule-project');
+        Route::post('/{project}/tasks/{task}/calendar/schedule', [ProjectController::class, 'scheduleTaskCalendar'])->whereNumber('project')->whereNumber('task')->name('calendar.schedule-task');
 
         Route::get('/{project}/tasks/{task}/comments', [ProjectController::class, 'commentsData'])->whereNumber('project')->whereNumber('task')->name('tasks.comments.data');
         Route::post('/{project}/tasks/{task}/comments', [ProjectController::class, 'addComment'])->whereNumber('project')->whereNumber('task')->name('tasks.comments.store');
+        Route::put('/{project}/tasks/{task}/comments/{comment}', [ProjectController::class, 'updateComment'])->whereNumber('project')->whereNumber('task')->whereNumber('comment')->name('tasks.comments.update');
+        Route::delete('/{project}/tasks/{task}/comments/{comment}', [ProjectController::class, 'destroyComment'])->whereNumber('project')->whereNumber('task')->whereNumber('comment')->name('tasks.comments.destroy');
 
         Route::post('/{project}/tasks/{task}/checklist', [ProjectController::class, 'checklistStore'])->whereNumber('project')->whereNumber('task')->name('tasks.checklist.store');
         Route::get('/{project}/tasks/{task}/checklist', [ProjectController::class, 'checklistData'])->whereNumber('project')->whereNumber('task')->name('tasks.checklist.data');
+        Route::put('/{project}/tasks/{task}/checklist/{item}', [ProjectController::class, 'checklistUpdate'])->whereNumber('project')->whereNumber('task')->whereNumber('item')->name('tasks.checklist.update');
         Route::patch('/{project}/tasks/{task}/checklist/{item}/toggle', [ProjectController::class, 'checklistToggle'])->whereNumber('project')->whereNumber('task')->whereNumber('item')->name('tasks.checklist.toggle');
         Route::delete('/{project}/tasks/{task}/checklist/{item}', [ProjectController::class, 'checklistDestroy'])->whereNumber('project')->whereNumber('task')->whereNumber('item')->name('tasks.checklist.destroy');
 

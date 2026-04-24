@@ -199,6 +199,9 @@ class MarketplaceController extends Controller
         if ($extension->slug === 'google-gmail' && \Route::has('google-gmail.index')) {
             return redirect()->route('google-gmail.index');
         }
+        if ($extension->slug === 'google-meet' && \Route::has('google-meet.index')) {
+            return redirect()->route('google-meet.index');
+        }
 
         return view('extensions::extensions.settings', compact('extension', 'activation'));
     }

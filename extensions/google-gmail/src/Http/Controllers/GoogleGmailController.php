@@ -36,6 +36,7 @@ class GoogleGmailController extends Controller
             'connected' => (bool) $token,
             'token' => $token,
             'settings' => ($storageReady && $extensionActive) ? $this->service->getSettings($tenantId) : [],
+            'jsI18n' => $this->jsI18n(),
         ]);
     }
 
@@ -387,10 +388,14 @@ class GoogleGmailController extends Controller
             $this->ensureExtensionActivated($tenantId);
 
             $attachment = $this->service->downloadAttachment($tenantId, $messageId, $attachmentId);
+            $disposition = $request->boolean('inline') ? 'inline' : 'attachment';
+            $filename = str_replace('"', '', (string) $attachment['file_name']);
+            $filenameStar = rawurlencode($filename);
 
             return response($attachment['content'], 200, [
                 'Content-Type' => $attachment['mime'],
-                'Content-Disposition' => 'attachment; filename="' . str_replace('"', '', (string) $attachment['file_name']) . '"',
+                'Content-Disposition' => $disposition . '; filename="' . $filename . '"; filename*=UTF-8\'\'' . $filenameStar,
+                'X-Content-Type-Options' => 'nosniff',
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -463,5 +468,24 @@ class GoogleGmailController extends Controller
         if (!$this->isStorageReady()) {
             throw new RuntimeException('Les tables Google Gmail sont absentes. Executez: php artisan migrate');
         }
+    }
+
+    private function jsI18n(): array
+    {
+        return [
+            'preview' => __('google-gmail::messages.attachments.preview'),
+            'download' => __('google-gmail::messages.attachments.download'),
+            'preview_loading' => __('google-gmail::messages.attachments.preview_loading'),
+            'download_loading' => __('google-gmail::messages.attachments.download_loading'),
+            'download_error' => __('google-gmail::messages.errors.download_attachment'),
+            'preview_error' => __('google-gmail::messages.errors.preview_attachment'),
+            'preview_not_supported' => __('google-gmail::messages.attachments.preview_not_supported'),
+            'preview_file' => __('google-gmail::messages.attachments.preview_file'),
+            'open_link_error' => __('google-gmail::messages.errors.open_link'),
+            'error' => __('google-gmail::messages.common.error'),
+            'validation' => __('google-gmail::messages.common.validation'),
+            'attachment' => __('google-gmail::messages.attachments.attachment'),
+            'close' => __('google-gmail::messages.common.close'),
+        ];
     }
 }

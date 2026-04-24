@@ -211,6 +211,7 @@
 .ggm-attachment-item {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   border: 1px solid #dbeafe;
   background: #eff6ff;
@@ -223,6 +224,86 @@
 
 .ggm-attachment-item small {
   color: #334155;
+}
+
+.ggm-attachment-action {
+  border: 1px solid #bfdbfe;
+  background: #fff;
+  color: #1d4ed8;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ggm-attachment-action:hover {
+  background: #dbeafe;
+}
+
+.ggm-attachment-action.is-loading {
+  opacity: .85;
+  cursor: wait;
+}
+
+.ggm-attachment-link-fallback {
+  display: none;
+}
+
+.ggm-attachment-preview-body {
+  min-height: 420px;
+  max-height: 72vh;
+  overflow: auto;
+  border: 1px solid var(--c-ink-05);
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px;
+}
+
+.ggm-preview-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.ggm-preview-frame {
+  width: 100%;
+  min-height: 62vh;
+  border: 0;
+}
+
+.ggm-preview-media {
+  width: 100%;
+  max-width: 100%;
+}
+
+.ggm-preview-text {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 12.5px;
+  color: #1e293b;
+  line-height: 1.6;
+  font-family: var(--ff-mono, monospace);
+}
+
+.ggm-preview-unsupported {
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #475569;
+  text-align: center;
+}
+
+.ggm-preview-unsupported i {
+  font-size: 30px;
+  color: #94a3b8;
 }
 
 .ggm-message-body {

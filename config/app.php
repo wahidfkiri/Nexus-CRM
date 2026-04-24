@@ -200,6 +200,7 @@ return [
         NexusExtensions\GoogleSheets\GoogleSheetsServiceProvider::class,
         NexusExtensions\GoogleDocx\GoogleDocxServiceProvider::class,
         NexusExtensions\GoogleGmail\GoogleGmailServiceProvider::class,
+        NexusExtensions\GoogleMeet\GoogleMeetServiceProvider::class,
 
         /*
          * Application Service Providers...

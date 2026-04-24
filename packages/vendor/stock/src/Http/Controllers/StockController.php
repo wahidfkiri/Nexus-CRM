@@ -18,6 +18,8 @@ use Vendor\Stock\Models\Article;
 use Vendor\Stock\Models\Order;
 use Vendor\Stock\Models\Supplier;
 use Vendor\Stock\Services\StockService;
+use Vendor\Extensions\Models\Extension;
+use Vendor\Extensions\Models\TenantExtension;
 
 class StockController extends Controller
 {
@@ -30,8 +32,24 @@ class StockController extends Controller
 
     public function articlesIndex()
     {
+        $tenantId = (int) (auth()->user()->tenant_id ?? 0);
+
         return view('stock::articles.index', [
             'statuses' => config('stock.article_statuses', []),
+            'marketplaceSuggestions' => array_values(array_filter([
+                $this->makeMarketplaceSuggestion(
+                    $tenantId,
+                    'clients',
+                    'Clients',
+                    'Installez Clients pour rattacher vos articles et commandes a vos clients CRM.'
+                ),
+                $this->makeMarketplaceSuggestion(
+                    $tenantId,
+                    'invoice',
+                    'Facturation',
+                    'Installez Facturation pour transformer vos articles en devis et factures en quelques clics.'
+                ),
+            ])),
         ]);
     }
 
@@ -282,5 +300,35 @@ class StockController extends Controller
     public function ordersExportExcel()
     {
         return Excel::download(new OrdersExport(), 'commandes_' . date('Y-m-d') . '.xlsx');
+    }
+
+    private function makeMarketplaceSuggestion(int $tenantId, string $slug, string $fallbackName, string $description): ?array
+    {
+        if ($tenantId <= 0) {
+            return null;
+        }
+
+        $extension = Extension::query()->where('slug', $slug)->first();
+        if (!$extension) {
+            return null;
+        }
+
+        $isActive = TenantExtension::query()
+            ->where('tenant_id', $tenantId)
+            ->where('extension_id', $extension->id)
+            ->whereIn('status', ['active', 'trial'])
+            ->exists();
+
+        if ($isActive) {
+            return null;
+        }
+
+        return [
+            'slug' => $slug,
+            'name' => (string) ($extension->name ?: $fallbackName),
+            'description' => $description,
+            'url' => route('marketplace.show', ['slug' => $slug]),
+            'icon' => (string) ($extension->icon ?: 'fas fa-puzzle-piece'),
+        ];
     }
 }
