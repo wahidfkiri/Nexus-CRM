@@ -15,7 +15,10 @@ class CanManageUsersMiddleware
             return redirect()->route('login');
         }
 
-        if (!in_array($user->role_in_tenant, ['owner', 'admin'])) {
+        if (
+            !$user->hasTenantRole(['owner', 'admin'])
+            && !$user->hasTenantPermission(['users.read'])
+        ) {
             abort(403, 'Vous n\'avez pas les droits pour gérer les membres.');
         }
 

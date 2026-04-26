@@ -57,7 +57,30 @@ class AppServiceProvider extends ServiceProvider
                     'google-docx' => ['route' => 'google-docx.index', 'icon' => 'fa-file-word', 'icon_bg_color' => '#1a73e8'],
                     'google-gmail' => ['route' => 'google-gmail.index', 'icon' => 'fa-envelope-open-text', 'icon_bg_color' => '#ea4335'],
                     'google-meet' => ['route' => 'google-meet.index', 'icon' => 'fa-video', 'icon_bg_color' => '#34a853'],
+                    'slack' => ['route' => 'slack.index', 'icon' => 'fa-slack', 'icon_bg_color' => '#4A154B'],
+                    'chatbot' => ['route' => 'chatbot.index', 'icon' => 'fa-comments', 'icon_bg_color' => '#0ea5e9'],
                 ];
+
+                $normalizeFaClass = static function (?string $value, string $fallback = 'fa-puzzle-piece'): string {
+                    $raw = trim((string) ($value ?? ''));
+                    if ($raw === '') {
+                        $raw = trim($fallback);
+                    }
+
+                    $raw = preg_replace('/\s+/', ' ', $raw) ?: '';
+                    $hasGlyph = preg_match('/(^|\s)fa-[a-z0-9-]+(\s|$)/i', $raw) === 1;
+                    $hasFamily = preg_match('/(^|\s)(fa|fas|far|fal|fad|fab|fat|fa-solid|fa-regular|fa-light|fa-thin|fa-brands)(\s|$)/i', $raw) === 1;
+
+                    if (!$hasGlyph) {
+                        return 'fas fa-puzzle-piece';
+                    }
+
+                    if (!$hasFamily) {
+                        return 'fas ' . $raw;
+                    }
+
+                    return $raw;
+                };
 
                 $apps = TenantExtension::query()
                     ->where('tenant_id', $tenantId)
@@ -65,7 +88,7 @@ class AppServiceProvider extends ServiceProvider
                     ->with('extension')
                     ->get()
                     ->filter(fn ($activation) => $activation->extension !== null)
-                    ->map(function ($activation) use ($routeMap) {
+                    ->map(function ($activation) use ($routeMap, $normalizeFaClass) {
                         $extension = $activation->extension;
                         $slug = (string) $extension->slug;
                         $map = $routeMap[$slug] ?? null;
@@ -78,10 +101,7 @@ class AppServiceProvider extends ServiceProvider
                             $url = route('marketplace.show', $slug);
                         }
 
-                        $extIcon = (string) ($extension->icon ?? '');
-                        $icon = str_starts_with($extIcon, 'fa-')
-                            ? $extIcon
-                            : (string) ($map['icon'] ?? 'fa-puzzle-piece');
+                        $icon = $normalizeFaClass((string) ($extension->icon ?? ''), (string) ($map['icon'] ?? 'fa-puzzle-piece'));
                         $iconBgColor = (string) ($extension->icon_bg_color ?? ($map['icon_bg_color'] ?? '#334155'));
                         $categoryKey = (string) ($extension->category ?? 'other');
 
@@ -95,7 +115,7 @@ class AppServiceProvider extends ServiceProvider
                             'sort_order' => (int) ($extension->sort_order ?? 9999),
                             'category_key' => $categoryKey,
                             'category_label' => (string) ($extension->category_label ?? ucfirst($categoryKey)),
-                            'category_icon' => (string) ($extension->category_icon ?? 'fa-puzzle-piece'),
+                            'category_icon' => $normalizeFaClass((string) ($extension->category_icon ?? ''), 'fa-puzzle-piece'),
                             'category_color' => (string) ($extension->category_color ?? '#64748b'),
                         ];
                     })

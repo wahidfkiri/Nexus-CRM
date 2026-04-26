@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use NexusExtensions\GoogleDrive\Models\GoogleDriveFile;
 use NexusExtensions\GoogleDrive\Services\GoogleDriveService;
+use NexusExtensions\Projects\Events\ProjectCreated;
+use NexusExtensions\Projects\Events\ProjectTaskCreated;
 use NexusExtensions\Projects\Http\Requests\ProjectStoreRequest;
 use NexusExtensions\Projects\Http\Requests\ProjectTaskStoreRequest;
 use NexusExtensions\Projects\Http\Requests\ProjectTaskUpdateRequest;
@@ -30,6 +32,7 @@ use RuntimeException;
 use Vendor\Client\Models\Client;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
+use Vendor\Automation\Services\AutomationSuggestionPresenter;
 use Vendor\GoogleCalendar\Services\GoogleCalendarService;
 
 class ProjectController extends Controller
@@ -238,6 +241,16 @@ class ProjectController extends Controller
                 ? $this->syncProjectCalendarOptional($project, $calendarId)
                 : ['event' => null, 'warning' => null, 'action_url' => null];
 
+            event(new ProjectCreated(
+                $project->fresh(['client:id,company_name', 'owner:id,name,email']),
+                [
+                    'created_via' => $request->expectsJson() ? 'api' : 'web',
+                    'calendar_requested' => $syncGoogleCalendar,
+                    'calendar_synced' => !empty($calendarSync['event']),
+                    'calendar_warning' => $calendarSync['warning'],
+                ]
+            ));
+
             $message = $calendarSync['event']
                 ? 'Projet cree et planifie dans Google Calendar.'
                 : ($syncGoogleCalendar && $calendarSync['warning']
@@ -248,6 +261,12 @@ class ProjectController extends Controller
                 'success' => true,
                 'message' => $message,
                 'data' => $this->formatProject($project->fresh(['client:id,company_name', 'owner:id,name'])->loadCount(['tasks', 'members'])),
+                'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
+                    'project_created',
+                    $project::class,
+                    $project->getKey(),
+                    (int) $project->tenant_id
+                ),
                 'redirect' => route('projects.show', $project),
                 'calendar' => $calendarSync['event'],
                 'calendar_warning' => $calendarSync['warning'],
@@ -563,6 +582,16 @@ class ProjectController extends Controller
                 : ['event' => null, 'warning' => null, 'action_url' => null];
 
             $this->logActivity('task_created', 'Tache creee: ' . $task->title, $project, $task, ['status' => $task->status]);
+
+            event(new ProjectTaskCreated(
+                $project->fresh(['client:id,company_name', 'owner:id,name']),
+                $task->fresh(['assignee:id,name,email', 'creator:id,name', 'client:id,company_name']),
+                [
+                    'calendar_requested' => $syncGoogleCalendar,
+                    'calendar_synced' => !empty($calendarSync['event']),
+                    'calendar_warning' => $calendarSync['warning'],
+                ]
+            ));
 
             return response()->json([
                 'success' => true,
@@ -2038,3 +2067,5 @@ class ProjectController extends Controller
         return $taskFolderId;
     }
 }
+
+

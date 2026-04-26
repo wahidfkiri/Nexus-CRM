@@ -193,6 +193,7 @@ return [
         Vendor\User\UserServiceProvider::class,
         Vendor\Rbac\RbacServiceProvider::class,
         Vendor\Extensions\ExtensionsServiceProvider::class,
+        Vendor\Automation\AutomationServiceProvider::class,
         Vendor\GoogleCalendar\GoogleCalendarServiceProvider::class,
         NexusExtensions\Projects\ProjectsServiceProvider::class,
         NexusExtensions\NotionWorkspace\NotionWorkspaceServiceProvider::class,
@@ -201,6 +202,8 @@ return [
         NexusExtensions\GoogleDocx\GoogleDocxServiceProvider::class,
         NexusExtensions\GoogleGmail\GoogleGmailServiceProvider::class,
         NexusExtensions\GoogleMeet\GoogleMeetServiceProvider::class,
+        NexusExtensions\Slack\SlackServiceProvider::class,
+        NexusExtensions\Chatbot\ChatbotServiceProvider::class,
 
         /*
          * Application Service Providers...

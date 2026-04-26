@@ -5,56 +5,51 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Vendor\CrmCore\Models\Tenant;
+use Vendor\Rbac\Services\TenantRoleService;
 
 class PermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Permissions Clients
-        $permissions = [
-            'view_clients',
-            'create_clients',
-            'edit_clients',
-            'delete_clients',
-            'export_clients',
-            
-            // Permissions Invoices
-            'view_invoices',
-            'create_invoices',
-            'edit_invoices',
-            'delete_invoices',
-            
-            // Permissions Dashboard
-            'view_dashboard',
-            
-            // Permissions Settings
-            'view_settings',
-            'edit_settings',
-        ];
-
-        foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        foreach (config('rbac.permission_groups', []) as $groupKey => $groupDefinition) {
+            foreach (($groupDefinition['permissions'] ?? []) as $name => $label) {
+                Permission::query()->firstOrCreate(
+                    [
+                        'name' => $name,
+                        'guard_name' => 'web',
+                    ],
+                    [
+                        'tenant_id' => null,
+                        'label' => $label,
+                        'group' => $groupKey,
+                    ]
+                );
+            }
         }
 
-        // Créer les rôles
-        $superAdmin = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
-        $superAdmin->givePermissionTo(Permission::all());
+        Role::query()->firstOrCreate(
+            [
+                'tenant_id' => null,
+                'name' => 'super_admin',
+                'guard_name' => 'web',
+            ],
+            [
+                'label' => 'Super administrateur',
+                'description' => 'Accès global plateforme',
+                'color' => '#dc2626',
+                'is_system' => true,
+                'is_active' => true,
+            ]
+        );
 
-        $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
-        $admin->givePermissionTo([
-            'view_dashboard',
-            'view_clients', 'create_clients', 'edit_clients', 'delete_clients', 'export_clients',
-            'view_invoices', 'create_invoices', 'edit_invoices', 'delete_invoices',
-        ]);
+        $tenantRoleService = app(TenantRoleService::class);
+        foreach (Tenant::query()->get(['id']) as $tenant) {
+            $tenantRoleService->ensureTenantRoles((int) $tenant->id);
+        }
 
-        $user = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
-        $user->givePermissionTo([
-            'view_dashboard',
-            'view_clients', 'create_clients',
-            'view_invoices',
-        ]);
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
     }
 }

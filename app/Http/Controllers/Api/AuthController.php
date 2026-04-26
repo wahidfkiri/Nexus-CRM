@@ -13,55 +13,47 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use Vendor\CrmCore\Models\Tenant;
+use Vendor\Rbac\Services\TenantRoleService;
 
 class AuthController extends Controller
 {
-    /**
-     * Connexion utilisateur avec Sanctum
-     */
     public function login(LoginRequest $request)
     {
         try {
             $credentials = $request->validated();
 
-            // Tentative de connexion
             if (!Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password']], $request->boolean('remember'))) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Email ou mot de passe incorrect'
+                    'message' => 'Email ou mot de passe incorrect',
                 ], 401);
             }
 
+            /** @var User $user */
             $user = Auth::user();
-            
-            // Vérification du statut actif
+
             if (!$user->is_active) {
                 Auth::logout();
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Votre compte est désactivé. Veuillez contacter l\'administrateur.',
-                    'code' => 'account_disabled'
+                    'message' => 'Votre compte est désactivé. Veuillez contacter l’administrateur.',
+                    'code' => 'account_disabled',
                 ], 403);
             }
 
             DB::beginTransaction();
 
-
-            Auth::login($user, $request->remember);
-
-            // Supprimer les anciens tokens (optionnel)
-            // $user->tokens()->delete();
-
-            // Créer un nouveau token Sanctum
             $token = $user->createToken('auth_token', ['*'])->plainTextToken;
-
-            // Mettre à jour la dernière connexion
             $user->update([
                 'last_login_at' => now(),
-                'last_login_ip' => $request->ip()
+                'last_login_ip' => $request->ip(),
             ]);
 
             DB::commit();
+
+            $tenantRole = $user->tenantRole($user->tenant_id);
 
             return response()->json([
                 'success' => true,
@@ -78,30 +70,26 @@ class AuthController extends Controller
                     'position' => $user->position,
                     'is_active' => $user->is_active,
                     'initials' => $user->initials,
-                    'role' => $user->getRoleNames()->first(),
-                    'permissions' => $user->getAllPermissions()->pluck('name')
+                    'role' => $tenantRole?->name ?? $user->role_in_tenant,
+                    'permissions' => $tenantRole?->permissions?->pluck('name') ?? collect(),
                 ],
-                'redirect' => '/dashboard'
+                'redirect' => '/dashboard',
             ]);
-
         } catch (Throwable $e) {
             DB::rollBack();
             Log::error('Login error: ' . $e->getMessage(), [
                 'email' => $request->email,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Une erreur est survenue lors de la connexion. Veuillez réessayer.',
-                'error' => config('app.debug') ? $e->getMessage() : null
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
 
-    /**
-     * Inscription utilisateur
-     */
     public function register(RegisterRequest $request)
     {
         try {
@@ -113,23 +101,38 @@ class AuthController extends Controller
                 'name' => trim($data['first_name'] . ' ' . $data['last_name']),
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
-                'email' => $data['email'],
+                'email' => mb_strtolower((string) $data['email']),
                 'company' => !empty($data['company']) ? $data['company'] : null,
                 'password' => Hash::make($data['password']),
-                'is_active' => true, // Par défaut, le compte est actif
+                'is_active' => true,
+                'status' => 'active',
             ]);
 
-            if (!$user) {
-                throw new \Exception("Impossible de créer l'utilisateur");
-            }
+            $tenantName = !empty($data['company']) ? $data['company'] : ('Entreprise de ' . $data['first_name']);
+            $tenant = Tenant::create([
+                'name' => $tenantName,
+                'slug' => Tenant::generateSlug($tenantName),
+                'email' => $user->email,
+                'timezone' => 'Europe/Paris',
+                'locale' => 'fr',
+                'currency' => 'EUR',
+                'status' => 'active',
+            ]);
 
-            // Assigner le rôle par défaut 'user'
-            $user->assignRole('user');
-            
-            // Événement d'inscription
+            $user->forceFill([
+                'tenant_id' => (int) $tenant->id,
+                'role_in_tenant' => 'owner',
+                'is_tenant_owner' => true,
+            ])->save();
+
+            app(TenantRoleService::class)->syncUserRole($user, (int) $tenant->id, 'owner', [
+                'is_tenant_owner' => true,
+                'status' => 'active',
+                'joined_at' => now(),
+            ]);
+
             event(new Registered($user));
-            
-            // Créer un token pour l'API
+
             $token = $user->createToken('auth_token')->plainTextToken;
 
             DB::commit();
@@ -148,79 +151,73 @@ class AuthController extends Controller
                     'company' => $user->company,
                     'is_active' => $user->is_active,
                     'initials' => $user->initials,
-                    'role' => $user->getRoleNames()->first(),
+                    'role' => 'owner',
                 ],
-                'redirect' => '/dashboard'
+                'redirect' => '/dashboard',
             ], 201);
-
         } catch (Throwable $e) {
             DB::rollBack();
             Log::error('Registration error: ' . $e->getMessage(), [
                 'email' => $request->email,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             if (str_contains($e->getMessage(), 'Duplicate entry')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Cet email est déjà utilisé.',
-                    'errors' => ['email' => ['Cet email est déjà utilisé.']]
+                    'errors' => ['email' => ['Cet email est déjà utilisé.']],
                 ], 422);
             }
 
             return response()->json([
                 'success' => false,
-                'message' => 'Une erreur est survenue lors de l\'inscription.',
-                'error' => config('app.debug') ? $e->getMessage() : null
+                'message' => 'Une erreur est survenue lors de l’inscription.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
 
-    /**
-     * Déconnexion - Révoquer le token
-     */
     public function logout(Request $request)
     {
         try {
             $user = $request->user();
-            
+
             if ($user) {
-                // Révoquer le token actuel
-                $user->currentAccessToken()->delete();
+                $user->currentAccessToken()?->delete();
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Déconnexion réussie'
+                'message' => 'Déconnexion réussie',
             ]);
-
         } catch (Throwable $e) {
             Log::error('Logout error: ' . $e->getMessage(), [
                 'user_id' => $request->user()?->id,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la déconnexion'
+                'message' => 'Erreur lors de la déconnexion',
             ], 500);
         }
     }
 
-    /**
-     * Obtenir l'utilisateur connecté
-     */
     public function user(Request $request)
     {
         try {
+            /** @var User|null $user */
             $user = $request->user();
-            
+
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Utilisateur non authentifié'
+                    'message' => 'Utilisateur non authentifié',
                 ], 401);
             }
+
+            $tenantRole = $user->tenantRole($user->tenant_id);
 
             return response()->json([
                 'success' => true,
@@ -240,44 +237,37 @@ class AuthController extends Controller
                     'last_login_at' => $user->last_login_at,
                     'created_at' => $user->created_at,
                 ],
-                'roles' => $user->getRoleNames(),
-                'permissions' => $user->getAllPermissions()->pluck('name')
+                'roles' => $tenantRole ? collect([$tenantRole->name]) : collect(),
+                'permissions' => $tenantRole?->permissions?->pluck('name') ?? collect(),
             ]);
-
         } catch (Throwable $e) {
             Log::error('Get user error: ' . $e->getMessage(), [
                 'user_id' => $request->user()?->id,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la récupération des informations'
+                'message' => 'Erreur lors de la récupération des informations',
             ], 500);
         }
     }
 
-    /**
-     * Rafraîchir le token
-     */
     public function refreshToken(Request $request)
     {
         try {
             $user = $request->user();
-            
+
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Utilisateur non authentifié'
+                    'message' => 'Utilisateur non authentifié',
                 ], 401);
             }
 
             DB::beginTransaction();
 
-            // Supprimer l'ancien token
-            $user->currentAccessToken()->delete();
-            
-            // Créer un nouveau token
+            $user->currentAccessToken()?->delete();
             $token = $user->createToken('auth_token')->plainTextToken;
 
             DB::commit();
@@ -286,36 +276,31 @@ class AuthController extends Controller
                 'success' => true,
                 'token' => $token,
                 'token_type' => 'Bearer',
-                'message' => 'Token rafraîchi avec succès'
+                'message' => 'Token rafraîchi avec succès',
             ]);
-
         } catch (Throwable $e) {
             DB::rollBack();
             Log::error('Token refresh error: ' . $e->getMessage(), [
                 'user_id' => $request->user()?->id,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors du rafraîchissement du token'
+                'message' => 'Erreur lors du rafraîchissement du token',
             ], 500);
         }
     }
 
-    /**
-     * Désactiver un compte utilisateur (Admin uniquement)
-     */
     public function disableAccount(Request $request, $id)
     {
         try {
             $user = User::findOrFail($id);
-            
-            // Vérifier que l'utilisateur connecté est admin
+
             if (!$request->user()->hasRole('super_admin')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour désactiver un compte'
+                    'message' => 'Vous n\'avez pas les droits pour désactiver un compte',
                 ], 403);
             }
 
@@ -323,8 +308,6 @@ class AuthController extends Controller
 
             $user->is_active = false;
             $user->save();
-            
-            // Révoquer tous les tokens de l'utilisateur désactivé
             $user->tokens()->delete();
 
             DB::commit();
@@ -335,44 +318,38 @@ class AuthController extends Controller
                 'user' => [
                     'id' => $user->id,
                     'email' => $user->email,
-                    'is_active' => $user->is_active
-                ]
+                    'is_active' => $user->is_active,
+                ],
             ]);
-
         } catch (Throwable $e) {
             DB::rollBack();
             Log::error('Disable account error: ' . $e->getMessage(), [
                 'user_id' => $id,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la désactivation du compte'
+                'message' => 'Erreur lors de la désactivation du compte',
             ], 500);
         }
     }
 
-    /**
-     * Activer un compte utilisateur (Admin uniquement)
-     */
     public function enableAccount(Request $request, $id)
     {
         try {
             $user = User::findOrFail($id);
-            
+
             if (!$request->user()->hasRole('super_admin')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Vous n\'avez pas les droits pour activer un compte'
+                    'message' => 'Vous n\'avez pas les droits pour activer un compte',
                 ], 403);
             }
 
             DB::beginTransaction();
-
             $user->is_active = true;
             $user->save();
-
             DB::commit();
 
             return response()->json([
@@ -381,20 +358,19 @@ class AuthController extends Controller
                 'user' => [
                     'id' => $user->id,
                     'email' => $user->email,
-                    'is_active' => $user->is_active
-                ]
+                    'is_active' => $user->is_active,
+                ],
             ]);
-
         } catch (Throwable $e) {
             DB::rollBack();
             Log::error('Enable account error: ' . $e->getMessage(), [
                 'user_id' => $id,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'activation du compte'
+                'message' => 'Erreur lors de l’activation du compte',
             ], 500);
         }
     }

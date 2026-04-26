@@ -59,6 +59,20 @@ spl_autoload_register(function (string $class): void {
     }
 });
 
+// Fallback autoload for Predis when composer autoload is stale.
+spl_autoload_register(function (string $class): void {
+    $prefix = 'Predis\\';
+    if (!str_starts_with($class, $prefix)) {
+        return;
+    }
+
+    $relative = str_replace('\\', DIRECTORY_SEPARATOR, substr($class, strlen($prefix)));
+    $path = base_path('vendor/predis/predis/src/' . $relative . '.php');
+    if (is_file($path)) {
+        require_once $path;
+    }
+});
+
 /*
 |--------------------------------------------------------------------------
 | Return The Application

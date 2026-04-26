@@ -328,6 +328,12 @@ const ProjectsModule = (() => {
       return;
     }
 
+    const automationFlow = !state.editingProjectId
+      && window.AutomationSuggestions
+      && response.data?.automation?.should_prompt
+      ? window.AutomationSuggestions.open(response.data.automation)
+      : null;
+
     Toast.success('Succes', response.data?.message || 'Projet enregistre.');
     Modal.close(document.getElementById('projectModal'));
     resetProjectForm();
@@ -335,6 +341,13 @@ const ProjectsModule = (() => {
     loadProjects();
     loadStats();
     handleCalendarSyncFeedback(response.data, 'Le projet');
+
+    if (automationFlow && typeof automationFlow.finally === 'function') {
+      automationFlow.finally(() => {
+        loadProjects();
+        loadStats();
+      });
+    }
   }
 
   function validateProjectPayload(payload) {

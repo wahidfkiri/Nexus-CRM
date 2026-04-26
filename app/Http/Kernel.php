@@ -71,6 +71,7 @@ class Kernel extends HttpKernel
         'tenant' => \Vendor\CrmCore\Http\Middleware\TenantMiddleware::class,
         'tenant.owner' => \Vendor\CrmCore\Http\Middleware\TenantOwnerMiddleware::class,
         'admin' => \App\Http\Middleware\EnsureTenantAdmin::class,
+        'superadmin' => \App\Http\Middleware\EnsureSuperAdmin::class,
         'extension.active' => \App\Http\Middleware\EnsureMarketplaceExtensionActive::class,
         'onboarding.completed' => \App\Http\Middleware\EnsureOnboardingCompleted::class,
         'idempotency' => \App\Http\Middleware\EnsureIdempotency::class,

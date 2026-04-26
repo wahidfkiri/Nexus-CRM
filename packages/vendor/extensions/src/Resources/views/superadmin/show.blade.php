@@ -15,8 +15,8 @@
 <div class="page-header">
   <div class="page-header-left" style="display:flex;align-items:center;gap:16px;">
     <div style="width:56px;height:56px;border-radius:16px;background:{{ $color }}18;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid {{ $color }}22;flex-shrink:0;">
-      @if($extension->icon_url)
-        <img src="{{ $extension->icon_url }}" style="width:34px;height:34px;object-fit:contain;" alt="">
+      @if($extension->icon)
+        <i class="{{ $extension->icon }}" style="color:{{ $color }};"></i>
       @else
         <i class="fas {{ $extension->category_icon }}" style="color:{{ $color }};"></i>
       @endif

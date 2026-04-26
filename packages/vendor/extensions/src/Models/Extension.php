@@ -172,8 +172,22 @@ class Extension extends Model
     public function getIconUrlAttribute(): ?string
     {
         if (!$this->icon) return null;
-        if (str_starts_with($this->icon, 'fa-') || str_starts_with($this->icon, 'fas ')) return null;
+        if ($this->isFontAwesomeIcon((string) $this->icon)) return null;
         return asset('storage/' . $this->icon);
+    }
+
+    public function getIconClassAttribute(): string
+    {
+        $icon = trim((string) ($this->icon ?? ''));
+        if ($icon === '' || !$this->isFontAwesomeIcon($icon)) {
+            return 'fas fa-puzzle-piece';
+        }
+
+        if (preg_match('/^fa-[a-z0-9-]+$/i', $icon) === 1) {
+            return 'fas ' . $icon;
+        }
+
+        return $icon;
     }
 
     public function getBannerUrlAttribute(): ?string
@@ -221,5 +235,22 @@ class Extension extends Model
         if ($this->active_installs_count > 0) {
             $this->decrement('active_installs_count');
         }
+    }
+
+    private function isFontAwesomeIcon(string $value): bool
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return false;
+        }
+
+        if (preg_match('/^fa-[a-z0-9-]+$/i', $value) === 1) {
+            return true;
+        }
+
+        $hasFamily = preg_match('/(^|\s)(fa|fas|far|fal|fad|fab|fat|fa-solid|fa-regular|fa-light|fa-thin|fa-brands)(\s|$)/i', $value) === 1;
+        $hasGlyph = preg_match('/(^|\s)fa-[a-z0-9-]+(\s|$)/i', $value) === 1;
+
+        return $hasFamily && $hasGlyph;
     }
 }

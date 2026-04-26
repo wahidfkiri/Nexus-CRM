@@ -2,25 +2,34 @@
 
 namespace Vendor\User\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
-use App\Models\User;
 use Vendor\CrmCore\Models\Tenant;
 
 class UserInvitation extends Model
 {
     use Notifiable;
 
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_ACCEPTED = 'accepted';
+    public const STATUS_EXPIRED = 'expired';
+    public const STATUS_REVOKED = 'revoked';
+
     protected $table = 'user_invitations';
 
     protected $fillable = [
         'tenant_id',
+        'user_id',
         'invited_by',
         'email',
+        'role_id',
         'role_in_tenant',
         'token',
         'expires_at',
+        'status',
+        'pending_email_key',
         'accepted_at',
         'revoked_at',
         'revoked_reason',
@@ -29,13 +38,11 @@ class UserInvitation extends Model
     ];
 
     protected $casts = [
-        'expires_at'    => 'datetime',
-        'accepted_at'   => 'datetime',
-        'revoked_at'    => 'datetime',
-        'last_resent_at'=> 'datetime',
+        'expires_at' => 'datetime',
+        'accepted_at' => 'datetime',
+        'revoked_at' => 'datetime',
+        'last_resent_at' => 'datetime',
     ];
-
-    // ── Relations ──────────────────────────────────────────────────────────
 
     public function tenant(): BelongsTo
     {
@@ -47,56 +54,96 @@ class UserInvitation extends Model
         return $this->belongsTo(User::class, 'invited_by');
     }
 
+    public function invitedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(config('permission.models.role'), 'role_id');
+    }
+
     public function routeNotificationForMail(): string
     {
         return (string) $this->email;
     }
 
-    // ── Accessors ──────────────────────────────────────────────────────────
+    public function isUsable(): bool
+    {
+        if ($this->status !== self::STATUS_PENDING) {
+            return false;
+        }
+
+        if ($this->expires_at && $this->expires_at->isPast()) {
+            return false;
+        }
+
+        return $this->accepted_at === null && $this->revoked_at === null;
+    }
+
+    public function markExpiredIfNeeded(): void
+    {
+        if (
+            $this->status === self::STATUS_PENDING
+            && $this->expires_at
+            && $this->expires_at->isPast()
+        ) {
+            $this->forceFill([
+                'status' => self::STATUS_EXPIRED,
+                'pending_email_key' => null,
+            ])->save();
+        }
+    }
 
     public function getIsExpiredAttribute(): bool
     {
-        return $this->expires_at && $this->expires_at->isPast();
+        return $this->status === self::STATUS_EXPIRED
+            || ($this->expires_at && $this->expires_at->isPast() && $this->accepted_at === null);
     }
 
     public function getIsAcceptedAttribute(): bool
     {
-        return !is_null($this->accepted_at);
+        return $this->status === self::STATUS_ACCEPTED || $this->accepted_at !== null;
     }
 
     public function getIsRevokedAttribute(): bool
     {
-        return !is_null($this->revoked_at);
+        return $this->status === self::STATUS_REVOKED || $this->revoked_at !== null;
     }
 
     public function getIsActiveAttribute(): bool
     {
-        return !$this->is_expired && !$this->is_accepted && !$this->is_revoked;
+        return $this->isUsable();
     }
 
     public function getStatusLabelAttribute(): string
     {
-        if ($this->is_accepted) return 'Acceptée';
-        if ($this->is_revoked)  return 'Révoquée';
-        if ($this->is_expired)  return 'Expirée';
-        return 'En attente';
+        return match ($this->status) {
+            self::STATUS_ACCEPTED => 'Acceptée',
+            self::STATUS_REVOKED => 'Révoquée',
+            self::STATUS_EXPIRED => 'Expirée',
+            default => 'En attente',
+        };
     }
 
     public function getStatusColorAttribute(): string
     {
-        if ($this->is_accepted) return 'success';
-        if ($this->is_revoked)  return 'danger';
-        if ($this->is_expired)  return 'warning';
-        return 'info';
+        return match ($this->status) {
+            self::STATUS_ACCEPTED => 'success',
+            self::STATUS_REVOKED => 'danger',
+            self::STATUS_EXPIRED => 'warning',
+            default => 'info',
+        };
     }
-
-    // ── Scopes ─────────────────────────────────────────────────────────────
 
     public function scopeActive($query)
     {
-        return $query->whereNull('accepted_at')
-                     ->whereNull('revoked_at')
-                     ->where('expires_at', '>', now());
+        return $query
+            ->where('status', self::STATUS_PENDING)
+            ->whereNull('accepted_at')
+            ->whereNull('revoked_at')
+            ->where('expires_at', '>', now());
     }
 
     public function scopeForTenant($query, int $tenantId)
@@ -106,6 +153,6 @@ class UserInvitation extends Model
 
     public function scopePending($query)
     {
-        return $query->whereNull('accepted_at')->whereNull('revoked_at');
+        return $query->where('status', self::STATUS_PENDING);
     }
 }

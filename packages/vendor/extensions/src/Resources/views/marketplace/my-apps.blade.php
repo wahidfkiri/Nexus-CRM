@@ -75,6 +75,7 @@
     @php
       $ext   = $activation->extension;
       $color = $ext->category_color ?? '#64748b';
+      $extIconClass = (string) ($ext->icon_class ?? 'fas fa-puzzle-piece');
       $st    = $activation->status;
       $stCfg = ['active'=>['bg'=>'#dcfce7','color'=>'#15803d','label'=>'Active'],
                  'trial' =>['bg'=>'#dbeafe','color'=>'#1d4ed8','label'=>'Essai'],
@@ -92,7 +93,7 @@
             @if($ext->icon_url)
               <img src="{{ $ext->icon_url }}" style="width:28px;height:28px;object-fit:contain;" alt="">
             @else
-              <i class="fas {{ $ext->category_icon }}" style="color:{{ $color }};"></i>
+              <i class="{{ $extIconClass }}" style="color:{{ $color }};"></i>
             @endif
           </div>
           <div>

@@ -4,11 +4,13 @@ namespace Vendor\Invoice\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Vendor\Invoice\Events\InvoiceCreated;
+use Vendor\Invoice\Events\QuoteCreated;
 use Vendor\Invoice\Models\Invoice;
-use Vendor\Invoice\Models\Quote;
 use Vendor\Invoice\Models\InvoiceItem;
-use Vendor\Invoice\Models\QuoteItem;
 use Vendor\Invoice\Models\Payment;
+use Vendor\Invoice\Models\Quote;
+use Vendor\Invoice\Models\QuoteItem;
 use Vendor\Invoice\Repositories\InvoiceRepository;
 
 class InvoiceService
@@ -24,13 +26,23 @@ class InvoiceService
         $digits = config('invoice.numbering.digits', 4);
         $year   = now()->year;
 
-        $last = Invoice::withoutGlobalScope('tenant')
+        $last = Invoice::withTrashed()
+            ->withoutGlobalScope('tenant')
             ->where('tenant_id', $tenantId)
             ->whereYear('created_at', $year)
             ->max(DB::raw("CAST(SUBSTRING_INDEX(number, '{$sep}', -1) AS UNSIGNED)"));
 
-        $next = ($last ?? 0) + 1;
-        return "{$prefix}{$sep}{$year}{$sep}" . str_pad($next, $digits, '0', STR_PAD_LEFT);
+        $next = max(1, (int) ($last ?? 0) + 1);
+
+        return $this->nextAvailableDocumentNumber(
+            Invoice::class,
+            $tenantId,
+            $prefix,
+            $sep,
+            $year,
+            $digits,
+            $next
+        );
     }
 
     public function generateQuoteNumber(int $tenantId): string
@@ -40,13 +52,23 @@ class InvoiceService
         $digits = config('invoice.numbering.digits', 4);
         $year   = now()->year;
 
-        $last = Quote::withoutGlobalScope('tenant')
+        $last = Quote::withTrashed()
+            ->withoutGlobalScope('tenant')
             ->where('tenant_id', $tenantId)
             ->whereYear('created_at', $year)
             ->max(DB::raw("CAST(SUBSTRING_INDEX(number, '{$sep}', -1) AS UNSIGNED)"));
 
-        $next = ($last ?? 0) + 1;
-        return "{$prefix}{$sep}{$year}{$sep}" . str_pad($next, $digits, '0', STR_PAD_LEFT);
+        $next = max(1, (int) ($last ?? 0) + 1);
+
+        return $this->nextAvailableDocumentNumber(
+            Quote::class,
+            $tenantId,
+            $prefix,
+            $sep,
+            $year,
+            $digits,
+            $next
+        );
     }
 
     // ─── FACTURES ──────────────────────────────────────────────────────────
@@ -64,8 +86,14 @@ class InvoiceService
             $invoice = Invoice::create($data);
             $this->syncItems($invoice, $items);
             $this->recalculate($invoice);
+            $invoice = $invoice->fresh(['items', 'client']);
+            DB::afterCommit(function () use ($invoice): void {
+                event(new InvoiceCreated($invoice, [
+                    'created_via' => request()?->expectsJson() ? 'api' : 'web',
+                ]));
+            });
 
-            return $invoice->fresh(['items', 'client']);
+            return $invoice;
         });
     }
 
@@ -104,8 +132,14 @@ class InvoiceService
             $quote = Quote::create($data);
             $this->syncQuoteItems($quote, $items);
             $this->recalculateQuote($quote);
+            $quote = $quote->fresh(['items', 'client']);
+            DB::afterCommit(function () use ($quote): void {
+                event(new QuoteCreated($quote, [
+                    'created_via' => request()?->expectsJson() ? 'api' : 'web',
+                ]));
+            });
 
-            return $quote->fresh(['items', 'client']);
+            return $quote;
         });
     }
 
@@ -373,5 +407,33 @@ class InvoiceService
         $toRate   = \Vendor\Invoice\Models\Currency::where('code', $to)->value('exchange_rate') ?? 1;
 
         return $amount / $fromRate * $toRate;
+    }
+
+    protected function nextAvailableDocumentNumber(
+        string $modelClass,
+        int $tenantId,
+        string $prefix,
+        string $separator,
+        int $year,
+        int $digits,
+        int $startAt
+    ): string {
+        $current = max(1, $startAt);
+
+        for ($guard = 0; $guard < 2000; $guard++, $current++) {
+            $candidate = "{$prefix}{$separator}{$year}{$separator}" . str_pad($current, $digits, '0', STR_PAD_LEFT);
+
+            $exists = $modelClass::withTrashed()
+                ->withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenantId)
+                ->where('number', $candidate)
+                ->exists();
+
+            if (!$exists) {
+                return $candidate;
+            }
+        }
+
+        throw new \RuntimeException('Impossible de générer un numéro unique de document.');
     }
 }

@@ -2,11 +2,12 @@
 
 namespace Vendor\Client\Services;
 
-use Vendor\Client\Models\Client;
-use Vendor\Client\Repositories\ClientRepository;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Vendor\Client\Events\ClientCreated;
+use Vendor\Client\Models\Client;
+use Vendor\Client\Repositories\ClientRepository;
 
 class ClientService
 {
@@ -21,6 +22,12 @@ class ClientService
         DB::beginTransaction();
         try {
             $client = $this->repository->create($data);
+            $client = $client->fresh(['user:id,name,email', 'assignedTo:id,name,email']);
+            DB::afterCommit(function () use ($client): void {
+                event(new ClientCreated($client, [
+                    'created_via' => request()?->expectsJson() ? 'api' : 'web',
+                ]));
+            });
             DB::commit();
             return $client;
         } catch (\Throwable $e) {

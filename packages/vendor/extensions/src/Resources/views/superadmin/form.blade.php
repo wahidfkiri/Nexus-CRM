@@ -14,6 +14,12 @@
   $isEdit = isset($extension);
   $act    = $isEdit ? route('superadmin.extensions.update', $extension) : route('superadmin.extensions.store');
   $method = $isEdit ? 'PUT' : 'POST';
+  $currentIconValue = old('icon');
+  if ($currentIconValue === null && $isEdit) {
+      $iconValue = (string) ($extension->icon ?? '');
+      $isIconClass = \Illuminate\Support\Str::startsWith($iconValue, ['fa-', 'fas ', 'far ', 'fab ', 'fal ', 'fad ']);
+      $currentIconValue = $isIconClass ? $iconValue : '';
+  }
 @endphp
 
 <div class="page-header">
@@ -78,13 +84,13 @@
         <div class="row">
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Icône FontAwesome <span class="hint">(ou upload)</span></label>
+              <label class="form-label">Icône FontAwesome <span class="hint">(optionnel, ou upload)</span></label>
               <div class="input-group">
                 <i class="fas fa-icons input-icon"></i>
-                <input type="text" name="icon" class="form-control" value="{{ old('icon', $isEdit ? $extension->icon : '') }}" placeholder="fa-puzzle-piece ou vide si upload"
+                <input type="text" name="icon" class="form-control" value="{{ $currentIconValue ?? '' }}" placeholder="fa-puzzle-piece (optionnel)"
                        oninput="updateIconPreview(this.value)">
               </div>
-              <span class="form-hint">Ex: <code>fa-google-drive</code>, <code>fa-slack</code></span>
+              <span class="form-hint">Ex: <code>fa-google-drive</code>, <code>fa-slack</code>. Laissez vide pour conserver la valeur actuelle.</span>
             </div>
           </div>
           <div class="col-6">
@@ -104,7 +110,7 @@
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Upload icône <span class="hint">(PNG/SVG, 256×256)</span></label>
+              <label class="form-label">Upload icône <span class="hint">(optionnel, PNG/SVG, 256×256)</span></label>
               <input type="file" name="icon_file" class="form-control" accept="image/*">
               @if($isEdit && $extension->icon_url)
                 <div style="margin-top:8px;"><img src="{{ $extension->icon_url }}" style="width:40px;height:40px;border-radius:10px;border:1px solid var(--c-ink-05);"></div>
@@ -113,7 +119,7 @@
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Upload banner <span class="hint">(1200×400)</span></label>
+              <label class="form-label">Upload banner <span class="hint">(optionnel, 1200×400)</span></label>
               <input type="file" name="banner_file" class="form-control" accept="image/*">
               @if($isEdit && $extension->banner_url)
                 <div style="margin-top:8px;"><img src="{{ $extension->banner_url }}" style="width:100%;border-radius:var(--r-sm);border:1px solid var(--c-ink-05);"></div>

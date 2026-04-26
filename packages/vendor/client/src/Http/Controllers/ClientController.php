@@ -10,6 +10,7 @@ use Vendor\Client\Http\Requests\ClientRequest;
 use Vendor\Client\Services\ClientService;
 use Vendor\Client\Exports\ClientsExport;
 use Vendor\Client\Imports\ClientsImport;
+use Vendor\Automation\Services\AutomationSuggestionPresenter;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
 use Maatwebsite\Excel\Facades\Excel;
@@ -78,6 +79,12 @@ class ClientController extends Controller
                 'success'  => true,
                 'message'  => 'Client créé avec succès.',
                 'data'     => $client,
+                'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
+                    'client_created',
+                    $client::class,
+                    $client->getKey(),
+                    (int) $client->tenant_id
+                ),
                 'redirect' => route('clients.show', $client),
             ], 201);
 
@@ -320,3 +327,8 @@ class ClientController extends Controller
         ];
     }
 }
+
+
+
+
+

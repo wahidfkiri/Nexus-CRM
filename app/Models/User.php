@@ -4,17 +4,21 @@ namespace App\Models;
 
 use App\Notifications\AccountActivationNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 use Vendor\CrmCore\Models\Tenant;
 use Vendor\User\Traits\TenantUserTrait;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, TenantUserTrait;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, TenantUserTrait;
 
     protected $fillable = [
         'name',
@@ -48,6 +52,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_active' => 'boolean',
         'is_tenant_owner' => 'boolean',
         'last_login_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     // ==================== RELATIONS ====================
@@ -74,6 +79,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function assignedClients()
     {
         return $this->hasMany('Vendor\Client\Models\Client', 'assigned_to');
+    }
+
+    public function tenantMemberships()
+    {
+        return $this->hasMany(TenantUserMembership::class, 'user_id');
     }
 
     // ==================== ACCESSORS ====================
@@ -156,7 +166,17 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function scopeByTenant($query, $tenantId)
     {
-        return $query->where('tenant_id', $tenantId);
+        return $query->where(function (Builder $q) use ($tenantId) {
+            $q->where('tenant_id', $tenantId);
+
+            if (Schema::hasTable('tenant_user_memberships')) {
+                $q->orWhereHas('tenantMemberships', function (Builder $membership) use ($tenantId) {
+                    $membership
+                        ->where('tenant_id', $tenantId)
+                        ->where('status', 'active');
+                });
+            }
+        });
     }
 
     /**
@@ -182,7 +202,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function canManageTenant(): bool
     {
-        return in_array($this->role_in_tenant, ['owner', 'admin']) || $this->is_tenant_owner === true;
+        return $this->hasTenantRole(['owner', 'admin']);
     }
 
     /**
@@ -198,10 +218,137 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function switchTenant($tenantId)
     {
-        $this->tenant_id = $tenantId;
-        $this->save();
-        
+        session()->put('current_tenant_id', (int) $tenantId);
+
         return $this;
+    }
+
+    public function hasTenantAccess(int $tenantId): bool
+    {
+        if ($tenantId <= 0) {
+            return false;
+        }
+
+        if (Schema::hasTable('tenant_user_memberships')) {
+            $membership = $this->tenantMemberships()
+                ->where('tenant_id', $tenantId)
+                ->latest('id')
+                ->first();
+
+            if ($membership) {
+                return (string) $membership->status === 'active';
+            }
+        }
+
+        return (int) $this->getOriginal('tenant_id') === $tenantId || (int) $this->tenant_id === $tenantId;
+    }
+
+    public function tenantRole(?int $tenantId = null): ?Role
+    {
+        $tenantId = (int) ($tenantId ?? session('current_tenant_id', $this->tenant_id ?: 0));
+        if ($tenantId <= 0) {
+            return null;
+        }
+
+        $membership = $this->tenantMemberships()
+            ->where('tenant_id', $tenantId)
+            ->latest('id')
+            ->first();
+
+        if ($membership?->role_id) {
+            return Role::query()
+                ->where('id', (int) $membership->role_id)
+                ->where('tenant_id', $tenantId)
+                ->where('is_active', true)
+                ->first();
+        }
+
+        $roleName = (string) ($membership?->role_in_tenant ?: ((int) $this->tenant_id === $tenantId ? $this->role_in_tenant : ''));
+        if ($roleName === '') {
+            return null;
+        }
+
+        return Role::query()
+            ->where('tenant_id', $tenantId)
+            ->where('name', $roleName)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    public function hasTenantRole(array|string $roles, ?int $tenantId = null): bool
+    {
+        if ($this->hasRole('super_admin') || $this->hasRole('super-admin')) {
+            return true;
+        }
+
+        $role = $this->tenantRole($tenantId);
+        if (!$role) {
+            return false;
+        }
+
+        $roles = is_array($roles) ? $roles : [$roles];
+
+        return in_array($role->name, $roles, true);
+    }
+
+    public function hasTenantPermission(array|string $permissions, ?int $tenantId = null): bool
+    {
+        if ($this->hasRole('super_admin') || $this->hasRole('super-admin')) {
+            return true;
+        }
+
+        $role = $this->tenantRole($tenantId);
+        if (!$role) {
+            return false;
+        }
+
+        $permissions = is_array($permissions) ? $permissions : [$permissions];
+        $granted = $role->permissions()->pluck('name')->all();
+
+        foreach ($permissions as $permission) {
+            if (!in_array($permission, $granted, true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function membershipForTenant(int $tenantId): ?TenantUserMembership
+    {
+        if (!Schema::hasTable('tenant_user_memberships') || $tenantId <= 0) {
+            return null;
+        }
+
+        return $this->tenantMemberships()
+            ->where('tenant_id', $tenantId)
+            ->where('status', 'active')
+            ->first();
+    }
+
+    public function ensureTenantMembership(?int $tenantId = null, ?string $role = null, ?bool $isOwner = null): void
+    {
+        if (!Schema::hasTable('tenant_user_memberships')) {
+            return;
+        }
+
+        $tenantId = (int) ($tenantId ?? $this->tenant_id ?? 0);
+        if ($tenantId <= 0 || !$this->exists) {
+            return;
+        }
+
+        TenantUserMembership::query()->updateOrCreate(
+            [
+                'user_id' => (int) $this->id,
+                'tenant_id' => $tenantId,
+            ],
+            [
+                'role_in_tenant' => (string) ($role ?? $this->role_in_tenant ?? 'user'),
+                'is_tenant_owner' => (bool) ($isOwner ?? $this->is_tenant_owner ?? false),
+                'status' => 'active',
+                'joined_at' => now(),
+            ]
+        );
     }
 
     /**
@@ -226,6 +373,16 @@ class User extends Authenticatable implements MustVerifyEmail
         static::creating(function ($user) {
             if (session()->has('current_tenant_id') && !$user->tenant_id) {
                 $user->tenant_id = session('current_tenant_id');
+            }
+        });
+
+        static::created(function (self $user): void {
+            $user->ensureTenantMembership();
+        });
+
+        static::updated(function (self $user): void {
+            if ($user->wasChanged('tenant_id') || $user->wasChanged('role_in_tenant') || $user->wasChanged('is_tenant_owner')) {
+                $user->ensureTenantMembership();
             }
         });
     }

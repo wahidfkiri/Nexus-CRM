@@ -24,6 +24,7 @@ class GlobalSettingsController extends Controller
         'date_format',
         'notifications_email',
         'notifications_browser',
+        'automation_suggestions_enabled',
     ];
 
     public function __construct(protected PhoneNumberService $phoneNumbers)
@@ -103,6 +104,7 @@ class GlobalSettingsController extends Controller
             'date_format' => (string) ($data['date_format'] ?? 'd/m/Y'),
             'notifications_email' => (string) ((int) filter_var($data['notifications_email'] ?? false, FILTER_VALIDATE_BOOL)),
             'notifications_browser' => (string) ((int) filter_var($data['notifications_browser'] ?? false, FILTER_VALIDATE_BOOL)),
+            'automation_suggestions_enabled' => (string) ((int) filter_var($data['automation_suggestions_enabled'] ?? false, FILTER_VALIDATE_BOOL)),
         ];
 
         foreach ($toSave as $key => $value) {

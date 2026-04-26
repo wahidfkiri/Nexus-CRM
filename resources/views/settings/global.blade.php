@@ -1,19 +1,19 @@
-@extends('layouts.global')
+﻿@extends('layouts.global')
 
-@section('title', 'Paramètres globaux')
+@section('title', 'ParamÃ¨tres globaux')
 
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Paramètres globaux</h1>
-    <p>Configurez l’identité de votre espace CRM, les préférences métier et les options générales.</p>
+    <h1>ParamÃ¨tres globaux</h1>
+    <p>Configurez lâ€™identitÃ© de votre espace CRM, les prÃ©fÃ©rences mÃ©tier et les options gÃ©nÃ©rales.</p>
   </div>
 </div>
 
 @if(!$canManageTenant)
   <section class="info-card">
     <div class="info-card-body">
-      <div class="form-error">Vous n’avez pas les permissions nécessaires pour modifier les paramètres globaux.</div>
+      <div class="form-error">Vous nâ€™avez pas les permissions nÃ©cessaires pour modifier les paramÃ¨tres globaux.</div>
     </div>
   </section>
 @else
@@ -29,7 +29,7 @@
     <section class="form-section">
       <h3 class="form-section-title">
         <i class="fas fa-building"></i>
-        Entreprise et identité
+        Entreprise et identitÃ©
       </h3>
       <div class="row">
         <div class="col-6">
@@ -48,7 +48,7 @@
         </div>
         <div class="col-6">
           <div class="form-group">
-            <label class="form-label">Téléphone (format +...)</label>
+            <label class="form-label">TÃ©lÃ©phone (format +...)</label>
             <input type="text" name="tenant_phone" class="form-control @error('tenant_phone') is-invalid @enderror" placeholder="+33612345678" value="{{ old('tenant_phone', $tenant->phone) }}">
             @error('tenant_phone')<span class="form-error">{{ $message }}</span>@enderror
           </div>
@@ -57,7 +57,7 @@
           <div class="form-group">
             <label class="form-label">Pays</label>
             <select name="company_country" class="form-control @error('company_country') is-invalid @enderror">
-              <option value="">Sélectionnez...</option>
+              <option value="">SÃ©lectionnez...</option>
               @foreach(($countries ?? []) as $country)
                 <option value="{{ $country['code'] }}" {{ old('company_country', $settings['company_country'] ?? '') === $country['code'] ? 'selected' : '' }}>
                   {{ $country['name'] }} ({{ $country['code'] }}) {{ $country['dial'] }}
@@ -97,7 +97,7 @@
         </div>
         <div class="col-6">
           <div class="form-group">
-            <label class="form-label">Description société</label>
+            <label class="form-label">Description sociÃ©tÃ©</label>
             <textarea name="company_description" rows="3" class="form-control @error('company_description') is-invalid @enderror">{{ old('company_description', $settings['company_description'] ?? '') }}</textarea>
             @error('company_description')<span class="form-error">{{ $message }}</span>@enderror
           </div>
@@ -108,7 +108,7 @@
     <section class="form-section">
       <h3 class="form-section-title">
         <i class="fas fa-globe"></i>
-        Préférences régionales
+        PrÃ©fÃ©rences rÃ©gionales
       </h3>
       <div class="row">
         <div class="col-4">
@@ -139,7 +139,7 @@
           <div class="form-group">
             <label class="form-label">Langue <span class="required">*</span></label>
             <select name="tenant_locale" class="form-control @error('tenant_locale') is-invalid @enderror" required>
-              <option value="fr" {{ old('tenant_locale', $tenant->locale ?? 'fr') === 'fr' ? 'selected' : '' }}>Français</option>
+              <option value="fr" {{ old('tenant_locale', $tenant->locale ?? 'fr') === 'fr' ? 'selected' : '' }}>FranÃ§ais</option>
               <option value="en" {{ old('tenant_locale', $tenant->locale ?? 'fr') === 'en' ? 'selected' : '' }}>English</option>
             </select>
             @error('tenant_locale')<span class="form-error">{{ $message }}</span>@enderror
@@ -156,14 +156,14 @@
       <div class="row">
         <div class="col-4">
           <div class="form-group">
-            <label class="form-label">Préfixe facture</label>
+            <label class="form-label">PrÃ©fixe facture</label>
             <input type="text" name="invoice_prefix" class="form-control @error('invoice_prefix') is-invalid @enderror" placeholder="INV" value="{{ old('invoice_prefix', $settings['invoice_prefix'] ?? 'INV') }}">
             @error('invoice_prefix')<span class="form-error">{{ $message }}</span>@enderror
           </div>
         </div>
         <div class="col-4">
           <div class="form-group">
-            <label class="form-label">TVA par défaut (%)</label>
+            <label class="form-label">TVA par dÃ©faut (%)</label>
             <input type="number" min="0" max="100" step="0.01" name="default_tax_rate" class="form-control @error('default_tax_rate') is-invalid @enderror" value="{{ old('default_tax_rate', $settings['default_tax_rate'] ?? '20') }}">
             @error('default_tax_rate')<span class="form-error">{{ $message }}</span>@enderror
           </div>
@@ -173,8 +173,8 @@
             <label class="form-label">Format date</label>
             @php($format = old('date_format', $settings['date_format'] ?? 'd/m/Y'))
             <select name="date_format" class="form-control @error('date_format') is-invalid @enderror">
-              <option value="d/m/Y" {{ $format === 'd/m/Y' ? 'selected' : '' }}>Jour/Mois/Année (31/12/2026)</option>
-              <option value="m/d/Y" {{ $format === 'm/d/Y' ? 'selected' : '' }}>Mois/Jour/Année (12/31/2026)</option>
+              <option value="d/m/Y" {{ $format === 'd/m/Y' ? 'selected' : '' }}>Jour/Mois/AnnÃ©e (31/12/2026)</option>
+              <option value="m/d/Y" {{ $format === 'm/d/Y' ? 'selected' : '' }}>Mois/Jour/AnnÃ©e (12/31/2026)</option>
               <option value="Y-m-d" {{ $format === 'Y-m-d' ? 'selected' : '' }}>ISO (2026-12-31)</option>
             </select>
             @error('date_format')<span class="form-error">{{ $message }}</span>@enderror
@@ -198,7 +198,7 @@
           <div class="form-group">
             <label style="display:flex;align-items:center;gap:8px;">
               <input type="checkbox" name="notifications_email" value="1" {{ old('notifications_email', $settings['notifications_email'] ?? '1') == '1' ? 'checked' : '' }}>
-              Notifications email activées
+              Notifications email activÃ©es
             </label>
           </div>
         </div>
@@ -206,7 +206,24 @@
           <div class="form-group">
             <label style="display:flex;align-items:center;gap:8px;">
               <input type="checkbox" name="notifications_browser" value="1" {{ old('notifications_browser', $settings['notifications_browser'] ?? '1') == '1' ? 'checked' : '' }}>
-              Notifications navigateur activées
+              Notifications navigateur activÃ©es
+            </label>
+          </div>
+        </div>
+        <div class="col-12" id="automation-suggestions-settings">
+          <div class="form-group" style="display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:16px 18px;border:1px solid var(--c-ink-05);border-radius:16px;background:var(--surface-0);">
+            <div>
+              <label class="form-label" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+                <i class="fas fa-wand-magic-sparkles"></i>
+                Suggestions intelligentes
+              </label>
+              <p style="margin:0;color:var(--c-ink-50);font-size:13px;line-height:1.6;">
+                Active ou desactive la modale de suggestions apres la creation d un client, devis, facture, projet ou tache.
+              </p>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap;margin-top:2px;">
+              <input type="checkbox" name="automation_suggestions_enabled" value="1" {{ old('automation_suggestions_enabled', $settings['automation_suggestions_enabled'] ?? '1') == '1' ? 'checked' : '' }}>
+              Activer
             </label>
           </div>
         </div>
@@ -215,7 +232,7 @@
 
     <div class="form-actions">
       <button type="submit" class="btn btn-primary" id="globalSettingsSaveBtn">
-        <i class="fas fa-floppy-disk"></i> Enregistrer les paramètres
+        <i class="fas fa-floppy-disk"></i> Enregistrer les paramÃ¨tres
       </button>
     </div>
   </form>
@@ -225,3 +242,4 @@
 @push('scripts')
 <script src="{{ asset('vendor/client/js/global-settings.js') }}"></script>
 @endpush
+

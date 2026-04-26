@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link rel="icon" href="{{asset('logo.png')}}" type="image/png">
   <title>@yield('title', 'CRM') - {{ config('app.name') }}</title>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -30,29 +31,43 @@
     .apps-drawer-item:hover{border-color:var(--c-accent);background:var(--c-accent-xl)}
     .apps-drawer-icon{width:34px;height:34px;border-radius:8px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;color:var(--c-accent)}
     .apps-drawer-badge{margin-left:auto;font-size:10px;padding:2px 7px;border-radius:999px;background:var(--c-success-lt);color:var(--c-success);font-weight:700}
-    .btn-icon-notif{position:relative}
-    .header-notif-badge{
-      position:absolute;
-      top:-4px;
-      right:-4px;
-      min-width:18px;
-      height:18px;
-      padding:0 5px;
-      border-radius:999px;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      background:#ef4444;
-      color:#fff;
-      border:2px solid #fff;
-      font-size:10px;
-      font-weight:700;
-      line-height:1;
-      box-shadow:0 3px 10px rgba(239,68,68,.45);
-    }
+    .automation-drawer{width:min(760px,calc(100vw - 32px));max-width:760px;max-height:min(86vh,920px);border-radius:24px;margin:0 auto}
+    .automation-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--c-ink-05);border-radius:14px;background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(15,118,110,.08))}
+    .automation-summary-copy{display:flex;flex-direction:column;gap:4px}
+    .automation-summary-copy strong{font-size:14px;color:var(--c-ink)}
+    .automation-summary-copy span{font-size:12px;color:var(--c-ink-50)}
+    .automation-summary-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .automation-list{display:flex;flex-direction:column;gap:12px;margin-top:14px;max-height:calc(min(86vh,920px) - 280px);overflow:auto;padding-right:4px}
+    .automation-empty{margin-top:14px;padding:18px 16px;border:1px dashed var(--c-ink-10);border-radius:14px;text-align:center;color:var(--c-ink-50);background:var(--surface-0)}
+    .automation-card{border:1px solid var(--c-ink-05);border-radius:16px;padding:14px;background:#fff;box-shadow:0 10px 24px rgba(15,23,42,.05)}
+    .automation-card.is-accepted{border-color:rgba(15,157,88,.24);background:rgba(15,157,88,.03)}
+    .automation-card.is-rejected{border-color:rgba(148,163,184,.24);background:rgba(148,163,184,.06)}
+    .automation-card-head{display:flex;align-items:flex-start;gap:12px}
+    .automation-card-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:18px}
+    .automation-card-copy{flex:1;min-width:0}
+    .automation-card-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .automation-card-title-row h4{margin:0;font-size:15px;line-height:1.4;color:var(--c-ink)}
+    .automation-card-meta{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:8px;font-size:12px;color:var(--c-ink-45)}
+    .automation-card-meta span{display:inline-flex;align-items:center;gap:6px}
+    .automation-card-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .automation-status-pill{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;background:rgba(37,99,235,.12);color:#2563eb}
+    .automation-status-pill.is-accepted{background:rgba(15,157,88,.14);color:#0f9d58}
+    .automation-status-pill.is-rejected{background:rgba(100,116,139,.14);color:#475569}
+    .automation-status-pill.is-expired{background:rgba(234,88,12,.14);color:#c2410c}
+    .modal-header-copy{flex:1;min-width:0}
+    .modal-header-actions{display:flex;align-items:center;gap:10px;margin-left:auto}
+    .modal-icon-link{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--c-ink-05);background:var(--surface-1);color:var(--c-ink-50);text-decoration:none;transition:all .2s ease}
+    .modal-icon-link:hover{border-color:var(--c-accent-lt);background:var(--c-accent-xl);color:var(--c-accent)}
     .modal-overlay.modal-overlay-right{justify-content:flex-end}
     .modal-overlay.modal-overlay-right .modal{transform:translateX(22px)}
     .modal-overlay.modal-overlay-right.open .modal{transform:translateX(0)}
+    @media (max-width: 768px){
+      .automation-drawer{width:calc(100vw - 18px);max-height:calc(100vh - 18px);border-radius:20px}
+      .automation-summary{flex-direction:column;align-items:stretch}
+      .automation-summary-actions{justify-content:stretch}
+      .automation-summary-actions .btn{flex:1}
+      .automation-list{max-height:calc(100vh - 360px)}
+    }
     .module-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 20px 0;padding:10px 14px;background:var(--surface-0);border:1px solid var(--c-ink-05);border-radius:12px}
     .module-toolbar-title{font-size:13px;font-weight:700;color:var(--c-ink-60);text-transform:uppercase;letter-spacing:.04em}
     .module-toolbar-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -112,6 +127,17 @@
       background:rgba(255,255,255,.1);
       color:#fff;
       flex:0 0 auto;
+    }
+    #sidebarToggle{display:none}
+    .sidebar-mobile-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(2,6,23,.48);
+      backdrop-filter:blur(2px);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .22s ease;
+      z-index:54;
     }
 
     .ui-tooltip{
@@ -176,7 +202,21 @@
     #userDropdown.open .dropdown-menu{
       transform:translate(0,0);
     }
+    @media (max-width: 1024px){
+      #sidebarToggle{display:inline-flex !important}
+      .crm-sidebar{
+        z-index:60;
+        box-shadow:0 20px 60px rgba(2,6,23,.36);
+      }
+      .crm-sidebar.open + .sidebar-mobile-backdrop{
+        opacity:1;
+        pointer-events:auto;
+      }
+    }
     @media (max-width: 992px){
+      .automation-drawer,.apps-drawer{max-width:100%;width:min(100vw, 100%)}
+      .automation-summary{flex-direction:column;align-items:flex-start}
+      .automation-summary-actions{width:100%;justify-content:flex-start}
       #userDropdown .dropdown-menu{
         left:auto;
         right:0;
@@ -239,12 +279,14 @@
           'google-docx' => 'google-docx.*',
           'google-gmail' => 'google-gmail.*',
           'google-meet' => 'google-meet.*',
+          'slack' => 'slack.*',
+          'chatbot' => 'chatbot.*',
         ];
       @endphp
       @if(($layoutInstalledAppsByCategory ?? collect())->count())
         @foreach(($layoutInstalledAppsByCategory ?? collect()) as $category)
           <div class="sidebar-nav-subsection">
-            <i class="fas {{ $category->icon ?? 'fa-puzzle-piece' }}" style="color:{{ $category->color ?? '#64748b' }}"></i>
+            <i class="{{ $category->icon ?? 'fas fa-puzzle-piece' }}" style="color:{{ $category->color ?? '#64748b' }}"></i>
             {{ $category->label ?? 'Autre' }}
           </div>
           @foreach(($category->apps ?? collect()) as $installedApp)
@@ -254,7 +296,7 @@
             @endphp
             <a href="{{ $installedApp->url }}" class="sidebar-app-link {{ $isActive ? 'active' : '' }}" data-tooltip="{{ $installedApp->name }}: ouvrir l'application">
               <span class="app-icon-badge" style="--app-bg: {{ $installedApp->icon_bg_color ?? '#334155' }};">
-                <i class="fa {{ $installedApp->icon }}"></i>
+                <i class="{{ $installedApp->icon }}"></i>
               </span>
               {{ $installedApp->name }}
             </a>
@@ -289,24 +331,24 @@
       </div>
     </div>
   </aside>
+  <div class="sidebar-mobile-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
   <div class="crm-main">
     <header class="crm-header">
-      <button id="sidebarToggle" class="btn-icon" style="display:none"><i class="fas fa-bars"></i></button>
+      <button id="sidebarToggle" class="btn-icon" aria-label="Ouvrir le menu"><i class="fas fa-bars"></i></button>
       <div class="crm-header-breadcrumb">@yield('breadcrumb')</div>
       <div class="crm-header-spacer"></div>
 
       <div class="global-search-wrap">
         <i class="fas fa-search"></i>
-        <input id="globalSearchInput" class="form-control" type="text" placeholder="Recherche globale: clients, users, factures, devis, projets, notion, apps Google..." autocomplete="off">
+        <input id="globalSearchInput" class="form-control" type="text" placeholder="Recherche globale: clients, users, factures, devis, projets, notion, apps Google, Slack, Chatbot..." autocomplete="off">
         <div id="globalSearchSuggestions" class="global-search-suggest"></div>
       </div>
 
       <div class="crm-header-actions">
-        <button class="btn-icon" data-tooltip="Mes applications" data-modal-open="myAppsModal"><i class="fas fa-th-large"></i></button>
-        <button class="btn-icon btn-icon-notif" id="globalNotifBtn" data-tooltip="Notifications">
+        <button class="btn-icon" data-modal-open="myAppsModal" aria-label="Mes applications"><i class="fas fa-th-large"></i></button>
+        <button class="btn-icon" id="globalNotifBtn" aria-label="Notifications">
           <i class="fas fa-bell"></i>
-          <span class="header-notif-badge" id="globalNotifCount">0</span>
         </button>
       </div>
     </header>
@@ -358,13 +400,13 @@
 
         @forelse(($layoutInstalledAppsByCategory ?? collect()) as $category)
           <div class="apps-drawer-category">
-            <i class="fas {{ $category->icon ?? 'fa-puzzle-piece' }}" style="color:{{ $category->color ?? '#64748b' }};margin-right:6px;"></i>
+            <i class="{{ $category->icon ?? 'fas fa-puzzle-piece' }}" style="color:{{ $category->color ?? '#64748b' }};margin-right:6px;"></i>
             {{ $category->label ?? 'Autre' }}
           </div>
           @foreach(($category->apps ?? collect()) as $app)
             <a href="{{ $app->url }}" class="apps-drawer-item">
               <span class="apps-drawer-icon" style="background:{{ $app->icon_bg_color ?? '#334155' }};color:#fff;">
-                <i class="fas {{ $app->icon }}"></i>
+                <i class="{{ $app->icon }}"></i>
               </span>
               <span>
                 <strong>{{ $app->name }}</strong><br>
@@ -384,6 +426,45 @@
     </div>
     <div class="modal-footer" style="justify-content:flex-start">
       <a href="{{ route('marketplace.my-apps') }}" class="btn btn-secondary"><i class="fas fa-th-list"></i> Gérer mes applications</a>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="automationSuggestionsModal">
+  <div class="modal automation-drawer">
+    <div class="modal-header">
+      <div class="modal-header-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+      <div class="modal-header-copy">
+        <div class="modal-title" data-automation-title>Suggestions intelligentes</div>
+        <div class="modal-subtitle" data-automation-subtitle>Le CRM vous propose les prochaines actions utiles.</div>
+      </div>
+      <div class="modal-header-actions">
+        @if(Route::has('settings.global'))
+          <a href="{{ route('settings.global') }}#automation-suggestions-settings" class="modal-icon-link" aria-label="Parametres des suggestions">
+            <i class="fas fa-gear"></i>
+          </a>
+        @endif
+        <button class="modal-close" data-modal-close>&times;</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="automation-summary">
+        <div class="automation-summary-copy">
+          <strong>Automations apres creation</strong>
+          <span data-automation-count>0 suggestion</span>
+        </div>
+        <div class="automation-summary-actions">
+          <button type="button" class="btn btn-secondary btn-sm" data-automation-bulk="reject"><i class="fas fa-ban"></i> Ignorer tout</button>
+          <button type="button" class="btn btn-primary btn-sm" data-automation-bulk="accept"><i class="fas fa-bolt"></i> Tout accepter</button>
+        </div>
+      </div>
+      <div class="automation-list" data-automation-list></div>
+      <div class="automation-empty" data-automation-empty style="display:none;">
+        Aucune suggestion en attente pour cette action.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-primary" data-automation-close><i class="fas fa-arrow-right"></i> Continuer</button>
     </div>
   </div>
 </div>
@@ -427,6 +508,18 @@
   ]));
 @endphp
 <script>
+window.CRM_AUTOMATION_ROUTES = {
+  list: @json(route('automation.suggestions.index')),
+  bulkAccept: @json(route('automation.suggestions.accept.bulk')),
+  bulkReject: @json(route('automation.suggestions.reject.bulk')),
+  accept: @json(url('/automation/suggestions/__ID__/accept')),
+  reject: @json(url('/automation/suggestions/__ID__/reject')),
+};
+
+window.CRM_AUTH_ROUTES = {
+  login: @json(Route::has('login') ? route('login') : url('/login')),
+};
+
 (function () {
   const layoutInstalledApps = @json(($layoutInstalledApps ?? collect())->pluck('slug')->values()->all());
   const layoutInstalledAppsMeta = @json($globalSearchInstalledAppsMeta);
@@ -448,6 +541,8 @@
     const hasGoogleCalendar = hasApp('google-calendar');
     const hasGoogleGmail = hasApp('google-gmail');
     const hasGoogleMeet = hasApp('google-meet');
+    const hasSlack = hasApp('slack');
+    const hasChatbot = hasApp('chatbot');
 
     let timer = null;
     let requestSeq = 0;
@@ -462,6 +557,21 @@
       const d = document.createElement('div');
       d.textContent = v || '';
       return d.innerHTML;
+    };
+    const iconClass = (value, fallback = 'fas fa-link') => {
+      const raw = String(value || '').trim();
+      if (!raw) return fallback;
+      const clean = raw.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, ' ').trim();
+      if (!clean) return fallback;
+
+      const tokens = clean.split(' ');
+      const hasGlyph = tokens.some((t) => /^fa-[a-z0-9-]+$/i.test(t));
+      const hasFamily = tokens.some((t) => /^(fa|fas|far|fal|fad|fab|fat|fa-solid|fa-regular|fa-light|fa-thin|fa-brands)$/i.test(t));
+
+      if (!hasGlyph) return fallback;
+      if (!hasFamily) return `fas ${clean}`;
+
+      return clean;
     };
     const normalize = (v) => String(v || '').toLowerCase();
     const hasQuery = (haystack, needle) => normalize(haystack).includes(normalize(needle));
@@ -495,7 +605,7 @@
       if (!rows.length) return '';
       const links = rows.map((r) => `
         <a class="global-search-item" href="${esc(ensureUrl(r.url))}"${r.external ? ' target="_blank" rel="noopener"' : ''}>
-          <i class="fa ${r.icon || 'fa-link'}" style="color:${esc(r.color || 'var(--c-accent)')};width:16px;"></i>
+          <i class="${iconClass(r.icon || '')}" style="color:${esc(r.color || 'var(--c-accent)')};width:16px;"></i>
           <div style="min-width:0;flex:1;">
             <div class="global-search-meta">
               <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.label)}</span>
@@ -596,6 +706,8 @@
         calendarEvents,
         gmailMessages,
         meetEvents,
+        slackMessages,
+        chatbotMessages,
       ] = await Promise.all([
         hasClients ? safeGet('/clients/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
         hasStock ? safeGet('/stock/articles/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
@@ -611,6 +723,8 @@
         hasGoogleCalendar && allowDeep ? safeGet('/extensions/google-calendar/data/events', { search: q, per_page: 5, include_holidays: 1 }) : Promise.resolve({ ok: false, data: {} }),
         hasGoogleGmail && allowDeep ? safeGet('/extensions/google-gmail/data/messages', { q, max_results: 5, label_id: 'ALL' }) : Promise.resolve({ ok: false, data: {} }),
         hasGoogleMeet && allowDeep ? safeGet('/extensions/google-meet/data/meetings', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        hasSlack && allowDeep ? safeGet('/extensions/slack/data/messages', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        hasChatbot && allowDeep ? safeGet('/extensions/chatbot/data/search', { q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
       ]);
 
       if (currentReq !== requestSeq) return;
@@ -712,6 +826,22 @@
         color: '#34a853',
         badge: 'Meet',
       }));
+      const slackRows = (slackMessages?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.username || 'Slack',
+        sub: row.text || '',
+        url: '/extensions/slack',
+        icon: 'fa-slack',
+        color: '#4A154B',
+        badge: 'Slack',
+      }));
+      const chatbotRows = (chatbotMessages?.data?.data || []).slice(0, 5).map((row) => ({
+        label: row.sender_name || 'Chatbot',
+        sub: [row.room_name, row.text].filter(Boolean).join(' | '),
+        url: '/extensions/chatbot',
+        icon: 'fa-comments',
+        color: '#0ea5e9',
+        badge: 'Chat',
+      }));
 
       renderGroups([
         { title: 'Raccourcis', rows: collectShortcuts(q) },
@@ -730,6 +860,8 @@
         { title: 'Google Calendar', rows: calendarRows },
         { title: 'Google Gmail', rows: gmailRows },
         { title: 'Google Meet', rows: meetRows },
+        { title: 'Slack', rows: slackRows },
+        { title: 'Chatbot', rows: chatbotRows },
       ]);
     };
 
@@ -949,59 +1081,10 @@
     window.addEventListener('resize', () => activeEl && setPosition(activeEl));
   }
 
-  function initHeaderGmailNotifications() {
-    const bellBadge = document.getElementById('globalNotifCount');
-    if (!bellBadge || typeof Http === 'undefined') return;
-    if (!layoutInstalledApps.includes('google-gmail')) return;
-    const isGmailPage = window.location.pathname.startsWith('/extensions/google-gmail');
-
-    let lastUnread = null;
-
-    const setBadge = (value) => {
-      const unread = Math.max(0, Number(value || 0));
-      bellBadge.textContent = unread > 99 ? '99+' : String(unread);
-      bellBadge.style.display = unread > 0 ? 'inline-flex' : 'none';
-    };
-
-    const syncFromApi = async (silentToast = true) => {
-      const { ok, data } = await Http.get('/extensions/google-gmail/data/stats', { refresh: 1 });
-      if (!ok || !data?.success || !data?.data?.connected) {
-        if (lastUnread !== null) setBadge(0);
-        lastUnread = 0;
-        return;
-      }
-
-      const unread = Number(data.data.unread_total || 0);
-      if (lastUnread !== null && unread > lastUnread && !silentToast && window.Toast) {
-        const delta = unread - lastUnread;
-        Toast.info('Nouveaux emails', `${delta} nouvel email recu.`);
-      }
-
-      lastUnread = unread;
-      setBadge(unread);
-    };
-
-    window.addEventListener('crm:gmail-unread', (event) => {
-      const unread = Number(event?.detail?.unread || 0);
-      lastUnread = unread;
-      setBadge(unread);
-    });
-
-    syncFromApi(true);
-    if (!isGmailPage) {
-      setInterval(() => {
-        if (document.visibilityState === 'visible') {
-          syncFromApi(false);
-        }
-      }, 90000);
-    }
-  }
-
   document.addEventListener('DOMContentLoaded', () => {
     initGlobalSearch();
     initInvoiceStockBridge();
     initProTooltips();
-    initHeaderGmailNotifications();
   });
 })();
 </script>

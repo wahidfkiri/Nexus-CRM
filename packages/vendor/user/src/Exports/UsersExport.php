@@ -3,10 +3,11 @@
 namespace Vendor\User\Exports;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
@@ -14,17 +15,35 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
 {
     public function collection()
     {
-        return User::where('tenant_id', auth()->user()->tenant_id)
-            ->with('roles')
-            ->get();
+        $tenantId = (int) auth()->user()->tenant_id;
+
+        $query = User::query()->with('roles');
+
+        if (Schema::hasTable('tenant_user_memberships')) {
+            $query
+                ->join('tenant_user_memberships as tum', function ($join) use ($tenantId): void {
+                    $join->on('users.id', '=', 'tum.user_id')
+                        ->where('tum.tenant_id', '=', $tenantId)
+                        ->where('tum.status', '=', 'active');
+                })
+                ->select([
+                    'users.*',
+                    'tum.role_in_tenant as role_in_tenant',
+                    'tum.is_tenant_owner as is_tenant_owner',
+                ]);
+        } else {
+            $query->where('users.tenant_id', $tenantId)->select('users.*');
+        }
+
+        return $query->get();
     }
 
     public function headings(): array
     {
         return [
-            'ID', 'Nom', 'Email', 'Téléphone',
-            'Rôle', 'Statut', 'Titre', 'Département',
-            'Dernière connexion', 'Créé le',
+            'ID', 'Nom', 'Email', 'Telephone',
+            'Role', 'Statut', 'Titre', 'Departement',
+            'Derniere connexion', 'Cree le',
         ];
     }
 
@@ -37,11 +56,11 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
             $user->id,
             $user->name,
             $user->email,
-            $user->phone ?? '—',
+            $user->phone ?? '-',
             $roleLabels[$user->role_in_tenant] ?? $user->role_in_tenant,
             $statusLabels[$user->status] ?? $user->status,
-            $user->job_title ?? '—',
-            $user->department ?? '—',
+            $user->job_title ?? '-',
+            $user->department ?? '-',
             $user->last_login_at?->format('d/m/Y H:i') ?? 'Jamais',
             $user->created_at->format('d/m/Y'),
         ];

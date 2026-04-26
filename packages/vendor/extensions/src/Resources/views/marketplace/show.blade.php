@@ -14,6 +14,10 @@
   $color    = $extension->category_color;
   $isActive = $activation && $activation->is_active;
   $isTrial  = $activation && $activation->is_trial;
+  $extIconClass = (string) ($extension->icon_class ?? 'fas fa-puzzle-piece');
+  $categoryIconClass = str_starts_with((string) $extension->category_icon, 'fa-')
+      ? 'fas ' . $extension->category_icon
+      : (string) $extension->category_icon;
 @endphp
 
 {{-- Banner --}}
@@ -34,7 +38,7 @@
         @if($extension->icon_url)
           <img src="{{ $extension->icon_url }}" style="width:44px;height:44px;object-fit:contain;" alt="">
         @else
-          <i class="fas {{ $extension->category_icon }}" style="color:{{ $color }};"></i>
+          <i class="{{ $extIconClass }}" style="color:{{ $color }};"></i>
         @endif
       </div>
       <div style="flex:1;">
@@ -57,7 +61,7 @@
         <p style="font-size:15px;color:var(--c-ink-60);margin:0 0 10px;">{{ $extension->tagline }}</p>
         <div style="display:flex;align-items:center;gap:16px;font-size:13px;color:var(--c-ink-40);">
           <span style="background:{{ $color }}18;color:{{ $color }};padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:600;">
-            <i class="fas {{ $extension->category_icon }}" style="font-size:10px;margin-right:4px;"></i>{{ $extension->category_label }}
+            <i class="{{ $categoryIconClass }}" style="font-size:10px;margin-right:4px;"></i>{{ $extension->category_label }}
           </span>
           @if($extension->rating > 0)
           <span><i class="fas fa-star" style="color:#f59e0b;margin-right:3px;"></i>{{ $extension->rating }}/5 ({{ $extension->ratings_count }} avis)</span>

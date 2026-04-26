@@ -16,6 +16,7 @@
         "laravel/tinker": "^2.8",
         "laravel/ui": "^4.6",
         "maatwebsite/excel": "^3.1",
+        "predis/predis": "2.2",
         "spatie/laravel-permission": "^6.25",
         "spiral/roadrunner-cli": "^2.7",
         "spiral/roadrunner-http": "^4.1"
@@ -42,6 +43,7 @@
             "Vendor\\User\\": "packages/vendor/user/src/",
             "Vendor\\Rbac\\": "packages/vendor/rbac/src/",
             "Vendor\\Extensions\\": "packages/vendor/extensions/src/",
+            "Vendor\\Automation\\": "packages/vendor/automation/src/",
             "Vendor\\GoogleCalendar\\": "extensions/google-calendar/src/",
             "NexusExtensions\\Projects\\": "extensions/projects/src/",
             "NexusExtensions\\NotionWorkspace\\": "extensions/notion-workspace/src/",
@@ -49,7 +51,9 @@
             "NexusExtensions\\GoogleSheets\\": "extensions/google-sheets/src/",
             "NexusExtensions\\GoogleDocx\\": "extensions/google-docx/src/",
             "NexusExtensions\\GoogleGmail\\": "extensions/google-gmail/src/",
-            "NexusExtensions\\GoogleMeet\\": "extensions/google-meet/src/"
+            "NexusExtensions\\GoogleMeet\\": "extensions/google-meet/src/",
+            "NexusExtensions\\Slack\\": "extensions/slack/src/",
+            "NexusExtensions\\Chatbot\\": "extensions/chatbot/src/"
          
         }
     },

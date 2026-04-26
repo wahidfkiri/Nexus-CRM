@@ -7,6 +7,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ResendVerificationRequest;
+use App\Models\TenantUserMembership;
 use App\Models\User;
 use App\Notifications\WelcomeAccountNotification;
 use Google\Client as GoogleClient;
@@ -20,6 +21,9 @@ use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 use Vendor\CrmCore\Models\Tenant;
+use Vendor\Rbac\Services\TenantRoleService;
+use Vendor\User\Repositories\UserRepository;
+use Vendor\User\Services\UserService;
 
 class AuthController extends Controller
 {
@@ -95,7 +99,48 @@ class AuthController extends Controller
             ])->withInput();
         }
 
+        try {
+            $this->handlePendingInvitationAfterAuthentication($request, $user);
+        } catch (Throwable $e) {
+            Auth::logout();
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                    'errors' => [
+                        'email' => [$e->getMessage()],
+                    ],
+                ], 403);
+            }
+
+            return back()->withErrors([
+                'email' => $e->getMessage(),
+            ])->withInput();
+        }
+
         $request->session()->regenerate();
+        $activeTenantId = $this->resolveActiveTenantIdForUser($user, (int) $request->session()->get('current_tenant_id', 0));
+
+        if ($activeTenantId <= 0) {
+            Auth::logout();
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Votre compte est désactivé par l’administrateur.',
+                    'errors' => [
+                        'email' => ['Votre compte est désactivé par l’administrateur.'],
+                    ],
+                ], 403);
+            }
+
+            return back()->withErrors([
+                'email' => 'Votre compte est désactivé par l’administrateur.',
+            ])->withInput();
+        }
+
+        $request->session()->put('current_tenant_id', $activeTenantId);
 
         $user->forceFill([
             'last_login_at' => now(),
@@ -125,38 +170,76 @@ class AuthController extends Controller
     public function register(RegisterRequest $request)
     {
         $data = $request->validated();
+        $pendingInvitationToken = (string) $request->session()->get('pending_invitation_token', '');
+        $pendingInvitation = $pendingInvitationToken !== ''
+            ? app(UserRepository::class)->findInvitationByToken($pendingInvitationToken)
+            : null;
+
+        if ($pendingInvitation && mb_strtolower((string) $pendingInvitation->email) !== mb_strtolower((string) $data['email'])) {
+            return back()->withErrors([
+                'email' => 'Cette invitation est liée à une autre adresse email.',
+            ])->withInput();
+        }
 
         try {
-            DB::transaction(function () use ($data): void {
+            DB::transaction(function () use ($data, $pendingInvitation): void {
                 $company = trim((string) ($data['company'] ?? ''));
-                $companyName = $company !== '' ? $company : ('Entreprise de ' . $data['first_name']);
-
-                $tenant = Tenant::create([
-                    'name' => $companyName,
-                    'slug' => Tenant::generateSlug($companyName),
-                    'email' => $data['email'],
-                    'timezone' => 'Europe/Paris',
-                    'locale' => 'fr',
-                    'currency' => 'EUR',
-                    'status' => 'active',
-                ]);
-
                 $user = User::create([
                     'name' => trim($data['first_name'] . ' ' . $data['last_name']),
                     'first_name' => $data['first_name'],
                     'last_name' => $data['last_name'],
-                    'email' => $data['email'],
+                    'email' => mb_strtolower((string) $data['email']),
                     'company' => $company !== '' ? $company : null,
                     'password' => Hash::make($data['password']),
                     'is_active' => true,
                     'status' => 'active',
-                    'tenant_id' => $tenant->id,
-                    'role_in_tenant' => 'owner',
-                    'is_tenant_owner' => true,
+                    'tenant_id' => null,
+                    'role_in_tenant' => $pendingInvitation?->role_in_tenant ?? 'owner',
+                    'is_tenant_owner' => false,
                     'auth_provider' => 'manual',
                 ]);
 
-                $this->assignPrimaryRole($user);
+                if ($pendingInvitation && $pendingInvitation->isUsable()) {
+                    app(UserService::class)->acceptInvitation($pendingInvitation, ['user' => $user]);
+                } else {
+                    $companyName = $company !== '' ? $company : ('Entreprise de ' . $data['first_name']);
+
+                    $tenant = Tenant::create([
+                        'name' => $companyName,
+                        'slug' => Tenant::generateSlug($companyName),
+                        'email' => $data['email'],
+                        'timezone' => 'Europe/Paris',
+                        'locale' => 'fr',
+                        'currency' => 'EUR',
+                        'status' => 'active',
+                    ]);
+
+                    $user->forceFill([
+                        'tenant_id' => $tenant->id,
+                        'role_in_tenant' => 'owner',
+                        'is_tenant_owner' => true,
+                    ])->save();
+
+                    TenantUserMembership::query()->updateOrCreate(
+                        [
+                            'user_id' => (int) $user->id,
+                            'tenant_id' => (int) $tenant->id,
+                        ],
+                        [
+                            'role_in_tenant' => 'owner',
+                            'is_tenant_owner' => true,
+                            'status' => 'active',
+                            'joined_at' => now(),
+                        ]
+                    );
+
+                    app(TenantRoleService::class)->syncUserRole($user, (int) $tenant->id, 'owner', [
+                        'is_tenant_owner' => true,
+                        'status' => 'active',
+                        'joined_at' => now(),
+                    ]);
+                }
+
                 $user->sendEmailVerificationNotification();
             });
         } catch (Throwable $e) {
@@ -171,6 +254,8 @@ class AuthController extends Controller
                 'email' => 'Inscription impossible pour le moment.',
             ])->withInput();
         }
+
+        $request->session()->forget(['pending_invitation_token', 'pending_invitation_email']);
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
@@ -194,7 +279,7 @@ class AuthController extends Controller
             return redirect()->away($client->createAuthUrl());
         } catch (Throwable $e) {
             return redirect()->route('login')->withErrors([
-                'email' => $e->getMessage(),
+                'email' => $this->resolveGoogleAuthErrorMessage($e),
             ]);
         }
     }
@@ -262,7 +347,11 @@ class AuthController extends Controller
                         'auth_provider_id' => (string) $googleUser->getId(),
                     ]);
 
-                    $this->assignPrimaryRole($existing);
+                    app(TenantRoleService::class)->syncUserRole($existing, (int) $tenant->id, 'owner', [
+                        'is_tenant_owner' => true,
+                        'status' => 'active',
+                        'joined_at' => now(),
+                    ]);
                     $sendWelcome = true;
                 } else {
                     $wasVerified = $existing->hasVerifiedEmail();
@@ -288,11 +377,13 @@ class AuthController extends Controller
             });
 
             if ($sendWelcome) {
-                $user->notify(new WelcomeAccountNotification());
+                $this->sendWelcomeNotificationSafely($user, 'google_callback');
             }
 
             Auth::login($user, true);
+            $this->handlePendingInvitationAfterAuthentication($request, $user);
             $request->session()->regenerate();
+            $request->session()->put('current_tenant_id', $this->resolveActiveTenantIdForUser($user));
 
             $user->forceFill([
                 'last_login_at' => now(),
@@ -303,7 +394,7 @@ class AuthController extends Controller
         } catch (Throwable $e) {
             Log::warning('Google callback failed: ' . $e->getMessage());
             return redirect()->route('login')->withErrors([
-                'email' => 'Connexion Google impossible. Verifiez GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET et URL de callback.',
+                'email' => $this->resolveGoogleAuthErrorMessage($e),
             ]);
         }
     }
@@ -326,7 +417,7 @@ class AuthController extends Controller
 
         if (!$user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
-            $user->notify(new WelcomeAccountNotification());
+            $this->sendWelcomeNotificationSafely($user, 'email_verification');
         }
 
         if (!$user->tenant_id) {
@@ -335,6 +426,7 @@ class AuthController extends Controller
 
         Auth::login($user, true);
         $request->session()->regenerate();
+        $request->session()->put('current_tenant_id', (int) $user->tenant_id);
 
         return redirect($this->afterAuthRedirect($user))->with('success', 'Compte active avec succes.');
     }
@@ -439,22 +531,24 @@ class AuthController extends Controller
             'is_tenant_owner' => true,
         ])->save();
 
-        $this->assignPrimaryRole($user);
-    }
+        TenantUserMembership::query()->updateOrCreate(
+            [
+                'user_id' => (int) $user->id,
+                'tenant_id' => (int) $tenant->id,
+            ],
+            [
+                'role_in_tenant' => 'owner',
+                'is_tenant_owner' => true,
+                'status' => 'active',
+                'joined_at' => now(),
+            ]
+        );
 
-    private function assignPrimaryRole(User $user): void
-    {
-        try {
-            $roles = ['owner', 'admin', 'user'];
-            foreach ($roles as $role) {
-                if (\Spatie\Permission\Models\Role::query()->where('name', $role)->exists()) {
-                    $user->syncRoles([$role]);
-                    return;
-                }
-            }
-        } catch (Throwable) {
-            // nothing
-        }
+        app(TenantRoleService::class)->syncUserRole($user, (int) $tenant->id, 'owner', [
+            'is_tenant_owner' => true,
+            'status' => 'active',
+            'joined_at' => now(),
+        ]);
     }
 
     private function splitName(string $value): array
@@ -464,5 +558,100 @@ class AuthController extends Controller
         $last = count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : '';
 
         return [$first, $last];
+    }
+
+    private function sendWelcomeNotificationSafely(User $user, string $context): void
+    {
+        try {
+            $user->notify(new WelcomeAccountNotification());
+        } catch (Throwable $e) {
+            Log::warning('Welcome notification failed', [
+                'context' => $context,
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function resolveGoogleAuthErrorMessage(Throwable $e): string
+    {
+        $message = mb_strtolower($e->getMessage());
+
+        if (
+            str_contains($message, 'google oauth non configure')
+            || str_contains($message, 'invalid_client')
+            || str_contains($message, 'client_secret')
+            || str_contains($message, 'client_id')
+            || str_contains($message, 'redirect_uri_mismatch')
+        ) {
+            return 'Connexion Google impossible. Vérifiez GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET et l’URL de callback.';
+        }
+
+        if (
+            str_contains($message, 'smtp server')
+            || str_contains($message, 'authentication rejected')
+            || str_contains($message, 'mailer')
+            || str_contains($message, 'mail')
+        ) {
+            return 'Connexion Google réussie, mais l’envoi d’email automatique a échoué. Vérifiez la configuration SMTP.';
+        }
+
+        if (str_contains($message, 'invalid_grant') || str_contains($message, 'etat oauth invalide')) {
+            return 'Connexion Google expirée ou invalide. Relancez la connexion Google puis réessayez.';
+        }
+
+        return 'Connexion Google impossible pour le moment. Vérifiez les logs serveur pour le détail.';
+    }
+
+    private function handlePendingInvitationAfterAuthentication(Request $request, User $user): void
+    {
+        $token = (string) $request->session()->get('pending_invitation_token', '');
+        if ($token === '') {
+            return;
+        }
+
+        $invitation = app(UserRepository::class)->findInvitationByToken($token);
+        if (!$invitation) {
+            $request->session()->forget(['pending_invitation_token', 'pending_invitation_email']);
+            return;
+        }
+
+        if (mb_strtolower((string) $user->email) !== mb_strtolower((string) $invitation->email)) {
+            throw new RuntimeException('Cette invitation est liée à une autre adresse email.');
+        }
+
+        if ($invitation->isUsable() && !$user->hasTenantAccess((int) $invitation->tenant_id)) {
+            app(UserService::class)->acceptInvitation($invitation, ['user' => $user]);
+            $request->session()->put('current_tenant_id', (int) $invitation->tenant_id);
+        }
+
+        $request->session()->forget(['pending_invitation_token', 'pending_invitation_email']);
+    }
+
+    private function resolveActiveTenantIdForUser(User $user, int $requestedTenantId = 0): int
+    {
+        if ($requestedTenantId > 0 && $user->hasTenantAccess($requestedTenantId)) {
+            $membership = $user->membershipForTenant($requestedTenantId);
+            if (!$membership || (string) $membership->status === 'active') {
+                return $requestedTenantId;
+            }
+        }
+
+        $baseTenantId = (int) ($user->getOriginal('tenant_id') ?: $user->tenant_id ?: 0);
+        if ($baseTenantId > 0 && $user->hasTenantAccess($baseTenantId)) {
+            $membership = $user->membershipForTenant($baseTenantId);
+            if (!$membership || (string) $membership->status === 'active') {
+                return $baseTenantId;
+            }
+        }
+
+        $membership = $user->tenantMemberships()
+            ->where('status', 'active')
+            ->orderByDesc('is_tenant_owner')
+            ->orderBy('id')
+            ->first();
+
+        return $membership ? (int) $membership->tenant_id : 0;
     }
 }

@@ -5,6 +5,7 @@ namespace Vendor\Rbac;
 use Illuminate\Support\ServiceProvider;
 use Vendor\Rbac\Services\RbacService;
 use Vendor\Rbac\Repositories\RbacRepository;
+use Vendor\Rbac\Services\TenantRoleService;
 
 class RbacServiceProvider extends ServiceProvider
 {
@@ -12,7 +13,11 @@ class RbacServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/rbac.php', 'rbac');
 
-        $this->app->bind(RbacRepository::class, fn() => new RbacRepository());
+        $this->app->bind(TenantRoleService::class, fn() => new TenantRoleService());
+
+        $this->app->bind(RbacRepository::class, function ($app) {
+            return new RbacRepository($app->make(TenantRoleService::class));
+        });
 
         $this->app->bind(RbacService::class, function ($app) {
             return new RbacService($app->make(RbacRepository::class));

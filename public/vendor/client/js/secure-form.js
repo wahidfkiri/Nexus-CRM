@@ -6,6 +6,44 @@ if (!window.__CRM_SECURE_FORM_LOADED__) {
       return document.querySelector('meta[name="csrf-token"]')?.content || '';
     }
 
+    function loginUrl() {
+      return window.CrmAuth?.loginUrl?.() || window.CRM_AUTH_ROUTES?.login || '/login';
+    }
+
+    function redirectToLogin(message) {
+      if (window.CrmAuth?.redirectToLogin) {
+        window.CrmAuth.redirectToLogin(message);
+        return;
+      }
+
+      if (window.Toast) {
+        window.Toast.warning('Session expiree', message || 'Votre session a expire. Redirection vers la connexion.', 1600);
+      }
+
+      window.setTimeout(() => {
+        window.location.href = loginUrl();
+      }, 180);
+    }
+
+    function isLoginRedirectResponse(response) {
+      if (window.CrmAuth?.isLoginRedirectResponse) {
+        return window.CrmAuth.isLoginRedirectResponse(response);
+      }
+
+      if (!response || !response.redirected || !response.url) {
+        return false;
+      }
+
+      try {
+        const redirectedUrl = new URL(response.url, window.location.origin);
+        const loginPath = new URL(loginUrl(), window.location.origin).pathname.replace(/\/+$/, '');
+
+        return redirectedUrl.pathname.replace(/\/+$/, '') === loginPath;
+      } catch (e) {
+        return false;
+      }
+    }
+
     function randomId() {
       if (window.crypto && typeof window.crypto.randomUUID === 'function') {
         return window.crypto.randomUUID();
@@ -102,6 +140,28 @@ if (!window.__CRM_SECURE_FORM_LOADED__) {
       }
 
       const response = await fetch(url, { method, headers, body });
+
+      if (isLoginRedirectResponse(response)) {
+        if (submitBtn && window.CrmForm?.setLoading) {
+          window.CrmForm.setLoading(submitBtn, false);
+        } else if (submitBtn) {
+          submitBtn.disabled = false;
+        }
+
+        form.dataset.submitting = '0';
+        redirectToLogin('Votre session a expire. Redirection vers la connexion.');
+
+        return {
+          ok: false,
+          status: 401,
+          data: {
+            success: false,
+            message: 'Votre session a expire. Redirection vers la connexion.',
+            redirect: loginUrl(),
+          },
+        };
+      }
+
       const data = await response.json().catch(() => ({}));
 
       if (submitBtn && window.CrmForm?.setLoading) {
@@ -113,6 +173,10 @@ if (!window.__CRM_SECURE_FORM_LOADED__) {
 
       if (response.status === 422) {
         showErrors(form, data.errors || {});
+      }
+
+      if (response.status === 401 || response.status === 419) {
+        redirectToLogin(data?.message || 'Votre session a expire. Redirection vers la connexion.');
       }
 
       return {

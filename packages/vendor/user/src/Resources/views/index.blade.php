@@ -201,7 +201,7 @@ window.USER_ROUTES = {
   bulkStatus: '{{ route("users.bulk.status") }}',
 };
 
-const ROLE_LABELS   = @json(config('user.tenant_roles'));
+const ROLE_LABELS   = @json($roles);
 const STATUS_LABELS = @json(config('user.user_statuses'));
 const ROLE_COLORS   = {
   owner:   '#7c3aed', admin: '#2563eb', manager: '#0891b2',

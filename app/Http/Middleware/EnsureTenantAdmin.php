@@ -15,11 +15,10 @@ class EnsureTenantAdmin
             return redirect()->route('login');
         }
 
-        if (!in_array($user->role_in_tenant, ['owner', 'admin'], true) && !$user->is_tenant_owner) {
+        if (!$user->hasTenantRole(['owner', 'admin'])) {
             abort(403, 'Acces reserve aux administrateurs du tenant.');
         }
 
         return $next($request);
     }
 }
-

@@ -128,7 +128,7 @@
 window.INV_ROUTES = {
   data: '{{ route("users.invitations.data") }}',
 };
-const ROLE_LABELS = @json(config('user.tenant_roles'));
+const ROLE_LABELS = @json($roles);
 
 class InvTable {
   constructor() {

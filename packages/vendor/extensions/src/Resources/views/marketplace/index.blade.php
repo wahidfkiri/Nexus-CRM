@@ -46,7 +46,7 @@
         ['icon'=>'fa-puzzle-piece','value'=>'50+','label'=>'Applications'],
         ['icon'=>'fa-gift','value'=>'Gratuit','label'=>'Pour commencer'],
         ['icon'=>'fa-bolt','value'=>'1-clic','label'=>'Installation'],
-        ['icon'=>'fa-shield-check','value'=>'Sécurisé','label'=>'Certifié'],
+        ['icon'=>'fa-shield-alt','value'=>'Sécurisé','label'=>'Certifié'],
       ];
     @endphp
     @foreach($heroStats as $s)
@@ -387,9 +387,12 @@ function renderApps(apps) {
 
 function renderCardGrid(a) {
   const color      = a.category_color || '#2563eb';
+  const iconBg     = a.icon_bg_color || `${color}18`;
+  const categoryIconClass = _iconClass(a.category_icon || 'fa-puzzle-piece');
+  const appIconClass = _iconClass(a.icon, categoryIconClass);
   const iconHtml   = a.icon_url
     ? `<img src="${a.icon_url}" style="width:32px;height:32px;object-fit:contain;" alt="${_esc(a.name)}">`
-    : `<i class="fas ${a.category_icon || 'fa-puzzle-piece'}" style="color:${color};font-size:24px;"></i>`;
+    : `<i class="${appIconClass}" style="color:white;font-size:24px;"></i>`;
   const priceHtml  = a.is_free
     ? `<span style="background:#dcfce7;color:#15803d;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;">Gratuit</span>`
     : `<span style="background:var(--c-accent-lt);color:var(--c-accent);padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;">${_esc(a.pricing_label)}</span>`;
@@ -418,7 +421,7 @@ function renderCardGrid(a) {
   <div class="app-card" style="--app-color:${color};" onclick="openAppModal('${a.slug}')">
     ${activeBadge}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;">
-      <div class="app-icon-wrap" style="background:${color}18;">
+      <div class="app-icon-wrap" style="background:${iconBg};">
         ${iconHtml}
       </div>
       <div class="app-card-badges">
@@ -433,7 +436,7 @@ function renderCardGrid(a) {
       <span><i class="fas fa-download" style="font-size:10px;margin-right:3px;"></i>${a.installs_count || 0}</span>
       ${a.rating > 0 ? `<span><i class="fas fa-star" style="color:#f59e0b;font-size:10px;margin-right:3px;"></i>${a.rating}</span>` : ''}
       <span style="background:${color}18;color:${color};padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:600;">
-        <i class="fas ${a.category_icon}" style="font-size:9px;margin-right:3px;"></i>${_esc(a.category_label)}
+        <i class="${categoryIconClass}" style="font-size:9px;margin-right:3px;"></i>${_esc(a.category_label)}
       </span>
     </div>
 
@@ -446,16 +449,19 @@ function renderCardGrid(a) {
 
 function renderCardList(a) {
   const color = a.category_color || '#2563eb';
+  const iconBg = a.icon_bg_color || `${color}18`;
+  const categoryIconClass = _iconClass(a.category_icon || 'fa-puzzle-piece');
+  const appIconClass = _iconClass(a.icon, categoryIconClass);
   const iconHtml = a.icon_url
     ? `<img src="${a.icon_url}" style="width:28px;height:28px;object-fit:contain;" alt="${_esc(a.name)}">`
-    : `<i class="fas ${a.category_icon || 'fa-puzzle-piece'}" style="color:${color};font-size:20px;"></i>`;
+    : `<i class="${appIconClass}" style="color:${color};font-size:20px;"></i>`;
   const actionBtn = a.is_activated
     ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();deactivateApp('${a.slug}','${_esc(a.name)}')"><i class="fas fa-plug-circle-xmark"></i></button>`
     : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();activateApp('${a.slug}','${_esc(a.name)}',${a.is_free},${a.has_trial})"><i class="fas fa-plug"></i> Installer</button>`;
 
   return `
   <div class="app-list-item" onclick="openAppModal('${a.slug}')">
-    <div style="width:44px;height:44px;border-radius:12px;background:${color}18;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div>
+    <div style="width:44px;height:44px;border-radius:12px;background:${iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div>
     <div style="flex:1;min-width:0;">
       <div style="font-weight:var(--fw-semi);color:var(--c-ink);display:flex;align-items:center;gap:8px;">
         ${_esc(a.name)}
@@ -528,6 +534,21 @@ async function openAppModal(slug) {
 }
 
 function _esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+function _iconClass(value, fallback = 'fas fa-puzzle-piece') {
+  const raw = String(value || '').trim();
+  if (!raw) return fallback;
+  const clean = raw.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, ' ').trim();
+  if (!clean) return fallback;
+
+  const tokens = clean.split(' ');
+  const hasGlyph = tokens.some((t) => /^fa-[a-z0-9-]+$/i.test(t));
+  const hasFamily = tokens.some((t) => /^(fa|fas|far|fal|fad|fab|fat|fa-solid|fa-regular|fa-light|fa-thin|fa-brands)$/i.test(t));
+
+  if (!hasGlyph) return fallback;
+  if (!hasFamily) return `fas ${clean}`;
+
+  return clean;
+}
 
 // Init
 document.addEventListener('DOMContentLoaded', () => loadApps());

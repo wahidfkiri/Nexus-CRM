@@ -5,6 +5,7 @@ namespace Vendor\Extensions\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Schema;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
 use Vendor\Extensions\Services\ExtensionService;
@@ -201,6 +202,32 @@ class MarketplaceController extends Controller
         }
         if ($extension->slug === 'google-meet' && \Route::has('google-meet.index')) {
             return redirect()->route('google-meet.index');
+        }
+        if ($extension->slug === 'chatbot' && \Route::has('chatbot.index')) {
+            return redirect()->route('chatbot.index');
+        }
+        if ($extension->slug === 'slack') {
+            $isConnected = false;
+            $slackTokenClass = \NexusExtensions\Slack\Models\SlackToken::class;
+
+            if (class_exists($slackTokenClass) && Schema::hasTable('slack_tokens')) {
+                $isConnected = $slackTokenClass::query()
+                    ->where('tenant_id', (int) $tenantId)
+                    ->where('is_active', true)
+                    ->exists();
+            }
+
+            if ($isConnected && \Route::has('slack.index')) {
+                return redirect()->route('slack.index');
+            }
+
+            if (\Route::has('slack.oauth.connect')) {
+                return redirect()->route('slack.oauth.connect');
+            }
+
+            if (\Route::has('slack.index')) {
+                return redirect()->route('slack.index');
+            }
         }
 
         return view('extensions::extensions.settings', compact('extension', 'activation'));

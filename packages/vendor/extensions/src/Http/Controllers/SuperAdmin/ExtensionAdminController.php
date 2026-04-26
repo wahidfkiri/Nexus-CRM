@@ -114,6 +114,11 @@ class ExtensionAdminController extends Controller
             if ($request->hasFile('icon_file'))   $data['icon_file']   = $request->file('icon_file');
             if ($request->hasFile('banner_file'))  $data['banner_file'] = $request->file('banner_file');
 
+            // Keep current media if edit form leaves them empty.
+            if (($data['icon'] ?? null) === null && !$request->hasFile('icon_file')) {
+                unset($data['icon']);
+            }
+
             $data['is_featured'] = $request->boolean('is_featured');
             $data['is_new']      = $request->boolean('is_new');
             $data['is_verified'] = $request->boolean('is_verified');

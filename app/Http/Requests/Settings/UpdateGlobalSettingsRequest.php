@@ -68,6 +68,7 @@ class UpdateGlobalSettingsRequest extends SecureFormRequest
             'date_format' => ['nullable', 'string', Rule::in(['d/m/Y', 'm/d/Y', 'Y-m-d'])],
             'notifications_email' => ['nullable', Rule::in(['0', '1', 0, 1, true, false])],
             'notifications_browser' => ['nullable', Rule::in(['0', '1', 0, 1, true, false])],
+            'automation_suggestions_enabled' => ['nullable', Rule::in(['0', '1', 0, 1, true, false])],
         ];
     }
 

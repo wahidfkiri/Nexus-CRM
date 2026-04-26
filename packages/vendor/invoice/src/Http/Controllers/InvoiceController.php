@@ -21,6 +21,7 @@ use Vendor\Invoice\Imports\InvoicesImport;
 use Vendor\CrmCore\Models\TenantSetting;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
+use Vendor\Automation\Services\AutomationSuggestionPresenter;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 
@@ -81,6 +82,12 @@ class InvoiceController extends Controller
                 'success'  => true,
                 'message'  => 'Facture crÃƒÆ’Ã‚Â©ÃƒÆ’Ã‚Â©e avec succÃƒÆ’Ã‚Â¨s.',
                 'data'     => $invoice,
+                'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
+                    'invoice_created',
+                    $invoice::class,
+                    $invoice->getKey(),
+                    (int) $invoice->tenant_id
+                ),
                 'redirect' => route('invoices.show', $invoice),
             ], 201);
 
@@ -371,6 +378,12 @@ class InvoiceController extends Controller
                 'success'  => true,
                 'message'  => 'Devis crÃƒÆ’Ã‚Â©ÃƒÆ’Ã‚Â© avec succÃƒÆ’Ã‚Â¨s.',
                 'data'     => $quote,
+                'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
+                    'quote_created',
+                    $quote::class,
+                    $quote->getKey(),
+                    (int) $quote->tenant_id
+                ),
                 'redirect' => route('invoices.quotes.show', $quote),
             ], 201);
         } catch (Throwable $e) {
@@ -813,4 +826,8 @@ class InvoiceController extends Controller
         ];
     }
 }
+
+
+
+
 

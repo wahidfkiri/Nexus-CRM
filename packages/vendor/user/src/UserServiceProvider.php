@@ -8,6 +8,7 @@ use Vendor\User\Services\UserService;
 use Vendor\User\Repositories\UserRepository;
 use Vendor\User\Http\Middleware\CanManageUsersMiddleware;
 use Vendor\User\Http\Middleware\UserContextMiddleware;
+use Vendor\Rbac\Services\TenantRoleService;
 
 class UserServiceProvider extends ServiceProvider
 {
@@ -20,7 +21,10 @@ class UserServiceProvider extends ServiceProvider
         $this->app->bind(UserRepository::class, fn() => new UserRepository());
 
         $this->app->bind(UserService::class, function ($app) {
-            return new UserService($app->make(UserRepository::class));
+            return new UserService(
+                $app->make(UserRepository::class),
+                $app->make(TenantRoleService::class),
+            );
         });
 
         $this->app->bind('user.service', fn($app) => $app->make(UserService::class));

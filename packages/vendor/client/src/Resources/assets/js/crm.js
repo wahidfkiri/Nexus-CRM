@@ -125,6 +125,7 @@ const Modal = (() => {
     if (!overlayEl) return;
     overlayEl.classList.add('open');
     document.body.style.overflow = 'hidden';
+    overlayEl.dispatchEvent(new CustomEvent('crm:modal-open'));
     // Close on backdrop click
     overlayEl.addEventListener('click', (e) => {
       if (e.target === overlayEl) close(overlayEl);
@@ -139,10 +140,14 @@ const Modal = (() => {
   function close(overlayEl, force = false) {
     if (!overlayEl) return;
     if (!force && overlayEl.id === 'confirmModal' && overlayEl.dataset.busy === '1') return;
+    const wasOpen = overlayEl.classList.contains('open');
     overlayEl.classList.remove('open');
     overlayEl.dataset.busy = '0';
     overlayEl.dataset.closeOnSuccess = '0';
     document.body.style.overflow = '';
+    if (wasOpen) {
+      overlayEl.dispatchEvent(new CustomEvent('crm:modal-close'));
+    }
   }
 
   function confirm({ title, message, confirmText = 'Confirmer', type = 'danger', onConfirm }) {
@@ -745,23 +750,44 @@ function ajaxForm(formId, options = {}) {
     const method = (formData.get('_method') || form.method || 'POST').toUpperCase();
     const url    = form.action;
 
-    let res;
-    if (method === 'POST') {
-      res = await Http.post(url, formData);
-    } else {
-      // For PUT/PATCH, convertit FormData vers JSON.
-      const body = {};
-      formData.forEach((v, k) => { if (k !== '_method' && k !== '_token') body[k] = v; });
-      res = await Http.put(url, body);
+    // Always submit multipart FormData (supports files on create/update).
+    // Also skip empty file inputs to keep optional uploads truly optional.
+    const payload = new FormData();
+    formData.forEach((value, key) => {
+      if (value instanceof File && value.size === 0 && !value.name) {
+        return;
+      }
+      payload.append(key, value);
+    });
+    if (method !== 'POST' && !payload.get('_method')) {
+      payload.set('_method', method);
     }
+
+    const res = await Http.post(url, payload);
 
     if (btn) CrmForm.setLoading(btn, false);
 
     if (res.ok) {
       Toast.success('Succès !', res.data.message || 'Opération réussie.');
-      if (options.onSuccess) options.onSuccess(res.data);
-      if (res.data.redirect && !options.noRedirect) {
-        setTimeout(() => window.location.href = res.data.redirect, 900);
+      const automationFlow = !options.skipAutomation
+        && window.AutomationSuggestions
+        && res.data?.automation?.should_prompt
+        ? window.AutomationSuggestions.open(res.data.automation, {
+            redirectUrl: res.data.redirect || null,
+          })
+        : null;
+
+      let onSuccessResult;
+      if (options.onSuccess) onSuccessResult = await options.onSuccess(res.data);
+
+      if (res.data.redirect && !options.noRedirect && onSuccessResult !== false) {
+        if (automationFlow && typeof automationFlow.finally === 'function') {
+          automationFlow.finally(() => {
+            window.location.href = res.data.redirect;
+          });
+        } else {
+          setTimeout(() => window.location.href = res.data.redirect, 900);
+        }
       }
     } else if (res.status === 422) {
       CrmForm.showErrors(form, res.data.errors || {});
@@ -773,6 +799,240 @@ function ajaxForm(formId, options = {}) {
 }
 
 window.ajaxForm = ajaxForm;
+
+/* ============================================================
+   AUTOMATION SUGGESTIONS
+   ============================================================ */
+const AutomationSuggestions = (() => {
+  let booted = false;
+  let state = {
+    items: [],
+    redirectUrl: null,
+    resolver: null,
+    title: '',
+    subtitle: '',
+  };
+
+  function getModal() {
+    return document.getElementById('automationSuggestionsModal');
+  }
+
+  function getEls() {
+    const modal = getModal();
+    if (!modal) return {};
+
+    return {
+      modal,
+      title: modal.querySelector('[data-automation-title]'),
+      subtitle: modal.querySelector('[data-automation-subtitle]'),
+      list: modal.querySelector('[data-automation-list]'),
+      empty: modal.querySelector('[data-automation-empty]'),
+      counter: modal.querySelector('[data-automation-count]'),
+      acceptAll: modal.querySelector('[data-automation-bulk="accept"]'),
+      rejectAll: modal.querySelector('[data-automation-bulk="reject"]'),
+      close: modal.querySelector('[data-automation-close]'),
+    };
+  }
+
+  function esc(value) {
+    const node = document.createElement('div');
+    node.textContent = value == null ? '' : String(value);
+    return node.innerHTML;
+  }
+
+  function routes() {
+    return window.CRM_AUTOMATION_ROUTES || {};
+  }
+
+  function pendingItems() {
+    return state.items.filter((item) => item.status === 'pending' && item.is_actionable);
+  }
+
+  function updateItems(updatedItems = []) {
+    const updates = new Map((updatedItems || []).map((item) => [Number(item.id), item]));
+    state.items = state.items.map((item) => updates.get(Number(item.id)) || item);
+  }
+
+  function render() {
+    const { title, subtitle, list, empty, counter, acceptAll, rejectAll, close } = getEls();
+    if (!list) return;
+
+    if (title) title.textContent = state.title || 'Suggestions intelligentes';
+    if (subtitle) subtitle.textContent = state.subtitle || 'Le CRM vous propose la suite la plus utile.';
+
+    const pendingCount = pendingItems().length;
+    if (counter) {
+      counter.textContent = pendingCount > 0
+        ? `${pendingCount} suggestion(s) en attente`
+        : 'Toutes les suggestions ont ete traitees';
+    }
+
+    if (acceptAll) acceptAll.disabled = pendingCount === 0;
+    if (rejectAll) rejectAll.disabled = pendingCount === 0;
+    if (close) {
+      close.innerHTML = pendingCount === 0
+        ? '<i class="fas fa-check"></i> Continuer'
+        : '<i class="fas fa-arrow-right"></i> Continuer';
+    }
+
+    if (!state.items.length) {
+      list.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+
+    if (empty) empty.style.display = 'none';
+
+    list.innerHTML = state.items.map((item) => {
+      const actionable = item.status === 'pending' && item.is_actionable;
+      const targetUrl = item.integration?.target_url ? esc(item.integration.target_url) : '';
+      const openLink = targetUrl
+        ? `<a class="btn btn-secondary btn-sm" href="${targetUrl}"><i class="fas fa-up-right-from-square"></i> Ouvrir</a>`
+        : '';
+
+      return `
+        <article class="automation-card is-${esc(item.status)}" data-automation-id="${item.id}">
+          <div class="automation-card-head">
+            <div class="automation-card-icon" style="background:${esc(item.theme?.background || 'rgba(37,99,235,.12)')};color:${esc(item.theme?.color || '#2563eb')}">
+              <i class="${esc(item.theme?.icon || 'fas fa-wand-magic-sparkles')}"></i>
+            </div>
+            <div class="automation-card-copy">
+              <div class="automation-card-title-row">
+                <h4>${esc(item.label)}</h4>
+                <span class="automation-status-pill is-${esc(item.status)}">${esc(item.status_label || item.status)}</span>
+              </div>
+              <div class="automation-card-meta">
+                <span><i class="fas fa-bolt"></i> ${esc(item.integration?.label || 'Automation')}</span>
+                <span><i class="fas fa-signal"></i> ${esc(item.confidence_label || 'Pertinent')} (${esc(item.confidence_percent || 0)}%)</span>
+                ${item.expires_human ? `<span><i class="fas fa-clock"></i> Expire ${esc(item.expires_human)}</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="automation-card-actions">
+            ${openLink}
+            ${actionable ? `<button type="button" class="btn btn-secondary btn-sm" data-automation-action="reject" data-id="${item.id}">${esc(item.secondary_label || 'Ignorer')}</button>` : ''}
+            ${actionable ? `<button type="button" class="btn btn-primary btn-sm" data-automation-action="accept" data-id="${item.id}">${esc(item.primary_label || 'Accepter')}</button>` : ''}
+          </div>
+        </article>
+      `;
+    }).join('');
+  }
+
+  async function processSingle(id, action, button) {
+    const endpointTemplate = action === 'accept' ? routes().accept : routes().reject;
+    if (!endpointTemplate) {
+      Toast.error('Automation', 'Routes automation indisponibles.');
+      return;
+    }
+
+    if (button) CrmForm.setLoading(button, true);
+    const response = await Http.post(endpointTemplate.replace('__ID__', id), {});
+    if (button) CrmForm.setLoading(button, false);
+
+    if (!response.ok) {
+      Toast.error('Automation', response.data?.message || 'Operation automation impossible.');
+      return;
+    }
+
+    updateItems(response.data?.data?.suggestions || []);
+    render();
+    Toast.success('Automation', response.data?.message || 'Suggestion mise a jour.');
+  }
+
+  async function processBulk(action, button) {
+    const ids = pendingItems().map((item) => Number(item.id));
+    if (!ids.length) return;
+
+    const endpoint = action === 'accept' ? routes().bulkAccept : routes().bulkReject;
+    if (!endpoint) {
+      Toast.error('Automation', 'Routes automation indisponibles.');
+      return;
+    }
+
+    if (button) CrmForm.setLoading(button, true);
+    const response = await Http.post(endpoint, { ids });
+    if (button) CrmForm.setLoading(button, false);
+
+    if (!response.ok) {
+      Toast.error('Automation', response.data?.message || 'Traitement groupe impossible.');
+      return;
+    }
+
+    updateItems(response.data?.data?.suggestions || []);
+    render();
+    Toast.success('Automation', response.data?.message || 'Suggestions mises a jour.');
+
+    const errorCount = Array.isArray(response.data?.data?.errors) ? response.data.data.errors.length : 0;
+    if (errorCount > 0) {
+      Toast.warning('Automation', `${errorCount} suggestion(s) n ont pas pu etre traitees.`);
+    }
+  }
+
+  function init() {
+    if (booted) return;
+    const { modal } = getEls();
+    if (!modal) return;
+
+    modal.addEventListener('click', async (event) => {
+      const singleAction = event.target.closest('[data-automation-action]');
+      if (singleAction) {
+        event.preventDefault();
+        await processSingle(singleAction.dataset.id, singleAction.dataset.automationAction, singleAction);
+        return;
+      }
+
+      const bulkAction = event.target.closest('[data-automation-bulk]');
+      if (bulkAction) {
+        event.preventDefault();
+        await processBulk(bulkAction.dataset.automationBulk, bulkAction);
+        return;
+      }
+
+      if (event.target.closest('[data-automation-close]')) {
+        event.preventDefault();
+        Modal.close(modal);
+      }
+    });
+
+    modal.addEventListener('crm:modal-close', () => {
+      const resolver = state.resolver;
+      const redirectUrl = state.redirectUrl;
+      state = { items: [], redirectUrl: null, resolver: null, title: '', subtitle: '' };
+      if (typeof resolver === 'function') {
+        resolver({ redirectUrl });
+      }
+    });
+
+    booted = true;
+  }
+
+  function open(payload, options = {}) {
+    init();
+    const { modal } = getEls();
+    if (!modal || !payload || !payload.should_prompt || !Array.isArray(payload.suggestions) || !payload.suggestions.length) {
+      return null;
+    }
+
+    state = {
+      items: payload.suggestions.slice(),
+      redirectUrl: options.redirectUrl || null,
+      resolver: null,
+      title: payload.title || 'Suggestions intelligentes',
+      subtitle: payload.subtitle || 'Le CRM vous propose les prochaines actions utiles.',
+    };
+
+    render();
+    Modal.open(modal);
+
+    return new Promise((resolve) => {
+      state.resolver = resolve;
+    });
+  }
+
+  return { open, render };
+})();
+
+window.AutomationSuggestions = AutomationSuggestions;
 
 /* ============================================================
    TAGS INPUT
@@ -848,8 +1108,35 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Mobile sidebar toggle
-  document.getElementById('sidebarToggle')?.addEventListener('click', () => {
-    document.querySelector('.crm-sidebar')?.classList.toggle('open');
+  const sidebar = document.querySelector('.crm-sidebar');
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+  const closeSidebar = () => sidebar?.classList.remove('open');
+
+  sidebarToggle?.addEventListener('click', () => {
+    sidebar?.classList.toggle('open');
+  });
+
+  sidebarBackdrop?.addEventListener('click', closeSidebar);
+
+  document.querySelectorAll('.sidebar-nav a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 1024) {
+        closeSidebar();
+      }
+    });
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeSidebar();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 1024) {
+      closeSidebar();
+    }
   });
 
   const sidebarNav = document.querySelector('.sidebar-nav');

@@ -12,7 +12,7 @@ return [
     */
 
     // Rôles système (non modifiables, toujours présents)
-    'system_roles' => ['owner', 'super-admin'],
+    'system_roles' => ['owner', 'super_admin'],
 
     // Rôles par défaut créés à l'installation
     'default_roles' => [

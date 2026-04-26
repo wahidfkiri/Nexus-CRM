@@ -2,13 +2,16 @@
 
 namespace Vendor\Extensions\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ExtensionRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
@@ -57,12 +60,16 @@ class ExtensionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required'      => 'Le nom de l\'extension est requis.',
-            'category.required'  => 'La catégorie est requise.',
-            'category.in'        => 'Catégorie invalide.',
+            'name.required'         => 'Le nom de l\'extension est requis.',
+            'category.required'     => 'La catégorie est requise.',
+            'category.in'           => 'Catégorie invalide.',
             'pricing_type.required' => 'Le type de tarification est requis.',
-            'status.required'    => 'Le statut est requis.',
-            'icon_bg_color.regex'=> 'Couleur hexadécimale invalide.',
+            'status.required'       => 'Le statut est requis.',
+            'icon_bg_color.regex'   => 'Couleur hexadécimale invalide.',
+            'icon_file.image'       => 'Le fichier icône doit être une image valide.',
+            'icon_file.max'         => 'Le fichier icône est trop volumineux.',
+            'banner_file.image'     => 'Le fichier banner doit être une image valide.',
+            'banner_file.max'       => 'Le fichier banner est trop volumineux.',
         ];
     }
 

@@ -7,7 +7,7 @@ use Vendor\Extensions\Http\Controllers\SuperAdmin\ExtensionAdminController;
 /* ══════════════════════════════════════════════════════════════════════════
    SUPER-ADMIN — Gestion du catalogue
    ══════════════════════════════════════════════════════════════════════════ */
-Route::middleware(['web', 'auth'])
+Route::middleware(['web', 'auth', 'superadmin'])
     ->prefix('superadmin/extensions')
     ->name('superadmin.extensions.')
     ->group(function () {

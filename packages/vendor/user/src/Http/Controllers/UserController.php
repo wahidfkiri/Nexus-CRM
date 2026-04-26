@@ -4,43 +4,40 @@ namespace Vendor\User\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Vendor\User\Http\Requests\UserRequest;
-use Vendor\User\Http\Requests\InviteRequest;
-use Vendor\User\Models\UserInvitation;
-use Vendor\User\Services\UserService;
-use Vendor\User\Exports\UsersExport;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
+use Vendor\Rbac\Services\TenantRoleService;
+use Vendor\User\Exports\UsersExport;
+use Vendor\User\Http\Requests\InviteRequest;
+use Vendor\User\Http\Requests\UserRequest;
+use Vendor\User\Models\UserInvitation;
+use Vendor\User\Repositories\UserRepository;
+use Vendor\User\Services\UserService;
 
 class UserController extends Controller
 {
-    public function __construct(protected UserService $userService) {}
-
-    /* ── INDEX ────────────────────────────────────────────────────────────── */
+    public function __construct(
+        protected UserService $userService,
+        protected TenantRoleService $tenantRoleService,
+    ) {
+    }
 
     public function index()
     {
         return view('user::index', [
-            'roles'    => config('user.tenant_roles', []),
+            'roles' => $this->tenantRoleOptions(),
             'statuses' => config('user.user_statuses', []),
         ]);
     }
 
-    /* ── CREATE ───────────────────────────────────────────────────────────── */
-
     public function create()
     {
         return view('user::invite', [
-            'roles' => array_diff_key(
-                config('user.tenant_roles', []),
-                ['owner' => '']          // On ne peut pas inviter un owner
-            ),
+            'roles' => array_diff_key($this->tenantRoleOptions(), ['owner' => '']),
         ]);
     }
-
-    /* ── STORE (invite) ───────────────────────────────────────────────────── */
 
     public function store(InviteRequest $request): JsonResponse
     {
@@ -50,7 +47,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Invitation envoyée à {$invitation->email}.",
-                'data'    => $invitation,
+                'data' => $invitation,
             ], 201);
         } catch (Throwable $e) {
             return response()->json([
@@ -60,19 +57,16 @@ class UserController extends Controller
         }
     }
 
-    /* ── SHOW ─────────────────────────────────────────────────────────────── */
-
     public function show(User $user)
     {
         $this->authorizeTenantUser($user);
         $user->load('roles');
+
         return view('user::show', [
-            'user'  => $user,
-            'roles' => config('user.tenant_roles', []),
+            'user' => $user,
+            'roles' => $this->tenantRoleOptions(),
         ]);
     }
-
-    /* ── EDIT ─────────────────────────────────────────────────────────────── */
 
     public function edit(User $user)
     {
@@ -80,13 +74,11 @@ class UserController extends Controller
         $user->load('roles');
 
         return view('user::edit', [
-            'user'     => $user,
-            'roles'    => config('user.tenant_roles', []),
+            'user' => $user,
+            'roles' => $this->tenantRoleOptions(),
             'statuses' => config('user.user_statuses', []),
         ]);
     }
-
-    /* ── UPDATE ───────────────────────────────────────────────────────────── */
 
     public function update(UserRequest $request, User $user): JsonResponse
     {
@@ -96,9 +88,9 @@ class UserController extends Controller
             $user = $this->userService->updateUser($user, $request->validated());
 
             return response()->json([
-                'success'  => true,
-                'message'  => 'Utilisateur mis à jour avec succès.',
-                'data'     => $user,
+                'success' => true,
+                'message' => 'Utilisateur mis à jour avec succès.',
+                'data' => $user,
                 'redirect' => route('users.show', $user),
             ]);
         } catch (Throwable $e) {
@@ -108,8 +100,6 @@ class UserController extends Controller
             ], 500);
         }
     }
-
-    /* ── DESTROY ──────────────────────────────────────────────────────────── */
 
     public function destroy(User $user): JsonResponse
     {
@@ -121,50 +111,46 @@ class UserController extends Controller
 
         try {
             $this->userService->deleteUser($user);
+
             return response()->json(['success' => true, 'message' => 'Utilisateur supprimé.']);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
 
-    /* ── DATA (AJAX) ──────────────────────────────────────────────────────── */
-
     public function getData(Request $request): JsonResponse
     {
         $users = $this->userService->getFilteredUsers($request->all());
 
         return response()->json([
-            'data'         => $users->items(),
+            'data' => $users->items(),
             'current_page' => $users->currentPage(),
-            'last_page'    => $users->lastPage(),
-            'per_page'     => $users->perPage(),
-            'total'        => $users->total(),
-            'from'         => $users->firstItem(),
-            'to'           => $users->lastItem(),
+            'last_page' => $users->lastPage(),
+            'per_page' => $users->perPage(),
+            'total' => $users->total(),
+            'from' => $users->firstItem(),
+            'to' => $users->lastItem(),
         ]);
     }
-
-    /* ── STATS (AJAX) ─────────────────────────────────────────────────────── */
 
     public function getStats(): JsonResponse
     {
         return response()->json([
             'success' => true,
-            'data'    => $this->userService->getStats(),
+            'data' => $this->userService->getStats(),
         ]);
     }
-
-    /* ── BULK ─────────────────────────────────────────────────────────────── */
 
     public function bulkDelete(Request $request): JsonResponse
     {
         $request->validate([
-            'ids'   => 'required|array|min:1',
+            'ids' => 'required|array|min:1',
             'ids.*' => 'integer',
         ]);
 
         try {
             $count = $this->userService->bulkDelete($request->ids);
+
             return response()->json(['success' => true, 'message' => "{$count} utilisateur(s) supprimé(s)."]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -174,26 +160,27 @@ class UserController extends Controller
     public function bulkStatus(Request $request): JsonResponse
     {
         $request->validate([
-            'ids'    => 'required|array|min:1',
-            'ids.*'  => 'integer',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
             'status' => 'required|in:active,inactive,suspended',
         ]);
 
         try {
             $count = $this->userService->bulkStatusUpdate($request->ids, $request->status);
+
             return response()->json(['success' => true, 'message' => "{$count} utilisateur(s) mis à jour."]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
-    /* ── SUSPEND / ACTIVATE ───────────────────────────────────────────────── */
-
     public function suspend(User $user): JsonResponse
     {
         $this->authorizeTenantUser($user);
+
         try {
             $this->userService->suspendUser($user);
+
             return response()->json(['success' => true, 'message' => 'Utilisateur suspendu.']);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
@@ -203,61 +190,63 @@ class UserController extends Controller
     public function activate(User $user): JsonResponse
     {
         $this->authorizeTenantUser($user);
+
         try {
             $this->userService->activateUser($user);
+
             return response()->json(['success' => true, 'message' => 'Utilisateur activé.']);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
 
-    /* ── AVATAR ───────────────────────────────────────────────────────────── */
-
     public function uploadAvatar(Request $request, User $user): JsonResponse
     {
         $this->authorizeTenantUser($user);
-        $request->validate(['avatar' => 'required|image|max:'.config('user.avatar.max_size_kb', 2048)]);
+        $request->validate(['avatar' => 'required|image|max:' . config('user.avatar.max_size_kb', 2048)]);
 
         try {
             $user = $this->userService->updateAvatar($user, $request->file('avatar'));
+
             return response()->json([
                 'success' => true,
                 'message' => 'Avatar mis à jour.',
-                'avatar_url' => asset('storage/'.$user->avatar),
+                'avatar_url' => asset('storage/' . $user->avatar),
             ]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
-    /* ── INVITATIONS ──────────────────────────────────────────────────────── */
-
     public function invitations()
     {
         return view('user::invitations', [
-            'roles' => config('user.tenant_roles', []),
+            'roles' => $this->tenantRoleOptions(),
         ]);
     }
 
     public function invitationsData(Request $request): JsonResponse
     {
         $invitations = $this->userService->getInvitations($request->all());
+
         return response()->json([
-            'data'         => $invitations->items(),
+            'data' => $invitations->items(),
             'current_page' => $invitations->currentPage(),
-            'last_page'    => $invitations->lastPage(),
-            'per_page'     => $invitations->perPage(),
-            'total'        => $invitations->total(),
-            'from'         => $invitations->firstItem(),
-            'to'           => $invitations->lastItem(),
+            'last_page' => $invitations->lastPage(),
+            'per_page' => $invitations->perPage(),
+            'total' => $invitations->total(),
+            'from' => $invitations->firstItem(),
+            'to' => $invitations->lastItem(),
         ]);
     }
 
     public function resendInvitation(UserInvitation $invitation): JsonResponse
     {
         $this->authorizeTenantInvitation($invitation);
+
         try {
             $this->userService->resendInvitation($invitation);
+
             return response()->json(['success' => true, 'message' => 'Invitation renvoyée.']);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
@@ -267,77 +256,158 @@ class UserController extends Controller
     public function revokeInvitation(UserInvitation $invitation): JsonResponse
     {
         $this->authorizeTenantInvitation($invitation);
+
         try {
             $this->userService->revokeInvitation($invitation);
+
             return response()->json(['success' => true, 'message' => 'Invitation révoquée.']);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
-    /* ── EXPORTS ──────────────────────────────────────────────────────────── */
-
     public function exportCsv()
     {
-        return Excel::download(new UsersExport, 'utilisateurs_'.date('Y-m-d').'.csv');
+        return Excel::download(new UsersExport, 'utilisateurs_' . date('Y-m-d') . '.csv');
     }
 
     public function exportExcel()
     {
-        return Excel::download(new UsersExport, 'utilisateurs_'.date('Y-m-d').'.xlsx');
+        return Excel::download(new UsersExport, 'utilisateurs_' . date('Y-m-d') . '.xlsx');
     }
-
-    /* ── ACCEPT INVITATION (public) ───────────────────────────────────────── */
 
     public function acceptForm(string $token)
     {
-        $invitation = app(\Vendor\User\Repositories\UserRepository::class)->findInvitationByToken($token);
+        $invitation = app(UserRepository::class)->findInvitationByToken($token);
 
-        if (!$invitation || !$invitation->is_active) {
-            abort(404, 'Invitation invalide ou expirée.');
+        if (!$invitation) {
+            return response()->view('user::accept-invalid', [
+                'reason' => 'Cette invitation est introuvable. Vérifiez le lien reçu par email.',
+            ], 410);
         }
 
-        return view('user::accept', compact('invitation'));
+        if (!$invitation->isUsable()) {
+            return response()->view('user::accept-invalid', [
+                'reason' => 'Cette invitation est expirée, déjà acceptée, ou révoquée.',
+            ], 410);
+        }
+
+        $existingUser = User::query()->whereRaw('LOWER(email) = ?', [mb_strtolower((string) $invitation->email)])->first();
+
+        if (auth()->check()) {
+            $currentUser = auth()->user();
+            if (mb_strtolower((string) $currentUser->email) !== mb_strtolower((string) $invitation->email)) {
+                return response()->view('user::accept-invalid', [
+                    'reason' => 'Cette invitation est liée à un autre compte. Connectez-vous avec la bonne adresse email.',
+                ], 403);
+            }
+        } elseif ($existingUser) {
+            session([
+                'pending_invitation_token' => $invitation->token,
+                'pending_invitation_email' => mb_strtolower((string) $invitation->email),
+            ]);
+
+            return redirect()
+                ->route('login')
+                ->with('info', 'Connectez-vous avec votre compte existant pour rejoindre cette équipe.');
+        } else {
+            session([
+                'pending_invitation_token' => $invitation->token,
+                'pending_invitation_email' => mb_strtolower((string) $invitation->email),
+            ]);
+
+            return redirect()
+                ->route('register')
+                ->with('info', 'Créez votre compte pour finaliser cette invitation.')
+                ->with('invitation_email', (string) $invitation->email);
+        }
+
+        return view('user::accept', [
+            'invitation' => $invitation,
+            'requiresPassword' => false,
+            'existingUser' => $existingUser,
+        ]);
     }
 
     public function acceptSubmit(Request $request, string $token): JsonResponse
     {
-        $request->validate([
-            'name'                  => 'required|string|max:255',
-            'password'              => 'required|min:8|confirmed',
-        ]);
+        $invitation = app(UserRepository::class)->findInvitationByToken($token);
 
-        $invitation = app(\Vendor\User\Repositories\UserRepository::class)->findInvitationByToken($token);
-
-        if (!$invitation || !$invitation->is_active) {
+        if (!$invitation || !$invitation->isUsable()) {
             return response()->json(['success' => false, 'message' => 'Invitation invalide ou expirée.'], 422);
         }
 
-        try {
-            $user = $this->userService->acceptInvitation($invitation, $request->only('name', 'password'));
+        if (!auth()->check()) {
+            session([
+                'pending_invitation_token' => $invitation->token,
+                'pending_invitation_email' => mb_strtolower((string) $invitation->email),
+            ]);
+
             return response()->json([
-                'success'  => true,
-                'message'  => 'Bienvenue ! Votre compte a été créé.',
-                'redirect' => route('login'),
+                'success' => false,
+                'message' => 'Connectez-vous ou créez votre compte pour accepter cette invitation.',
+                'redirect' => User::query()->whereRaw('LOWER(email) = ?', [mb_strtolower((string) $invitation->email)])->exists()
+                    ? route('login')
+                    : route('register'),
+            ], 409);
+        }
+
+        if (mb_strtolower((string) auth()->user()->email) !== mb_strtolower((string) $invitation->email)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette invitation est liée à une autre adresse email.',
+            ], 403);
+        }
+
+        try {
+            $this->userService->acceptInvitation($invitation, [
+                'user' => auth()->user(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invitation acceptée. Votre accès à cette équipe est maintenant actif.',
+                'redirect' => url('/dashboard'),
             ]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
 
-    /* ── Helpers ──────────────────────────────────────────────────────────── */
-
     private function authorizeTenantUser(User $user): void
     {
-        if ($user->tenant_id !== auth()->user()->tenant_id) {
+        $tenantId = (int) auth()->user()->tenant_id;
+        $membership = $user->tenantMemberships()
+            ->where('tenant_id', $tenantId)
+            ->latest('id')
+            ->first();
+
+        if ($membership) {
+            $user->setAttribute('role_in_tenant', (string) $membership->role_in_tenant);
+            $user->setAttribute('is_tenant_owner', (bool) $membership->is_tenant_owner);
+            $user->setAttribute('status', (string) $membership->status);
+        }
+
+        if (!$membership && (int) $user->getOriginal('tenant_id') !== $tenantId) {
             abort(403, 'Accès non autorisé.');
         }
     }
 
     private function authorizeTenantInvitation(UserInvitation $invitation): void
     {
-        if ($invitation->tenant_id !== auth()->user()->tenant_id) {
+        if ((int) $invitation->tenant_id !== (int) auth()->user()->tenant_id) {
             abort(403, 'Accès non autorisé.');
         }
+    }
+
+    private function tenantRoleOptions(): array
+    {
+        $tenantId = (int) auth()->user()->tenant_id;
+        $roles = $this->tenantRoleService->ensureTenantRoles($tenantId);
+
+        return $roles
+            ->sortByDesc('is_system')
+            ->mapWithKeys(fn ($role) => [$role->name => ($role->label ?? ucfirst($role->name))])
+            ->toArray();
     }
 }

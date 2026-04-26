@@ -1,266 +1,309 @@
-<?php
+@extends('layouts.global')
 
-namespace Vendor\Extensions\Console\Commands;
+@section('title', 'Activations Extensions')
 
-use Illuminate\Console\Command;
-use Vendor\Extensions\Models\Extension;
+@section('breadcrumb')
+  <a href="{{ route('superadmin.extensions.index') }}">Extensions</a>
+  <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
+  <span style="color:var(--c-ink)">Activations tenants</span>
+@endsection
 
-class SeedExtensionsCommand extends Command
-{
-    protected $signature   = 'extensions:seed {--reset : Supprime et recrée le catalogue}';
-    protected $description = 'Peuple le catalogue avec des extensions de démonstration';
+@section('content')
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Activations des extensions</h1>
+    <p>Suivi global des installations par tenant</p>
+  </div>
+  <div class="page-header-actions">
+    <a href="{{ route('superadmin.extensions.index') }}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Retour catalogue
+    </a>
+  </div>
+</div>
 
-    public function handle(): int
-    {
-        if ($this->option('reset')) {
-            Extension::query()->forceDelete();
-            $this->warn('  ↺ Catalogue réinitialisé.');
-        }
+<div class="table-wrapper">
+  <div class="table-header">
+    <span class="table-title">Liste des activations</span>
+    <span class="table-count" id="activationCount">0</span>
+    <div class="table-spacer"></div>
+    <select class="filter-select" id="statusFilter">
+      <option value="">Tous statuts</option>
+      @foreach($activationStatuses as $key => $label)
+        <option value="{{ $key }}">{{ $label }}</option>
+      @endforeach
+    </select>
+    <button class="btn btn-ghost btn-sm" id="resetFilters" title="Réinitialiser">
+      <i class="fas fa-rotate-left"></i>
+    </button>
+  </div>
 
-        $extensions = $this->getDemoExtensions();
-        $this->info("📦 Création de {count($extensions)} extensions...");
+  <table class="crm-table">
+    <thead>
+      <tr>
+        <th>Extension</th>
+        <th>Tenant</th>
+        <th>Statut</th>
+        <th>Activée le</th>
+        <th>Prix</th>
+        <th>Activée par</th>
+        <th style="text-align:right;padding-right:20px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="activationTableBody"></tbody>
+  </table>
 
-        foreach ($extensions as $idx => $data) {
-            $ext = Extension::firstOrCreate(
-                ['slug' => $data['slug']],
-                array_merge($data, ['sort_order' => ($idx + 1) * 10])
-            );
-            $this->line("  ✓ <comment>{$ext->name}</comment> " . ($ext->wasRecentlyCreated ? '(créée)' : '(existante)'));
-        }
+  <div class="table-pagination">
+    <span class="pagination-info" id="paginationInfo"></span>
+    <div class="pagination-spacer"></div>
+    <div class="pagination-pages" id="paginationControls"></div>
+  </div>
+</div>
 
-        $this->info('✅ Catalogue prêt.');
-        return self::SUCCESS;
+<div class="modal-overlay" id="suspendModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">Suspendre l'activation</div>
+      <button class="modal-close" data-modal-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Raison <span class="required">*</span></label>
+        <textarea id="suspendReason" class="form-control" rows="3" placeholder="Indiquez la raison de suspension..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close>Annuler</button>
+      <button class="btn btn-danger" id="confirmSuspend" data-loading-text="Suspension...">Suspendre</button>
+    </div>
+  </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+window.EXT_ACTIVATIONS_ROUTES = {
+  data: '{{ route('superadmin.extensions.activations.data') }}',
+  suspendBase: '{{ url('/superadmin/extensions/activations') }}',
+};
+
+class ExtensionActivationsPage {
+  constructor() {
+    this.state = {
+      page: 1,
+      per_page: 20,
+      status: '',
+      total: 0,
+    };
+    this.pendingSuspendId = null;
+
+    this.bindEvents();
+    this.load();
+  }
+
+  bindEvents() {
+    document.getElementById('statusFilter')?.addEventListener('change', (event) => {
+      this.state.status = String(event.target.value || '');
+      this.state.page = 1;
+      this.load();
+    });
+
+    document.getElementById('resetFilters')?.addEventListener('click', () => {
+      this.state.status = '';
+      this.state.page = 1;
+      const status = document.getElementById('statusFilter');
+      if (status) status.value = '';
+      this.load();
+    });
+
+    document.getElementById('confirmSuspend')?.addEventListener('click', async () => {
+      await this.suspendCurrentActivation();
+    });
+  }
+
+  async load() {
+    const tbody = document.getElementById('activationTableBody');
+    if (tbody) {
+      tbody.innerHTML = Array.from({ length: 6 }).map(() =>
+        `<tr>${Array.from({ length: 7 }).map(() => '<td><div class="skeleton" style="height:12px;border-radius:4px;"></div></td>').join('')}</tr>`
+      ).join('');
     }
 
-    private function getDemoExtensions(): array
-    {
-        return [
-            // ── STOCKAGE ──────────────────────────────────────────────────
-            [
-                'slug'          => 'google-drive',
-                'name'          => 'Google Drive',
-                'tagline'       => 'Stockez, partagez et accédez à vos fichiers partout',
-                'description'   => 'Connectez Google Drive pour joindre des fichiers directement à vos clients et factures.',
-                'category'      => 'storage',
-                'icon'          => 'fa-google-drive',
-                'icon_bg_color' => '#4285F4',
-                'developer_name'=> 'Google LLC',
-                'pricing_type'  => 'free',
-                'status'        => 'active',
-                'is_featured'   => true,
-                'is_official'   => false,
-                'is_verified'   => true,
-                'installs_count'=> 1240,
-                'rating'        => 4.8,
-            ],
-            [
-                'slug'          => 'dropbox',
-                'name'          => 'Dropbox',
-                'tagline'       => 'Synchronisez vos documents d\'affaires',
-                'description'   => 'Reliez votre espace Dropbox pour un accès rapide à vos fichiers métiers.',
-                'category'      => 'storage',
-                'icon'          => 'fa-dropbox',
-                'icon_bg_color' => '#0061FF',
-                'developer_name'=> 'Dropbox Inc.',
-                'pricing_type'  => 'freemium',
-                'price'         => 9.99,
-                'billing_cycle' => 'monthly',
-                'status'        => 'active',
-                'is_new'        => true,
-                'installs_count'=> 430,
-                'rating'        => 4.5,
-            ],
+    const { ok, data } = await Http.get(window.EXT_ACTIVATIONS_ROUTES.data, {
+      page: this.state.page,
+      per_page: this.state.per_page,
+      status: this.state.status,
+    });
 
-            // ── COMMUNICATION ─────────────────────────────────────────────
-            [
-                'slug'          => 'slack',
-                'name'          => 'Slack',
-                'tagline'       => 'Recevez vos alertes CRM dans Slack',
-                'description'   => 'Notifications de nouveaux clients, factures et opportunités directement dans vos canaux Slack.',
-                'category'      => 'communication',
-                'icon'          => 'fa-slack',
-                'icon_bg_color' => '#4A154B',
-                'developer_name'=> 'Slack Technologies',
-                'pricing_type'  => 'free',
-                'status'        => 'active',
-                'is_featured'   => true,
-                'is_verified'   => true,
-                'installs_count'=> 2100,
-                'rating'        => 4.9,
-            ],
-            [
-                'slug'          => 'microsoft-teams',
-                'name'          => 'Microsoft Teams',
-                'tagline'       => 'Intégration native avec l\'écosystème Microsoft',
-                'description'   => 'Synchronisez vos contacts, réunions et documents avec Microsoft Teams.',
-                'category'      => 'communication',
-                'icon'          => 'fa-microsoft',
-                'icon_bg_color' => '#6264A7',
-                'pricing_type'  => 'free',
-                'status'        => 'active',
-                'installs_count'=> 890,
-                'rating'        => 4.6,
-            ],
-            [
-                'slug'          => 'twilio-sms',
-                'name'          => 'Twilio SMS',
-                'tagline'       => 'Envoyez des SMS à vos clients',
-                'description'   => 'Campagnes SMS, rappels de rendez-vous et notifications personnalisées.',
-                'category'      => 'communication',
-                'icon'          => 'fa-sms',
-                'icon_bg_color' => '#F22F46',
-                'developer_name'=> 'Twilio Inc.',
-                'pricing_type'  => 'usage',
-                'price'         => 0.05,
-                'status'        => 'active',
-                'has_trial'     => true,
-                'trial_days'    => 30,
-                'installs_count'=> 320,
-                'rating'        => 4.4,
-            ],
-
-            // ── IA ────────────────────────────────────────────────────────
-            [
-                'slug'          => 'nexus-ai',
-                'name'          => 'Nexus AI Assistant',
-                'tagline'       => 'IA générative pour votre CRM',
-                'description'   => 'Générez des emails, résumés clients et analyses commerciales grâce à l\'IA.',
-                'category'      => 'ai',
-                'icon'          => 'fa-robot',
-                'icon_bg_color' => '#f59e0b',
-                'pricing_type'  => 'paid',
-                'price'         => 29.00,
-                'billing_cycle' => 'monthly',
-                'has_trial'     => true,
-                'trial_days'    => 14,
-                'status'        => 'active',
-                'is_featured'   => true,
-                'is_official'   => true,
-                'is_new'        => true,
-                'installs_count'=> 540,
-                'rating'        => 4.9,
-            ],
-            [
-                'slug'          => 'chatgpt-integration',
-                'name'          => 'ChatGPT',
-                'tagline'       => 'Intégration OpenAI ChatGPT',
-                'description'   => 'Utilisez GPT-4 pour automatiser vos réponses clients et créer du contenu.',
-                'category'      => 'ai',
-                'icon'          => 'fa-brain',
-                'icon_bg_color' => '#10a37f',
-                'developer_name'=> 'OpenAI',
-                'pricing_type'  => 'paid',
-                'price'         => 19.00,
-                'billing_cycle' => 'monthly',
-                'has_trial'     => true,
-                'trial_days'    => 7,
-                'status'        => 'active',
-                'installs_count'=> 710,
-                'rating'        => 4.7,
-            ],
-
-            // ── MARKETING ─────────────────────────────────────────────────
-            [
-                'slug'          => 'mailchimp',
-                'name'          => 'Mailchimp',
-                'tagline'       => 'Synchronisez vos listes et campagnes email',
-                'description'   => 'Exportez vos contacts vers Mailchimp et déclenchez des campagnes depuis le CRM.',
-                'category'      => 'marketing',
-                'icon'          => 'fa-mailchimp',
-                'icon_bg_color' => '#FFE01B',
-                'developer_name'=> 'Intuit Mailchimp',
-                'pricing_type'  => 'free',
-                'status'        => 'active',
-                'installs_count'=> 980,
-                'rating'        => 4.5,
-            ],
-            [
-                'slug'          => 'hubspot',
-                'name'          => 'HubSpot CRM',
-                'tagline'       => 'Synchronisation bidirectionnelle HubSpot',
-                'description'   => 'Importez/exportez contacts, deals et activités entre NexusCRM et HubSpot.',
-                'category'      => 'marketing',
-                'icon'          => 'fa-hubspot',
-                'icon_bg_color' => '#FF7A59',
-                'developer_name'=> 'HubSpot Inc.',
-                'pricing_type'  => 'freemium',
-                'price'         => 49.00,
-                'billing_cycle' => 'monthly',
-                'status'        => 'active',
-                'is_verified'   => true,
-                'installs_count'=> 620,
-                'rating'        => 4.6,
-            ],
-
-            // ── PRODUCTIVITÉ ──────────────────────────────────────────────
-            [
-                'slug'          => 'google-calendar',
-                'name'          => 'Google Calendar',
-                'tagline'       => 'Synchronisez vos rendez-vous clients',
-                'description'   => 'Créez des événements depuis vos fiches clients, synchronisation temps réel.',
-                'category'      => 'productivity',
-                'icon'          => 'fa-calendar-days',
-                'icon_bg_color' => '#4285F4',
-                'developer_name'=> 'Google LLC',
-                'pricing_type'  => 'free',
-                'status'        => 'active',
-                'is_featured'   => true,
-                'installs_count'=> 1560,
-                'rating'        => 4.8,
-            ],
-            [
-                'slug'          => 'zapier',
-                'name'          => 'Zapier',
-                'tagline'       => 'Connectez 5000+ applications',
-                'description'   => 'Automatisez vos workflows en connectant NexusCRM à toutes vos applications via Zapier.',
-                'category'      => 'integration',
-                'icon'          => 'fa-bolt',
-                'icon_bg_color' => '#FF4A00',
-                'developer_name'=> 'Zapier Inc.',
-                'pricing_type'  => 'freemium',
-                'price'         => 19.99,
-                'billing_cycle' => 'monthly',
-                'has_trial'     => true,
-                'trial_days'    => 14,
-                'status'        => 'active',
-                'is_verified'   => true,
-                'installs_count'=> 750,
-                'rating'        => 4.7,
-            ],
-
-            // ── FINANCE ───────────────────────────────────────────────────
-            [
-                'slug'          => 'stripe-payments',
-                'name'          => 'Stripe',
-                'tagline'       => 'Encaissez vos factures en ligne',
-                'description'   => 'Envoyez des liens de paiement Stripe depuis vos factures NexusCRM.',
-                'category'      => 'finance',
-                'icon'          => 'fa-stripe',
-                'icon_bg_color' => '#635BFF',
-                'developer_name'=> 'Stripe Inc.',
-                'pricing_type'  => 'free',
-                'status'        => 'active',
-                'is_official'   => true,
-                'is_featured'   => true,
-                'installs_count'=> 1890,
-                'rating'        => 4.9,
-            ],
-            [
-                'slug'          => 'quickbooks',
-                'name'          => 'QuickBooks',
-                'tagline'       => 'Synchronisation comptable complète',
-                'description'   => 'Exportez automatiquement vos factures vers QuickBooks pour la comptabilité.',
-                'category'      => 'finance',
-                'icon'          => 'fa-calculator',
-                'icon_bg_color' => '#2CA01C',
-                'developer_name'=> 'Intuit Inc.',
-                'pricing_type'  => 'paid',
-                'price'         => 15.00,
-                'billing_cycle' => 'monthly',
-                'status'        => 'active',
-                'installs_count'=> 430,
-                'rating'        => 4.4,
-            ],
-        ];
+    if (!ok) {
+      Toast.error('Erreur', data?.message || 'Impossible de charger les activations.');
+      return;
     }
+
+    const rows = Array.isArray(data.data) ? data.data : [];
+    this.state.total = Number(data.total || 0);
+
+    this.renderRows(rows);
+    this.renderPagination(data);
+
+    const count = document.getElementById('activationCount');
+    if (count) count.textContent = String(this.state.total);
+  }
+
+  renderRows(rows) {
+    const tbody = document.getElementById('activationTableBody');
+    if (!tbody) return;
+
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="table-empty">
+        <div class="table-empty-icon"><i class="fas fa-plug-circle-xmark"></i></div>
+        <h3>Aucune activation</h3>
+        <p>Aucune donnée trouvée pour ce filtre.</p>
+      </div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map((row) => {
+      const status = this.statusBadge(row.status);
+      const extensionName = this.esc(row.extension?.name || '-');
+      const tenantName = this.esc(row.tenant?.name || '-');
+      const activatedBy = this.esc(row.activated_by_user?.name || '-');
+      const activatedAt = row.activated_at ? this.formatDate(row.activated_at) : '-';
+      const price = Number(row.price_paid || 0) > 0
+        ? `${Number(row.price_paid).toFixed(2)} ${this.esc(row.currency || 'EUR')}`
+        : '<span style="color:var(--c-ink-40);">Gratuit</span>';
+
+      const actions = row.status === 'suspended'
+        ? `<button class="btn-icon" title="Restaurer" data-action="restore" data-id="${Number(row.id)}"><i class="fas fa-check-circle"></i></button>`
+        : `<button class="btn-icon danger" title="Suspendre" data-action="suspend" data-id="${Number(row.id)}"><i class="fas fa-ban"></i></button>`;
+
+      return `<tr>
+        <td style="font-weight:var(--fw-semi);">${extensionName}</td>
+        <td>${tenantName}</td>
+        <td>${status}</td>
+        <td>${activatedAt}</td>
+        <td>${price}</td>
+        <td>${activatedBy}</td>
+        <td><div class="row-actions" style="justify-content:flex-end;padding-right:4px;">${actions}</div></td>
+      </tr>`;
+    }).join('');
+
+    tbody.querySelectorAll('[data-action="suspend"]').forEach((button) => {
+      button.addEventListener('click', () => this.openSuspendModal(Number(button.dataset.id || 0)));
+    });
+    tbody.querySelectorAll('[data-action="restore"]').forEach((button) => {
+      button.addEventListener('click', () => this.restoreActivation(Number(button.dataset.id || 0)));
+    });
+  }
+
+  renderPagination(data) {
+    const info = document.getElementById('paginationInfo');
+    const pages = document.getElementById('paginationControls');
+    if (!info || !pages) return;
+
+    const current = Number(data.current_page || 1);
+    const last = Number(data.last_page || 1);
+    const perPage = Number(data.per_page || this.state.per_page);
+    const total = Number(data.total || 0);
+    const from = total === 0 ? 0 : ((current - 1) * perPage) + 1;
+    const to = Math.min(current * perPage, total);
+
+    info.textContent = total ? `Affichage ${from}-${to} sur ${total}` : 'Aucun résultat';
+
+    pages.innerHTML = '';
+    if (last <= 1) return;
+
+    const addButton = (label, target, disabled, active = false) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `pagination-btn ${active ? 'active' : ''}`;
+      btn.textContent = label;
+      btn.disabled = disabled;
+      btn.addEventListener('click', () => {
+        if (this.state.page === target) return;
+        this.state.page = target;
+        this.load();
+      });
+      pages.appendChild(btn);
+    };
+
+    addButton('‹', Math.max(1, current - 1), current <= 1);
+    for (let page = 1; page <= last; page += 1) {
+      if (page === 1 || page === last || Math.abs(page - current) <= 1) {
+        addButton(String(page), page, false, page === current);
+      }
+    }
+    addButton('›', Math.min(last, current + 1), current >= last);
+  }
+
+  openSuspendModal(id) {
+    if (!id) return;
+    this.pendingSuspendId = id;
+    const reason = document.getElementById('suspendReason');
+    if (reason) reason.value = '';
+    Modal.open(document.getElementById('suspendModal'));
+  }
+
+  async suspendCurrentActivation() {
+    if (!this.pendingSuspendId) return;
+    const button = document.getElementById('confirmSuspend');
+    const reasonInput = document.getElementById('suspendReason');
+    const reason = String(reasonInput?.value || '').trim();
+    if (!reason) {
+      Toast.warning('Requis', 'Veuillez saisir une raison.');
+      return;
+    }
+
+    if (button) CrmForm.setLoading(button, true);
+    const { ok, data } = await Http.post(`${window.EXT_ACTIVATIONS_ROUTES.suspendBase}/${this.pendingSuspendId}/suspend`, { reason });
+    if (button) CrmForm.setLoading(button, false);
+
+    if (!ok) {
+      Toast.error('Erreur', data?.message || 'Suspension impossible.');
+      return;
+    }
+
+    Modal.close(document.getElementById('suspendModal'));
+    Toast.success('Succès', data.message || 'Activation suspendue.');
+    this.load();
+  }
+
+  async restoreActivation(id) {
+    if (!id) return;
+    const { ok, data } = await Http.post(`${window.EXT_ACTIVATIONS_ROUTES.suspendBase}/${id}/restore`, {});
+    if (!ok) {
+      Toast.error('Erreur', data?.message || 'Restauration impossible.');
+      return;
+    }
+    Toast.success('Succès', data.message || 'Activation restaurée.');
+    this.load();
+  }
+
+  statusBadge(status) {
+    const s = String(status || '').toLowerCase();
+    if (s === 'active') return '<span class="badge badge-actif">Active</span>';
+    if (s === 'trial') return '<span class="badge badge-info">Essai</span>';
+    if (s === 'suspended') return '<span class="badge badge-inactif">Suspendue</span>';
+    if (s === 'inactive') return '<span class="badge badge-inactif">Inactive</span>';
+    if (s === 'pending') return '<span class="badge badge-warning">En attente</span>';
+    return `<span class="badge badge-secondary">${this.esc(status || '-')}</span>`;
+  }
+
+  formatDate(value) {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  esc(value) {
+    const div = document.createElement('div');
+    div.textContent = String(value ?? '');
+    return div.innerHTML;
+  }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  new ExtensionActivationsPage();
+});
+</script>
+@endpush
+
