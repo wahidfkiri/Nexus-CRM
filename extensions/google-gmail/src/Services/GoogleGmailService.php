@@ -196,7 +196,12 @@ class GoogleGmailService
         $client = $this->makeClient();
         $client->setAccessToken($token->toGoogleToken());
 
-        if ($token->is_expired && $token->refresh_token) {
+        if ($token->is_expired) {
+            if (!$token->refresh_token) {
+                $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
+                throw new RuntimeException('Session Google Gmail expiree ou revoquee. Reconnectez votre compte Google.');
+            }
+
             $newToken = $client->fetchAccessTokenWithRefreshToken($token->refresh_token);
             if (!isset($newToken['error'])) {
                 $token->update([
@@ -206,6 +211,14 @@ class GoogleGmailService
                 ]);
                 $client->setAccessToken($newToken);
             } else {
+                if ($this->isRevokedOrExpiredOAuthError(
+                    (string) ($newToken['error'] ?? ''),
+                    (string) ($newToken['error_description'] ?? '')
+                )) {
+                    $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
+                    throw new RuntimeException('Session Google Gmail expiree ou revoquee. Reconnectez votre compte Google.');
+                }
+
                 throw new RuntimeException((string) ($newToken['error_description'] ?? $newToken['error']));
             }
         }
@@ -1602,6 +1615,14 @@ class GoogleGmailService
         $raw = (string) $e->getMessage();
         $msg = Str::lower($raw);
 
+        if (
+            str_contains($msg, 'invalid_grant')
+            || str_contains($msg, 'expired or revoked')
+            || str_contains($msg, 'token has been expired or revoked')
+        ) {
+            return new RuntimeException('Session Google Gmail expiree ou revoquee. Reconnectez Google Gmail.');
+        }
+
         $isNotFound = str_contains($msg, 'not found')
             || str_contains($msg, 'requested entity was not found')
             || str_contains($msg, 'not_found');
@@ -1633,6 +1654,31 @@ class GoogleGmailService
         }
 
         return new RuntimeException($raw !== '' ? $raw : 'Unexpected Google Gmail error.');
+    }
+
+    private function isRevokedOrExpiredOAuthError(string $error, string $description = ''): bool
+    {
+        $full = Str::lower(trim($error . ' ' . $description));
+
+        return str_contains($full, 'invalid_grant')
+            || str_contains($full, 'expired or revoked')
+            || str_contains($full, 'token has been expired or revoked');
+    }
+
+    private function invalidateTokenAfterOAuthFailure(GoogleGmailToken $token, string $reason): void
+    {
+        try {
+            $token->update([
+                'is_active' => false,
+                'disconnected_at' => now(),
+                'access_token' => '',
+                'refresh_token' => null,
+            ]);
+
+            $this->log((int) $token->tenant_id, 'oauth_invalidated', null, null, ['reason' => $reason]);
+        } catch (Throwable $e) {
+            Log::warning('[GoogleGmail] invalidate token failed', ['message' => $e->getMessage()]);
+        }
     }
 
     private function log(

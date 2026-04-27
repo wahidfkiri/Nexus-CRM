@@ -198,6 +198,7 @@ return [
         NexusExtensions\Projects\ProjectsServiceProvider::class,
         NexusExtensions\NotionWorkspace\NotionWorkspaceServiceProvider::class,
         NexusExtensions\GoogleDrive\GoogleDriveServiceProvider::class,
+        NexusExtensions\Dropbox\DropboxServiceProvider::class,
         NexusExtensions\GoogleSheets\GoogleSheetsServiceProvider::class,
         NexusExtensions\GoogleDocx\GoogleDocxServiceProvider::class,
         NexusExtensions\GoogleGmail\GoogleGmailServiceProvider::class,

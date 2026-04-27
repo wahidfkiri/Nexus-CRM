@@ -140,4 +140,43 @@ class Quote extends Model
 
     public function accept(): void { $this->update(['status' => 'accepted', 'accepted_at' => now()]); }
     public function decline(string $reason = ''): void { $this->update(['status' => 'declined', 'declined_at' => now(), 'decline_reason' => $reason]); }
+
+    public function hasConvertibleItems(): bool
+    {
+        if ($this->relationLoaded('items')) {
+            return $this->items->isNotEmpty();
+        }
+
+        return $this->items()->exists();
+    }
+
+    public function canBeConvertedToInvoice(): bool
+    {
+        if ($this->is_converted) {
+            return false;
+        }
+
+        if (in_array($this->status, ['declined'], true)) {
+            return false;
+        }
+
+        return $this->hasConvertibleItems();
+    }
+
+    public function conversionBlockedReason(): string
+    {
+        if ($this->is_converted) {
+            return 'Ce devis a deja ete converti en facture.';
+        }
+
+        if (in_array($this->status, ['declined'], true)) {
+            return 'Un devis refuse ne peut pas etre converti en facture.';
+        }
+
+        if (!$this->hasConvertibleItems()) {
+            return 'Ce devis brouillon doit etre complete et enregistre avec au moins une ligne avant conversion en facture.';
+        }
+
+        return '';
+    }
 }

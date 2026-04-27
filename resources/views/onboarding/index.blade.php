@@ -4,7 +4,7 @@
 
 @php
     $steps = $isOwner
-        ? ['Profil', 'SociÃ©tÃ©', 'Secteur', 'Applications']
+        ? ['Profil', 'Société', 'Secteur', 'Applications']
         : ['Profil'];
 
     $initialApps = !empty($activeSlugs) ? $activeSlugs : $recommendedApps;
@@ -485,7 +485,7 @@
   }
 
   .ob-app-card.active::after {
-    content: "InstallÃ©e";
+    content: "Installée";
     position: absolute;
     right: 10px;
     top: 10px;
@@ -640,7 +640,7 @@
        data-apps-url="{{ route('onboarding.apps') }}">
     <div class="ob-head">
       <h1>Finalisez votre espace CRM</h1>
-      <p>Quelques Ã©tapes simples pour lancer votre activitÃ© dans un espace prÃªt Ã  lâ€™emploi.</p>
+      <p>Quelques étapes simples pour lancer votre activité dans un espace prêt à l'emploi.</p>
     </div>
 
     <div class="ob-steps-wrap">
@@ -659,7 +659,7 @@
 
     <div class="ob-body">
       <div class="ob-alert hidden" id="wizardAlert"></div>
-      <p class="ob-note">Les champs marquÃ©s <span class="required-mark">*</span> sont obligatoires.</p>
+      <p class="ob-note">Les champs marqués <span class="required-mark">*</span> sont obligatoires.</p>
 
       <section class="ob-panel active" data-step-panel="0">
         <h2>Votre profil</h2>
@@ -668,9 +668,9 @@
         <form id="profileForm" novalidate>
           <div class="ob-grid">
             <div class="ob-field">
-              <label for="firstName">PrÃ©nom <span class="required-mark">*</span></label>
+              <label for="firstName">Prénom <span class="required-mark">*</span></label>
               <input type="text" class="ob-input" id="firstName" name="first_name"
-                     data-label="PrÃ©nom" required minlength="2"
+                     data-label="Prénom" required minlength="2"
                      value="{{ old('first_name', $user->first_name ?? '') }}">
             </div>
 
@@ -682,10 +682,10 @@
             </div>
 
             <div class="ob-field">
-              <label>TÃ©lÃ©phone</label>
+              <label>Téléphone</label>
               <div class="ob-phone-wrap" id="profilePhoneWrap">
                 <div class="ob-field">
-                  <select class="ob-select js-phone-country-select" id="profilePhoneCountry" name="profile_phone_country" data-label="Pays du tÃ©lÃ©phone" data-placeholder="Indicatif...">
+                  <select class="ob-select js-phone-country-select" id="profilePhoneCountry" name="profile_phone_country" data-label="Pays du téléphone" data-placeholder="Indicatif...">
                     @foreach($countries as $country)
                       <option value="{{ $country['code'] }}"
                               data-code="{{ $country['code'] }}"
@@ -699,7 +699,7 @@
                 </div>
                 <div class="ob-field">
                   <input type="text" class="ob-input" id="phone" name="phone_local"
-                         data-label="TÃ©lÃ©phone" pattern="^[0-9\s().-]{6,30}$"
+                         data-label="Téléphone" pattern="^[0-9\s().-]{6,30}$"
                          value="{{ $profilePhoneLocal }}">
                   <span class="ob-mini" id="profilePhonePrefixHelper"></span>
                 </div>
@@ -714,9 +714,9 @@
             </div>
 
             <div class="ob-field">
-              <label for="department">DÃ©partement</label>
+              <label for="department">Département</label>
               <input type="text" class="ob-input" id="department" name="department"
-                     data-label="DÃ©partement"
+                     data-label="Département"
                      value="{{ old('department', $user->department ?? '') }}">
             </div>
           </div>
@@ -725,22 +725,22 @@
 
       @if($isOwner)
         <section class="ob-panel" data-step-panel="1">
-          <h2>Informations de la sociÃ©tÃ©</h2>
-          <p>Configurez votre entreprise pour une expÃ©rience CRM adaptÃ©e.</p>
+          <h2>Informations de la société</h2>
+          <p>Configurez votre entreprise pour une expérience CRM adaptée.</p>
 
           <form id="companyForm" novalidate>
             <div class="ob-grid">
               <div class="ob-field">
-                <label for="companyName">Nom de la sociÃ©tÃ© <span class="required-mark">*</span></label>
+                <label for="companyName">Nom de la société <span class="required-mark">*</span></label>
                 <input type="text" class="ob-input" id="companyName" name="company_name"
-                       data-label="Nom de la sociÃ©tÃ©" required minlength="2"
+                       data-label="Nom de la société" required minlength="2"
                        value="{{ old('company_name', $tenant->name ?? '') }}">
               </div>
 
               <div class="ob-field">
-                <label for="companyEmail">Email sociÃ©tÃ© <span class="required-mark">*</span></label>
+                <label for="companyEmail">Email société <span class="required-mark">*</span></label>
                 <input type="email" class="ob-input" id="companyEmail" name="company_email"
-                       data-label="Email sociÃ©tÃ©" required
+                       data-label="Email société" required
                        value="{{ old('company_email', $tenant->email ?? $user->email) }}">
               </div>
 
@@ -762,10 +762,10 @@
               </div>
 
               <div class="ob-field">
-                <label>TÃ©lÃ©phone sociÃ©tÃ© <span class="required-mark">*</span></label>
+                <label>Téléphone société <span class="required-mark">*</span></label>
                 <div class="ob-phone-wrap" id="phoneWrap">
                   <div class="ob-field">
-                    <select class="ob-select js-phone-country-select" id="companyPhoneCountry" name="company_phone_country" data-label="Pays de tÃ©lÃ©phone" data-placeholder="Indicatif..." required>
+                    <select class="ob-select js-phone-country-select" id="companyPhoneCountry" name="company_phone_country" data-label="Pays de téléphone" data-placeholder="Indicatif..." required>
                       @foreach($countries as $country)
                         <option value="{{ $country['code'] }}"
                                 data-code="{{ $country['code'] }}"
@@ -779,7 +779,7 @@
                   </div>
                   <div class="ob-field">
                     <input type="text" class="ob-input" id="companyPhone" name="company_phone"
-                           data-label="TÃ©lÃ©phone sociÃ©tÃ©" required pattern="^[0-9\s().-]{6,30}$"
+                           data-label="Téléphone société" required pattern="^[0-9\s().-]{6,30}$"
                            value="{{ old('company_phone', $companySetup['company_phone_local']) }}">
                     <span class="ob-mini" id="phonePrefixHelper"></span>
                   </div>
@@ -801,15 +801,15 @@
               </div>
 
               <div class="ob-field" style="grid-column: 1 / -1;">
-                <label for="companyAddress">Adresse complÃ¨te <span class="required-mark">*</span></label>
+                <label for="companyAddress">Adresse complète <span class="required-mark">*</span></label>
                 <textarea class="ob-textarea" id="companyAddress" name="company_address"
-                          data-label="Adresse complÃ¨te" required minlength="5">{{ old('company_address', $tenant->address ?? '') }}</textarea>
+                          data-label="Adresse complète" required minlength="5">{{ old('company_address', $tenant->address ?? '') }}</textarea>
               </div>
 
               <div class="ob-field" style="grid-column: 1 / -1;">
-                <label for="companyDescription">Description de la sociÃ©tÃ©</label>
+                <label for="companyDescription">Description de la société</label>
                 <textarea class="ob-textarea" id="companyDescription" name="company_description"
-                          data-label="Description de la sociÃ©tÃ©">{{ old('company_description', $companySetup['company_description']) }}</textarea>
+                          data-label="Description de la société">{{ old('company_description', $companySetup['company_description']) }}</textarea>
               </div>
 
               <div class="ob-field">
@@ -846,7 +846,7 @@
         </section>
 
         <section class="ob-panel" data-step-panel="2">
-          <h2>Votre secteur dâ€™activitÃ©</h2>
+          <h2>Votre secteur d'activité</h2>
           <p>Nous adaptons les applications et recommandations selon votre domaine.</p>
 
           <form id="sectorForm" novalidate>
@@ -856,7 +856,7 @@
                   <label class="ob-sector-card {{ $selectedSector === $key ? 'active' : '' }}" data-sector-card>
                     <input type="radio" name="sector" value="{{ $key }}" {{ $selectedSector === $key ? 'checked' : '' }}>
                     {{ $label }}
-                    <small>Configuration optimisÃ©e pour {{ strtolower($label) }}</small>
+                    <small>Configuration optimisée pour {{ strtolower($label) }}</small>
                   </label>
                 @endforeach
               </div>
@@ -865,8 +865,8 @@
         </section>
 
         <section class="ob-panel" data-step-panel="3">
-          <h2>Applications Ã  installer</h2>
-          <p>SÃ©lectionnez les applications nÃ©cessaires. Vous pourrez en ajouter dâ€™autres plus tard.</p>
+          <h2>Applications à installer</h2>
+          <p>Sélectionnez les applications nécessaires. Vous pourrez en ajouter d'autres plus tard.</p>
 
           <form id="appsForm" novalidate>
             <div class="ob-field" id="appsField">
@@ -910,7 +910,7 @@
                       </span>
                       <span class="ob-app-name">{{ $app->name }}</span>
                     </div>
-                    <p class="ob-app-tagline">{{ $app->tagline ?: 'Application mÃ©tier intÃ©grÃ©e Ã  votre CRM.' }}</p>
+                    <p class="ob-app-tagline">{{ $app->tagline ?: 'Application métier intégrée à votre CRM.' }}</p>
                   </label>
                 @endforeach
               </div>
@@ -920,9 +920,9 @@
       @endif
 
       <div class="ob-footer">
-        <span class="ob-note" id="wizardStepText">Ã‰tape 1 sur {{ count($steps) }}</span>
+        <span class="ob-note" id="wizardStepText">Étape 1 sur {{ count($steps) }}</span>
         <div class="ob-footer-right">
-          <button type="button" class="btn btn-secondary" id="prevBtn" style="display:none;"><i class="fas fa-arrow-left"></i> PrÃ©cÃ©dent</button>
+          <button type="button" class="btn btn-secondary" id="prevBtn" style="display:none;"><i class="fas fa-arrow-left"></i> Précédent</button>
           <button type="button" class="btn btn-primary" id="nextBtn">Suivant <i class="fas fa-arrow-right"></i></button>
         </div>
       </div>
@@ -1087,7 +1087,7 @@
             const rawName = data.name || data.text || '';
             const rawDial = data.dial || '';
             const countryText = mode === 'phone' ? `${rawCode} ${rawDial}`.trim() : rawName;
-            const meta = mode === 'phone' ? rawName : `${rawCode}${rawDial ? ` Â· ${rawDial}` : ''}`;
+            const meta = mode === 'phone' ? rawName : `${rawCode}${rawDial ? ` · ${rawDial}` : ''}`;
             const code = escape(rawCode);
             return `<div class="country-option">
               <img src="${flagUrl(rawCode)}" alt="${code}">
@@ -1264,9 +1264,9 @@
           if (digitsValue.startsWith('0')) {
             errors.phone_local = ['Saisissez le telephone sans le 0 initial (indicatif deja selectionne).'];
           } else if (lengths.length > 0 && !lengths.includes(digitsLength)) {
-            errors.phone_local = [`Le tÃ©lÃ©phone doit contenir ${phoneLengthsLabel(lengths)} chiffres pour ce pays.`];
+            errors.phone_local = [`Le téléphone doit contenir ${phoneLengthsLabel(lengths)} chiffres pour ce pays.`];
           } else if (lengths.length === 0 && (digitsLength < 8 || digitsLength > 15)) {
-            errors.phone_local = ['Le tÃ©lÃ©phone doit contenir entre 8 et 15 chiffres.'];
+            errors.phone_local = ['Le téléphone doit contenir entre 8 et 15 chiffres.'];
           }
         }
       }
@@ -1281,9 +1281,9 @@
           if (digitsValue.startsWith('0')) {
             errors.company_phone = ['Saisissez le telephone sans le 0 initial (indicatif deja selectionne).'];
           } else if (lengths.length > 0 && !lengths.includes(digitsLength)) {
-            errors.company_phone = [`Le tÃ©lÃ©phone doit contenir ${phoneLengthsLabel(lengths)} chiffres pour ce pays.`];
+            errors.company_phone = [`Le téléphone doit contenir ${phoneLengthsLabel(lengths)} chiffres pour ce pays.`];
           } else if (lengths.length === 0 && (digitsLength < 8 || digitsLength > 15)) {
-            errors.company_phone = ['Le tÃ©lÃ©phone doit contenir entre 8 et 15 chiffres.'];
+            errors.company_phone = ['Le téléphone doit contenir entre 8 et 15 chiffres.'];
           }
         }
       }
@@ -1291,7 +1291,7 @@
       if (currentConfig.formId === 'sectorForm') {
         const selected = form.querySelector('input[name="sector"]:checked');
         if (!selected) {
-          addSpecialError('sectorGrid', 'Veuillez sÃ©lectionner un secteur.');
+          addSpecialError('sectorGrid', 'Veuillez sélectionner un secteur.');
           return false;
         }
       }
@@ -1299,7 +1299,7 @@
       if (currentConfig.formId === 'appsForm') {
         const selectedApps = form.querySelectorAll('input[name="apps[]"]:checked');
         if (selectedApps.length === 0) {
-          addSpecialError('appsGrid', 'SÃ©lectionnez au moins une application.');
+          addSpecialError('appsGrid', 'Sélectionnez au moins une application.');
           return false;
         }
       }
@@ -1364,7 +1364,7 @@
         clearSpecialErrors(form);
         syncTomSelectErrorState();
         if (showSuccessToast && response.data?.message) {
-          Toast.success('SuccÃ¨s', response.data.message);
+          Toast.success('Succès', response.data.message);
         }
         return true;
       }
@@ -1415,7 +1415,7 @@
         progressBar.style.width = `${progress}%`;
       }
       if (stepText) {
-        stepText.textContent = `Ã‰tape ${currentStep + 1} sur ${totalSteps}`;
+        stepText.textContent = `Étape ${currentStep + 1} sur ${totalSteps}`;
       }
       if (prevBtn) {
         prevBtn.style.display = currentStep === 0 ? 'none' : 'inline-flex';
@@ -1435,7 +1435,7 @@
       installOverlay.classList.add('open');
       installBar.style.width = '0%';
       installValue.textContent = '0%';
-      installStatus.textContent = 'PrÃ©paration de votre espace CRM...';
+      installStatus.textContent = 'Préparation de votre espace CRM...';
 
       if (installTimer) {
         window.clearInterval(installTimer);
@@ -1444,9 +1444,9 @@
         value = Math.min(value + Math.floor(Math.random() * 8) + 2, 92);
         installBar.style.width = `${value}%`;
         installValue.textContent = `${value}%`;
-        if (value > 20) installStatus.textContent = 'CrÃ©ation de la structure de votre espace...';
-        if (value > 45) installStatus.textContent = 'Installation des applications sÃ©lectionnÃ©es...';
-        if (value > 70) installStatus.textContent = 'Finalisation et vÃ©rifications...';
+        if (value > 20) installStatus.textContent = 'Création de la structure de votre espace...';
+        if (value > 45) installStatus.textContent = 'Installation des applications sélectionnées...';
+        if (value > 70) installStatus.textContent = 'Finalisation et vérifications...';
         if (value >= 92 && installTimer) {
           window.clearInterval(installTimer);
           installTimer = null;
@@ -1464,7 +1464,7 @@
       }
       installBar.style.width = '100%';
       installValue.textContent = '100%';
-      installStatus.textContent = 'Votre espace est prÃªt.';
+      installStatus.textContent = 'Votre espace est prêt.';
     }
 
     async function finalizeWizard() {
@@ -1492,8 +1492,8 @@
       }
 
       finishInstallProgress();
-      setAlert('success', completeResponse.data?.message || 'Configuration terminÃ©e avec succÃ¨s.');
-      Toast.success('SuccÃ¨s', completeResponse.data?.message || 'Configuration terminÃ©e avec succÃ¨s.');
+      setAlert('success', completeResponse.data?.message || 'Configuration terminée avec succès.');
+      Toast.success('Succès', completeResponse.data?.message || 'Configuration terminée avec succès.');
 
       setTimeout(() => {
         window.location.href = completeResponse.data?.redirect || '{{ url('/dashboard') }}';

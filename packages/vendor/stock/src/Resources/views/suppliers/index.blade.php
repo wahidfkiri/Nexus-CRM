@@ -14,7 +14,7 @@
 document.addEventListener('DOMContentLoaded',()=>{
  window._stockSuppliersTable = new CrmTable({
   tbodyId:'suppliersTableBody', dataUrl:'{{ route('stock.suppliers.data') }}',
-  renderRow:(s)=>`<tr><td><a href="/stock/suppliers/${s.id}" style="color:var(--c-accent);font-weight:600;text-decoration:none;">${s.name}</a></td><td>${s.contact_name ?? '—'}</td><td>${s.email ?? '—'}</td><td>${s.phone ?? '—'}</td><td><a class="btn-icon" href="/stock/suppliers/${s.id}/edit"><i class="fas fa-pen"></i></a></td></tr>`
+  renderRow:(s)=>`<tr><td><a href="/stock/suppliers/${s.id}" style="color:var(--c-accent);font-weight:600;text-decoration:none;">${s.name}</a></td><td>${s.contact_name ?? 'â€”'}</td><td>${s.email ?? 'â€”'}</td><td>${s.phone ?? 'â€”'}</td><td><a class="btn-icon" href="/stock/suppliers/${s.id}/edit"><i class="fas fa-pen"></i></a></td></tr>`
  });
 });
 </script>

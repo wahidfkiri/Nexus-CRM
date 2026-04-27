@@ -14,7 +14,7 @@
 document.addEventListener('DOMContentLoaded',()=>{
  window._stockOrdersTable = new CrmTable({
   tbodyId:'ordersTableBody', dataUrl:'{{ route('stock.orders.data') }}',
-  renderRow:(o)=>`<tr><td><a href="/stock/orders/${o.id}" style="color:var(--c-accent);font-weight:600;text-decoration:none;">${o.number}</a></td><td>${o.supplier?.name ?? '—'}</td><td>${o.order_date ?? '—'}</td><td>${o.total}</td><td><span class="badge badge-${o.status==='received'?'paid':(o.status==='cancelled'?'cancelled':'sent')}">${o.status}</span></td><td><a class="btn-icon" href="/stock/orders/${o.id}/edit"><i class="fas fa-pen"></i></a></td></tr>`
+  renderRow:(o)=>`<tr><td><a href="/stock/orders/${o.id}" style="color:var(--c-accent);font-weight:600;text-decoration:none;">${o.number}</a></td><td>${o.supplier?.name ?? 'â€”'}</td><td>${o.order_date ?? 'â€”'}</td><td>${o.total}</td><td><span class="badge badge-${o.status==='received'?'paid':(o.status==='cancelled'?'cancelled':'sent')}">${o.status}</span></td><td><a class="btn-icon" href="/stock/orders/${o.id}/edit"><i class="fas fa-pen"></i></a></td></tr>`
  });
 });
 </script>

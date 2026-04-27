@@ -472,7 +472,7 @@
 <div class="modal-overlay" id="confirmModal">
   <div class="modal modal-sm">
     <div class="modal-body" style="text-align:center;padding:36px 28px;">
-      <div class="modal-confirm-icon danger"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="modal-confirm-icon danger" data-confirm-icon><i class="fas fa-exclamation-triangle"></i></div>
       <h3 class="modal-confirm-title" data-confirm-title>Confirmer l'action</h3>
       <p class="modal-confirm-text" data-confirm-text style="margin-bottom:24px;"></p>
       <div style="display:flex;gap:10px;justify-content:center;">

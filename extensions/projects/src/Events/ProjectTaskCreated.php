@@ -65,7 +65,7 @@ class ProjectTaskCreated implements AutomationContextEvent
                 'client_id' => $project->client_id ? (int) $project->client_id : null,
                 'client_name' => (string) optional($project->client)->company_name,
                 'owner_id' => $project->owner_id ? (int) $project->owner_id : null,
-                'has_drive_folder' => !empty($projectMetadata['drive_folder_id']) || !empty($projectMetadata['drive_folder']),
+                'has_drive_folder' => !empty($projectMetadata['drive_folder_id']) || !empty($projectMetadata['drive_folder']) || !empty($projectMetadata['dropbox_folder_id']) || !empty($projectMetadata['dropbox_folder']),
                 'has_team_channel' => !empty($projectMetadata['chatbot_room']) || !empty($projectMetadata['slack_channel']),
             ],
             'task' => [

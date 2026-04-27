@@ -7,40 +7,40 @@ use Vendor\Extensions\Models\Extension;
 
 class SeedExtensionsCommand extends Command
 {
-    protected $signature   = 'extensions:seed {--reset : Supprime et recrÃ©e le catalogue}';
-    protected $description = 'Peuple le catalogue avec des extensions de dÃ©monstration';
+    protected $signature   = 'extensions:seed {--reset : Supprime et recrée le catalogue}';
+    protected $description = 'Peuple le catalogue avec des extensions de démonstration';
 
     public function handle(): int
     {
         if ($this->option('reset')) {
             Extension::query()->forceDelete();
-            $this->warn('  â†º Catalogue rÃ©initialisÃ©.');
+            $this->warn('  ↺ Catalogue réinitialisé.');
         }
 
         $extensions = $this->getDemoExtensions();
-        $this->info("ðŸ“¦ CrÃ©ation de " . count($extensions) . " extensions...");
+        $this->info("📦 Création de " . count($extensions) . " extensions...");
 
         foreach ($extensions as $idx => $data) {
             $ext = Extension::firstOrCreate(
                 ['slug' => $data['slug']],
                 array_merge($data, ['sort_order' => ($idx + 1) * 10])
             );
-            $this->line("  âœ“ <comment>{$ext->name}</comment> " . ($ext->wasRecentlyCreated ? '(crÃ©Ã©e)' : '(existante)'));
+            $this->line("  ✓ <comment>{$ext->name}</comment> " . ($ext->wasRecentlyCreated ? '(créée)' : '(existante)'));
         }
 
-        $this->info('âœ… Catalogue prÃªt.');
+        $this->info('✅ Catalogue prêt.');
         return self::SUCCESS;
     }
 
     private function getDemoExtensions(): array
     {
         return [
-            // â”€â”€ STOCKAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── STOCKAGE ──────────────────────────────────────────────────
             [
                 'slug'          => 'google-drive',
                 'name'          => 'Google Drive',
-                'tagline'       => 'Stockez, partagez et accÃ©dez Ã  vos fichiers partout',
-                'description'   => 'Connectez Google Drive pour joindre des fichiers directement Ã  vos clients et factures.',
+                'tagline'       => 'Stockez, partagez et accédez à vos fichiers partout',
+                'description'   => 'Connectez Google Drive pour joindre des fichiers directement à vos clients et factures.',
                 'category'      => 'storage',
                 'icon'          => 'fa-google-drive',
                 'icon_bg_color' => '#4285F4',
@@ -57,7 +57,7 @@ class SeedExtensionsCommand extends Command
                 'slug'          => 'dropbox',
                 'name'          => 'Dropbox',
                 'tagline'       => 'Synchronisez vos documents d\'affaires',
-                'description'   => 'Reliez votre espace Dropbox pour un accÃ¨s rapide Ã  vos fichiers mÃ©tiers.',
+                'description'   => 'Reliez votre espace Dropbox pour un accès rapide à vos fichiers métiers.',
                 'category'      => 'storage',
                 'icon'          => 'fa-dropbox',
                 'icon_bg_color' => '#0061FF',
@@ -71,12 +71,12 @@ class SeedExtensionsCommand extends Command
                 'rating'        => 4.5,
             ],
 
-            // â”€â”€ COMMUNICATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── COMMUNICATION ─────────────────────────────────────────────
             [
                 'slug'          => 'slack',
                 'name'          => 'Slack',
                 'tagline'       => 'Recevez vos alertes CRM dans Slack',
-                'description'   => 'Notifications de nouveaux clients, factures et opportunitÃ©s directement dans vos canaux Slack.',
+                'description'   => 'Notifications de nouveaux clients, factures et opportunités directement dans vos canaux Slack.',
                 'category'      => 'communication',
                 'icon'          => 'fa-slack',
                 'icon_bg_color' => '#4A154B',
@@ -91,8 +91,8 @@ class SeedExtensionsCommand extends Command
             [
                 'slug'          => 'microsoft-teams',
                 'name'          => 'Microsoft Teams',
-                'tagline'       => 'IntÃ©gration native avec l\'Ã©cosystÃ¨me Microsoft',
-                'description'   => 'Synchronisez vos contacts, rÃ©unions et documents avec Microsoft Teams.',
+                'tagline'       => 'Intégration native avec l\'écosystème Microsoft',
+                'description'   => 'Synchronisez vos contacts, réunions et documents avec Microsoft Teams.',
                 'category'      => 'communication',
                 'icon'          => 'fa-microsoft',
                 'icon_bg_color' => '#6264A7',
@@ -104,8 +104,8 @@ class SeedExtensionsCommand extends Command
             [
                 'slug'          => 'twilio-sms',
                 'name'          => 'Twilio SMS',
-                'tagline'       => 'Envoyez des SMS Ã  vos clients',
-                'description'   => 'Campagnes SMS, rappels de rendez-vous et notifications personnalisÃ©es.',
+                'tagline'       => 'Envoyez des SMS à vos clients',
+                'description'   => 'Campagnes SMS, rappels de rendez-vous et notifications personnalisées.',
                 'category'      => 'communication',
                 'icon'          => 'fa-sms',
                 'icon_bg_color' => '#F22F46',
@@ -119,12 +119,12 @@ class SeedExtensionsCommand extends Command
                 'rating'        => 4.4,
             ],
 
-            // â”€â”€ IA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── IA ────────────────────────────────────────────────────────
             [
                 'slug'          => 'nexus-ai',
                 'name'          => 'Nexus AI Assistant',
-                'tagline'       => 'IA gÃ©nÃ©rative pour votre CRM',
-                'description'   => 'GÃ©nÃ©rez des emails, rÃ©sumÃ©s clients et analyses commerciales grÃ¢ce Ã  l\'IA.',
+                'tagline'       => 'IA générative pour votre CRM',
+                'description'   => 'Générez des emails, résumés clients et analyses commerciales grâce à l\'IA.',
                 'category'      => 'ai',
                 'icon'          => 'fa-robot',
                 'icon_bg_color' => '#f59e0b',
@@ -143,8 +143,8 @@ class SeedExtensionsCommand extends Command
             [
                 'slug'          => 'chatgpt-integration',
                 'name'          => 'ChatGPT',
-                'tagline'       => 'IntÃ©gration OpenAI ChatGPT',
-                'description'   => 'Utilisez GPT-4 pour automatiser vos rÃ©ponses clients et crÃ©er du contenu.',
+                'tagline'       => 'Intégration OpenAI ChatGPT',
+                'description'   => 'Utilisez GPT-4 pour automatiser vos réponses clients et créer du contenu.',
                 'category'      => 'ai',
                 'icon'          => 'fa-brain',
                 'icon_bg_color' => '#10a37f',
@@ -159,12 +159,12 @@ class SeedExtensionsCommand extends Command
                 'rating'        => 4.7,
             ],
 
-            // â”€â”€ MARKETING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── MARKETING ─────────────────────────────────────────────────
             [
                 'slug'          => 'mailchimp',
                 'name'          => 'Mailchimp',
                 'tagline'       => 'Synchronisez vos listes et campagnes email',
-                'description'   => 'Exportez vos contacts vers Mailchimp et dÃ©clenchez des campagnes depuis le CRM.',
+                'description'   => 'Exportez vos contacts vers Mailchimp et déclenchez des campagnes depuis le CRM.',
                 'category'      => 'marketing',
                 'icon'          => 'fa-mailchimp',
                 'icon_bg_color' => '#FFE01B',
@@ -178,7 +178,7 @@ class SeedExtensionsCommand extends Command
                 'slug'          => 'hubspot',
                 'name'          => 'HubSpot CRM',
                 'tagline'       => 'Synchronisation bidirectionnelle HubSpot',
-                'description'   => 'Importez/exportez contacts, deals et activitÃ©s entre NexusCRM et HubSpot.',
+                'description'   => 'Importez/exportez contacts, deals et activités entre NexusCRM et HubSpot.',
                 'category'      => 'marketing',
                 'icon'          => 'fa-hubspot',
                 'icon_bg_color' => '#FF7A59',
@@ -192,12 +192,12 @@ class SeedExtensionsCommand extends Command
                 'rating'        => 4.6,
             ],
 
-            // â”€â”€ PRODUCTIVITÃ‰ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── PRODUCTIVITÉ ──────────────────────────────────────────────
             [
                 'slug'          => 'google-calendar',
                 'name'          => 'Google Calendar',
                 'tagline'       => 'Synchronisez vos rendez-vous clients',
-                'description'   => 'CrÃ©ez des Ã©vÃ©nements depuis vos fiches clients, synchronisation temps rÃ©el.',
+                'description'   => 'Créez des événements depuis vos fiches clients, synchronisation temps réel.',
                 'category'      => 'productivity',
                 'icon'          => 'fa-calendar-days',
                 'icon_bg_color' => '#4285F4',
@@ -209,12 +209,12 @@ class SeedExtensionsCommand extends Command
                 'rating'        => 4.8,
             ],
 
-            // â”€â”€ PRODUCTIVITÃ‰ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── PRODUCTIVITÉ ──────────────────────────────────────────────
             [
                 'slug'           => 'google-sheets',
                 'name'           => 'Google Sheets',
-                'tagline'        => 'CrÃ©ez et gÃ©rez vos feuilles de calcul Google',
-                'description'    => 'Connectez Google Sheets pour crÃ©er, lire, modifier et supprimer des feuilles de calcul directement depuis le CRM.',
+                'tagline'        => 'Créez et gérez vos feuilles de calcul Google',
+                'description'    => 'Connectez Google Sheets pour créer, lire, modifier et supprimer des feuilles de calcul directement depuis le CRM.',
                 'category'       => 'productivity',
                 'icon'           => 'fa-file-excel',
                 'icon_bg_color'  => '#0f9d58',
@@ -282,7 +282,7 @@ class SeedExtensionsCommand extends Command
                 'slug'          => 'zapier',
                 'name'          => 'Zapier',
                 'tagline'       => 'Connectez 5000+ applications',
-                'description'   => 'Automatisez vos workflows en connectant NexusCRM Ã  toutes vos applications via Zapier.',
+                'description'   => 'Automatisez vos workflows en connectant NexusCRM à toutes vos applications via Zapier.',
                 'category'      => 'integration',
                 'icon'          => 'fa-bolt',
                 'icon_bg_color' => '#FF4A00',
@@ -298,7 +298,7 @@ class SeedExtensionsCommand extends Command
                 'rating'        => 4.7,
             ],
 
-            // â”€â”€ FINANCE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── FINANCE ───────────────────────────────────────────────────
             [
                 'slug'          => 'stripe-payments',
                 'name'          => 'Stripe',
@@ -318,8 +318,8 @@ class SeedExtensionsCommand extends Command
             [
                 'slug'          => 'quickbooks',
                 'name'          => 'QuickBooks',
-                'tagline'       => 'Synchronisation comptable complÃ¨te',
-                'description'   => 'Exportez automatiquement vos factures vers QuickBooks pour la comptabilitÃ©.',
+                'tagline'       => 'Synchronisation comptable complète',
+                'description'   => 'Exportez automatiquement vos factures vers QuickBooks pour la comptabilité.',
                 'category'      => 'finance',
                 'icon'          => 'fa-calculator',
                 'icon_bg_color' => '#2CA01C',

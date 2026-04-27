@@ -8,6 +8,11 @@
   <span style="color:var(--c-ink)">{{ $quote->number }}</span>
 @endsection
 
+@php
+  $canConvertQuote = $quote->canBeConvertedToInvoice();
+  $convertBlockedReason = $quote->conversionBlockedReason();
+@endphp
+
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
@@ -20,13 +25,29 @@
   <div class="page-header-actions">
     <a href="{{ route('invoices.quotes.pdf', $quote) }}" class="btn btn-secondary"><i class="fas fa-file-pdf"></i> PDF</a>
     @if(!$quote->is_converted && !in_array($quote->status, ['declined']))
-      <button class="btn btn-success" onclick="convertQuote({{ $quote->id }}, '{{ $quote->number }}')"><i class="fas fa-arrow-right"></i> Convertir</button>
+      @if($canConvertQuote)
+        <button class="btn btn-success" onclick="convertQuote({{ $quote->id }}, '{{ $quote->number }}')"><i class="fas fa-arrow-right"></i> Convertir</button>
+      @else
+        <button class="btn btn-secondary" type="button" disabled title="{{ $convertBlockedReason }}"><i class="fas fa-lock"></i> Convertir</button>
+      @endif
     @endif
     @if(!in_array($quote->status, ['accepted', 'declined']))
       <a href="{{ route('invoices.quotes.edit', $quote) }}" class="btn btn-primary"><i class="fas fa-pen"></i> Modifier</a>
     @endif
   </div>
 </div>
+
+@if(!$canConvertQuote && !$quote->is_converted)
+  <div class="info-card" style="margin-bottom:16px;">
+    <div class="info-card-header"><i class="fas fa-circle-info"></i><h3>Conversion indisponible</h3></div>
+    <div class="info-card-body">
+      <p style="margin-top:0;color:var(--c-ink-60);font-size:14px;line-height:1.7;">{{ $convertBlockedReason }}</p>
+      @if(!in_array($quote->status, ['accepted', 'declined']))
+        <a href="{{ route('invoices.quotes.edit', $quote) }}" class="btn btn-primary"><i class="fas fa-pen"></i> Modifier ce devis</a>
+      @endif
+    </div>
+  </div>
+@endif
 
 <div class="row" style="align-items:flex-start;">
   <div class="col-8" style="padding:0 12px 0 0;">

@@ -14,6 +14,7 @@ class ExtensionAvailabilityService
         'google-gmail' => 'google-gmail.index',
         'google-calendar' => 'google-calendar.index',
         'google-drive' => 'google-drive.index',
+        'dropbox' => 'dropbox.index',
         'google-meet' => 'google-meet.index',
         'google-sheets' => 'google-sheets.index',
         'google-docx' => 'google-docx.index',

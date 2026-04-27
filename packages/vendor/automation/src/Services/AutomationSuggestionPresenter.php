@@ -199,6 +199,7 @@ class AutomationSuggestionPresenter
             'google-gmail' => 'Google Gmail',
             'google-calendar' => 'Google Calendar',
             'google-drive' => 'Google Drive',
+            'dropbox' => 'Dropbox',
             'google-meet' => 'Google Meet',
             'google-sheets' => 'Google Sheets',
             'google-docx' => 'Google Docs',
@@ -239,6 +240,11 @@ class AutomationSuggestionPresenter
                 'icon' => 'fas fa-folder-open',
                 'color' => '#1a73e8',
                 'background' => 'rgba(26,115,232,.12)',
+            ],
+            $integration === 'dropbox' => [
+                'icon' => 'fab fa-dropbox',
+                'color' => '#0061ff',
+                'background' => 'rgba(0,97,255,.12)',
             ],
             $integration === 'google-meet' => [
                 'icon' => 'fas fa-video',

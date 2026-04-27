@@ -170,11 +170,19 @@ class GoogleMeetService
 
         if ($token->is_expired) {
             if (!$token->refresh_token) {
+                $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
                 throw new RuntimeException('Google Meet session expired. Please reconnect your Google account.');
             }
 
             $newToken = $client->fetchAccessTokenWithRefreshToken($token->refresh_token);
             if (isset($newToken['error'])) {
+                if ($this->isRevokedOrExpiredOAuthError(
+                    (string) ($newToken['error'] ?? ''),
+                    (string) ($newToken['error_description'] ?? '')
+                )) {
+                    $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
+                    throw new RuntimeException('Session Google Meet expiree ou revoquee. Reconnectez votre compte Google.');
+                }
                 throw new RuntimeException((string) ($newToken['error_description'] ?? $newToken['error']));
             }
 
@@ -790,6 +798,35 @@ class GoogleMeetService
         }
 
         return url($path);
+    }
+
+    private function isRevokedOrExpiredOAuthError(string $error, string $description = ''): bool
+    {
+        $full = Str::lower(trim($error . ' ' . $description));
+
+        return str_contains($full, 'invalid_grant')
+            || str_contains($full, 'expired or revoked')
+            || str_contains($full, 'token has been expired or revoked');
+    }
+
+    private function invalidateTokenAfterOAuthFailure(GoogleMeetToken $token, string $reason): void
+    {
+        try {
+            $token->update([
+                'is_active' => false,
+                'disconnected_at' => now(),
+                'access_token' => '',
+                'refresh_token' => null,
+                'selected_calendar_id' => null,
+                'selected_calendar_summary' => null,
+            ]);
+
+            GoogleMeetCalendar::forTenant((int) $token->tenant_id)->update(['is_selected' => false]);
+
+            $this->log((int) $token->tenant_id, 'oauth_invalidated', ['reason' => $reason]);
+        } catch (Throwable $e) {
+            Log::warning('[GoogleMeet] invalidate token failed', ['message' => $e->getMessage()]);
+        }
     }
 
     private function translateGoogleApiException(Throwable $e, ?string $eventId = null): RuntimeException

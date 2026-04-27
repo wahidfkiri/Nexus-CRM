@@ -390,6 +390,11 @@ function renderCardGrid(a) {
   const iconBg     = a.icon_bg_color || `${color}18`;
   const categoryIconClass = _iconClass(a.category_icon || 'fa-puzzle-piece');
   const appIconClass = _iconClass(a.icon, categoryIconClass);
+  const slugArg = _attrJs(a.slug || '');
+  const nameArg = _attrJs(a.name || '');
+  const iconUrlArg = _attrJs(a.icon_url || '');
+  const iconClassArg = _attrJs(appIconClass);
+  const colorArg = _attrJs(color);
   const iconHtml   = a.icon_url
     ? `<img src="${a.icon_url}" style="width:32px;height:32px;object-fit:contain;" alt="${_esc(a.name)}">`
     : `<i class="${appIconClass}" style="color:white;font-size:24px;"></i>`;
@@ -410,10 +415,10 @@ function renderCardGrid(a) {
     : '';
 
   const actionBtn = a.is_activated
-    ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();deactivateApp('${a.slug}','${_esc(a.name)}')">
+    ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();deactivateApp(${slugArg},${nameArg},${iconUrlArg},${iconClassArg},${colorArg})">
          <i class="fas fa-plug-circle-xmark"></i> Désactiver
        </button>`
-    : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();activateApp('${a.slug}','${_esc(a.name)}',${a.is_free},${a.has_trial})">
+    : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();activateApp(${slugArg},${nameArg},${a.is_free},${a.has_trial},${iconUrlArg},${iconClassArg},${colorArg})">
          <i class="fas fa-plug"></i> ${a.has_trial ? 'Essayer' : 'Installer'}
        </button>`;
 
@@ -452,12 +457,17 @@ function renderCardList(a) {
   const iconBg = a.icon_bg_color || `${color}18`;
   const categoryIconClass = _iconClass(a.category_icon || 'fa-puzzle-piece');
   const appIconClass = _iconClass(a.icon, categoryIconClass);
+  const slugArg = _attrJs(a.slug || '');
+  const nameArg = _attrJs(a.name || '');
+  const iconUrlArg = _attrJs(a.icon_url || '');
+  const iconClassArg = _attrJs(appIconClass);
+  const colorArg = _attrJs(color);
   const iconHtml = a.icon_url
     ? `<img src="${a.icon_url}" style="width:28px;height:28px;object-fit:contain;" alt="${_esc(a.name)}">`
     : `<i class="${appIconClass}" style="color:${color};font-size:20px;"></i>`;
   const actionBtn = a.is_activated
-    ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();deactivateApp('${a.slug}','${_esc(a.name)}')"><i class="fas fa-plug-circle-xmark"></i></button>`
-    : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();activateApp('${a.slug}','${_esc(a.name)}',${a.is_free},${a.has_trial})"><i class="fas fa-plug"></i> Installer</button>`;
+    ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();deactivateApp(${slugArg},${nameArg},${iconUrlArg},${iconClassArg},${colorArg})"><i class="fas fa-plug-circle-xmark"></i></button>`
+    : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();activateApp(${slugArg},${nameArg},${a.is_free},${a.has_trial},${iconUrlArg},${iconClassArg},${colorArg})"><i class="fas fa-plug"></i> Installer</button>`;
 
   return `
   <div class="app-list-item" onclick="openAppModal('${a.slug}')">
@@ -491,7 +501,18 @@ function renderPagination(data) {
 function goTo(p) { state.page = p; loadApps(); window.scrollTo({top:0,behavior:'smooth'}); }
 
 /* ── Actions ─────────────────────────────────────────────────────────────── */
-async function activateApp(slug, name, isFree, hasTrial) {
+function buildAppConfirmIcon(name, iconUrl, iconClass) {
+  const safeName = _esc(name || '');
+  const safeUrl = String(iconUrl || '').replace(/"/g, '&quot;');
+
+  if (safeUrl) {
+    return `<img src="${safeUrl}" alt="${safeName}">`;
+  }
+
+  return `<i class="${_iconClass(iconClass || 'fas fa-puzzle-piece')}"></i>`;
+}
+
+async function activateApp(slug, name, isFree, hasTrial, iconUrl = '', iconClass = 'fas fa-puzzle-piece', color = '#2563eb') {
   const msg = hasTrial
     ? `Démarrer un essai gratuit de « ${name} » ?`
     : (isFree ? `Installer « ${name} » gratuitement ?` : `Activer « ${name} » ?`);
@@ -501,12 +522,18 @@ async function activateApp(slug, name, isFree, hasTrial) {
     message: hasTrial ? `Vous bénéficierez d'une période d'essai gratuite.` : 'L\'application sera immédiatement disponible.',
     confirmText: hasTrial ? 'Démarrer l\'essai' : 'Installer',
     type: 'success',
+    iconHtml: buildAppConfirmIcon(name, iconUrl, iconClass),
+    iconVariant: 'app',
+    iconColor: color,
     onConfirm: async () => {
       const { ok, data } = await Http.post(`/marketplace/${slug}/activate`, {});
       if (ok) {
         Toast.success('Installée !', data.message);
+        if (data.redirect) {
+          setTimeout(() => { window.location.href = data.redirect; }, 450);
+          return;
+        }
         loadApps();
-        setTimeout(() => window.location.reload(), 650);
       } else {
         Toast.error('Erreur', data.message);
       }
@@ -514,12 +541,15 @@ async function activateApp(slug, name, isFree, hasTrial) {
   });
 }
 
-async function deactivateApp(slug, name) {
+async function deactivateApp(slug, name, iconUrl = '', iconClass = 'fas fa-puzzle-piece', color = '#2563eb') {
   Modal.confirm({
     title: `Désactiver « ${name} » ?`,
     message: 'Vos données seront conservées. Vous pourrez réactiver l\'application à tout moment.',
     confirmText: 'Désactiver',
     type: 'danger',
+    iconHtml: buildAppConfirmIcon(name, iconUrl, iconClass),
+    iconVariant: 'app',
+    iconColor: color,
     onConfirm: async () => {
       const { ok, data } = await Http.post(`/marketplace/${slug}/deactivate`, {});
       if (ok) { Toast.success('Désactivée', data.message); loadApps(); }
@@ -534,6 +564,7 @@ async function openAppModal(slug) {
 }
 
 function _esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+function _attrJs(value) { return JSON.stringify(String(value ?? '')).replace(/"/g, '&quot;'); }
 function _iconClass(value, fallback = 'fas fa-puzzle-piece') {
   const raw = String(value || '').trim();
   if (!raw) return fallback;
@@ -554,3 +585,6 @@ function _iconClass(value, fallback = 'fas fa-puzzle-piece') {
 document.addEventListener('DOMContentLoaded', () => loadApps());
 </script>
 @endpush
+
+
+

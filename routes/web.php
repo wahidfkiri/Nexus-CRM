@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Api\DraftController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GlobalSettingsController;
 use App\Http\Controllers\OnboardingController;
@@ -53,5 +54,11 @@ Route::middleware('web')->group(function () {
         Route::post('/security/validation-demo', [SecurityValidationDemoController::class, 'store'])->name('security.validation-demo.store');
         Route::get('/analytics', fn () => view('analytics'))->name('analytics');
         Route::get('/tables', fn () => view('tables'))->name('tables');
+
+        Route::prefix('api/drafts')->name('drafts.')->group(function () {
+            Route::post('/save', [DraftController::class, 'save'])->name('save');
+            Route::get('/load', [DraftController::class, 'load'])->name('load');
+            Route::delete('/delete/{id}', [DraftController::class, 'destroy'])->name('delete');
+        });
     });
 });

@@ -275,10 +275,26 @@
 
 @push('scripts')
 <script>
-ajaxForm('clientForm', {
-  onSuccess: (data) => {
-    Toast.success('Client créé !', 'Le client a été ajouté à votre portefeuille.', 3000);
-  }
+document.addEventListener('DOMContentLoaded', () => {
+  window.CrmDrafts?.attach('clientForm', {
+    type: 'client',
+    label: 'client',
+    collect: (data) => {
+      const tags = window.CrmTagsInputs?.tags_wrap?.getTags?.() || [];
+      data['tags[]'] = tags;
+      return data;
+    },
+    apply: (data) => {
+      const tags = Array.isArray(data['tags[]']) ? data['tags[]'] : [];
+      window.CrmTagsInputs?.tags_wrap?.setTags?.(tags);
+    },
+  });
+
+  ajaxForm('clientForm', {
+    onSuccess: (data) => {
+      Toast.success('Client cr???? !', 'Le client a ??t?? ajout?? ?? votre portefeuille.', 3000);
+    }
+  });
 });
 </script>
 @endpush

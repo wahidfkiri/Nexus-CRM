@@ -828,6 +828,24 @@ textarea.form-control { resize: vertical; min-height: 100px; }
   font-size: 26px; margin: 0 auto 16px;
 }
 .modal-confirm-icon.danger { background: var(--c-danger-lt); color: var(--c-danger); }
+.modal-confirm-icon.success { background: var(--c-success-lt); color: var(--c-success); }
+.modal-confirm-icon.warning { background: var(--c-warning-lt); color: var(--c-warning); }
+.modal-confirm-icon.info { background: var(--c-info-lt); color: var(--c-info); }
+.modal-confirm-icon.app {
+  background: color-mix(in srgb, var(--modal-app-color, var(--c-accent)) 12%, white);
+  color: var(--modal-app-color, var(--c-accent));
+  border: 1px solid color-mix(in srgb, var(--modal-app-color, var(--c-accent)) 22%, transparent);
+  border-radius: 18px;
+}
+.modal-confirm-icon.app i {
+  color: var(--modal-app-color, var(--c-accent));
+}
+.modal-confirm-icon img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+}
 .modal-confirm-title { font-size: 18px; font-weight: var(--fw-semi); text-align: center; margin: 0 0 8px; }
 .modal-confirm-text { font-size: 14px; color: var(--c-ink-60); text-align: center; margin: 0; }
 

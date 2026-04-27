@@ -151,15 +151,29 @@ class GoogleDocxService
         $client = $this->makeClient();
         $client->setAccessToken($token->toGoogleToken());
 
-        if ($token->is_expired && $token->refresh_token) {
+        if ($token->is_expired) {
+            if (!$token->refresh_token) {
+                $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
+                throw new RuntimeException('Session Google Docs expiree ou revoquee. Reconnectez votre compte Google.');
+            }
+
             $newToken = $client->fetchAccessTokenWithRefreshToken($token->refresh_token);
             if (!isset($newToken['error'])) {
                 $token->update([
                     'access_token' => $newToken['access_token'] ?? $token->access_token,
+                    'refresh_token' => $newToken['refresh_token'] ?? $token->refresh_token,
                     'token_expires_at' => now()->addSeconds((int) ($newToken['expires_in'] ?? 3600)),
                 ]);
                 $client->setAccessToken($newToken);
             } else {
+                if ($this->isRevokedOrExpiredOAuthError(
+                    (string) ($newToken['error'] ?? ''),
+                    (string) ($newToken['error_description'] ?? '')
+                )) {
+                    $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
+                    throw new RuntimeException('Session Google Docs expiree ou revoquee. Reconnectez votre compte Google.');
+                }
+
                 throw new RuntimeException((string) ($newToken['error_description'] ?? $newToken['error']));
             }
         }
@@ -649,6 +663,14 @@ class GoogleDocxService
         $raw = (string) $e->getMessage();
         $message = Str::lower($raw);
 
+        if (
+            str_contains($message, 'invalid_grant')
+            || str_contains($message, 'expired or revoked')
+            || str_contains($message, 'token has been expired or revoked')
+        ) {
+            return new RuntimeException('Session Google Docs expiree ou revoquee. Reconnectez Google Docs.');
+        }
+
         $isNotFound = str_contains($message, 'requested entity was not found')
             || str_contains($message, 'not_found')
             || str_contains($message, 'notfound');
@@ -671,6 +693,31 @@ class GoogleDocxService
         }
 
         return new RuntimeException($raw !== '' ? $raw : 'Erreur Google Docs inattendue.');
+    }
+
+    private function isRevokedOrExpiredOAuthError(string $error, string $description = ''): bool
+    {
+        $full = Str::lower(trim($error . ' ' . $description));
+
+        return str_contains($full, 'invalid_grant')
+            || str_contains($full, 'expired or revoked')
+            || str_contains($full, 'token has been expired or revoked');
+    }
+
+    private function invalidateTokenAfterOAuthFailure(GoogleDocxToken $token, string $reason): void
+    {
+        try {
+            $token->update([
+                'is_active' => false,
+                'disconnected_at' => now(),
+                'access_token' => '',
+                'refresh_token' => null,
+            ]);
+
+            $this->log((int) $token->tenant_id, 'oauth_invalidated', null, null, ['reason' => $reason]);
+        } catch (\Throwable $e) {
+            Log::warning('[GoogleDocx] invalidate token failed', ['message' => $e->getMessage()]);
+        }
     }
 
     private function log(

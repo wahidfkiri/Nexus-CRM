@@ -50,14 +50,14 @@
         <div class="form-group">
           <label class="form-label">Préfixe factures <span class="required">*</span></label>
           <input type="text" name="invoice_prefix" class="form-control" value="{{ config('invoice.numbering.invoice_prefix', 'FAC') }}" placeholder="FAC">
-          <span class="form-hint">Ex : FAC â†’ FAC-2024-0001</span>
+          <span class="form-hint">Ex : FAC → FAC-2024-0001</span>
         </div>
       </div>
       <div class="col-6">
         <div class="form-group">
           <label class="form-label">Préfixe devis <span class="required">*</span></label>
           <input type="text" name="quote_prefix" class="form-control" value="{{ config('invoice.numbering.quote_prefix', 'DEV') }}" placeholder="DEV">
-          <span class="form-hint">Ex : DEV â†’ DEV-2024-0001</span>
+          <span class="form-hint">Ex : DEV → DEV-2024-0001</span>
         </div>
       </div>
       <div class="col-4">
@@ -100,7 +100,7 @@
   </div>
 </div>
 
-{{-- â”€â”€ TVA â”€â”€ --}}
+{{-- ── TVA ── --}}
 <div id="tab-taxes" class="tab-panel" style="display:none;">
   <div class="form-section">
     <h3 class="form-section-title">
@@ -152,7 +152,7 @@
   </div>
 </div>
 
-{{-- â”€â”€ RETENUE â”€â”€ --}}
+{{-- ── RETENUE ── --}}
 <div id="tab-withholding" class="tab-panel" style="display:none;">
   <div class="form-section">
     <h3 class="form-section-title">
@@ -212,7 +212,7 @@
   </div>
 </div>
 
-{{-- â”€â”€ SIGNATURE ÉLECTRONIQUE â”€â”€ --}}
+{{-- ── SIGNATURE ÉLECTRONIQUE ── --}}
 <div id="tab-signature" class="tab-panel" style="display:none;">
   <div class="form-section">
     <h3 class="form-section-title">
@@ -311,7 +311,7 @@
   </div>
 </div>
 
-{{-- â”€â”€ COMPTABILITÉ â”€â”€ --}}
+{{-- ── COMPTABILITÉ ── --}}
 <div id="tab-accounting" class="tab-panel" style="display:none;">
   <div class="form-section">
     <h3 class="form-section-title">
@@ -334,7 +334,7 @@
           <label class="form-label">Devise de base</label>
           <select name="base_currency" class="form-control">
             @foreach(config('invoice.currencies') as $code => $cfg)
-              <option value="{{ $code }}" {{ $code === 'EUR' ? 'selected' : '' }}>{{ $code }} â€” {{ $cfg['name'] }}</option>
+              <option value="{{ $code }}" {{ $code === 'EUR' ? 'selected' : '' }}>{{ $code }} — {{ $cfg['name'] }}</option>
             @endforeach
           </select>
         </div>
@@ -397,7 +397,7 @@
   </div>
 </div>
 
-{{-- â”€â”€ RAPPELS â”€â”€ --}}
+{{-- ── RAPPELS ── --}}
 <div id="tab-reminders" class="tab-panel" style="display:none;">
   <div class="form-section">
     <h3 class="form-section-title">
@@ -458,7 +458,7 @@
   </div>
 </div>
 
-{{-- â”€â”€ TEMPLATES PDF â”€â”€ --}}
+{{-- ── TEMPLATES PDF ── --}}
 <div id="tab-templates" class="tab-panel" style="display:none;">
   <div class="form-section">
     <h3 class="form-section-title">
@@ -474,7 +474,7 @@
             <option value="modern"  {{ $tpl === 'modern' ? 'selected' : '' }}>Modèle 2 - Moderne (entête plein)</option>
             <option value="minimal" {{ $tpl === 'minimal' ? 'selected' : '' }}>Modèle 3 - Minimal (noir et blanc)</option>
           </select>
-          <span class="form-hint">S'applique au PDF “Facture”.</span>
+          <span class="form-hint">S'applique au PDF "Facture".</span>
         </div>
       </div>
       <div class="col-6">
@@ -486,7 +486,7 @@
             <option value="modern"  {{ $tplq === 'modern' ? 'selected' : '' }}>Modèle 2 - Moderne (entête plein)</option>
             <option value="minimal" {{ $tplq === 'minimal' ? 'selected' : '' }}>Modèle 3 - Minimal (noir et blanc)</option>
           </select>
-          <span class="form-hint">S'applique au PDF “Devis”.</span>
+          <span class="form-hint">S'applique au PDF "Devis".</span>
         </div>
       </div>
       <div class="col-12">
@@ -661,7 +661,7 @@
     <div class="col-12">
       <div class="form-group">
         <label class="form-label">Texte de pied de page PDF (optionnel)</label>
-        <input type="text" name="pdf_footer" class="form-control" placeholder="{{ config('app.name') }} â€” SIRET / TVA / Coordonnées" value="{{ $settings['pdf_footer'] ?? '' }}">
+        <input type="text" name="pdf_footer" class="form-control" placeholder="{{ config('app.name') }} — SIRET / TVA / Coordonnées" value="{{ $settings['pdf_footer'] ?? '' }}">
       </div>
     </div>
   </div>
@@ -1012,5 +1012,4 @@ document.getElementById('settingsForm')?.addEventListener('submit', async (e) =>
 });
 </script>
 @endpush
-
 

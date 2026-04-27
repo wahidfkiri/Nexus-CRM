@@ -284,58 +284,125 @@ window.INVOICE_CURRENCIES    = @json($currencies);
 window.DEFAULT_CURRENCY      = '{{ 'EUR' }}';
 window.WITHHOLDING_COUNTRIES = @json(config('invoice.withholding_tax.countries', []));
 
+
+function applyClientSelection(snapshot = {}) {
+  const clientId = document.getElementById('clientId');
+  const search = document.getElementById('clientSearch');
+  const selected = document.getElementById('clientSelected');
+  if (!clientId || !search || !selected) return;
+
+  const id = snapshot.id || snapshot.client_id || '';
+  if (!id) {
+    clearClient(false);
+    if (snapshot.search) search.value = snapshot.search;
+    return;
+  }
+
+  clientId.value = id;
+  search.style.display = 'none';
+  search.value = snapshot.search || snapshot.company_name || '';
+  selected.style.display = 'flex';
+  document.getElementById('clientInitials').textContent = (snapshot.company_name || '?').substring(0, 2).toUpperCase();
+  document.getElementById('clientName').textContent = snapshot.company_name || '';
+  document.getElementById('clientEmail').textContent = snapshot.email || '';
+}
+
+function clearClient(triggerChange = true) {
+  const clientId = document.getElementById('clientId');
+  const search = document.getElementById('clientSearch');
+  const selected = document.getElementById('clientSelected');
+  if (clientId) clientId.value = '';
+  if (search) {
+    search.style.display = '';
+    search.value = '';
+  }
+  if (selected) selected.style.display = 'none';
+
+  if (triggerChange && clientId) {
+    clientId.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+
+window.clearClient = clearClient;
+
 document.addEventListener('DOMContentLoaded', () => {
-  // Date auto-calc
   const issueDate = document.getElementById('issue_date');
-  const terms     = document.getElementById('payment_terms');
-  const dueDate   = document.getElementById('due_date');
+  const terms = document.getElementById('payment_terms');
+  const dueDate = document.getElementById('due_date');
+  const clientIdInput = document.getElementById('clientId');
+
   function calcDue() {
     if (!issueDate.value || !terms.value) return;
     const d = new Date(issueDate.value);
-    d.setDate(d.getDate() + parseInt(terms.value));
+    d.setDate(d.getDate() + parseInt(terms.value, 10));
     dueDate.value = d.toISOString().split('T')[0];
   }
+
   issueDate.addEventListener('change', calcDue);
   terms.addEventListener('change', calcDue);
   calcDue();
 
-  // Discount type toggle
   document.getElementById('discount_type').addEventListener('change', function() {
     document.getElementById('discountValueGroup').style.display = this.value !== 'none' ? 'block' : 'none';
     InvLineItems.recalc();
   });
 
-  // Tax/withholding change
   document.getElementById('tax_rate')?.addEventListener('change', () => InvLineItems.recalc());
   document.getElementById('withholding_tax_rate')?.addEventListener('change', () => InvLineItems.recalc());
   document.getElementById('discount_value')?.addEventListener('input', () => InvLineItems.recalc());
   document.getElementById('currency')?.addEventListener('change', () => InvLineItems.recalc());
 
-  // Init line items
   InvLineItems.init({ currency: 'EUR', defaultTaxRate: {{ config('invoice.tax.default_rate', 20) }} });
 
-  // Init client search
   InvClientSearch.init('clientSearch', 'clientId', {
     suggestionsEl: 'clientSuggestions',
     onSelect: (c) => {
-      document.getElementById('clientSearch').style.display = 'none';
-      const sel = document.getElementById('clientSelected');
-      sel.style.display = 'flex';
-      document.getElementById('clientInitials').textContent = (c.company_name||'?').substring(0,2).toUpperCase();
-      document.getElementById('clientName').textContent = c.company_name;
-      document.getElementById('clientEmail').textContent = c.email || '';
+      applyClientSelection({
+        id: c.id,
+        company_name: c.company_name,
+        email: c.email || '',
+        search: c.company_name || '',
+      });
+      clientIdInput?.dispatchEvent(new Event('change', { bubbles: true }));
     }
   });
 
-  // AJAX form
+  window.CrmDrafts?.attach('invoiceForm', {
+    type: 'invoice',
+    label: 'facture',
+    collect: (data) => {
+      data.__draft_line_items = InvLineItems.getData();
+      data.__draft_client = {
+        id: document.getElementById('clientId')?.value || '',
+        company_name: document.getElementById('clientName')?.textContent || '',
+        email: document.getElementById('clientEmail')?.textContent || '',
+        search: document.getElementById('clientSearch')?.value || '',
+      };
+      return data;
+    },
+    apply: (data) => {
+      if (Array.isArray(data.__draft_line_items)) {
+        InvLineItems.load(data.__draft_line_items);
+      }
+
+      if (data.__draft_client?.id) {
+        applyClientSelection(data.__draft_client);
+      } else {
+        clearClient(false);
+        if (data.__draft_client?.search) {
+          document.getElementById('clientSearch').value = data.__draft_client.search;
+        }
+      }
+
+      if (Object.prototype.hasOwnProperty.call(data, 'due_date')) {
+        document.getElementById('due_date').value = data.due_date || '';
+      }
+
+      InvLineItems.recalc();
+    },
+  });
+
   ajaxForm('invoiceForm');
 });
-
-function clearClient() {
-  document.getElementById('clientId').value = '';
-  document.getElementById('clientSearch').style.display = '';
-  document.getElementById('clientSearch').value = '';
-  document.getElementById('clientSelected').style.display = 'none';
-}
 </script>
 @endpush

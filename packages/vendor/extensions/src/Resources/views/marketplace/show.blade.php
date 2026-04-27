@@ -167,7 +167,7 @@
           <i class="fas fa-cog"></i> Configurer
         </a>
         <button class="btn btn-ghost" style="width:100%;justify-content:center;color:var(--c-danger);"
-                onclick="deactivateExt('{{ $extension->slug }}','{{ $extension->name }}')">
+                onclick="deactivateExt(@js($extension->slug), @js($extension->name), @js($extension->icon_url), @js($extIconClass), @js($color))">
           <i class="fas fa-plug-circle-xmark"></i> Désactiver
         </button>
       @else
@@ -193,18 +193,18 @@
 
         @if($extension->has_trial)
           <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:10px;"
-                  onclick="activateExt('{{ $extension->slug }}','{{ $extension->name }}',true)">
+                  onclick="activateExt(@js($extension->slug), @js($extension->name), true, @js($extension->icon_url), @js($extIconClass), @js($color))">
             <i class="fas fa-rocket"></i> Essai gratuit {{ $extension->trial_days }} jours
           </button>
           @if(!$extension->is_free)
             <button class="btn btn-secondary" style="width:100%;justify-content:center;"
-                    onclick="activateExt('{{ $extension->slug }}','{{ $extension->name }}',false)">
+                    onclick="activateExt(@js($extension->slug), @js($extension->name), false, @js($extension->icon_url), @js($extIconClass), @js($color))">
               <i class="fas fa-plug"></i> Activer maintenant
             </button>
           @endif
         @else
           <button class="btn btn-primary" style="width:100%;justify-content:center;"
-                  onclick="activateExt('{{ $extension->slug }}','{{ $extension->name }}',false)">
+                  onclick="activateExt(@js($extension->slug), @js($extension->name), false, @js($extension->icon_url), @js($extIconClass), @js($color))">
             <i class="fas fa-plug"></i>
             {{ $extension->is_free ? 'Installer gratuitement' : 'Activer l\'extension' }}
           </button>
@@ -305,29 +305,50 @@
 
 @push('scripts')
 <script>
-async function activateExt(slug, name, isTrial) {
+function buildMarketplaceConfirmIcon(name, iconUrl, iconClass) {
+  const safeName = document.createElement('div');
+  safeName.textContent = name || '';
+
+  if (iconUrl) {
+    return `<img src="${String(iconUrl).replace(/"/g, '&quot;')}" alt="${safeName.innerHTML}">`;
+  }
+
+  return `<i class="${String(iconClass || 'fas fa-puzzle-piece').replace(/"/g, '')}"></i>`;
+}
+
+async function activateExt(slug, name, isTrial, iconUrl = '', iconClass = 'fas fa-puzzle-piece', color = '#2563eb') {
   const msg = isTrial ? `Démarrer l'essai gratuit de « ${name} » ?` : `Activer « ${name} » ?`;
   Modal.confirm({
     title: msg,
     message: isTrial ? 'Profitez de toutes les fonctionnalités sans engagement.' : 'L\'extension sera immédiatement disponible.',
     confirmText: isTrial ? 'Démarrer l\'essai' : 'Activer',
     type: 'success',
+    iconHtml: buildMarketplaceConfirmIcon(name, iconUrl, iconClass),
+    iconVariant: 'app',
+    iconColor: color,
     onConfirm: async () => {
       const { ok, data } = await Http.post(`/marketplace/${slug}/activate`, {});
       if (ok) {
         Toast.success('Activée !', data.message);
+        if (data.redirect) {
+          setTimeout(() => { window.location.href = data.redirect; }, 450);
+          return;
+        }
         setTimeout(() => location.reload(), 1000);
       } else Toast.error('Erreur', data.message);
     }
   });
 }
 
-async function deactivateExt(slug, name) {
+async function deactivateExt(slug, name, iconUrl = '', iconClass = 'fas fa-puzzle-piece', color = '#2563eb') {
   Modal.confirm({
     title: `Désactiver « ${name} » ?`,
     message: 'Vos données seront conservées. Vous pourrez réactiver à tout moment.',
     confirmText: 'Désactiver',
     type: 'danger',
+    iconHtml: buildMarketplaceConfirmIcon(name, iconUrl, iconClass),
+    iconVariant: 'app',
+    iconColor: color,
     onConfirm: async () => {
       const { ok, data } = await Http.post(`/marketplace/${slug}/deactivate`, {});
       if (ok) { Toast.success('Désactivée', data.message); setTimeout(() => location.reload(), 900); }
@@ -337,3 +358,4 @@ async function deactivateExt(slug, name) {
 }
 </script>
 @endpush
+

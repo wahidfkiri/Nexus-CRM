@@ -194,6 +194,35 @@ GOOGLE_MEET_CLIENT_SECRET=
 GOOGLE_MEET_REDIRECT_URI=
 ```
 
+### Dropbox OAuth
+
+Pour l'extension Dropbox :
+
+1. Creer une application Dropbox dans [App Console](https://www.dropbox.com/developers/apps).
+2. Choisir un acces adapte a votre usage CRM, puis activer au minimum les scopes :
+   - `account_info.read`
+   - `files.metadata.read`
+   - `files.metadata.write`
+   - `files.content.read`
+   - `files.content.write`
+   - `sharing.read`
+   - `sharing.write`
+3. Ajouter l'URL de callback autorisee :
+
+- `http://127.0.0.1:8000/extensions/dropbox/oauth/callback`
+
+Variables `.env` attendues :
+
+```dotenv
+DROPBOX_CLIENT_ID=
+DROPBOX_CLIENT_SECRET=
+DROPBOX_REDIRECT_URI=/extensions/dropbox/oauth/callback
+```
+
+Important :
+- si vous changez les scopes dans Dropbox App Console, deconnectez puis reconnectez Dropbox dans le CRM pour obtenir un nouveau token OAuth.
+- sans `files.content.write`, Dropbox refusera la creation de dossier, l'upload, le renommage et les autres operations d'ecriture.
+
 ### Slack OAuth
 
 Pour l'extension Slack :
@@ -236,6 +265,7 @@ Activation par tenant:
 Apps avec connexion externe a faire apres installation :
 
 - Google Drive
+- Dropbox
 - Google Calendar
 - Google Sheets
 - Google Docs

@@ -90,21 +90,25 @@
 </form>
 @endsection
 
+@php
+  $existingItems = $quote->items->map(function ($item) {
+      return [
+          'description' => $item->description,
+          'reference' => $item->reference,
+          'quantity' => (float) $item->quantity,
+          'unit' => $item->unit,
+          'unit_price' => (float) $item->unit_price,
+          'discount_type' => $item->discount_type ?? 'none',
+          'discount_value' => (float) $item->discount_value,
+          'tax_rate' => (float) $item->tax_rate,
+      ];
+  })->values();
+@endphp
+
 @push('scripts')
 <script>
 window.INVOICE_CURRENCIES = @json($currencies);
-const existingItems = @json($quote->items->map(function ($item) {
-  return [
-    'description' => $item->description,
-    'reference' => $item->reference,
-    'quantity' => (float) $item->quantity,
-    'unit' => $item->unit,
-    'unit_price' => (float) $item->unit_price,
-    'discount_type' => $item->discount_type ?? 'none',
-    'discount_value' => (float) $item->discount_value,
-    'tax_rate' => (float) $item->tax_rate,
-  ];
-})->values());
+const existingItems = @json($existingItems);
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('discount_type').addEventListener('change', function () {

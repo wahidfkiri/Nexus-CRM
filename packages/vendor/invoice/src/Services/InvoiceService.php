@@ -17,7 +17,7 @@ class InvoiceService
 {
     public function __construct(protected InvoiceRepository $repo) {}
 
-    // ─── NUMÉROTATION ──────────────────────────────────────────────────────
+    // â”€â”€â”€ NUMÃ‰ROTATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public function generateInvoiceNumber(int $tenantId): string
     {
@@ -71,7 +71,7 @@ class InvoiceService
         );
     }
 
-    // ─── FACTURES ──────────────────────────────────────────────────────────
+    // â”€â”€â”€ FACTURES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public function createInvoice(array $data): Invoice
     {
@@ -113,11 +113,11 @@ class InvoiceService
 
     public function deleteInvoice(Invoice $invoice): void
     {
-        abort_if(in_array($invoice->status, ['paid']), 422, 'Impossible de supprimer une facture payée.');
+        abort_if(in_array($invoice->status, ['paid']), 422, 'Impossible de supprimer une facture payÃ©e.');
         $invoice->delete();
     }
 
-    // ─── DEVIS ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€ DEVIS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public function createQuote(array $data): Quote
     {
@@ -159,7 +159,7 @@ class InvoiceService
 
     public function deleteQuote(Quote $quote): void
     {
-        abort_if($quote->is_converted, 422, 'Ce devis a déjà été converti en facture.');
+        abort_if($quote->is_converted, 422, 'Ce devis a dÃ©jÃ  Ã©tÃ© converti en facture.');
         $quote->delete();
     }
 
@@ -168,7 +168,8 @@ class InvoiceService
      */
     public function convertQuoteToInvoice(Quote $quote): Invoice
     {
-        abort_if($quote->is_converted, 422, 'Ce devis a déjà été converti.');
+        abort_if($quote->is_converted, 422, 'Ce devis a dÃ©jÃ  Ã©tÃ© converti.');
+        abort_if(!$quote->canBeConvertedToInvoice(), 422, $quote->conversionBlockedReason());
 
         return DB::transaction(function () use ($quote) {
             $invoiceData = [
@@ -225,7 +226,7 @@ class InvoiceService
         });
     }
 
-    // ─── PAIEMENTS ─────────────────────────────────────────────────────────
+    // â”€â”€â”€ PAIEMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public function addPayment(Invoice $invoice, array $data): Payment
     {
@@ -239,10 +240,10 @@ class InvoiceService
 
     public function deletePayment(Payment $payment): void
     {
-        $payment->delete(); // Observer met à jour la facture
+        $payment->delete(); // Observer met Ã  jour la facture
     }
 
-    // ─── CALCULS ───────────────────────────────────────────────────────────
+    // â”€â”€â”€ CALCULS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public function recalculate(Invoice $invoice): void
     {
@@ -300,7 +301,7 @@ class InvoiceService
             + ['discount_amount' => $discountAmount, 'tax_amount' => $taxAmount, 'withholding_tax_amount' => $withholdingAmount]);
     }
 
-    // ─── LIGNES ────────────────────────────────────────────────────────────
+    // â”€â”€â”€ LIGNES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private function syncItems(Invoice $invoice, array $items): void
     {
@@ -348,7 +349,7 @@ class InvoiceService
         }
     }
 
-    // ─── STATS ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€ STATS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public function getStats(): array
     {
@@ -395,7 +396,7 @@ class InvoiceService
             ->paginate($filters['per_page'] ?? config('invoice.pagination.per_page'));
     }
 
-    // ─── CHANGE DE DEVISE ──────────────────────────────────────────────────
+    // â”€â”€â”€ CHANGE DE DEVISE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public function convertAmount(float $amount, string $from, string $to, ?float $rate = null): float
     {
@@ -434,6 +435,6 @@ class InvoiceService
             }
         }
 
-        throw new \RuntimeException('Impossible de générer un numéro unique de document.');
+        throw new \RuntimeException('Impossible de gÃ©nÃ©rer un numÃ©ro unique de document.');
     }
 }

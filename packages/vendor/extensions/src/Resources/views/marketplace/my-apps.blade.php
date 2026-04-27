@@ -134,12 +134,12 @@
             <i class="fas fa-cog"></i> Configurer
           </a>
           <button class="btn btn-ghost btn-sm" style="color:var(--c-danger);"
-                  onclick="deactivateMyApp('{{ $ext->slug }}','{{ $ext->name }}')">
+                  onclick="deactivateMyApp(@js($ext->slug), @js($ext->name), @js($ext->icon_url), @js($extIconClass), @js($color))">
             <i class="fas fa-plug-circle-xmark"></i>
           </button>
         @elseif($st === 'inactive')
           <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center;"
-                  onclick="reactivateMyApp('{{ $ext->slug }}','{{ $ext->name }}')">
+                  onclick="reactivateMyApp(@js($ext->slug), @js($ext->name), @js($ext->icon_url), @js($extIconClass), @js($color))">
             <i class="fas fa-plug"></i> Réactiver
           </button>
         @elseif($st === 'suspended')
@@ -178,12 +178,26 @@ function filterByStatus(status, btn) {
   });
 }
 
-async function deactivateMyApp(slug, name) {
+function buildMarketplaceConfirmIcon(name, iconUrl, iconClass) {
+  const safeName = document.createElement('div');
+  safeName.textContent = name || '';
+
+  if (iconUrl) {
+    return `<img src="${String(iconUrl).replace(/"/g, '&quot;')}" alt="${safeName.innerHTML}">`;
+  }
+
+  return `<i class="${String(iconClass || 'fas fa-puzzle-piece').replace(/"/g, '')}"></i>`;
+}
+
+async function deactivateMyApp(slug, name, iconUrl = '', iconClass = 'fas fa-puzzle-piece', color = '#2563eb') {
   Modal.confirm({
     title: `Désactiver « ${name} » ?`,
     message: 'L\'application sera désactivée mais vos données resteront intactes.',
     confirmText: 'Désactiver',
     type: 'danger',
+    iconHtml: buildMarketplaceConfirmIcon(name, iconUrl, iconClass),
+    iconVariant: 'app',
+    iconColor: color,
     onConfirm: async () => {
       const { ok, data } = await Http.post(`/marketplace/${slug}/deactivate`, {});
       if (ok) { Toast.success('Désactivée', data.message); setTimeout(() => location.reload(), 900); }
@@ -192,10 +206,19 @@ async function deactivateMyApp(slug, name) {
   });
 }
 
-async function reactivateMyApp(slug, name) {
+async function reactivateMyApp(slug, name, iconUrl = '', iconClass = 'fas fa-puzzle-piece', color = '#2563eb') {
   const { ok, data } = await Http.post(`/marketplace/${slug}/activate`, {});
-  if (ok) { Toast.success('Réactivée !', data.message); setTimeout(() => location.reload(), 900); }
+  if (ok) {
+    Toast.success('Réactivée !', data.message);
+    if (data.redirect) {
+      setTimeout(() => { window.location.href = data.redirect; }, 450);
+      return;
+    }
+    setTimeout(() => location.reload(), 900);
+  }
   else Toast.error('Erreur', data.message);
 }
 </script>
 @endpush
+
+

@@ -20,6 +20,9 @@
     @elseif(!$extensionActive)
       <a href="{{ route('marketplace.show', 'google-drive') }}" class="btn btn-primary"><i class="fas fa-store"></i> Activate from Marketplace</a>
     @elseif($connected)
+      @if(!empty($dropboxInstalled))
+      <a href="{{ route('dropbox.index') }}" class="btn btn-secondary"><i class="fab fa-dropbox"></i> Ouvrir Dropbox</a>
+      @endif
       <button class="btn btn-secondary" id="gdRefreshBtn"><i class="fas fa-rotate"></i> Refresh</button>
       <button class="btn btn-secondary" id="gdTrashBtn"><i class="fas fa-trash"></i> Trash</button>
       <button class="btn btn-primary" id="gdCreateFolderBtn" data-modal-open="gdFolderModal"><i class="fas fa-folder-plus"></i> New Folder</button>
@@ -83,6 +86,16 @@
     </div>
   </div>
 </div>
+
+@if(!empty($dropboxInstalled))
+<div class="info-card" style="margin-bottom:20px;">
+  <div class="info-card-header"><i class="fab fa-dropbox"></i><h3>Dropbox est aussi disponible</h3></div>
+  <div class="info-card-body">
+    <p style="margin-top:0;color:var(--c-ink-60);font-size:14px;line-height:1.7;">Si certains documents doivent plutot vivre dans Dropbox, ouvrez l'autre application de stockage pour utiliser ce second espace.</p>
+    <a href="{{ route('dropbox.index') }}" class="btn btn-secondary"><i class="fab fa-dropbox"></i> Basculer vers Dropbox</a>
+  </div>
+</div>
+@endif
 
 <div class="table-wrapper">
   <div class="table-header">
@@ -192,4 +205,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
-

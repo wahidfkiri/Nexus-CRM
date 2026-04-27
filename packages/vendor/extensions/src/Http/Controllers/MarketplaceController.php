@@ -126,7 +126,7 @@ class MarketplaceController extends Controller
                 'message'   => $msg,
                 'is_trial'  => $activation->is_trial,
                 'status'    => $activation->status,
-                'redirect'  => route('marketplace.show', $extension->slug),
+                'redirect'  => route('marketplace.settings', $extension->slug),
             ]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
@@ -190,6 +190,9 @@ class MarketplaceController extends Controller
         }
         if ($extension->slug === 'google-drive' && \Route::has('google-drive.index')) {
             return redirect()->route('google-drive.index');
+        }
+        if ($extension->slug === 'dropbox' && \Route::has('dropbox.index')) {
+            return redirect()->route('dropbox.index');
         }
         if ($extension->slug === 'google-sheets' && \Route::has('google-sheets.index')) {
             return redirect()->route('google-sheets.index');

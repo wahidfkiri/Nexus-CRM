@@ -3,6 +3,7 @@
 namespace NexusExtensions\Projects\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\DraftService;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -240,6 +241,7 @@ class ProjectController extends Controller
             $calendarSync = $syncGoogleCalendar
                 ? $this->syncProjectCalendarOptional($project, $calendarId)
                 : ['event' => null, 'warning' => null, 'action_url' => null];
+            app(DraftService::class)->forgetFromRequest($request);
 
             event(new ProjectCreated(
                 $project->fresh(['client:id,company_name', 'owner:id,name,email']),
@@ -298,6 +300,7 @@ class ProjectController extends Controller
             $calendarSync = $syncGoogleCalendar
                 ? $this->syncProjectCalendarOptional($project, $calendarId)
                 : ['event' => null, 'warning' => null, 'action_url' => null];
+            app(DraftService::class)->forgetFromRequest($request);
 
             $this->logActivity('project_updated', 'Projet mis a jour', $project, null, $payload);
 
@@ -580,6 +583,7 @@ class ProjectController extends Controller
             $calendarSync = $syncGoogleCalendar
                 ? $this->syncTaskCalendarOptional($project, $task, $calendarId)
                 : ['event' => null, 'warning' => null, 'action_url' => null];
+            app(DraftService::class)->forgetFromRequest($request);
 
             $this->logActivity('task_created', 'Tache creee: ' . $task->title, $project, $task, ['status' => $task->status]);
 
@@ -652,6 +656,7 @@ class ProjectController extends Controller
             $calendarSync = $syncGoogleCalendar
                 ? $this->syncTaskCalendarOptional($project, $task, $calendarId)
                 : ['event' => null, 'warning' => null, 'action_url' => null];
+            app(DraftService::class)->forgetFromRequest($request);
 
             $this->logActivity('task_updated', 'Tache mise a jour: ' . $task->title, $project, $task, $payload);
 

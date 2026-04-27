@@ -402,8 +402,9 @@ const InvLineItems = (() => {
 
     // Load existing items (edit mode)
     if (opts.items?.length) {
-      opts.items.forEach(it => _addFromData(it));
+      load(opts.items);
     } else {
+      clear();
       addLine();
     }
   }
@@ -484,6 +485,43 @@ const InvLineItems = (() => {
     recalc();
   }
 
+  function clear() {
+    items = [];
+    counter = 0;
+    const tbody = document.getElementById('lineItemsBody');
+    if (tbody) tbody.innerHTML = '';
+  }
+
+  function load(rows = []) {
+    clear();
+
+    if (Array.isArray(rows) && rows.length) {
+      rows.forEach((row) => _addFromData(row));
+    } else {
+      addLine();
+    }
+
+    recalc();
+  }
+
+  function getData() {
+    return items.map((item) => {
+      const tr = document.getElementById(`li-${item.id}`);
+      if (!tr) return null;
+
+      return {
+        description: tr.querySelector(`[name="items[${item.id}][description]"]`)?.value || '',
+        reference: tr.querySelector(`[name="items[${item.id}][reference]"]`)?.value || '',
+        quantity: parseFloat(tr.querySelector(`[name="items[${item.id}][quantity]"]`)?.value || 0) || 0,
+        unit: tr.querySelector(`[name="items[${item.id}][unit]"]`)?.value || '',
+        unit_price: parseFloat(tr.querySelector(`[name="items[${item.id}][unit_price]"]`)?.value || 0) || 0,
+        discount_type: tr.querySelector(`[name="items[${item.id}][discount_type]"]`)?.value || 'none',
+        discount_value: parseFloat(tr.querySelector(`[name="items[${item.id}][discount_value]"]`)?.value || 0) || 0,
+        tax_rate: parseFloat(tr.querySelector(`[name="items[${item.id}][tax_rate]"]`)?.value || taxRate) || taxRate,
+      };
+    }).filter(Boolean);
+  }
+
   function _calcLine(id) {
     const tr = document.getElementById(`li-${id}`);
     if (!tr) return;
@@ -547,7 +585,7 @@ const InvLineItems = (() => {
   function _setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
   function _esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
 
-  return { init, addLine, removeLine, recalc };
+  return { init, addLine, removeLine, recalc, clear, load, getData };
 })();
 window.InvLineItems = InvLineItems;
 

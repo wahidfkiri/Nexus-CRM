@@ -28,7 +28,7 @@ class ProjectTaskCreatedSuggestionProvider implements SuggestionProvider
 
         $taskTitle = (string) ($task['title'] ?? 'cette tache');
         $calendarSynced = (bool) ($task['calendar_synced'] ?? false) || (bool) ($meta['calendar_synced'] ?? false);
-        $hasDriveFolder = (bool) ($project['has_drive_folder'] ?? false);
+        $hasStorageFolder = (bool) ($project['has_drive_folder'] ?? false);
         $hasTeamChannel = (bool) ($project['has_team_channel'] ?? false);
 
         $suggestions = [];
@@ -52,21 +52,27 @@ class ProjectTaskCreatedSuggestionProvider implements SuggestionProvider
             );
         }
 
-        if (!$hasDriveFolder) {
-            $driveInstalled = $this->extensions->isActive($tenantId, 'google-drive');
+        if (!$hasStorageFolder) {
+            $preferredStorage = $this->extensions->preferredInstalled($tenantId, ['google-drive', 'dropbox']);
+            $storageInstalled = $preferredStorage !== null;
+            $storageSlug = $preferredStorage ?: 'dropbox';
+            $storageAction = $storageSlug === 'dropbox' ? 'create_project_dropbox_folder' : 'create_project_drive_folder';
+
             $suggestions[] = SuggestionDefinition::make(
-                $driveInstalled ? 'create_project_drive_folder' : 'install_extension',
-                $driveInstalled
-                    ? 'Creer le dossier Google Drive du projet pour cette tache'
-                    : 'Installer Google Drive pour centraliser les fichiers du projet',
+                $storageInstalled ? $storageAction : 'install_extension',
+                $storageInstalled
+                    ? ($storageSlug === 'dropbox'
+                        ? 'Creer le dossier Dropbox du projet pour cette tache'
+                        : 'Creer le dossier Google Drive du projet pour cette tache')
+                    : 'Installer Dropbox ou Google Drive pour centraliser les fichiers du projet',
                 0.82,
-                $driveInstalled
+                $storageInstalled
                     ? ['project_id' => $projectId, 'task_id' => $taskId]
-                    : ['extension_slug' => 'google-drive', 'project_id' => $projectId, 'task_id' => $taskId, 'target_action' => 'create_project_drive_folder'],
+                    : ['extension_slug' => 'dropbox', 'project_id' => $projectId, 'task_id' => $taskId, 'target_action' => 'create_project_dropbox_folder'],
                 [
-                    'integration' => 'google-drive',
-                    'installed' => $driveInstalled,
-                    'target_url' => $this->extensions->targetUrl('google-drive'),
+                    'integration' => $storageSlug,
+                    'installed' => $storageInstalled,
+                    'target_url' => $this->extensions->targetUrl($storageSlug),
                 ]
             );
         }

@@ -1,8 +1,8 @@
-﻿if (!window.__CRM_CORE_LOADED__) {
+if (!window.__CRM_CORE_LOADED__) {
   window.__CRM_CORE_LOADED__ = true;
 
 /**
- * CRM SaaS â€” Core JavaScript
+ * CRM SaaS — Core JavaScript
  * Toast notifications, Modals, Table manager, Form helpers, AJAX utils
  */
 
@@ -150,13 +150,28 @@ const Modal = (() => {
     }
   }
 
-  function confirm({ title, message, confirmText = 'Confirmer', type = 'danger', onConfirm }) {
+  function confirm({ title, message, confirmText = 'Confirmer', type = 'danger', iconHtml = '', iconVariant = '', iconColor = '', onConfirm }) {
     const overlay = document.getElementById('confirmModal');
     if (!overlay) { console.warn('confirmModal element not found'); return; }
+
+    const iconEl = overlay.querySelector('[data-confirm-icon]');
+    const fallbackIcons = {
+      danger: 'fas fa-exclamation-triangle',
+      success: 'fas fa-circle-check',
+      warning: 'fas fa-triangle-exclamation',
+      info: 'fas fa-circle-info',
+    };
+    const resolvedVariant = iconVariant || (iconHtml ? 'app' : type);
 
     overlay.querySelector('[data-confirm-title]').textContent  = title;
     overlay.querySelector('[data-confirm-text]').textContent   = message;
     const btn = overlay.querySelector('[data-confirm-ok]');
+    if (iconEl) {
+      iconEl.className = `modal-confirm-icon ${resolvedVariant}`;
+      if (iconColor) iconEl.style.setProperty('--modal-app-color', iconColor);
+      else iconEl.style.removeProperty('--modal-app-color');
+      iconEl.innerHTML = iconHtml || `<i class="${fallbackIcons[type] || fallbackIcons.info}"></i>`;
+    }
     btn.textContent = confirmText;
     btn.className = `btn btn-${type}`;
     overlay.dataset.busy = '0';
@@ -430,7 +445,6 @@ const Http = (() => {
     }
 
     const data = await response.json().catch(() => ({}));
-
     if (response.status === 401 || response.status === 419) {
       redirectToLogin(data?.message || 'Votre session a expire. Redirection vers la connexion.');
     }
@@ -822,6 +836,10 @@ function ajaxForm(formId, options = {}) {
     if (btn) CrmForm.setLoading(btn, false);
 
     if (res.ok) {
+      if (form.__crmDraftManager && typeof form.__crmDraftManager.complete === 'function') {
+        form.__crmDraftManager.complete(res.data);
+      }
+
       Toast.success('Succès !', res.data.message || 'Opération réussie.');
       const automationFlow = !options.skipAutomation
         && window.AutomationSuggestions
@@ -853,6 +871,485 @@ function ajaxForm(formId, options = {}) {
 }
 
 window.ajaxForm = ajaxForm;
+
+/* ============================================================
+   DRAFTS / AUTOSAVE
+   ============================================================ */
+const CrmDrafts = (() => {
+  const DEFAULTS = {
+    saveUrl: '/api/drafts/save',
+    loadUrl: '/api/drafts/load',
+    deleteUrlBase: '/api/drafts/delete',
+    debounceMs: Number(window.CRM_DRAFTS_CONFIG?.debounceMs || 1500),
+    promptOnLoad: true,
+    autoLoad: true,
+    renderUi: true,
+  };
+
+  function attach(formRef, options = {}) {
+    const form = typeof formRef === 'string' ? document.getElementById(formRef) : formRef;
+    if (!form) return null;
+    if (form.__crmDraftManager) return form.__crmDraftManager;
+
+    const settings = { ...DEFAULTS, ...options };
+    const state = {
+      draft: null,
+      timer: null,
+      loading: false,
+      restoring: false,
+      resumed: false,
+      prompted: false,
+    };
+
+    const draftInput = ensureDraftInput(form);
+    const ui = settings.renderUi === false ? null : ensureDraftUi(form);
+
+    const api = {
+      load,
+      saveNow,
+      resume,
+      discard,
+      complete,
+      resetLocal,
+      hasDraft: () => !!state.draft,
+      getDraft: () => state.draft,
+      promptResumeIfAvailable,
+      setStatus,
+    };
+
+    form.__crmDraftManager = api;
+    bind();
+
+    if (settings.autoLoad !== false) {
+      window.setTimeout(() => {
+        load({ prompt: settings.promptOnLoad !== false });
+      }, 0);
+    }
+
+    return api;
+
+    function bind() {
+      if (ui?.resumeBtn) {
+        ui.resumeBtn.addEventListener('click', () => resume());
+      }
+
+      if (ui?.discardBtn) {
+        ui.discardBtn.addEventListener('click', () => discard());
+      }
+
+      form.addEventListener('input', (event) => {
+        if (shouldIgnoreEvent(event)) return;
+        scheduleSave();
+      }, true);
+
+      form.addEventListener('change', (event) => {
+        if (shouldIgnoreEvent(event)) return;
+        scheduleSave();
+      }, true);
+    }
+
+    function shouldIgnoreEvent(event) {
+      if (state.restoring) return true;
+      if (typeof settings.shouldSave === 'function' && settings.shouldSave() === false) return true;
+
+      const target = event?.target;
+      if (!target || !target.name) return false;
+
+      const type = String(target.type || '').toLowerCase();
+
+      return ['file', 'submit', 'button', 'reset'].includes(type);
+    }
+
+    function scheduleSave() {
+      clearTimeout(state.timer);
+      setStatus('Sauvegarde...', 'muted');
+      state.timer = window.setTimeout(() => {
+        saveNow();
+      }, Math.max(300, settings.debounceMs || 1500));
+    }
+
+    async function load({ prompt = false } = {}) {
+      const params = { type: resolveType() };
+      const route = resolveRoute();
+      if (route) params.route = route;
+
+      const res = await Http.get(settings.loadUrl, params);
+      if (!res.ok) {
+        setStatus(res.data?.message || 'Sauvegarde automatique indisponible', 'danger');
+        return null;
+      }
+
+      state.draft = res.data?.data || null;
+      draftInput.value = state.draft?.id || '';
+      refreshUi();
+      emitStateChange();
+
+      if (typeof settings.onDraftLoaded === 'function') {
+        settings.onDraftLoaded(state.draft, api);
+      }
+
+      if (prompt && state.draft) {
+        promptResumeIfAvailable();
+      }
+
+      return state.draft;
+    }
+
+    async function saveNow() {
+      if (state.loading || state.restoring) return null;
+      if (typeof settings.shouldSave === 'function' && settings.shouldSave() === false) return null;
+
+      let data = serializeForm(form);
+      if (typeof settings.collect === 'function') {
+        data = settings.collect(data, form, api) || data;
+      }
+
+      if (!hasMeaningfulValue(data)) {
+        return null;
+      }
+
+      state.loading = true;
+      const res = await Http.post(settings.saveUrl, {
+        type: resolveType(),
+        route: resolveRoute(),
+        data,
+      });
+      state.loading = false;
+
+      if (!res.ok || !res.data?.data) {
+        setStatus(res.data?.message || 'Echec de sauvegarde', 'danger');
+        return null;
+      }
+
+      state.draft = res.data.data;
+      state.resumed = true;
+      state.prompted = false;
+      draftInput.value = state.draft.id || '';
+      refreshUi();
+      setStatus('Sauvegardee ' + formatRelativeTime(state.draft.updated_at), 'success');
+      emitStateChange();
+
+      if (typeof settings.onSaved === 'function') {
+        settings.onSaved(state.draft, api);
+      }
+
+      return state.draft;
+    }
+
+    async function resume() {
+      if (!state.draft?.data) return;
+
+      state.restoring = true;
+      applySerializedData(form, state.draft.data);
+
+      if (typeof settings.apply === 'function') {
+        settings.apply(state.draft.data, form, api);
+      }
+
+      window.setTimeout(() => {
+        state.restoring = false;
+      }, 0);
+
+      state.resumed = true;
+      state.prompted = false;
+      refreshUi();
+      setStatus('Brouillon restaure', 'success');
+      emitStateChange();
+      Toast.success('Brouillon', 'Le formulaire a ete restaure.');
+    }
+
+    async function discard() {
+      const draftId = Number(state.draft?.id || draftInput.value || 0);
+      if (draftId > 0) {
+        await Http.delete(settings.deleteUrlBase + '/' + draftId);
+      }
+
+      complete();
+      setStatus('Brouillon supprime', 'muted');
+      Toast.success('Brouillon', 'Le brouillon a ete supprime.');
+    }
+
+    function resetLocal() {
+      clearTimeout(state.timer);
+      state.draft = null;
+      state.resumed = false;
+      state.prompted = false;
+      draftInput.value = '';
+      refreshUi();
+      emitStateChange();
+    }
+
+    function complete() {
+      resetLocal();
+    }
+
+    function promptResumeIfAvailable() {
+      if (!state.draft || state.resumed || state.prompted) return;
+
+      state.prompted = true;
+
+      if (!window.Modal || typeof window.Modal.confirm !== 'function') {
+        resume();
+        return;
+      }
+
+      Modal.confirm({
+        title: 'Brouillon disponible',
+        message: 'Un brouillon ' + resolveLabel() + ' est disponible. Voulez-vous le reprendre ?',
+        confirmText: 'Reprendre',
+        type: 'info',
+        onConfirm: async () => {
+          await resume();
+        },
+      });
+    }
+
+    function resolveType() {
+      return typeof settings.type === 'function' ? settings.type() : settings.type;
+    }
+
+    function resolveLabel() {
+      return typeof settings.label === 'function'
+        ? settings.label()
+        : (settings.label || resolveType() || 'en cours');
+    }
+
+    function resolveRoute() {
+      if (typeof settings.route === 'function') {
+        return settings.route();
+      }
+
+      if (typeof settings.route === 'string' && settings.route.trim() !== '') {
+        return settings.route.trim();
+      }
+
+      return (window.location.pathname || '') + (window.location.search || '');
+    }
+
+    function setStatus(message = '', tone = 'muted') {
+      if (!ui?.statusEl) return;
+
+      ui.statusEl.textContent = message;
+      ui.statusEl.style.color = ({
+        muted: 'var(--c-ink-40)',
+        success: 'var(--c-success)',
+        danger: 'var(--c-danger)',
+      })[tone] || 'var(--c-ink-40)';
+    }
+
+    function refreshUi() {
+      if (!ui) return;
+
+      const hasDraft = !!state.draft;
+      ui.resumeBtn.style.display = hasDraft && !state.resumed ? '' : 'none';
+      ui.discardBtn.style.display = hasDraft ? '' : 'none';
+      ui.labelEl.textContent = hasDraft
+        ? 'Brouillon ' + resolveLabel() + ' disponible'
+        : 'Sauvegarde automatique';
+    }
+
+    function emitStateChange() {
+      if (typeof settings.onStateChange === 'function') {
+        settings.onStateChange({
+          draft: state.draft,
+          hasDraft: !!state.draft,
+          resumed: state.resumed,
+        }, api);
+      }
+    }
+  }
+
+  function ensureDraftInput(form) {
+    let input = form.querySelector('input[name="draft_id"]');
+    if (input) return input;
+
+    input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'draft_id';
+    form.appendChild(input);
+
+    return input;
+  }
+
+  function ensureDraftUi(form) {
+    let root = form.querySelector('[data-draft-ui]');
+    if (!root) {
+      root = document.createElement('div');
+      root.setAttribute('data-draft-ui', '1');
+      root.style.display = 'flex';
+      root.style.alignItems = 'center';
+      root.style.justifyContent = 'space-between';
+      root.style.gap = '12px';
+      root.style.padding = '12px 14px';
+      root.style.marginBottom = '16px';
+      root.style.border = '1px solid var(--c-ink-10)';
+      root.style.borderRadius = '12px';
+      root.style.background = 'rgba(15, 23, 42, 0.03)';
+      root.innerHTML = ''
+        + '<div style="display:flex;flex-direction:column;gap:4px;">'
+        + '  <strong data-draft-label style="font-size:13px;color:var(--c-ink);">Sauvegarde automatique</strong>'
+        + '  <span data-draft-status style="font-size:12px;color:var(--c-ink-40);"></span>'
+        + '</div>'
+        + '<div style="display:flex;align-items:center;gap:8px;">'
+        + '  <button type="button" class="btn btn-secondary btn-sm" data-draft-resume style="display:none;">Reprendre brouillon</button>'
+        + '  <button type="button" class="btn btn-ghost btn-sm" data-draft-discard style="display:none;">Supprimer</button>'
+        + '</div>';
+      form.insertBefore(root, form.firstChild);
+    }
+
+    return {
+      root,
+      labelEl: root.querySelector('[data-draft-label]'),
+      statusEl: root.querySelector('[data-draft-status]'),
+      resumeBtn: root.querySelector('[data-draft-resume]'),
+      discardBtn: root.querySelector('[data-draft-discard]'),
+    };
+  }
+
+  function serializeForm(form) {
+    const data = {};
+    const radiosHandled = new Set();
+
+    Array.from(form.elements || []).forEach((field) => {
+      if (!field || !field.name || field.disabled) return;
+      if (['_token', '_method', 'draft_id'].includes(field.name)) return;
+
+      const tag = String(field.tagName || '').toLowerCase();
+      const type = String(field.type || '').toLowerCase();
+      if (type === 'file') return;
+
+      if (type === 'radio') {
+        if (radiosHandled.has(field.name)) return;
+        radiosHandled.add(field.name);
+        const checked = form.querySelector('input[type="radio"][name="' + escapeSelector(field.name) + '"]:checked');
+        data[field.name] = checked ? checked.value : '';
+        return;
+      }
+
+      if (type === 'checkbox') {
+        if (field.name.endsWith('[]')) {
+          if (!Array.isArray(data[field.name])) data[field.name] = [];
+          if (field.checked) data[field.name].push(field.value);
+          return;
+        }
+
+        data[field.name] = field.checked ? (field.value === 'on' ? 1 : field.value) : '';
+        return;
+      }
+
+      if (tag === 'select' && field.multiple) {
+        data[field.name] = Array.from(field.selectedOptions || []).map((option) => option.value);
+        return;
+      }
+
+      assignSerializedValue(data, field.name, field.value);
+    });
+
+    return data;
+  }
+
+  function assignSerializedValue(target, name, value) {
+    if (!Object.prototype.hasOwnProperty.call(target, name)) {
+      target[name] = value;
+      return;
+    }
+
+    if (!Array.isArray(target[name])) {
+      target[name] = [target[name]];
+    }
+
+    target[name].push(value);
+  }
+
+  function applySerializedData(form, data) {
+    if (!data || typeof data !== 'object') return;
+
+    Object.entries(data).forEach(([name, value]) => {
+      if (name.startsWith('__')) return;
+
+      const fields = form.querySelectorAll('[name="' + escapeSelector(name) + '"]');
+      if (!fields.length) return;
+
+      fields.forEach((field) => {
+        const tag = String(field.tagName || '').toLowerCase();
+        const type = String(field.type || '').toLowerCase();
+
+        if (type === 'file') return;
+
+        if (type === 'checkbox') {
+          if (field.name.endsWith('[]')) {
+            const selected = Array.isArray(value) ? value.map(String) : [];
+            field.checked = selected.includes(String(field.value));
+          } else {
+            field.checked = normalizeCheckboxValue(value);
+          }
+        } else if (type === 'radio') {
+          field.checked = String(value ?? '') === String(field.value);
+        } else if (tag === 'select' && field.multiple) {
+          const selectedValues = Array.isArray(value) ? value.map(String) : [];
+          Array.from(field.options || []).forEach((option) => {
+            option.selected = selectedValues.includes(String(option.value));
+          });
+        } else if (typeof value !== 'object' || value === null) {
+          field.value = value == null ? '' : String(value);
+        }
+
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        field.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    });
+  }
+
+  function hasMeaningfulValue(value) {
+    if (Array.isArray(value)) {
+      return value.some((item) => hasMeaningfulValue(item));
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.values(value).some((item) => hasMeaningfulValue(item));
+    }
+
+    if (typeof value === 'number') {
+      return !Number.isNaN(value);
+    }
+
+    if (typeof value === 'boolean') {
+      return value;
+    }
+
+    return String(value ?? '').trim() !== '';
+  }
+
+  function normalizeCheckboxValue(value) {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value === 1;
+
+    const normalized = String(value ?? '').trim().toLowerCase();
+
+    return ['1', 'true', 'yes', 'on'].includes(normalized);
+  }
+
+  function escapeSelector(value) {
+    if (typeof window.CSS !== 'undefined' && typeof window.CSS.escape === 'function') {
+      return window.CSS.escape(value);
+    }
+
+    return String(value).replace(/([ #;?%&,.+*~\':"!^$[\]()=>|/@])/g, '\\$1');
+  }
+
+  function formatRelativeTime(value) {
+    if (!value) return 'a l instant';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'recemment';
+
+    return 'a ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  return { attach };
+})();
+
+window.CrmDrafts = CrmDrafts;
 
 /* ============================================================
    AUTOMATION SUGGESTIONS
@@ -1103,41 +1600,72 @@ window.AutomationSuggestions = AutomationSuggestions;
 /* ============================================================
    TAGS INPUT
    ============================================================ */
+
 function initTagsInput(inputId, hiddenName) {
-  const container = document.getElementById(inputId + '_wrap');
-  if (!container) return;
+  const container = typeof inputId === 'string'
+    ? (document.getElementById(inputId) || document.getElementById(inputId + '_wrap'))
+    : inputId;
+  if (!container) return null;
   const textInput = container.querySelector('.tags-input');
   const tags = new Set();
 
   function addTag(val) {
-    val = val.trim().toLowerCase();
+    val = String(val || '').trim().toLowerCase();
     if (!val || tags.has(val)) return;
     tags.add(val);
     const chip = document.createElement('span');
     chip.className = 'tag-chip';
-    chip.innerHTML = `${val}<button type="button" aria-label="Retirer">×</button>`;
-    chip.querySelector('button').addEventListener('click', () => { tags.delete(val); chip.remove(); syncHidden(); });
+    chip.innerHTML = val + '<button type="button" aria-label="Retirer">x</button>'; 
+    chip.querySelector('button').addEventListener('click', () => {
+      tags.delete(val);
+      chip.remove();
+      syncHidden();
+    });
     container.insertBefore(chip, textInput);
     syncHidden();
   }
 
   function syncHidden() {
-    container.querySelectorAll(`input[name="${hiddenName}[]"]`).forEach(i => i.remove());
-    tags.forEach(t => {
-      const inp = document.createElement('input');
-      inp.type = 'hidden'; inp.name = `${hiddenName}[]`; inp.value = t;
-      container.appendChild(inp);
+    container.querySelectorAll('input[name="' + hiddenName + '[]"]').forEach((input) => input.remove());
+    tags.forEach((tag) => {
+      const hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = hiddenName + '[]';
+      hidden.value = tag;
+      container.appendChild(hidden);
     });
   }
 
-  textInput.addEventListener('keydown', (e) => {
+  function clearTags() {
+    tags.clear();
+    container.querySelectorAll('.tag-chip').forEach((chip) => chip.remove());
+    syncHidden();
+  }
+
+  function setTags(values) {
+    clearTags();
+    (Array.isArray(values) ? values : []).forEach((value) => addTag(value));
+  }
+
+  textInput?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       addTag(textInput.value);
       textInput.value = '';
     }
   });
-  container.addEventListener('click', () => textInput.focus());
+  container.addEventListener('click', () => textInput?.focus());
+
+  const key = container.id || hiddenName;
+  window.CrmTagsInputs = window.CrmTagsInputs || {};
+  window.CrmTagsInputs[key] = {
+    addTag,
+    getTags: () => Array.from(tags),
+    setTags,
+    clearTags,
+  };
+
+  return window.CrmTagsInputs[key];
 }
 
 /* ============================================================
@@ -1170,7 +1698,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Init tags inputs
   document.querySelectorAll('[data-tags-input]').forEach(el => {
-    initTagsInput(el.id, el.dataset.tagsInput);
+    initTagsInput(el, el.dataset.tagsInput);
   });
 
   // Mobile sidebar toggle
@@ -1219,4 +1747,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 }
-

@@ -48,6 +48,7 @@
             "NexusExtensions\\Projects\\": "extensions/projects/src/",
             "NexusExtensions\\NotionWorkspace\\": "extensions/notion-workspace/src/",
             "NexusExtensions\\GoogleDrive\\": "extensions/gdrive/src/",
+            "NexusExtensions\\Dropbox\\": "extensions/dropbox/src/",
             "NexusExtensions\\GoogleSheets\\": "extensions/google-sheets/src/",
             "NexusExtensions\\GoogleDocx\\": "extensions/google-docx/src/",
             "NexusExtensions\\GoogleGmail\\": "extensions/google-gmail/src/",

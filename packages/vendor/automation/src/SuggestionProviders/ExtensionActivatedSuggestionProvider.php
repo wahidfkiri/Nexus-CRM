@@ -47,7 +47,7 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
 
         if ($slug === 'projects') {
             $calendarInstalled = $this->extensions->isActive($tenantId, 'google-calendar');
-            $driveInstalled = $this->extensions->isActive($tenantId, 'google-drive');
+            $storageInstalled = $this->extensions->preferredInstalled($tenantId, ['google-drive', 'dropbox']) !== null;
             $chatInstalled = $this->extensions->preferredInstalled($tenantId, ['chatbot', 'slack']) !== null;
 
             if (!$calendarInstalled) {
@@ -64,16 +64,16 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
                 );
             }
 
-            if (!$driveInstalled) {
+            if (!$storageInstalled) {
                 $suggestions[] = SuggestionDefinition::make(
                     'install_extension',
-                    'Installer Google Drive pour centraliser les fichiers projet',
-                    0.82,
-                    ['extension_slug' => 'google-drive', 'activation_id' => $activationId, 'target_action' => 'create_project_drive_folder'],
+                    'Installer Dropbox ou Google Drive pour centraliser les fichiers projet',
+                    0.84,
+                    ['extension_slug' => 'dropbox', 'activation_id' => $activationId, 'target_action' => 'create_project_dropbox_folder'],
                     [
-                        'integration' => 'google-drive',
+                        'integration' => 'dropbox',
                         'installed' => false,
-                        'target_url' => $this->extensions->targetUrl('google-drive'),
+                        'target_url' => $this->extensions->targetUrl('dropbox'),
                     ]
                 );
             }
@@ -150,6 +150,66 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
             );
         }
 
+        if ($slug === 'dropbox' && $this->extensions->isActive($tenantId, 'projects')) {
+            $suggestions[] = SuggestionDefinition::make(
+                'open_extension_workspace',
+                'Ouvrir Projets pour stocker vos fichiers dans Dropbox',
+                0.84,
+                [
+                    'activation_id' => $activationId,
+                    'extension_slug' => 'projects',
+                    'target_url' => $this->extensions->targetUrl('projects'),
+                    'message' => 'Raccourci Projets enregistre apres activation de Dropbox.',
+                ],
+                [
+                    'integration' => 'projects',
+                    'installed' => true,
+                    'target_url' => $this->extensions->targetUrl('projects'),
+                    'primary_label' => 'Marquer traite',
+                ]
+            );
+        }
+
+        if ($slug === 'google-drive' && $this->extensions->isActive($tenantId, 'dropbox')) {
+            $suggestions[] = SuggestionDefinition::make(
+                'open_extension_workspace',
+                'Ouvrir Dropbox si vous souhaitez utiliser un second espace de stockage',
+                0.78,
+                [
+                    'activation_id' => $activationId,
+                    'extension_slug' => 'dropbox',
+                    'target_url' => $this->extensions->targetUrl('dropbox'),
+                    'message' => 'Raccourci Dropbox enregistre apres activation de Google Drive.',
+                ],
+                [
+                    'integration' => 'dropbox',
+                    'installed' => true,
+                    'target_url' => $this->extensions->targetUrl('dropbox'),
+                    'primary_label' => 'Marquer traite',
+                ]
+            );
+        }
+
+        if ($slug === 'dropbox' && $this->extensions->isActive($tenantId, 'google-drive')) {
+            $suggestions[] = SuggestionDefinition::make(
+                'open_extension_workspace',
+                'Ouvrir Google Drive si vous souhaitez utiliser un second espace de stockage',
+                0.78,
+                [
+                    'activation_id' => $activationId,
+                    'extension_slug' => 'google-drive',
+                    'target_url' => $this->extensions->targetUrl('google-drive'),
+                    'message' => 'Raccourci Google Drive enregistre apres activation de Dropbox.',
+                ],
+                [
+                    'integration' => 'google-drive',
+                    'installed' => true,
+                    'target_url' => $this->extensions->targetUrl('google-drive'),
+                    'primary_label' => 'Marquer traite',
+                ]
+            );
+        }
+
         if ($slug === 'google-gmail' && $this->extensions->isActive($tenantId, 'invoice')) {
             $suggestions[] = SuggestionDefinition::make(
                 'open_extension_workspace',
@@ -176,7 +236,7 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
     protected function primaryWorkspaceLabel(string $slug, string $name): string
     {
         return match ($slug) {
-            'google-calendar', 'google-drive', 'google-gmail', 'google-meet', 'google-sheets', 'google-docx', 'slack' => 'Ouvrir ' . $name . ' pour finaliser la connexion',
+            'google-calendar', 'google-drive', 'dropbox', 'google-gmail', 'google-meet', 'google-sheets', 'google-docx', 'slack' => 'Ouvrir ' . $name . ' pour finaliser la connexion',
             'projects' => 'Ouvrir Projets pour creer votre premier espace de travail',
             'invoice' => 'Ouvrir Facturation pour configurer vos documents',
             default => 'Ouvrir ' . $name . ' pour terminer sa configuration',

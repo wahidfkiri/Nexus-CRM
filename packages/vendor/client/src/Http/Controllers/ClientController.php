@@ -3,6 +3,7 @@
 namespace Vendor\Client\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\DraftService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Vendor\Client\Models\Client;
@@ -74,6 +75,7 @@ class ClientController extends Controller
             $data['tenant_id']  = auth()->user()->tenant_id ?? null;
 
             $client = $this->clientService->create($data);
+            app(DraftService::class)->forgetFromRequest($request);
 
             return response()->json([
                 'success'  => true,
@@ -133,6 +135,7 @@ class ClientController extends Controller
 
         try {
             $client = $this->clientService->update($client, $request->validated());
+            app(DraftService::class)->forgetFromRequest($request);
 
             return response()->json([
                 'success'  => true,

@@ -28,12 +28,14 @@ class GoogleDriveController extends Controller
         $storageReady = $this->isStorageReady();
         $extensionActive = $storageReady && $this->isExtensionActive($tenantId);
         $token = ($storageReady && $extensionActive) ? $this->service->getToken($tenantId) : null;
+        $dropboxInstalled = $this->isTenantExtensionActive($tenantId, 'dropbox');
 
         return view('google-drive::drive.index', [
             'storageReady' => $storageReady,
             'extensionActive' => $extensionActive,
             'connected' => (bool) $token,
             'token' => $token,
+            'dropboxInstalled' => $dropboxInstalled,
         ]);
     }
 
@@ -379,7 +381,12 @@ class GoogleDriveController extends Controller
 
     private function isExtensionActive(int $tenantId): bool
     {
-        $extension = Extension::query()->where('slug', 'google-drive')->first();
+        return $this->isTenantExtensionActive($tenantId, 'google-drive');
+    }
+
+    private function isTenantExtensionActive(int $tenantId, string $slug): bool
+    {
+        $extension = Extension::query()->where('slug', $slug)->first();
         if (!$extension) {
             return false;
         }
@@ -405,4 +412,3 @@ class GoogleDriveController extends Controller
         }
     }
 }
-

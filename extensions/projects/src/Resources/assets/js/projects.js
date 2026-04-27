@@ -19,6 +19,8 @@ const ProjectsModule = (() => {
     taskSearch: '',
     taskAssignedTo: '',
     editingTask: null,
+    projectDraftManager: null,
+    taskDraftManager: null,
     tagInput: null,
     activeTaskTab: 'details',
     viewMode: 'kanban',
@@ -42,6 +44,7 @@ const ProjectsModule = (() => {
     bindIndexFilters();
     bindProjectModal();
     bindWysiwyg();
+    initProjectDrafts();
     loadProjects();
     loadStats();
   }
@@ -104,6 +107,10 @@ const ProjectsModule = (() => {
       state.editingProjectId = null;
       resetProjectForm();
       setText('projectModalTitle', 'Nouveau projet');
+      window.setTimeout(async () => {
+        await state.projectDraftManager?.load({ prompt: false });
+        state.projectDraftManager?.promptResumeIfAvailable();
+      }, 0);
     });
 
     saveBtn?.addEventListener('click', saveProject);
@@ -272,6 +279,7 @@ const ProjectsModule = (() => {
     const project = state.projects.find((p) => Number(p.id) === Number(id));
     if (!project) return;
 
+    state.projectDraftManager?.resetLocal();
     state.editingProjectId = project.id;
     setText('projectModalTitle', 'Modifier projet');
     setField('projectId', project.id);
@@ -306,6 +314,7 @@ const ProjectsModule = (() => {
       budget: normalizeNullable(getField('projectBudget')),
       member_ids: getMultiValues('projectMemberIds').map((v) => Number(v)).filter((v) => !Number.isNaN(v)),
       sync_google_calendar: getCheckbox('projectSyncGoogleCalendar'),
+      draft_id: normalizeNullable(form.querySelector('[name="draft_id"]')?.value || ''),
     };
     setField('projectDescription', payload.description || '');
 
@@ -335,6 +344,7 @@ const ProjectsModule = (() => {
       : null;
 
     Toast.success('Succes', response.data?.message || 'Projet enregistre.');
+    state.projectDraftManager?.complete();
     Modal.close(document.getElementById('projectModal'));
     resetProjectForm();
     state.editingProjectId = null;
@@ -398,6 +408,35 @@ const ProjectsModule = (() => {
     setCheckbox('projectSyncGoogleCalendar', false);
   }
 
+  function initProjectDrafts() {
+    state.projectDraftManager = window.CrmDrafts?.attach('projectForm', {
+      type: 'project',
+      label: 'projet',
+      promptOnLoad: false,
+      collect: (data) => {
+        data.description = getWysiwygHtml('projectDescriptionEditor');
+        return data;
+      },
+      apply: (data) => {
+        setWysiwygHtml('projectDescriptionEditor', data.description || '');
+        setField('projectDescription', data.description || '');
+      },
+      shouldSave: () => !state.editingProjectId,
+      onStateChange: () => updateProjectDraftCta(),
+    });
+
+    updateProjectDraftCta();
+  }
+
+  function updateProjectDraftCta() {
+    const btn = document.getElementById('projectCreateBtn');
+    if (!btn) return;
+
+    btn.innerHTML = state.projectDraftManager?.hasDraft()
+      ? '<i class="fas fa-rotate-left"></i> Reprendre brouillon'
+      : '<i class="fas fa-plus"></i> Nouveau projet';
+  }
+
   function initShow() {
     bindShowToolbar();
     bindBoards();
@@ -406,6 +445,7 @@ const ProjectsModule = (() => {
     bindFilesPanel();
     bindWysiwyg();
     state.tagInput = createTagInput(document.getElementById('taskTagsInput'));
+    initTaskDrafts();
     renderTaskStatusOptions();
     updateTaskScheduleButton();
     loadBoards().finally(loadTasks);
@@ -881,6 +921,7 @@ const ProjectsModule = (() => {
     if (taskId) {
       const task = state.tasks.find((t) => Number(t.id) === Number(taskId));
       if (!task) return;
+      state.taskDraftManager?.resetLocal();
       state.editingTask = task;
 
       setText('taskDrawerTitle', 'Modifier tache');
@@ -905,6 +946,10 @@ const ProjectsModule = (() => {
       loadTaskFiles(task.id);
     } else {
       setText('taskDrawerTitle', 'Nouvelle tache');
+      window.setTimeout(async () => {
+        await state.taskDraftManager?.load({ prompt: false });
+        state.taskDraftManager?.promptResumeIfAvailable();
+      }, 0);
     }
 
     updateTaskScheduleButton();
@@ -949,6 +994,7 @@ const ProjectsModule = (() => {
       client_id: normalizeNullable(getField('taskClientId')),
       tags: state.tagInput ? state.tagInput.getTags() : normalizeTags(getField('taskTagsHidden')),
       sync_google_calendar: getCheckbox('taskSyncGoogleCalendar'),
+      draft_id: normalizeNullable(drawerForm?.querySelector('[name="draft_id"]')?.value || ''),
     };
     setField('taskDescription', payload.description || '');
     setField('taskTagsHidden', Array.isArray(payload.tags) ? payload.tags.join(',') : '');
@@ -973,6 +1019,7 @@ const ProjectsModule = (() => {
     }
 
     Toast.success('Succes', response.data?.message || 'Tache enregistree.');
+    state.taskDraftManager?.complete();
     handleCalendarSyncFeedback(response.data, 'La tache');
     closeTaskDrawer();
     resetTaskForm();
@@ -1633,6 +1680,39 @@ const ProjectsModule = (() => {
     const fn = document.getElementById('taskFileName');
     if (fn) fn.textContent = 'Aucun fichier';
     updateTaskScheduleButton();
+  }
+
+  function initTaskDrafts() {
+    state.taskDraftManager = window.CrmDrafts?.attach('taskDrawerForm', {
+      type: 'task',
+      label: 'tache',
+      promptOnLoad: false,
+      collect: (data) => {
+        data.description = getWysiwygHtml('taskDescriptionEditor');
+        data.tags = state.tagInput ? state.tagInput.getTags() : normalizeTags(getField('taskTagsHidden'));
+        return data;
+      },
+      apply: (data) => {
+        const tags = Array.isArray(data.tags) ? data.tags : normalizeTags(data.tags);
+        setWysiwygHtml('taskDescriptionEditor', data.description || '');
+        setField('taskDescription', data.description || '');
+        setField('taskTagsHidden', tags.join(','));
+        if (state.tagInput) state.tagInput.setTags(tags);
+      },
+      shouldSave: () => !state.editingTask,
+      onStateChange: () => updateTaskDraftCta(),
+    });
+
+    updateTaskDraftCta();
+  }
+
+  function updateTaskDraftCta() {
+    const btn = document.getElementById('taskCreateBtn');
+    if (!btn) return;
+
+    btn.innerHTML = state.taskDraftManager?.hasDraft()
+      ? '<i class="fas fa-rotate-left"></i> Reprendre brouillon'
+      : '<i class="fas fa-plus"></i> Nouvelle tache';
   }
 
   async function loadTaskFiles(taskId) {

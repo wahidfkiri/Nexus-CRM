@@ -48,20 +48,26 @@ class ProjectCreatedSuggestionProvider implements SuggestionProvider
             );
         }
 
-        $driveInstalled = $this->extensions->isActive($tenantId, 'google-drive');
+        $preferredStorage = $this->extensions->preferredInstalled($tenantId, ['google-drive', 'dropbox']);
+        $storageInstalled = $preferredStorage !== null;
+        $storageSlug = $preferredStorage ?: 'dropbox';
+        $storageAction = $storageSlug === 'dropbox' ? 'create_project_dropbox_folder' : 'create_project_drive_folder';
+
         $suggestions[] = SuggestionDefinition::make(
-            $driveInstalled ? 'create_project_drive_folder' : 'install_extension',
-            $driveInstalled
-                ? "Créer un dossier Google Drive pour {$projectName}"
-                : 'Installer Google Drive pour centraliser les fichiers du projet',
+            $storageInstalled ? $storageAction : 'install_extension',
+            $storageInstalled
+                ? ($storageSlug === 'dropbox'
+                    ? "Creer un dossier Dropbox pour {$projectName}"
+                    : "Creer un dossier Google Drive pour {$projectName}")
+                : 'Installer Dropbox ou Google Drive pour centraliser les fichiers du projet',
             0.87,
-            $driveInstalled
+            $storageInstalled
                 ? ['project_id' => $projectId]
-                : ['extension_slug' => 'google-drive', 'project_id' => $projectId, 'target_action' => 'create_project_drive_folder'],
+                : ['extension_slug' => 'dropbox', 'project_id' => $projectId, 'target_action' => 'create_project_dropbox_folder'],
             [
-                'integration' => 'google-drive',
-                'installed' => $driveInstalled,
-                'target_url' => $this->extensions->targetUrl('google-drive'),
+                'integration' => $storageSlug,
+                'installed' => $storageInstalled,
+                'target_url' => $this->extensions->targetUrl($storageSlug),
             ]
         );
 
@@ -71,7 +77,7 @@ class ProjectCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $channelInstalled ? 'create_project_channel' : 'install_extension',
             $channelInstalled
-                ? "Créer un canal d'équipe pour {$projectName}"
+                ? "Creer un canal d equipe pour {$projectName}"
                 : 'Installer Chatbot ou Slack pour ouvrir un canal projet',
             0.76,
             $channelInstalled

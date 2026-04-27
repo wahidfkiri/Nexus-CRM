@@ -154,15 +154,29 @@ class GoogleDriveService
         $client = $this->makeClient();
         $client->setAccessToken($token->toGoogleToken());
 
-        if ($token->is_expired && $token->refresh_token) {
+        if ($token->is_expired) {
+            if (!$token->refresh_token) {
+                $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
+                throw new RuntimeException('Session Google Drive expiree ou revoquee. Reconnectez votre compte Google.');
+            }
+
             $newToken = $client->fetchAccessTokenWithRefreshToken($token->refresh_token);
             if (!isset($newToken['error'])) {
                 $token->update([
                     'access_token' => $newToken['access_token'] ?? $token->access_token,
+                    'refresh_token' => $newToken['refresh_token'] ?? $token->refresh_token,
                     'token_expires_at' => now()->addSeconds((int) ($newToken['expires_in'] ?? 3600)),
                 ]);
                 $client->setAccessToken($newToken);
             } else {
+                if ($this->isRevokedOrExpiredOAuthError(
+                    (string) ($newToken['error'] ?? ''),
+                    (string) ($newToken['error_description'] ?? '')
+                )) {
+                    $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
+                    throw new RuntimeException('Session Google Drive expiree ou revoquee. Reconnectez votre compte Google.');
+                }
+
                 throw new RuntimeException((string) ($newToken['error_description'] ?? $newToken['error']));
             }
         }
@@ -582,6 +596,31 @@ class GoogleDriveService
         }
 
         return url($path);
+    }
+
+    private function isRevokedOrExpiredOAuthError(string $error, string $description = ''): bool
+    {
+        $full = Str::lower(trim($error . ' ' . $description));
+
+        return str_contains($full, 'invalid_grant')
+            || str_contains($full, 'expired or revoked')
+            || str_contains($full, 'token has been expired or revoked');
+    }
+
+    private function invalidateTokenAfterOAuthFailure(GoogleDriveToken $token, string $reason): void
+    {
+        try {
+            $token->update([
+                'is_active' => false,
+                'disconnected_at' => now(),
+                'access_token' => '',
+                'refresh_token' => null,
+            ]);
+
+            $this->log((int) $token->tenant_id, null, null, 'oauth_invalidated', ['reason' => $reason]);
+        } catch (\Throwable $e) {
+            Log::warning('[GoogleDrive] invalidate token failed', ['message' => $e->getMessage()]);
+        }
     }
 
     private function log(int $tenantId, ?string $fileId, ?string $fileName, string $action, array $metadata = []): void
