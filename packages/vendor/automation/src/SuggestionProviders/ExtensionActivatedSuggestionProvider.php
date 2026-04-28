@@ -34,13 +34,15 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
                     'activation_id' => $activationId,
                     'extension_slug' => $slug,
                     'target_url' => $this->extensions->targetUrl($slug),
-                    'message' => 'Raccourci vers ' . $name . ' enregistre.',
+                    'target_blank' => $slug === 'notion-workspace',
+                    'message' => 'Raccourci vers ' . $name . ' enregistré.',
                 ],
                 [
                     'integration' => $slug,
                     'installed' => true,
                     'target_url' => $this->extensions->targetUrl($slug),
-                    'primary_label' => 'Marquer traite',
+                    'target_blank' => $slug === 'notion-workspace',
+                    'primary_label' => 'Marquer traité',
                 ]
             ),
         ];
@@ -53,7 +55,7 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
             if (!$calendarInstalled) {
                 $suggestions[] = SuggestionDefinition::make(
                     'install_extension',
-                    'Installer Google Calendar pour planifier projets et taches',
+                    'Installer Google Calendar pour planifier projets et tâches',
                     0.89,
                     ['extension_slug' => 'google-calendar', 'activation_id' => $activationId, 'target_action' => 'schedule_project_kickoff'],
                     [
@@ -113,19 +115,19 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
         if ($slug === 'google-calendar' && $this->extensions->isActive($tenantId, 'projects')) {
             $suggestions[] = SuggestionDefinition::make(
                 'open_extension_workspace',
-                'Ouvrir Projets pour utiliser Google Calendar sur vos projets et taches',
+                'Ouvrir Projets pour utiliser Google Calendar sur vos projets et tâches',
                 0.86,
                 [
                     'activation_id' => $activationId,
                     'extension_slug' => 'projects',
                     'target_url' => $this->extensions->targetUrl('projects'),
-                    'message' => 'Raccourci Projets enregistre apres activation de Google Calendar.',
+                    'message' => 'Raccourci Projets enregistré après activation de Google Calendar.',
                 ],
                 [
                     'integration' => 'projects',
                     'installed' => true,
                     'target_url' => $this->extensions->targetUrl('projects'),
-                    'primary_label' => 'Marquer traite',
+                    'primary_label' => 'Marquer traité',
                 ]
             );
         }
@@ -139,13 +141,13 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
                     'activation_id' => $activationId,
                     'extension_slug' => 'projects',
                     'target_url' => $this->extensions->targetUrl('projects'),
-                    'message' => 'Raccourci Projets enregistre apres activation de Google Drive.',
+                    'message' => 'Raccourci Projets enregistré après activation de Google Drive.',
                 ],
                 [
                     'integration' => 'projects',
                     'installed' => true,
                     'target_url' => $this->extensions->targetUrl('projects'),
-                    'primary_label' => 'Marquer traite',
+                    'primary_label' => 'Marquer traité',
                 ]
             );
         }
@@ -159,13 +161,13 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
                     'activation_id' => $activationId,
                     'extension_slug' => 'projects',
                     'target_url' => $this->extensions->targetUrl('projects'),
-                    'message' => 'Raccourci Projets enregistre apres activation de Dropbox.',
+                    'message' => 'Raccourci Projets enregistré après activation de Dropbox.',
                 ],
                 [
                     'integration' => 'projects',
                     'installed' => true,
                     'target_url' => $this->extensions->targetUrl('projects'),
-                    'primary_label' => 'Marquer traite',
+                    'primary_label' => 'Marquer traité',
                 ]
             );
         }
@@ -179,13 +181,13 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
                     'activation_id' => $activationId,
                     'extension_slug' => 'dropbox',
                     'target_url' => $this->extensions->targetUrl('dropbox'),
-                    'message' => 'Raccourci Dropbox enregistre apres activation de Google Drive.',
+                    'message' => 'Raccourci Dropbox enregistré après activation de Google Drive.',
                 ],
                 [
                     'integration' => 'dropbox',
                     'installed' => true,
                     'target_url' => $this->extensions->targetUrl('dropbox'),
-                    'primary_label' => 'Marquer traite',
+                    'primary_label' => 'Marquer traité',
                 ]
             );
         }
@@ -199,13 +201,13 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
                     'activation_id' => $activationId,
                     'extension_slug' => 'google-drive',
                     'target_url' => $this->extensions->targetUrl('google-drive'),
-                    'message' => 'Raccourci Google Drive enregistre apres activation de Dropbox.',
+                    'message' => 'Raccourci Google Drive enregistré après activation de Dropbox.',
                 ],
                 [
                     'integration' => 'google-drive',
                     'installed' => true,
                     'target_url' => $this->extensions->targetUrl('google-drive'),
-                    'primary_label' => 'Marquer traite',
+                    'primary_label' => 'Marquer traité',
                 ]
             );
         }
@@ -219,13 +221,13 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
                     'activation_id' => $activationId,
                     'extension_slug' => 'invoice',
                     'target_url' => $this->extensions->targetUrl('invoice'),
-                    'message' => 'Raccourci Facturation enregistre apres activation de Gmail.',
+                    'message' => 'Raccourci Facturation enregistré après activation de Gmail.',
                 ],
                 [
                     'integration' => 'invoice',
                     'installed' => true,
                     'target_url' => $this->extensions->targetUrl('invoice'),
-                    'primary_label' => 'Marquer traite',
+                    'primary_label' => 'Marquer traité',
                 ]
             );
         }
@@ -236,8 +238,8 @@ class ExtensionActivatedSuggestionProvider implements SuggestionProvider
     protected function primaryWorkspaceLabel(string $slug, string $name): string
     {
         return match ($slug) {
-            'google-calendar', 'google-drive', 'dropbox', 'google-gmail', 'google-meet', 'google-sheets', 'google-docx', 'slack' => 'Ouvrir ' . $name . ' pour finaliser la connexion',
-            'projects' => 'Ouvrir Projets pour creer votre premier espace de travail',
+            'google-calendar', 'google-drive', 'dropbox', 'google-gmail', 'google-meet', 'google-sheets', 'google-docx', 'notion-workspace', 'slack' => 'Ouvrir ' . $name . ' pour finaliser la connexion',
+            'projects' => 'Ouvrir Projets pour créer votre premier espace de travail',
             'invoice' => 'Ouvrir Facturation pour configurer vos documents',
             default => 'Ouvrir ' . $name . ' pour terminer sa configuration',
         };

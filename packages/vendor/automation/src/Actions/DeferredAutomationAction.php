@@ -12,10 +12,11 @@ class DeferredAutomationAction implements AutomationAction
     {
         return [
             'result' => 'recorded',
-            'message' => 'Suggestion enregistree. L action detaillee sera branchee lors de la phase 4.',
+            'message' => 'Suggestion enregistrée. L action détaillée sera branchée lors de la phase 4.',
             'action_type' => (string) $automationEvent->action_type,
             'suggestion_id' => $suggestion?->id,
             'target_url' => $suggestion?->meta['target_url'] ?? null,
+            'target_blank' => (bool) ($suggestion?->meta['target_blank'] ?? false),
         ];
     }
 }

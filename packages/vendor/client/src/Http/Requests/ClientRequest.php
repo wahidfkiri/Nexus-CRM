@@ -5,6 +5,7 @@ namespace Vendor\Client\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
 class ClientRequest extends FormRequest
 {
@@ -15,19 +16,27 @@ class ClientRequest extends FormRequest
 
     public function rules(): array
     {
-        // On update, ignore the current client's email in unique check
         $clientId = $this->route('client') instanceof \Vendor\Client\Models\Client
             ? $this->route('client')->id
             : $this->route('client');
 
-        $emailRule = $this->isMethod('PUT') || $this->isMethod('PATCH')
-            ? "required|email|max:255|unique:clients,email,{$clientId},id,deleted_at,NULL"
-            : 'required|email|max:255|unique:clients,email,NULL,id,deleted_at,NULL';
+        $tenantId = (int) ($this->user()?->tenant_id ?? 0);
+
+        $emailRule = Rule::unique('clients', 'email')
+            ->where(function ($query) use ($tenantId) {
+                return $query
+                    ->where('tenant_id', $tenantId)
+                    ->whereNull('deleted_at');
+            });
+
+        if ($clientId) {
+            $emailRule->ignore($clientId);
+        }
 
         return [
             'company_name'      => 'required|string|max:255',
             'contact_name'      => 'nullable|string|max:255',
-            'email'             => $emailRule,
+            'email'             => ['required', 'email', 'max:255', $emailRule],
             'phone'             => 'nullable|string|max:20',
             'mobile'            => 'nullable|string|max:20',
             'website'           => 'nullable|url|max:255',

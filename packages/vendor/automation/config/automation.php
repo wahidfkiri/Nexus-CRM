@@ -65,6 +65,7 @@ return [
         'create_project_drive_folder' => \Vendor\Automation\Actions\CreateProjectDriveFolderAction::class,
         'create_project_dropbox_folder' => \Vendor\Automation\Actions\CreateProjectDropboxFolderAction::class,
         'create_project_channel' => \Vendor\Automation\Actions\CreateProjectChannelAction::class,
+        'create_notion_page' => \Vendor\Automation\Actions\CreateNotionPageAutomationAction::class,
         'open_extension_workspace' => \Vendor\Automation\Actions\OpenExtensionWorkspaceAction::class,
         'install_extension' => \Vendor\Automation\Actions\DeferredAutomationAction::class,
     ],

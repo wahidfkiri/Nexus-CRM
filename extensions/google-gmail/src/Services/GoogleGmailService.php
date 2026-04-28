@@ -25,6 +25,10 @@ class GoogleGmailService
     private ?GoogleClient $client = null;
     private ?Gmail $gmailService = null;
 
+    public function __construct(protected GoogleGmailSocketService $socketService)
+    {
+    }
+
     public function makeClient(): GoogleClient
     {
         $client = new GoogleClient();
@@ -39,7 +43,7 @@ class GoogleGmailService
         return $client;
     }
 
-    public function getAuthUrl(int $tenantId, int $userId): string
+    public function getAuthUrl(int $tenantId, int $userId, array $context = []): string
     {
         $clientId = (string) config('google-gmail.oauth.client_id');
         if ($clientId === '') {
@@ -52,6 +56,8 @@ class GoogleGmailService
             'user_id' => $userId,
             'nonce' => Str::uuid()->toString(),
             'ts' => now()->timestamp,
+            'desktop' => (bool) ($context['desktop'] ?? false),
+            'desktop_return' => trim((string) ($context['desktop_return'] ?? '')) ?: null,
         ]);
 
         $client->setState($state);
@@ -66,6 +72,13 @@ class GoogleGmailService
             throw new RuntimeException('Invalid OAuth state.');
         }
 
+        $issuedAt = (int) ($state['ts'] ?? 0);
+        $now = now()->timestamp;
+
+        if ($issuedAt <= 0 || $issuedAt < ($now - 900) || $issuedAt > ($now + 300)) {
+            throw new RuntimeException('OAuth state expired.');
+        }
+
         return $state;
     }
 
@@ -73,6 +86,7 @@ class GoogleGmailService
     {
         $client = $this->makeClient();
         $tokenData = $client->fetchAccessTokenWithAuthCode($code);
+        $existingToken = GoogleGmailToken::forTenant($tenantId)->first();
 
         if (isset($tokenData['error'])) {
             throw new RuntimeException((string) ($tokenData['error_description'] ?? $tokenData['error']));
@@ -90,7 +104,8 @@ class GoogleGmailService
             [
                 'connected_by' => $userId,
                 'access_token' => $tokenData['access_token'] ?? '',
-                'refresh_token' => $tokenData['refresh_token'] ?? null,
+                // Google does not always return a new refresh_token on reconnect.
+                'refresh_token' => $tokenData['refresh_token'] ?? $existingToken?->refresh_token,
                 'token_expires_at' => isset($tokenData['expires_in'])
                     ? now()->addSeconds((int) $tokenData['expires_in'])
                     : now()->addHour(),
@@ -110,6 +125,10 @@ class GoogleGmailService
 
         $this->listLabels($tenantId, true);
         $this->log($tenantId, 'connected', null, null, ['google_email' => $token->google_email]);
+        $this->safeEmitMailboxRealtime($tenantId, 'connected', [
+            'actor_user_id' => $userId,
+            'google_email' => $token->google_email,
+        ], true, true);
 
         return $token->fresh();
     }
@@ -138,6 +157,10 @@ class GoogleGmailService
         ]);
 
         $this->log($tenantId, 'disconnected');
+        $this->safeEmitMailboxRealtime($tenantId, 'disconnected', [
+            'actor_user_id' => Auth::id(),
+            'reason' => 'manual_disconnect',
+        ], false);
     }
 
     public function getToken(int $tenantId): ?GoogleGmailToken
@@ -182,6 +205,11 @@ class GoogleGmailService
             'signature_enabled' => (bool) $settings->signature_enabled,
             'polling_interval_seconds' => (int) $settings->polling_interval_seconds,
         ]);
+
+        $this->safeEmitMailboxRealtime($tenantId, 'settings.updated', [
+            'actor_user_id' => Auth::id(),
+            'settings' => $this->settingsToArray($settings),
+        ], false);
 
         return $this->settingsToArray($settings);
     }
@@ -488,6 +516,11 @@ class GoogleGmailService
             'subject' => (string) ($payload['subject'] ?? ''),
         ]);
 
+        $this->safeEmitMailboxRealtime($tenantId, 'message.sent', [
+            'actor_user_id' => Auth::id(),
+            'message' => $result,
+        ]);
+
         return $result;
     }
 
@@ -555,6 +588,12 @@ class GoogleGmailService
         $this->log($tenantId, 'reply_email', $sentId, (string) ($result['thread_id'] ?? null), [
             'source_message_id' => $this->normalizeMessageId($messageId),
             'to' => $to,
+        ]);
+
+        $this->safeEmitMailboxRealtime($tenantId, 'message.replied', [
+            'actor_user_id' => Auth::id(),
+            'message' => $result,
+            'source_message_id' => $this->normalizeMessageId($messageId),
         ]);
 
         return $result;
@@ -626,6 +665,12 @@ class GoogleGmailService
             'to' => $to,
         ]);
 
+        $this->safeEmitMailboxRealtime($tenantId, 'message.forwarded', [
+            'actor_user_id' => Auth::id(),
+            'message' => $result,
+            'source_message_id' => $this->normalizeMessageId($messageId),
+        ]);
+
         return $result;
     }
 
@@ -667,6 +712,11 @@ class GoogleGmailService
 
         $updated = $this->getMessage($tenantId, $id);
         $this->log($tenantId, 'trash', $id, (string) ($updated['thread_id'] ?? null));
+        $this->safeEmitMailboxRealtime($tenantId, 'message.updated', [
+            'actor_user_id' => Auth::id(),
+            'message' => $updated,
+            'action' => 'trash',
+        ]);
 
         return $updated;
     }
@@ -684,6 +734,11 @@ class GoogleGmailService
 
         $updated = $this->getMessage($tenantId, $id);
         $this->log($tenantId, 'untrash', $id, (string) ($updated['thread_id'] ?? null));
+        $this->safeEmitMailboxRealtime($tenantId, 'message.updated', [
+            'actor_user_id' => Auth::id(),
+            'message' => $updated,
+            'action' => 'untrash',
+        ]);
 
         return $updated;
     }
@@ -704,6 +759,11 @@ class GoogleGmailService
             ->delete();
 
         $this->log($tenantId, 'delete_message', $id, null);
+        $this->safeEmitMailboxRealtime($tenantId, 'message.deleted', [
+            'actor_user_id' => Auth::id(),
+            'message_id' => $id,
+            'action' => 'delete',
+        ]);
     }
 
     public function downloadAttachment(int $tenantId, string $messageId, string $attachmentId): array
@@ -759,6 +819,206 @@ class GoogleGmailService
     {
         $token = $this->getToken($tenantId);
         if (!$token) {
+            return $this->formatMailboxStats($tenantId, null, []);
+        }
+
+        $labels = $this->listLabels($tenantId, $refreshLabels);
+        if (empty($labels) && !$refreshLabels) {
+            $labels = $this->listLabels($tenantId, true);
+        }
+
+        return $this->formatMailboxStats($tenantId, $token, $labels);
+    }
+
+    public function getMailboxSnapshot(
+        int $tenantId,
+        bool $refresh = false,
+        string $labelId = 'INBOX',
+        string $query = '',
+        ?string $pageToken = null,
+        int $maxResults = 25,
+        bool $includeSpamTrash = false
+    ): array {
+        $settings = $this->getSettings($tenantId);
+        $token = $this->getToken($tenantId);
+
+        if (!$token) {
+            return [
+                'settings' => $settings,
+                'labels' => [],
+                'stats' => $this->formatMailboxStats($tenantId, null, []),
+                'messages' => [
+                    'messages' => [],
+                    'next_page_token' => null,
+                    'result_size_estimate' => 0,
+                ],
+            ];
+        }
+
+        $labels = $this->listLabels($tenantId, $refresh);
+        if (empty($labels) && !$refresh) {
+            $labels = $this->listLabels($tenantId, true);
+        }
+
+        return [
+            'settings' => $settings,
+            'labels' => $labels,
+            'stats' => $this->formatMailboxStats($tenantId, $token, $labels),
+            'messages' => $this->listMessages(
+                $tenantId,
+                $labelId,
+                $query,
+                $pageToken,
+                $maxResults,
+                $includeSpamTrash
+            ),
+        ];
+    }
+
+    public function syncMailboxRealtime(int $tenantId, bool $force = false): array
+    {
+        if (!config('google-gmail.socket.enabled', false)) {
+            return ['changed' => false, 'emitted' => false];
+        }
+
+        $token = $this->getToken($tenantId);
+        if (!$token) {
+            return ['changed' => false, 'emitted' => false];
+        }
+
+        $gmail = $this->getGmailService($tenantId);
+
+        try {
+            $profile = $gmail->users->getProfile('me');
+        } catch (Throwable $e) {
+            throw $this->translateGoogleApiException($e);
+        }
+
+        $previousHistoryId = (string) ($token->history_id ?? '');
+        $currentHistoryId = trim((string) ($profile->getHistoryId() ?? ''));
+        $hasChanges = $force
+            || $previousHistoryId === ''
+            || $currentHistoryId === ''
+            || !hash_equals($previousHistoryId, $currentHistoryId);
+
+        if (!$hasChanges) {
+            return [
+                'changed' => false,
+                'emitted' => false,
+                'history_id' => $currentHistoryId,
+                'previous_history_id' => $previousHistoryId,
+            ];
+        }
+
+        $payload = $this->buildMailboxRealtimePayload($tenantId, true, true);
+        $payload['history_id'] = $currentHistoryId !== '' ? $currentHistoryId : $previousHistoryId;
+        $payload['previous_history_id'] = $previousHistoryId;
+        $payload['reason'] = 'scheduler_sync';
+
+        if ($currentHistoryId !== '' && $currentHistoryId !== $previousHistoryId) {
+            GoogleGmailToken::forTenant($tenantId)->update([
+                'history_id' => $currentHistoryId,
+            ]);
+        }
+
+        $emitted = $this->socketService->emit($tenantId, 'mailbox.synced', $payload);
+
+        return [
+            'changed' => true,
+            'emitted' => $emitted,
+            'history_id' => $payload['history_id'],
+            'previous_history_id' => $previousHistoryId,
+        ];
+    }
+
+    private function modifyMessageLabels(int $tenantId, string $messageId, array $add, array $remove, string $action): array
+    {
+        $id = $this->normalizeMessageId($messageId);
+        $gmail = $this->getGmailService($tenantId);
+
+        $request = new ModifyMessageRequest();
+        $request->setAddLabelIds($add);
+        $request->setRemoveLabelIds($remove);
+
+        try {
+            $gmail->users_messages->modify('me', $id, $request);
+        } catch (Throwable $e) {
+            throw $this->translateGoogleApiException($e, $id);
+        }
+
+        $updated = $this->getMessage($tenantId, $id);
+        $this->log($tenantId, $action, $id, (string) ($updated['thread_id'] ?? null), [
+            'add_labels' => $add,
+            'remove_labels' => $remove,
+        ]);
+
+        $this->safeEmitMailboxRealtime($tenantId, 'message.updated', [
+            'actor_user_id' => Auth::id(),
+            'message' => $updated,
+            'action' => $action,
+        ]);
+
+        return $updated;
+    }
+
+    private function safeEmitMailboxRealtime(
+        int $tenantId,
+        string $event,
+        array $payload = [],
+        bool $refreshSnapshot = true,
+        bool $includeInboxMessages = false
+    ): void {
+        try {
+            $packet = $refreshSnapshot
+                ? array_merge($this->buildMailboxRealtimePayload($tenantId, true, $includeInboxMessages), $payload)
+                : $payload;
+
+            $this->socketService->emit($tenantId, $event, $packet);
+        } catch (Throwable $e) {
+            Log::debug('[GoogleGmail][Socket] emit skipped', [
+                'tenant_id' => $tenantId,
+                'event' => $event,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function buildMailboxRealtimePayload(
+        int $tenantId,
+        bool $refreshLabels = true,
+        bool $includeInboxMessages = false
+    ): array {
+        $token = $this->getToken($tenantId);
+        $labels = $token ? $this->listLabels($tenantId, $refreshLabels) : [];
+
+        $payload = [
+            'connected' => (bool) $token,
+            'stats' => $this->formatMailboxStats($tenantId, $token, $labels),
+            'labels' => $labels,
+        ];
+
+        if ($includeInboxMessages && $token) {
+            $preview = $this->listMessages(
+                $tenantId,
+                'INBOX',
+                '',
+                null,
+                $this->normalizeSocketPreviewLimit((int) config('google-gmail.socket.scheduler_preview_limit', 25)),
+                false
+            );
+
+            $payload['selected_label'] = 'INBOX';
+            $payload['messages'] = (array) ($preview['messages'] ?? []);
+            $payload['next_page_token'] = $preview['next_page_token'] ?? null;
+            $payload['result_size_estimate'] = (int) ($preview['result_size_estimate'] ?? 0);
+        }
+
+        return $payload;
+    }
+
+    private function formatMailboxStats(int $tenantId, ?GoogleGmailToken $token, array $labels): array
+    {
+        if (!$token) {
             return [
                 'connected' => false,
                 'google_email' => null,
@@ -773,11 +1033,6 @@ class GoogleGmailService
                 'starred_total' => 0,
                 'local_messages' => 0,
             ];
-        }
-
-        $labels = $this->listLabels($tenantId, $refreshLabels);
-        if (empty($labels) && !$refreshLabels) {
-            $labels = $this->listLabels($tenantId, true);
         }
 
         $byId = collect($labels)->keyBy('label_id');
@@ -805,28 +1060,9 @@ class GoogleGmailService
         ];
     }
 
-    private function modifyMessageLabels(int $tenantId, string $messageId, array $add, array $remove, string $action): array
+    private function normalizeSocketPreviewLimit(int $value): int
     {
-        $id = $this->normalizeMessageId($messageId);
-        $gmail = $this->getGmailService($tenantId);
-
-        $request = new ModifyMessageRequest();
-        $request->setAddLabelIds($add);
-        $request->setRemoveLabelIds($remove);
-
-        try {
-            $gmail->users_messages->modify('me', $id, $request);
-        } catch (Throwable $e) {
-            throw $this->translateGoogleApiException($e, $id);
-        }
-
-        $updated = $this->getMessage($tenantId, $id);
-        $this->log($tenantId, $action, $id, (string) ($updated['thread_id'] ?? null), [
-            'add_labels' => $add,
-            'remove_labels' => $remove,
-        ]);
-
-        return $updated;
+        return max(5, min(50, $value > 0 ? $value : 25));
     }
 
     private function buildMimeMessage(array $data, array $attachments = []): string

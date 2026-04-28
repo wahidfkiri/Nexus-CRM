@@ -14,6 +14,7 @@ use NexusExtensions\GoogleMeet\Models\GoogleMeetCalendar;
 use NexusExtensions\GoogleMeet\Services\GoogleMeetService;
 use RuntimeException;
 use Throwable;
+use Vendor\Automation\Services\AutomationReconnectNotificationService;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
 
@@ -90,6 +91,8 @@ class GoogleMeetController extends Controller
 
             $this->ensureExtensionActivated($tenantId);
             $this->service->exchangeCode((string) $request->string('code'), $tenantId, $userId);
+            app(AutomationReconnectNotificationService::class)
+                ->notifyForProvider($tenantId, $userId, 'google-meet', route('google-meet.index'));
 
             return redirect()->route('google-meet.index')->with('success', 'Google Meet connecte avec succes.');
         } catch (Throwable $e) {

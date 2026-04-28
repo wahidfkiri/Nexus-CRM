@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
+use Vendor\Automation\Services\AutomationReconnectNotificationService;
 use Vendor\Client\Models\Client;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
@@ -110,6 +111,8 @@ class GoogleCalendarController extends Controller
 
             $this->ensureExtensionActivated($tenantId);
             $this->service->exchangeCode((string) $request->string('code'), $tenantId, $userId);
+            app(AutomationReconnectNotificationService::class)
+                ->notifyForProvider($tenantId, $userId, 'google-calendar', route('google-calendar.index'));
 
             return redirect()->route('google-calendar.index')->with('success', 'Google Calendar connecte avec succes.');
         } catch (Throwable $e) {

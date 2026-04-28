@@ -171,9 +171,7 @@ class Extension extends Model
 
     public function getIconUrlAttribute(): ?string
     {
-        if (!$this->icon) return null;
-        if ($this->isFontAwesomeIcon((string) $this->icon)) return null;
-        return asset('storage/' . $this->icon);
+        return $this->resolveMediaUrl($this->icon, true);
     }
 
     public function getIconClassAttribute(): string
@@ -192,7 +190,7 @@ class Extension extends Model
 
     public function getBannerUrlAttribute(): ?string
     {
-        return $this->banner ? asset('storage/' . $this->banner) : null;
+        return $this->resolveMediaUrl($this->banner);
     }
 
     // ── Methods ────────────────────────────────────────────────────────────
@@ -252,5 +250,36 @@ class Extension extends Model
         $hasGlyph = preg_match('/(^|\s)fa-[a-z0-9-]+(\s|$)/i', $value) === 1;
 
         return $hasFamily && $hasGlyph;
+    }
+
+    private function resolveMediaUrl(?string $value, bool $ignoreFontAwesome = false): ?string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        if ($ignoreFontAwesome && $this->isFontAwesomeIcon($value)) {
+            return null;
+        }
+
+        if (preg_match('/^(data:|https?:\/\/|\/\/)/i', $value) === 1) {
+            return $value;
+        }
+
+        if (str_starts_with($value, '/storage/')) {
+            return asset(ltrim($value, '/'));
+        }
+
+        if (str_starts_with($value, 'storage/')) {
+            return asset($value);
+        }
+
+        if (str_starts_with($value, '/')) {
+            return asset(ltrim($value, '/'));
+        }
+
+        return asset('storage/' . ltrim($value, '/'));
     }
 }

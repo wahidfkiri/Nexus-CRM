@@ -73,7 +73,7 @@ class AutomationSuggestionPresenter
                 'source_type' => $sourceType,
                 'source_id' => $sourceId !== null ? (string) $sourceId : null,
                 'title' => $this->titleForSourceEvent($sourceEvent),
-                'subtitle' => 'Les suggestions intelligentes sont desactivees dans les parametres globaux.',
+                'subtitle' => 'Les suggestions intelligentes sont désactivées dans les paramètres globaux.',
                 'count' => 0,
                 'pending_count' => 0,
                 'settings_url' => $this->preferences->settingsUrl(),
@@ -121,8 +121,8 @@ class AutomationSuggestionPresenter
     {
         $meta = (array) ($suggestion->meta ?? []);
         $payload = (array) ($suggestion->payload ?? []);
-        $installed = !array_key_exists('installed', $meta) || (bool) $meta['installed'];
-        $isInstall = $suggestion->type === 'install_extension' || !$installed;
+        $installéd = !array_key_exists('installéd', $meta) || (bool) $meta['installéd'];
+        $isInstall = $suggestion->type === 'install_extension' || !$installéd;
         $theme = $this->themeFor($suggestion);
         $confidencePercent = (int) round(((float) $suggestion->confidence) * 100);
         $primaryLabel = (string) ($meta['primary_label'] ?? ($isInstall ? 'Installer' : 'Accepter'));
@@ -145,8 +145,9 @@ class AutomationSuggestionPresenter
             'integration' => [
                 'slug' => (string) ($meta['integration'] ?? ($payload['extension_slug'] ?? 'automation')),
                 'label' => $this->integrationLabel((string) ($meta['integration'] ?? ($payload['extension_slug'] ?? 'automation'))),
-                'installed' => $installed,
+                'installéd' => $installéd,
                 'target_url' => $meta['target_url'] ?? null,
+                'target_blank' => (bool) ($meta['target_blank'] ?? false),
             ],
             'theme' => $theme,
             'intent' => $isInstall ? 'install' : 'automation',
@@ -166,9 +167,9 @@ class AutomationSuggestionPresenter
             'invoice_created' => 'Automatisations suggerees pour cette facture',
             'quote_created' => 'Automatisations suggerees pour ce devis',
             'project_created' => 'Automatisations suggerees pour ce projet',
-            'project_task_created' => 'Automatisations suggerees pour cette tache',
+            'project_task_created' => 'Automatisations suggerees pour cette tâche',
             'user_invited' => 'Automatisations suggerees pour cette invitation',
-            'extension_activated' => 'Suggestions apres activation de cette application',
+            'extension_activated' => 'Suggestions après activation de cette application',
             default => 'Automatisations suggerees',
         };
     }

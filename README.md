@@ -1,18 +1,38 @@
-# Nexus CRM
+﻿# Nexus CRM
 
-Application CRM SaaS multi-tenant (Laravel 10) avec modules metier, marketplace interne, onboarding guide, moteur d'automation intelligent et extensions Google / communication.
+CRM SaaS multi-tenant sous Laravel 10, orienté modules métier, marketplace interne, automatisations guidées, intégrations OAuth et wrapper desktop Tauri.
 
-## Stack technique
+## Vue d'ensemble
 
-- PHP 8.1+ (8.2 recommande)
-- Laravel 10
-- MySQL 8+
-- Node.js 18+ et npm
-- Redis (cache + session par defaut)
-- Vite (front)
-- Laravel Octane + RoadRunner (serveur haute performance)
+Le projet couvre aujourd'hui :
 
-## 1) Installation sur un nouvel environnement
+- `Clients`, `Facturation`, `Stock`, `Utilisateurs`, `RBAC`
+- `Projects`
+- intégrations `Google Calendar`, `Google Drive`, `Google Sheets`, `Google Docs`, `Google Gmail`, `Google Meet`
+- intégrations `Dropbox`, `Slack`, `Notion Workspace`, `Chatbot`
+- moteur d'`automation` human-in-the-loop
+- système de `drafts` avec autosave, reprise et rappels
+- wrapper `desktop/tauri` prêt pour une application Windows
+- environnement local HTTPS sous XAMPP / Apache sur `https://localhost`
+
+## Prérequis
+
+### Socle web
+
+- PHP `8.2+`
+- Laravel `10`
+- MySQL `8+`
+- Node.js `18+` pour le front web
+- npm
+
+### Compléments selon les usages
+
+- Redis si vous voulez cache / session / queue hors mode fichier
+- Node.js `22+` si vous utilisez le wrapper Tauri desktop
+- Rust + Visual Studio Build Tools si vous compilez l'app Tauri Windows
+- XAMPP / Apache si vous utilisez le setup HTTPS local du projet
+
+## Installation rapide
 
 ### 1. Cloner le projet
 
@@ -21,75 +41,37 @@ git clone <URL_DU_REPO> nexus-crm
 cd nexus-crm
 ```
 
-### 2. Installer les dependances PHP
+### 2. Installer les dépendances PHP
 
 ```bash
 composer install
 ```
 
-### 3. Installer les dependances front
+### 3. Installer les dépendances front
 
 ```bash
 npm install
 ```
 
-### 4. Configurer l'environnement
+### 4. Préparer l'environnement
 
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-Renseigner ensuite au minimum dans `.env`:
+Variables minimales à renseigner dans `.env` :
 
 - `APP_NAME`, `APP_ENV`, `APP_URL`
 - `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
-- `CACHE_DRIVER`, `SESSION_DRIVER`, `REDIS_*` si vous gardez Redis
-- variables `MAIL_*` (emails verification + bienvenue)
-- variables Google / Slack OAuth (voir section OAuth ci-dessous)
+- `CACHE_DRIVER`, `SESSION_DRIVER`
+- `MAIL_*`
+- variables OAuth nécessaires selon les extensions activées
 
-### 4.b Redis (important)
-
-Le projet utilise par defaut :
-
-- `CACHE_DRIVER=redis`
-- `SESSION_DRIVER=redis`
-
-Deux options possibles :
-
-1. Installer et lancer Redis localement / sur le serveur
-2. Ou temporairement repasser en mode simple dans `.env` :
-
-```dotenv
-CACHE_DRIVER=file
-SESSION_DRIVER=file
-QUEUE_CONNECTION=sync
-```
-
-Exemple de verification Redis :
-
-```bash
-redis-cli ping
-```
-
-Reponse attendue :
-
-```text
-PONG
-```
-
-### 5. Base de donnees
+### 5. Base de données
 
 ```bash
 php artisan migrate --seed
-```
-
-Si vous utilisez la queue `database`, penser aussi a creer la table des jobs :
-
-```bash
-php artisan queue:table
-php artisan queue:failed-table
-php artisan migrate
 ```
 
 ### 6. Lien de stockage public
@@ -100,25 +82,25 @@ php artisan storage:link
 
 ### 7. Build front
 
-- Mode developpement:
+Développement :
 
 ```bash
 npm run dev
 ```
 
-- Build production:
+Production :
 
 ```bash
 npm run build
 ```
 
-### 8. Demarrage classique Laravel (sans Octane)
+### 8. Démarrage Laravel simple
 
 ```bash
 php artisan serve
 ```
 
-### 9. Verification rapide apres installation
+### 9. Vérifications utiles
 
 ```bash
 php artisan optimize:clear
@@ -126,43 +108,44 @@ php artisan about
 php artisan route:list
 ```
 
-## 2) Configuration OAuth (Google / Slack)
+## HTTPS local avec XAMPP / Apache
 
-### Google Cloud Console
+L'environnement local du projet est maintenant prévu pour fonctionner en HTTPS sur :
 
-Dans Google Cloud Console :
+- [https://localhost](https://localhost)
 
-1. Creer un projet Google Cloud.
-2. Activer les APIs necessaires selon les apps utilisees :
-   - Google Drive API
-   - Google Calendar API
-   - Google Sheets API
-   - Google Docs API
-   - Gmail API
-3. Creer un OAuth Client ID (type Web).
-4. Ajouter les URI de redirection autorises (exact match).
+Réglages importants côté `.env` :
 
-URI de callback utilisees par l'application:
+```dotenv
+APP_URL=https://localhost
+SESSION_SECURE_COOKIE=true
+```
 
-- `/auth/google/callback`
-- `/extensions/google-drive/oauth/callback`
-- `/extensions/google-calendar/oauth/callback`
-- `/extensions/google-sheets/oauth/callback`
-- `/extensions/google-docx/oauth/callback`
-- `/extensions/google-gmail/oauth/callback`
-- `/extensions/google-meet/oauth/callback`
+Conséquences :
 
-Exemple local (a adapter a votre domaine):
+- les callbacks OAuth locaux doivent aussi être déclarés en `https://localhost/...`
+- les cookies de session deviennent cohérents avec un usage sécurisé local
+- si vous gardez certains sockets en `http://127.0.0.1:*`, pensez au risque de mixed content selon les pages
 
-- `http://127.0.0.1:8000/auth/google/callback`
-- `http://127.0.0.1:8000/extensions/google-drive/oauth/callback`
-- `http://127.0.0.1:8000/extensions/google-calendar/oauth/callback`
-- `http://127.0.0.1:8000/extensions/google-sheets/oauth/callback`
-- `http://127.0.0.1:8000/extensions/google-docx/oauth/callback`
-- `http://127.0.0.1:8000/extensions/google-gmail/oauth/callback`
-- `http://127.0.0.1:8000/extensions/google-meet/oauth/callback`
+Guide dédié :
 
-Variables `.env` attendues:
+- [docs/local-https-xampp.md](docs/local-https-xampp.md)
+
+## Configuration OAuth
+
+### Google
+
+URI locales typiques à déclarer dans Google Cloud Console :
+
+- `https://localhost/auth/google/callback`
+- `https://localhost/extensions/google-drive/oauth/callback`
+- `https://localhost/extensions/google-calendar/oauth/callback`
+- `https://localhost/extensions/google-sheets/oauth/callback`
+- `https://localhost/extensions/google-docx/oauth/callback`
+- `https://localhost/extensions/google-gmail/oauth/callback`
+- `https://localhost/extensions/google-meet/oauth/callback`
+
+Variables `.env` attendues :
 
 ```dotenv
 GOOGLE_CLIENT_ID=
@@ -194,24 +177,13 @@ GOOGLE_MEET_CLIENT_SECRET=
 GOOGLE_MEET_REDIRECT_URI=
 ```
 
-### Dropbox OAuth
+### Dropbox
 
-Pour l'extension Dropbox :
+Callback locale typique :
 
-1. Creer une application Dropbox dans [App Console](https://www.dropbox.com/developers/apps).
-2. Choisir un acces adapte a votre usage CRM, puis activer au minimum les scopes :
-   - `account_info.read`
-   - `files.metadata.read`
-   - `files.metadata.write`
-   - `files.content.read`
-   - `files.content.write`
-   - `sharing.read`
-   - `sharing.write`
-3. Ajouter l'URL de callback autorisee :
+- `https://localhost/extensions/dropbox/oauth/callback`
 
-- `http://127.0.0.1:8000/extensions/dropbox/oauth/callback`
-
-Variables `.env` attendues :
+Variables `.env` :
 
 ```dotenv
 DROPBOX_CLIENT_ID=
@@ -219,21 +191,13 @@ DROPBOX_CLIENT_SECRET=
 DROPBOX_REDIRECT_URI=/extensions/dropbox/oauth/callback
 ```
 
-Important :
-- si vous changez les scopes dans Dropbox App Console, deconnectez puis reconnectez Dropbox dans le CRM pour obtenir un nouveau token OAuth.
-- sans `files.content.write`, Dropbox refusera la creation de dossier, l'upload, le renommage et les autres operations d'ecriture.
+### Slack
 
-### Slack OAuth
+Callback locale typique :
 
-Pour l'extension Slack :
+- `https://localhost/extensions/slack/oauth/callback`
 
-1. Creer une application dans Slack API.
-2. Configurer les scopes OAuth necessaires.
-3. Ajouter l'URL de callback autorisee :
-
-- `http://127.0.0.1:8000/extensions/slack/oauth/callback`
-
-Variables `.env` attendues :
+Variables `.env` :
 
 ```dotenv
 SLACK_CLIENT_ID=
@@ -242,173 +206,157 @@ SLACK_REDIRECT_URI=/extensions/slack/oauth/callback
 SLACK_API_BASE_URL=https://slack.com/api
 ```
 
-## 3) Marketplace / Applications
+### Notion Workspace
 
-Le catalogue des applications est seed automatiquement si la table `extensions` existe, mais vous pouvez forcer le seed:
+L'extension Notion utilise désormais la vraie API OAuth Notion, pas un workspace local custom.
+
+Callback locale typique :
+
+- `https://localhost/extensions/notion-workspace/oauth/callback`
+
+Variables `.env` :
+
+```dotenv
+NOTION_WORKSPACE_CLIENT_ID=
+NOTION_WORKSPACE_CLIENT_SECRET=
+NOTION_WORKSPACE_REDIRECT_URI=/extensions/notion-workspace/oauth/callback
+```
+
+## Marketplace et applications
+
+Le marketplace active les modules par tenant.
+
+Commandes utiles :
 
 ```bash
 php artisan extensions:seed
-```
-
-Reinitialiser puis reseeder le catalogue:
-
-```bash
 php artisan extensions:seed --reset
 ```
 
-Activation par tenant:
-
-- chaque tenant installe ses apps depuis `/applications` (Marketplace)
-- si une app n'est pas active pour le tenant, elle ne doit pas apparaitre dans le menu global
-- l'installation d'une app ne suffit pas toujours : certaines apps doivent ensuite etre connectees via OAuth depuis leur propre ecran
-
-Apps avec connexion externe a faire apres installation :
+Applications qui demandent généralement une connexion externe après installation :
 
 - Google Drive
-- Dropbox
 - Google Calendar
 - Google Sheets
 - Google Docs
 - Google Gmail
 - Google Meet
+- Dropbox
 - Slack
+- Notion Workspace
 
-## 4) Lancer Octane avec RoadRunner
+## Drafts et reprise de saisie
 
-### Prerequis Octane
+Le CRM embarque un système de brouillons multi-tenant.
 
-- package `laravel/octane` installe
-- package RoadRunner installe (`spiral/roadrunner-http`, `spiral/roadrunner-cli`)
-- extension PHP `sockets` activee (important, surtout sous Windows/XAMPP)
+Ce qu'il fait :
 
-Verifier:
+- autosave silencieux côté formulaire
+- reprise d'un brouillon au retour utilisateur
+- suppression du brouillon après validation finale réussie
+- rappel différé uniquement si la saisie n'est pas terminée
 
-```bash
-php -m | findstr sockets
-```
-
-Si absent sous XAMPP, editer `C:\xampp\php\php.ini`:
-
-```ini
-extension=sockets
-```
-
-Puis relancer le terminal.
-
-### Installation Octane (une seule fois)
+Commandes planifiées :
 
 ```bash
-php artisan octane:install --server=roadrunner
+php artisan schedule:list
 ```
 
-Cela genere notamment:
+Éléments attendus :
 
-- `config/octane.php`
-- `.rr.yaml`
-- variable `.env`: `OCTANE_SERVER=roadrunner`
+- `drafts:remind` toutes les heures
+- `drafts:cleanup` tous les jours à `02:30`
 
-### Demarrer Octane
+## Automation intelligent
+
+Le moteur d'automation fonctionne en mode human-in-the-loop :
+
+- un événement métier déclenche des suggestions
+- l'utilisateur accepte ou ignore
+- si accepté, l'action réelle est exécutée
+- en cas d'auth externe expirée, la suggestion peut être remise en attente avec demande de reconnexion
+
+Cas déjà couverts :
+
+- Gmail
+- Google Calendar
+- Google Drive
+- Dropbox
+- Slack
+- Google Meet
+- Google Sheets
+- Google Docs
+- Notion Workspace
+
+Guide dédié :
+
+- [docs/automation-system.md](docs/automation-system.md)
+
+## Notion Workspace
+
+L'extension `notion-workspace` est maintenant pensée comme une vraie intégration Notion :
+
+- connexion OAuth officielle Notion
+- recherche de pages Notion partagées
+- lecture bloc par bloc depuis l'API Notion
+- création de page dans le workspace connecté
+- liaison CRM entre page Notion et client / projet
+- suggestions automation pouvant ouvrir Notion ou créer une page Notion
+
+## Temps réel Gmail
+
+Le module Gmail utilise une architecture hybride :
+
+- Socket.IO pour pousser les changements vers l'interface
+- scheduler Laravel pour détecter les nouveaux emails entrants
+- fallback polling avec un seul endpoint `snapshot` si le socket est indisponible
+
+Guide dédié :
+
+- [docs/google-gmail-realtime.md](docs/google-gmail-realtime.md)
+
+## Desktop Tauri
+
+Le repo contient un wrapper desktop Tauri dans `desktop/tauri`.
+
+Scripts racine disponibles :
 
 ```bash
-php artisan octane:start --server=roadrunner --host=127.0.0.1 --port=8000 --rpc-port=6001 --workers=1 --task-workers=1 --max-requests=500
+npm run desktop:tauri:install
+npm run desktop:tauri:dev
+npm run desktop:tauri:build:no-bundle
+npm run desktop:tauri:build
+npm run desktop:tauri:frontend:build
 ```
 
-### Demarrer Octane en mode watch (dev)
+Guide dédié :
 
-```bash
-php artisan octane:start --server=roadrunner --host=127.0.0.1 --port=8000 --watch
-```
+- [docs/desktop-tauri.md](docs/desktop-tauri.md)
 
-### Statut / stop / restart
+## Queue, scheduler et temps réel
 
-```bash
-php artisan octane:status
-php artisan octane:stop
-php artisan octane:reload
-```
-
-## 5) Temps reel Socket.IO (Slack / Chatbot)
-
-Deux extensions utilisent un serveur Node Socket.IO separe :
-
-- `extensions/slack/socket-server`
-- `extensions/chatbot/socket-server`
-
-### Slack Socket.IO
-
-```bash
-cd extensions/slack/socket-server
-npm install
-npm start
-```
-
-Port par defaut :
-
-- `6002`
-
-Variables `.env` utiles :
-
-```dotenv
-SLACK_SOCKET_IO_ENABLED=true
-SLACK_SOCKET_IO_URL=http://127.0.0.1:6002
-SLACK_SOCKET_IO_PATH=/socket.io
-SLACK_SOCKET_IO_NAMESPACE=/
-SLACK_SOCKET_IO_EMIT_URL=http://127.0.0.1:6002/emit
-SLACK_SOCKET_IO_SERVER_TOKEN=
-```
-
-### Chatbot Socket.IO
-
-```bash
-cd extensions/chatbot/socket-server
-npm install
-npm start
-```
-
-Port par defaut :
-
-- `6003`
-
-Variables `.env` utiles :
-
-```dotenv
-CHATBOT_SOCKET_IO_ENABLED=true
-CHATBOT_SOCKET_IO_URL=http://127.0.0.1:6003
-CHATBOT_SOCKET_IO_PATH=/socket.io
-CHATBOT_SOCKET_IO_NAMESPACE=/
-CHATBOT_SOCKET_IO_EMIT_URL=http://127.0.0.1:6003/emit
-CHATBOT_SOCKET_IO_SERVER_TOKEN=
-```
-
-## 6) Queue et traitements en arriere-plan
-
-Par defaut, `.env.example` utilise :
+Par défaut, le projet peut tourner en mode simple avec :
 
 ```dotenv
 QUEUE_CONNECTION=sync
+CACHE_DRIVER=file
+SESSION_DRIVER=file
 ```
 
-Ce mode fonctionne en local, mais pour une vraie production il est recommande d'utiliser `redis` ou `database`.
+Pour une exécution plus propre en arrière-plan :
 
-### Exemple avec Redis
+- utilisez Redis ou `database`
+- démarrez un worker queue
+- laissez le scheduler Laravel tourner
 
-```dotenv
-QUEUE_CONNECTION=redis
-```
-
-Puis lancer un worker :
+Exemple :
 
 ```bash
 php artisan queue:work --queue=default,automation --tries=3
+php artisan schedule:work
 ```
 
-Le moteur d'automation peut fonctionner en `sync`, mais il est plus propre en queue asynchrone pour les actions longues :
-
-- emails
-- Google APIs
-- automatisations futures
-
-## 7) Deploiement (checklist rapide)
+## Déploiement rapide
 
 ```bash
 composer install --no-dev --optimize-autoloader
@@ -422,69 +370,53 @@ php artisan view:cache
 php artisan storage:link
 ```
 
-Si vous utilisez Redis / queue / temps reel en production, prevoir aussi :
+Si vous utilisez les intégrations temps réel ou desktop, prévoyez aussi :
 
-- Redis demarre
-- worker queue demarre
-- serveur Octane demarre
-- serveurs Socket.IO Slack / Chatbot demarres si ces extensions sont actives
+- serveur Socket.IO concerné démarré
+- scheduler Laravel actif
+- queue worker actif si nécessaire
+- certificats et variables OAuth cohérents avec le domaine final
 
-## 8) Troubleshooting
+## Documentation disponible
 
-### "Class ... not found" apres ajout package/extension
+- [docs/README.md](docs/README.md)
+- [docs/SCENARIOS_PROJET_CRM.md](docs/SCENARIOS_PROJET_CRM.md)
+- [docs/automation-system.md](docs/automation-system.md)
+- [docs/google-gmail-realtime.md](docs/google-gmail-realtime.md)
+- [docs/desktop-tauri.md](docs/desktop-tauri.md)
+- [docs/local-https-xampp.md](docs/local-https-xampp.md)
+- [docs/validation-security.md](docs/validation-security.md)
 
-```bash
-composer dump-autoload
-php artisan optimize:clear
-```
+## Troubleshooting rapide
 
-### "Base table not found"
+### Erreur OAuth locale
 
-```bash
-php artisan migrate
-```
+Vérifier :
 
-### OAuth "Acces bloque : demande invalide"
+- le protocole `https://localhost`
+- la même callback exacte dans `.env` et dans la console du provider
+- que l'extension est bien activée pour le tenant
 
-Verifier:
+### Les suggestions automation échouent après expiration d'un token
 
-- client id/secret corrects
-- redirect URI exacte dans Google Cloud Console
-- meme domaine/protocole (`http`/`https`) entre `.env` et Google Console
+Vérifier :
 
-### Sessions / cache Redis ne fonctionnent pas
+- que l'utilisateur reconnecte bien l'extension concernée
+- que la suggestion repasse en `pending`
+- qu'une notification de reprise apparaît dans le header
 
-Verifier :
+### Gmail reste en polling
 
-- que Redis est demarre
-- que `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` sont corrects
-- ou repasser provisoirement `CACHE_DRIVER=file` et `SESSION_DRIVER=file`
+Vérifier :
 
-### Socket.IO Slack / Chatbot ne diffuse pas
+- que le serveur Socket.IO Gmail tourne
+- que `GOOGLE_GMAIL_SOCKET_IO_ENABLED=true`
+- que le scheduler exécute `google-gmail:sync-realtime`
 
-Verifier :
+### Les brouillons ne disparaissent pas après succès
 
-- que le serveur Node correspondant tourne sur le bon port
-- que `*_SOCKET_IO_EMIT_URL` pointe vers le bon serveur
-- que `*_SOCKET_IO_SERVER_TOKEN` correspond des deux cotes si vous activez le token
-- que le firewall local ne bloque pas `6002` / `6003`
+Vérifier :
 
-### Octane sous Windows: erreurs signaux/permissions
+- que le formulaire transmet bien `draft_id`
+- que le contrôleur appelle `DraftService::forgetFromRequest()` sur le flux concerné
 
-Si RoadRunner est present en `rr.exe`, verifier aussi la presence de `rr` a la racine si necessaire (certaines versions/scripts l'attendent).
-
-## 9) Documentation interne utile
-
-Le projet inclut une couche de securite/validation centralisee, ainsi qu'un moteur d'automation transverse. Voir :
-
-- `docs/validation-security.md`
-- `docs/automation-system.md`
-
----
-
-Pour une installation propre sur un autre serveur, suivre au minimum :
-
-1. sections `1 -> 4`
-2. section `5` si vous utilisez Slack / Chatbot temps reel
-3. section `6` si vous passez la queue en asynchrone
-4. section `7` pour le deploiement final

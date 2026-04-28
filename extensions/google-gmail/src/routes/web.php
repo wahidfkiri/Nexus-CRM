@@ -3,6 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use NexusExtensions\GoogleGmail\Http\Controllers\GoogleGmailController;
 
+Route::middleware(['web'])
+    ->prefix('extensions/google-gmail')
+    ->name('google-gmail.')
+    ->group(function () {
+        Route::get('/oauth/callback', [GoogleGmailController::class, 'callback'])->name('oauth.callback');
+    });
+
 Route::middleware(['web', 'auth', 'tenant', 'extension.active:google-gmail'])
     ->prefix('extensions/google-gmail')
     ->name('google-gmail.')
@@ -10,10 +17,10 @@ Route::middleware(['web', 'auth', 'tenant', 'extension.active:google-gmail'])
         Route::get('/', [GoogleGmailController::class, 'index'])->name('index');
 
         Route::get('/oauth/connect', [GoogleGmailController::class, 'connect'])->name('oauth.connect');
-        Route::get('/oauth/callback', [GoogleGmailController::class, 'callback'])->name('oauth.callback');
         Route::post('/oauth/disconnect', [GoogleGmailController::class, 'disconnect'])->name('oauth.disconnect');
 
         Route::get('/data/stats', [GoogleGmailController::class, 'stats'])->name('stats');
+        Route::get('/data/snapshot', [GoogleGmailController::class, 'snapshotData'])->name('snapshot.data');
         Route::get('/data/labels', [GoogleGmailController::class, 'labelsData'])->name('labels.data');
         Route::get('/data/messages', [GoogleGmailController::class, 'messagesData'])->name('messages.data');
         Route::get('/data/settings', [GoogleGmailController::class, 'settingsData'])->name('settings.data');

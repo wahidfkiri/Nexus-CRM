@@ -12,7 +12,10 @@
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Extensions & Marketplace</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-puzzle-piece', 'bg' => '#ede9fe', 'color' => '#7c3aed', 'alt' => 'Extensions'])
+      <h1 style="margin:0;">Extensions & Marketplace</h1>
+    </div>
     <p>Gérez le catalogue d'applications disponibles pour vos tenants</p>
   </div>
   <div class="page-header-actions">
@@ -236,9 +239,11 @@ class ExtTable {
 
   _row(e) {
     const color     = e.category_color || '#64748b';
-    const iconHtml  = e.icon_url
-      ? `<img src="${e.icon_url}" style="width:28px;height:28px;object-fit:contain;" alt="">`
-      : `<i class="fas ${e.category_icon || 'fa-puzzle-piece'}" style="color:${color};font-size:18px;"></i>`;
+    const iconSrc   = this._iconSource(e.icon_url || e.icon);
+    const iconClass = this._iconClass(e.icon || e.category_icon || 'fa-puzzle-piece');
+    const iconHtml  = iconSrc
+      ? `<img src="${this._esc(iconSrc)}" style="width:28px;height:28px;object-fit:contain;" alt="">`
+      : `<i class="${iconClass}" style="color:${color};font-size:18px;"></i>`;
     const st        = STATUS_STYLES[e.status] || { cls:'secondary', label: e.status };
     const priceHtml = e.is_free
       ? `<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;">Gratuit</span>`
@@ -308,6 +313,33 @@ class ExtTable {
 
   goTo(p) { this.state.page = p; this.load(); window.scrollTo({top:0,behavior:'smooth'}); }
   _esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+  _iconClass(value, fallback = 'fas fa-puzzle-piece') {
+    const raw = String(value || '').trim();
+    if (!raw) return fallback;
+    const clean = raw.replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, ' ').trim();
+    if (!clean) return fallback;
+
+    const tokens = clean.split(' ');
+    const hasGlyph = tokens.some((t) => /^fa-[a-z0-9-]+$/i.test(t));
+    const hasFamily = tokens.some((t) => /^(fa|fas|far|fal|fad|fab|fat|fa-solid|fa-regular|fa-light|fa-thin|fa-brands)$/i.test(t));
+
+    if (!hasGlyph) return fallback;
+    if (!hasFamily) return `fas ${clean}`;
+
+    return clean;
+  }
+  _iconSource(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    if (/^(data:|https?:\/\/|\/\/)/i.test(raw)) return raw;
+    if (/^(fa|fas|far|fal|fad|fab|fat|fa-solid|fa-regular|fa-light|fa-thin|fa-brands)(\s|$)/i.test(raw)) return '';
+    if (/(^|\s)fa-[a-z0-9-]+(\s|$)/i.test(raw)) return '';
+    if (raw.startsWith('/storage/')) return raw;
+    if (raw.startsWith('storage/')) return `/${raw}`;
+    if (raw.startsWith('/')) return raw;
+    if (/\.(png|svg|jpe?g|gif|webp|avif|ico)(\?.*)?$/i.test(raw)) return `/storage/${raw.replace(/^\/+/, '')}`;
+    return '';
+  }
 
   static async toggleFeatured(id) {
     const { ok, data } = await Http.post(`/superadmin/extensions/${id}/featured`, {});

@@ -1,17 +1,20 @@
 @extends('google-drive::layouts.drive')
 
-@section('title', 'Google Drive')
+@section('title', data_get($currentExtensionMeta, 'name', 'Google Drive'))
 
 @section('gd_breadcrumb')
   <a href="{{ route('marketplace.index') }}">Applications</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Google Drive</span>
+  <span style="color:var(--c-ink)">{{ data_get($currentExtensionMeta, 'name', 'Google Drive') }}</span>
 @endsection
 
 @section('gd_content')
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Google Drive</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => (data_get($currentExtensionMeta, 'icon_url') ?: data_get($currentExtensionMeta, 'icon', 'fab fa-google-drive')), 'bg' => '#dcfce7', 'color' => '#0f9d58', 'alt' => data_get($currentExtensionMeta, 'name', 'Google Drive')])
+      <h1 style="margin:0;">{{ data_get($currentExtensionMeta, 'name', 'Google Drive') }}</h1>
+    </div>
     <p>Manage tenant files, folders, sharing, and trash directly from Google Drive.</p>
   </div>
   <div class="page-header-actions">

@@ -101,8 +101,10 @@ class ExtensionRepository
     public function getTenantExtensions(int $tenantId, array $filters = []): Collection
     {
         return TenantExtension::where('tenant_id', $tenantId)
+            ->whereHas('extension')
             ->with('extension')
             ->when(!empty($filters['status']), fn($q) => $q->where('status', $filters['status']))
+            ->latest('updated_at')
             ->get();
     }
 

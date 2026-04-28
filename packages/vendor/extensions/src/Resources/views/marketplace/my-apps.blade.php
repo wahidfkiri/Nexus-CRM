@@ -9,15 +9,28 @@
 @endsection
 
 @section('content')
+@php
+  $marketplaceAdmin = auth()->check() && (auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('super-admin'));
+@endphp
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Mes applications</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-th-large', 'bg' => '#dbeafe', 'color' => '#2563eb', 'alt' => 'Mes applications'])
+      <h1 style="margin:0;">Mes applications</h1>
+    </div>
     <p>Gérez vos extensions installées et leurs configurations</p>
   </div>
-  <a href="{{ route('marketplace.index') }}" class="btn btn-primary">
-    <i class="fas fa-plus"></i> Découvrir des applications
-  </a>
+  <div class="page-header-actions">
+    @if($marketplaceAdmin)
+      <a href="{{ route('superadmin.extensions.index') }}" class="btn btn-secondary">
+        <i class="fas fa-sliders-h"></i> Parametres marketplace
+      </a>
+    @endif
+    <a href="{{ route('marketplace.index') }}" class="btn btn-primary">
+      <i class="fas fa-plus"></i> Decouvrir des applications
+    </a>
+  </div>
 </div>
 
 {{-- Stats --}}
@@ -74,6 +87,9 @@
     @foreach($activations as $activation)
     @php
       $ext   = $activation->extension;
+      if (!$ext) {
+          continue;
+      }
       $color = $ext->category_color ?? '#64748b';
       $extIconClass = (string) ($ext->icon_class ?? 'fas fa-puzzle-piece');
       $st    = $activation->status;
@@ -220,5 +236,3 @@ async function reactivateMyApp(slug, name, iconUrl = '', iconClass = 'fas fa-puz
 }
 </script>
 @endpush
-
-

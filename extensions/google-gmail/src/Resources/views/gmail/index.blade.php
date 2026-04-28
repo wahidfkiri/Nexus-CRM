@@ -1,17 +1,20 @@
 @extends('google-gmail::layouts.gmail')
 
-@section('title', __('google-gmail::messages.page.title'))
+@section('title', data_get($currentExtensionMeta, 'name', __('google-gmail::messages.page.title')))
 
 @section('ggm_breadcrumb')
   <a href="{{ route('marketplace.index') }}">{{ __('google-gmail::messages.breadcrumb.applications') }}</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">{{ __('google-gmail::messages.page.title') }}</span>
+  <span style="color:var(--c-ink)">{{ data_get($currentExtensionMeta, 'name', __('google-gmail::messages.page.title')) }}</span>
 @endsection
 
 @section('ggm_content')
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Google Gmail</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => (data_get($currentExtensionMeta, 'icon_url') ?: data_get($currentExtensionMeta, 'icon', 'fas fa-envelope-open-text')), 'bg' => '#fee2e2', 'color' => '#ea4335', 'alt' => data_get($currentExtensionMeta, 'name', 'Google Gmail')])
+      <h1 style="margin:0;">{{ data_get($currentExtensionMeta, 'name', 'Google Gmail') }}</h1>
+    </div>
     <p>Centralisez vos emails Gmail dans votre CRM avec une interface mail moderne.</p>
   </div>
   <div class="page-header-actions">
@@ -507,6 +510,7 @@ window.GGMAIL_ROUTES = {
   connect: '{{ route('google-gmail.oauth.connect') }}',
   disconnect: '{{ route('google-gmail.oauth.disconnect') }}',
   stats: '{{ route('google-gmail.stats') }}',
+  snapshotData: '{{ route('google-gmail.snapshot.data') }}',
   labelsData: '{{ route('google-gmail.labels.data') }}',
   messagesData: '{{ route('google-gmail.messages.data') }}',
   settingsData: '{{ route('google-gmail.settings.data') }}',
@@ -518,7 +522,16 @@ window.GGMAIL_ROUTES = {
 
 window.GGMAIL_BOOTSTRAP = {
   connected: @json((bool) $connected),
+  tenantId: @json((int) (auth()->user()->tenant_id ?? 0)),
+  userId: @json((int) (auth()->id() ?? 0)),
   settings: @json($settings ?? []),
+  socket: {
+    enabled: @json((bool) $socketEnabled),
+    clientUrl: @json((string) $socketClientUrl),
+    path: @json((string) $socketPath),
+    namespace: @json((string) $socketNamespace),
+    transports: @json((array) config('google-gmail.socket.transports', ['websocket', 'polling'])),
+  },
   i18n: @json($jsI18n ?? []),
 };
 

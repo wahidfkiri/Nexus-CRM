@@ -38,7 +38,7 @@ class CreateProjectChannelAction extends AbstractAutomationAction
         $provider = $this->resolveProvider($tenantId, $preferredProvider);
 
         return $provider === 'slack'
-            ? $this->createSlackChannel($automationEvent, $project)
+            ? $this->withReconnectHandling('slack', fn () => $this->createSlackChannel($automationEvent, $project))
             : $this->createChatbotRoom($automationEvent, $project);
     }
 

@@ -2,7 +2,10 @@
 @section('title', 'Commandes stock')
 @section('breadcrumb')<span>Stock</span><i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i><span style="color:var(--c-ink)">Commandes</span>@endsection
 @section('content')
-<div class="page-header"><div class="page-header-left"><h1>Commandes fournisseur</h1></div><div class="page-header-actions"><a href="{{ route('stock.orders.export.excel') }}" class="btn btn-secondary">Export Excel</a><a href="{{ route('stock.orders.create') }}" class="btn btn-primary">Nouvelle commande</a></div></div>
+<div class="page-header"><div class="page-header-left"><div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-truck-loading', 'bg' => '#e0f2fe', 'color' => '#0891b2', 'alt' => 'Commandes fournisseur'])
+      <h1 style="margin:0;">Commandes fournisseur</h1>
+    </div></div><div class="page-header-actions"><a href="{{ route('stock.orders.export.excel') }}" class="btn btn-secondary">Export Excel</a><a href="{{ route('stock.orders.create') }}" class="btn btn-primary">Nouvelle commande</a></div></div>
 <div class="table-wrapper">
 <div class="table-header"><span class="table-title">Commandes</span><div class="table-spacer"></div><div class="table-search"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Numero, fournisseur..."></div><select class="filter-select" data-filter="status"><option value="">Tous statuts</option>@foreach($statuses as $k=>$l)<option value="{{ $k }}">{{ $l }}</option>@endforeach</select></div>
 <table class="crm-table"><thead><tr><th>Numero</th><th>Fournisseur</th><th>Date</th><th>Total</th><th>Statut</th><th></th></tr></thead><tbody id="ordersTableBody"></tbody></table>

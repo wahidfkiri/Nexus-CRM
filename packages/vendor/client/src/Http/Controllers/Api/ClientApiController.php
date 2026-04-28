@@ -3,6 +3,7 @@
 namespace Vendor\Client\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\DraftService;
 use Illuminate\Http\Request;
 use Vendor\Client\Models\Client;
 use Vendor\Client\Http\Requests\ClientRequest;
@@ -41,6 +42,7 @@ class ClientApiController extends Controller
             $data['tenant_id'] = auth()->user()->tenant_id;
             
             $client = $this->clientService->create($data);
+            app(DraftService::class)->forgetFromRequest($request);
             
             return response()->json([
                 'success' => true,
@@ -75,6 +77,7 @@ class ClientApiController extends Controller
         
         try {
             $client = $this->clientService->update($client, $request->validated());
+            app(DraftService::class)->forgetFromRequest($request);
             
             return response()->json([
                 'success' => true,

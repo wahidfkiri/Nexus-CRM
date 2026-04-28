@@ -12,7 +12,10 @@
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Paiements</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-money-check', 'bg' => 'var(--c-success-lt)', 'color' => 'var(--c-success)', 'alt' => 'Paiements'])
+      <h1 style="margin:0;">Paiements</h1>
+    </div>
     <p>Historique et suivi de tous les paiements reçus</p>
   </div>
   <div class="page-header-actions">

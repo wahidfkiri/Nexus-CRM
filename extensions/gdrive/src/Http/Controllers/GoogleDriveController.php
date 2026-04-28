@@ -13,6 +13,7 @@ use NexusExtensions\GoogleDrive\Services\GoogleDriveService;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
+use Vendor\Automation\Services\AutomationReconnectNotificationService;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
 
@@ -74,6 +75,8 @@ class GoogleDriveController extends Controller
 
             $this->ensureExtensionActivated($tenantId);
             $this->service->exchangeCode((string) $request->string('code'), $tenantId, $userId);
+            app(AutomationReconnectNotificationService::class)
+                ->notifyForProvider($tenantId, $userId, 'google-drive', route('google-drive.index'));
 
             return redirect()->route('google-drive.index')->with('success', 'Google Drive connected successfully.');
         } catch (Throwable $e) {

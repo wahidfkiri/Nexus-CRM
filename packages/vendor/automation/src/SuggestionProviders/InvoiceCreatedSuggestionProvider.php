@@ -86,6 +86,35 @@ class InvoiceCreatedSuggestionProvider implements SuggestionProvider
             ]
         );
 
+        $notionInstalled = $this->extensions->isActive($tenantId, 'notion-workspace');
+        $suggestions[] = SuggestionDefinition::make(
+            $notionInstalled ? 'create_notion_page' : 'install_extension',
+            $notionInstalled
+                ? 'Créer une page Notion de suivi de facture'
+                : 'Installer Notion Workspace pour documenter le suivi de paiement',
+            0.8,
+            $notionInstalled
+                ? [
+                    'invoice_id' => $invoiceId,
+                    'extension_slug' => 'notion-workspace',
+                    'template' => 'invoice_followup',
+                    'context_label' => 'Suivi de facture',
+                ]
+                : [
+                    'extension_slug' => 'notion-workspace',
+                    'invoice_id' => $invoiceId,
+                    'target_action' => 'create_notion_page',
+                    'template' => 'invoice_followup',
+                ],
+            [
+                'integration' => 'notion-workspace',
+                'installed' => $notionInstalled,
+                'target_url' => $this->extensions->targetUrl('notion-workspace'),
+                'target_blank' => true,
+                'template' => 'invoice_followup',
+            ]
+        );
+
         return $suggestions;
     }
 

@@ -85,6 +85,35 @@ class QuoteCreatedSuggestionProvider implements SuggestionProvider
             ]
         );
 
+        $notionInstalled = $this->extensions->isActive($tenantId, 'notion-workspace');
+        $suggestions[] = SuggestionDefinition::make(
+            $notionInstalled ? 'create_notion_page' : 'install_extension',
+            $notionInstalled
+                ? 'Créer une page Notion de suivi du devis'
+                : 'Installer Notion Workspace pour documenter le suivi commercial',
+            0.8,
+            $notionInstalled
+                ? [
+                    'quote_id' => $quoteId,
+                    'extension_slug' => 'notion-workspace',
+                    'template' => 'quote_followup',
+                    'context_label' => 'Suivi de devis',
+                ]
+                : [
+                    'extension_slug' => 'notion-workspace',
+                    'quote_id' => $quoteId,
+                    'target_action' => 'create_notion_page',
+                    'template' => 'quote_followup',
+                ],
+            [
+                'integration' => 'notion-workspace',
+                'installed' => $notionInstalled,
+                'target_url' => $this->extensions->targetUrl('notion-workspace'),
+                'target_blank' => true,
+                'template' => 'quote_followup',
+            ]
+        );
+
         return $suggestions;
     }
 

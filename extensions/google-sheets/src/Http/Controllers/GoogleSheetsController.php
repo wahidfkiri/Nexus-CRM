@@ -12,6 +12,7 @@ use NexusExtensions\GoogleSheets\Http\Requests\GoogleSheetsWriteRangeRequest;
 use NexusExtensions\GoogleSheets\Services\GoogleSheetsService;
 use RuntimeException;
 use Throwable;
+use Vendor\Automation\Services\AutomationReconnectNotificationService;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
 
@@ -76,6 +77,8 @@ class GoogleSheetsController extends Controller
 
             $this->ensureExtensionActivated($tenantId);
             $this->service->exchangeCode((string) $request->string('code'), $tenantId, $userId);
+            app(AutomationReconnectNotificationService::class)
+                ->notifyForProvider($tenantId, $userId, 'google-sheets', route('google-sheets.index'));
 
             return redirect()->route('google-sheets.index')
                 ->with('success', 'Google Sheets connecté avec succès.');

@@ -12,7 +12,10 @@
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Factures</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-file-invoice', 'bg' => '#ede9fe', 'color' => '#7c3aed', 'alt' => 'Factures'])
+      <h1 style="margin:0;">Factures</h1>
+    </div>
     <p>Gérez et suivez l'ensemble de vos factures</p>
   </div>
   <div class="page-header-actions">

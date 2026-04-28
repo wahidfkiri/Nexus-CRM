@@ -9,6 +9,9 @@
 @endsection
 
 @section('content')
+@php
+  $marketplaceAdmin = auth()->check() && (auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('super-admin'));
+@endphp
 
 {{-- Page Hero --}}
 <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#0f2044 100%);border-radius:var(--r-2xl);padding:40px 48px;margin-bottom:28px;position:relative;overflow:hidden;">
@@ -22,14 +25,20 @@
         <i class="fas fa-store" style="color:#60a5fa;"></i>
         NexusCRM Marketplace
       </div>
-      <h1 style="font-size:2.2rem;font-weight:800;color:#fff;margin-bottom:8px;line-height:1.2;">
-        Applications & Intégrations
-      </h1>
+      <div class="page-title-heading" style="margin-bottom:8px;">
+        @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-store', 'bg' => 'rgba(255,255,255,.12)', 'color' => '#60a5fa', 'alt' => 'Marketplace'])
+        <h1 style="font-size:2.2rem;font-weight:800;color:#fff;margin:0;line-height:1.2;">Applications & Integrations</h1>
+      </div>
       <p style="color:rgba(255,255,255,.6);font-size:15px;max-width:480px;margin:0;">
         Connectez vos outils préférés et étendez les fonctionnalités de votre CRM en un clic.
       </p>
     </div>
-    <div style="display:flex;gap:12px;flex-shrink:0;">
+    <div style="display:flex;gap:12px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+      @if($marketplaceAdmin)
+        <a href="{{ route('superadmin.extensions.index') }}" class="btn btn-secondary" style="border-color:rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.06);">
+          <i class="fas fa-sliders-h"></i> Parametres marketplace
+        </a>
+      @endif
       <a href="{{ route('marketplace.my-apps') }}" class="btn btn-secondary" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8);background:rgba(255,255,255,.08);">
         <i class="fas fa-th-list"></i> Mes apps
         @if($myAppsCount > 0)
@@ -390,13 +399,14 @@ function renderCardGrid(a) {
   const iconBg     = a.icon_bg_color || `${color}18`;
   const categoryIconClass = _iconClass(a.category_icon || 'fa-puzzle-piece');
   const appIconClass = _iconClass(a.icon, categoryIconClass);
+  const iconSrc = _iconSource(a.icon_url || a.icon);
   const slugArg = _attrJs(a.slug || '');
   const nameArg = _attrJs(a.name || '');
-  const iconUrlArg = _attrJs(a.icon_url || '');
+  const iconUrlArg = _attrJs(iconSrc);
   const iconClassArg = _attrJs(appIconClass);
   const colorArg = _attrJs(color);
-  const iconHtml   = a.icon_url
-    ? `<img src="${a.icon_url}" style="width:32px;height:32px;object-fit:contain;" alt="${_esc(a.name)}">`
+  const iconHtml   = iconSrc
+    ? `<img src="${iconSrc}" style="width:32px;height:32px;object-fit:contain;" alt="${_esc(a.name)}">`
     : `<i class="${appIconClass}" style="color:white;font-size:24px;"></i>`;
   const priceHtml  = a.is_free
     ? `<span style="background:#dcfce7;color:#15803d;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;">Gratuit</span>`
@@ -457,13 +467,14 @@ function renderCardList(a) {
   const iconBg = a.icon_bg_color || `${color}18`;
   const categoryIconClass = _iconClass(a.category_icon || 'fa-puzzle-piece');
   const appIconClass = _iconClass(a.icon, categoryIconClass);
+  const iconSrc = _iconSource(a.icon_url || a.icon);
   const slugArg = _attrJs(a.slug || '');
   const nameArg = _attrJs(a.name || '');
-  const iconUrlArg = _attrJs(a.icon_url || '');
+  const iconUrlArg = _attrJs(iconSrc);
   const iconClassArg = _attrJs(appIconClass);
   const colorArg = _attrJs(color);
-  const iconHtml = a.icon_url
-    ? `<img src="${a.icon_url}" style="width:28px;height:28px;object-fit:contain;" alt="${_esc(a.name)}">`
+  const iconHtml = iconSrc
+    ? `<img src="${iconSrc}" style="width:28px;height:28px;object-fit:contain;" alt="${_esc(a.name)}">`
     : `<i class="${appIconClass}" style="color:${color};font-size:20px;"></i>`;
   const actionBtn = a.is_activated
     ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();deactivateApp(${slugArg},${nameArg},${iconUrlArg},${iconClassArg},${colorArg})"><i class="fas fa-plug-circle-xmark"></i></button>`
@@ -503,7 +514,7 @@ function goTo(p) { state.page = p; loadApps(); window.scrollTo({top:0,behavior:'
 /* ── Actions ─────────────────────────────────────────────────────────────── */
 function buildAppConfirmIcon(name, iconUrl, iconClass) {
   const safeName = _esc(name || '');
-  const safeUrl = String(iconUrl || '').replace(/"/g, '&quot;');
+  const safeUrl = String(_iconSource(iconUrl) || '').replace(/"/g, '&quot;');
 
   if (safeUrl) {
     return `<img src="${safeUrl}" alt="${safeName}">`;
@@ -581,10 +592,21 @@ function _iconClass(value, fallback = 'fas fa-puzzle-piece') {
   return clean;
 }
 
+function _iconSource(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (/^(data:|https?:\/\/|\/\/)/i.test(raw)) return raw;
+  if (/^(fa|fas|far|fal|fad|fab|fat|fa-solid|fa-regular|fa-light|fa-thin|fa-brands)(\s|$)/i.test(raw)) return '';
+  if (/(^|\s)fa-[a-z0-9-]+(\s|$)/i.test(raw)) return '';
+  if (raw.startsWith('/storage/')) return raw;
+  if (raw.startsWith('storage/')) return `/${raw}`;
+  if (raw.startsWith('/')) return raw;
+  if (/\.(png|svg|jpe?g|gif|webp|avif|ico)(\?.*)?$/i.test(raw)) return `/storage/${raw.replace(/^\/+/, '')}`;
+  return '';
+}
+
 // Init
 document.addEventListener('DOMContentLoaded', () => loadApps());
 </script>
 @endpush
-
-
 

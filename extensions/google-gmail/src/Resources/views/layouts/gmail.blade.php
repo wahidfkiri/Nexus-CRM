@@ -13,5 +13,6 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js" crossorigin="anonymous"></script>
 <script src="{{ asset('vendor/google-gmail/js/google-gmail.js') }}"></script>
 @endpush

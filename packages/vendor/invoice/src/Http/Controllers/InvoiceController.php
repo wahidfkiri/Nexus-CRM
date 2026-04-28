@@ -377,6 +377,7 @@ class InvoiceController extends Controller
             $data = $request->validated();
             $data['tenant_id'] = auth()->user()->tenant_id;
             $quote = $this->service->createQuote($data);
+            app(DraftService::class)->forgetFromRequest($request);
             return response()->json([
                 'success'  => true,
                 'message'  => 'Devis créé avec succès.',
@@ -417,6 +418,7 @@ class InvoiceController extends Controller
     {
         try {
             $quote = $this->service->updateQuote($quote, $request->validated());
+            app(DraftService::class)->forgetFromRequest($request);
             return response()->json([
                 'success'  => true,
                 'message'  => 'Devis mis à jour.',
@@ -829,7 +831,6 @@ class InvoiceController extends Controller
         ];
     }
 }
-
 
 
 

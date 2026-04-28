@@ -1,17 +1,20 @@
 @extends('google-docx::layouts.docx')
 
-@section('title', 'Google Docs')
+@section('title', data_get($currentExtensionMeta, 'name', 'Google Docs'))
 
 @section('gdx_breadcrumb')
   <a href="{{ route('marketplace.index') }}">Applications</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Google Docs</span>
+  <span style="color:var(--c-ink)">{{ data_get($currentExtensionMeta, 'name', 'Google Docs') }}</span>
 @endsection
 
 @section('gdx_content')
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Google Docs</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => (data_get($currentExtensionMeta, 'icon_url') ?: data_get($currentExtensionMeta, 'icon', 'fas fa-file-word')), 'bg' => '#dbeafe', 'color' => '#1a73e8', 'alt' => data_get($currentExtensionMeta, 'name', 'Google Docs')])
+      <h1 style="margin:0;">{{ data_get($currentExtensionMeta, 'name', 'Google Docs') }}</h1>
+    </div>
     <p>Créez, lisez et modifiez vos documents Google Docs depuis le CRM.</p>
   </div>
   <div class="page-header-actions">

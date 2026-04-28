@@ -24,12 +24,121 @@
     .global-search-meta{display:flex;align-items:center;justify-content:space-between;gap:10px}
     .global-search-badge{font-size:10px;padding:2px 7px;border-radius:999px;background:var(--c-accent-xl);color:var(--c-accent);font-weight:700;white-space:nowrap}
     .global-search-empty,.global-search-loading{padding:12px 10px;color:var(--c-ink-50);font-size:13px}
+    .crm-header-actions{display:flex;align-items:center;gap:10px}
+    .crm-layout > .crm-main{padding-top:var(--header-h, 64px)}
+    .crm-layout > .crm-main > .crm-header{
+      position:fixed !important;
+      top:0;
+      left:var(--sidebar-w, 260px);
+      right:0;
+      z-index:80;
+    }
+    .header-notif-wrap{position:relative}
+    .header-notif-wrap .btn-icon{position:relative}
+    .header-notif-badge{
+      position:absolute;
+      top:-3px;
+      right:-3px;
+      min-width:18px;
+      height:18px;
+      padding:0 5px;
+      border-radius:999px;
+      background:#dc2626;
+      color:#fff;
+      font-size:10px;
+      font-weight:800;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 6px 16px rgba(220,38,38,.26);
+    }
+    .header-notif-dropdown{
+      position:absolute;
+      top:calc(100% + 12px);
+      right:0;
+      width:min(420px, calc(100vw - 28px));
+      background:#fff;
+      border:1px solid var(--c-ink-05);
+      border-radius:18px;
+      box-shadow:0 20px 46px rgba(15,23,42,.16);
+      overflow:hidden;
+      display:none;
+      z-index:120;
+    }
+    .header-notif-wrap.open .header-notif-dropdown{display:block}
+    .header-notif-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px 16px;
+      border-bottom:1px solid var(--c-ink-05);
+      background:linear-gradient(180deg,rgba(37,99,235,.06),rgba(255,255,255,0));
+    }
+    .header-notif-header strong{display:block;font-size:14px;color:var(--c-ink)}
+    .header-notif-header span{font-size:12px;color:var(--c-ink-45)}
+    .header-notif-counter{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:28px;
+      height:28px;
+      padding:0 9px;
+      border-radius:999px;
+      background:rgba(37,99,235,.12);
+      color:#2563eb;
+      font-size:12px;
+      font-weight:800;
+    }
+    .header-notif-list{max-height:420px;overflow:auto;padding:8px}
+    .header-notif-item{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      padding:12px;
+      border-radius:14px;
+      text-decoration:none;
+      color:inherit;
+      transition:background .18s ease,border-color .18s ease;
+      border:1px solid transparent;
+    }
+    .header-notif-item:hover{
+      background:var(--c-accent-xl);
+      border-color:rgba(37,99,235,.12);
+    }
+    .header-notif-item.is-unread{
+      background:rgba(245,158,11,.08);
+      border-color:rgba(245,158,11,.14);
+    }
+    .header-notif-icon{
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      background:rgba(37,99,235,.10);
+      color:var(--notif-accent, #2563eb);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+      box-shadow:inset 0 0 0 1px rgba(37,99,235,.12);
+    }
+    .header-notif-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+    .header-notif-copy strong{font-size:13px;color:var(--c-ink)}
+    .header-notif-copy small{font-size:12px;line-height:1.45;color:var(--c-ink-50)}
+    .header-notif-copy em{font-size:11px;font-style:normal;color:var(--c-ink-35)}
+    .header-notif-empty{
+      padding:22px 16px;
+      text-align:center;
+      color:var(--c-ink-45);
+      font-size:13px;
+    }
     .apps-drawer{height:100vh;max-height:100vh;border-radius:0;max-width:420px;margin-left:auto}
     .apps-drawer-list{display:flex;flex-direction:column;gap:10px}
     .apps-drawer-category{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--c-ink-40);font-weight:700;padding:8px 2px 0}
     .apps-drawer-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--c-ink-05);border-radius:10px;text-decoration:none;color:var(--c-ink);transition:all .2s ease}
     .apps-drawer-item:hover{border-color:var(--c-accent);background:var(--c-accent-xl)}
     .apps-drawer-icon{width:34px;height:34px;border-radius:8px;background:var(--surface-1);display:flex;align-items:center;justify-content:center;color:var(--c-accent)}
+    .apps-drawer-icon img{width:20px;height:20px;object-fit:contain;display:block}
     .apps-drawer-badge{margin-left:auto;font-size:10px;padding:2px 7px;border-radius:999px;background:var(--c-success-lt);color:var(--c-success);font-weight:700}
     .automation-drawer{width:min(760px,calc(100vw - 32px));max-width:760px;max-height:min(86vh,920px);border-radius:24px;margin:0 auto}
     .automation-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--c-ink-05);border-radius:14px;background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(15,118,110,.08))}
@@ -105,6 +214,40 @@
     .sidebar-app-link .app-icon-badge i{
       width:auto;
       font-size:11px;
+    }
+    .sidebar-app-link .app-icon-badge img{
+      width:14px;
+      height:14px;
+      object-fit:contain;
+      display:block;
+    }
+    .page-title-heading{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin-bottom:6px;
+    }
+    .page-title-module-icon{
+      width:50px;
+      height:50px;
+      border-radius:15px;
+      background:var(--pti-bg, var(--c-accent-lt));
+      color:var(--pti-color, var(--c-accent));
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.45),0 10px 24px rgba(15,23,42,.08);
+      flex:0 0 auto;
+      overflow:hidden;
+    }
+    .page-title-module-icon i{
+      font-size:22px;
+    }
+    .page-title-module-icon img{
+      width:28px;
+      height:28px;
+      object-fit:contain;
+      display:block;
     }
     .sidebar-market-link .nav-badge{background:rgba(37,99,235,.32);color:#dbeafe}
     .sidebar-brand-logo{
@@ -204,6 +347,7 @@
     }
     @media (max-width: 1024px){
       #sidebarToggle{display:inline-flex !important}
+      .crm-layout > .crm-main > .crm-header{left:0}
       .crm-sidebar{
         z-index:60;
         box-shadow:0 20px 60px rgba(2,6,23,.36);
@@ -256,11 +400,6 @@
 
       <div class="sidebar-nav-section">Utilisateurs</div>
       <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') || request()->routeIs('rbac.*') ? 'active' : '' }}"><i class="fa fa-user-cog"></i> Utilisateurs</a>
-      @if(Route::has('settings.global'))
-        <div class="sidebar-nav-section">Configuration</div>
-        <a href="{{ route('settings.global') }}" class="{{ request()->routeIs('settings.global*') ? 'active' : '' }}"><i class="fas fa-sliders"></i> Paramètres globaux</a>
-      @endif
-
       <div class="sidebar-nav-section">Applications</div>
       <a href="{{ route('marketplace.index') }}" class="sidebar-market-link {{ request()->routeIs('marketplace.*') ? 'active' : '' }}" data-tooltip="Marketplace: installer de nouvelles applications">
         <i class="fa fa-store"></i> Marketplace <span class="nav-badge">Store</span>
@@ -296,7 +435,11 @@
             @endphp
             <a href="{{ $installedApp->url }}" class="sidebar-app-link {{ $isActive ? 'active' : '' }}" data-tooltip="{{ $installedApp->name }}: ouvrir l'application">
               <span class="app-icon-badge" style="--app-bg: {{ $installedApp->icon_bg_color ?? '#334155' }};">
-                <i class="{{ $installedApp->icon }}"></i>
+                @if(!empty($installedApp->icon_url))
+                  <img src="{{ $installedApp->icon_url }}" alt="{{ $installedApp->name }}">
+                @else
+                  <i class="{{ $installedApp->icon }}"></i>
+                @endif
               </span>
               {{ $installedApp->name }}
             </a>
@@ -347,9 +490,53 @@
 
       <div class="crm-header-actions">
         <button class="btn-icon" data-modal-open="myAppsModal" aria-label="Mes applications"><i class="fas fa-th-large"></i></button>
-        <button class="btn-icon" id="globalNotifBtn" aria-label="Notifications">
-          <i class="fas fa-bell"></i>
-        </button>
+        <div class="header-notif-wrap" id="globalNotifWrap">
+          <button class="btn-icon" id="globalNotifBtn" aria-label="Notifications" aria-expanded="false" type="button">
+            <i class="fas fa-bell"></i>
+            @if(($layoutNotificationsUnreadCount ?? 0) > 0)
+              <span class="header-notif-badge">{{ ($layoutNotificationsUnreadCount ?? 0) > 99 ? '99+' : ($layoutNotificationsUnreadCount ?? 0) }}</span>
+            @endif
+          </button>
+          <div class="header-notif-dropdown" id="globalNotifDropdown" aria-hidden="true">
+            <div class="header-notif-header">
+              <div>
+                <strong>Notifications</strong>
+                <span>Vos rappels et actions a reprendre</span>
+              </div>
+              <span class="header-notif-counter">{{ (int) ($layoutNotificationsUnreadCount ?? 0) }}</span>
+            </div>
+            <div class="header-notif-list">
+              @forelse(($layoutNotifications ?? collect()) as $notification)
+                @php
+                  $notificationUrl = trim((string) ($notification->action_url ?? ''));
+                  $notificationClasses = 'header-notif-item' . (!empty($notification->is_unread) ? ' is-unread' : '');
+                @endphp
+                @if($notificationUrl !== '')
+                  <a href="{{ $notificationUrl }}" class="{{ $notificationClasses }}">
+                @else
+                  <div class="{{ $notificationClasses }}">
+                @endif
+                  <span class="header-notif-icon" style="--notif-accent: {{ $notification->accent ?? '#2563eb' }};">
+                    <i class="fas {{ $notification->icon ?? 'fa-bell' }}"></i>
+                  </span>
+                  <span class="header-notif-copy">
+                    <strong>{{ $notification->title ?? 'Notification CRM' }}</strong>
+                    <small>{{ $notification->message ?? 'Une action est disponible.' }}</small>
+                    <em>
+                      {{ !empty($notification->created_at) ? \Illuminate\Support\Carbon::parse($notification->created_at)->locale('fr')->diffForHumans() : 'A l instant' }}
+                    </em>
+                  </span>
+                @if($notificationUrl !== '')
+                  </a>
+                @else
+                  </div>
+                @endif
+              @empty
+                <div class="header-notif-empty">Aucune notification pour le moment.</div>
+              @endforelse
+            </div>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -406,7 +593,11 @@
           @foreach(($category->apps ?? collect()) as $app)
             <a href="{{ $app->url }}" class="apps-drawer-item">
               <span class="apps-drawer-icon" style="background:{{ $app->icon_bg_color ?? '#334155' }};color:#fff;">
-                <i class="{{ $app->icon }}"></i>
+                @if(!empty($app->icon_url))
+                  <img src="{{ $app->icon_url }}" alt="{{ $app->name }}">
+                @else
+                  <i class="{{ $app->icon }}"></i>
+                @endif
               </span>
               <span>
                 <strong>{{ $app->name }}</strong><br>
@@ -494,6 +685,7 @@
         'slug' => (string) ($app->slug ?? ''),
         'name' => (string) ($app->name ?? ''),
         'icon' => (string) ($app->icon ?? 'fa-puzzle-piece'),
+        'icon_url' => (string) ($app->icon_url ?? ''),
         'url' => (string) ($app->url ?? ''),
       ];
     })
@@ -582,6 +774,18 @@ window.CRM_AUTH_ROUTES = {
       if (/^https?:\/\//i.test(raw)) return raw;
       return '#';
     };
+    const resolveImageIconSource = (value) => {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      if (/^(data:|https?:\/\/|\/\/)/i.test(raw)) return raw;
+      if (/^(fa|fas|far|fal|fad|fab|fat|fa-solid|fa-regular|fa-light|fa-thin|fa-brands)(\s|$)/i.test(raw)) return '';
+      if (/(^|\s)fa-[a-z0-9-]+(\s|$)/i.test(raw)) return '';
+      if (raw.startsWith('/storage/')) return raw;
+      if (raw.startsWith('storage/')) return `/${raw}`;
+      if (raw.startsWith('/')) return raw;
+      if (/\.(png|svg|jpe?g|gif|webp|avif|ico)(\?.*)?$/i.test(raw)) return `/storage/${raw.replace(/^\/+/, '')}`;
+      return '';
+    };
     const safeGet = async (url, params = {}) => {
       try {
         const res = await Http.get(url, params);
@@ -605,7 +809,10 @@ window.CRM_AUTH_ROUTES = {
       if (!rows.length) return '';
       const links = rows.map((r) => `
         <a class="global-search-item" href="${esc(ensureUrl(r.url))}"${r.external ? ' target="_blank" rel="noopener"' : ''}>
-          <i class="${iconClass(r.icon || '')}" style="color:${esc(r.color || 'var(--c-accent)')};width:16px;"></i>
+          ${resolveImageIconSource(r.icon_url || r.icon)
+            ? `<img src="${esc(resolveImageIconSource(r.icon_url || r.icon))}" alt="${esc(r.label || 'App')}" style="width:16px;height:16px;object-fit:contain;display:block;">`
+            : `<i class="${iconClass(r.icon || '')}" style="color:${esc(r.color || 'var(--c-accent)')};width:16px;"></i>`
+          }
           <div style="min-width:0;flex:1;">
             <div class="global-search-meta">
               <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.label)}</span>
@@ -655,6 +862,7 @@ window.CRM_AUTH_ROUTES = {
         sub: `Application (${app.slug})`,
         url: app.url,
         icon: app.icon || 'fa-puzzle-piece',
+        icon_url: app.icon_url || '',
         badge: 'App',
       }));
       return rows.slice(0, 8);
@@ -907,6 +1115,47 @@ window.CRM_AUTH_ROUTES = {
     });
   }
 
+  function initHeaderNotifications() {
+    const wrap = document.getElementById('globalNotifWrap');
+    const btn = document.getElementById('globalNotifBtn');
+    const panel = document.getElementById('globalNotifDropdown');
+    if (!wrap || !btn || !panel) return;
+
+    const open = () => {
+      wrap.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+      panel.setAttribute('aria-hidden', 'false');
+    };
+
+    const close = () => {
+      wrap.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      panel.setAttribute('aria-hidden', 'true');
+    };
+
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (wrap.classList.contains('open')) {
+        close();
+        return;
+      }
+      open();
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!wrap.contains(event.target)) {
+        close();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        close();
+      }
+    });
+  }
+
   function initInvoiceStockBridge() {
     const form = document.getElementById('invoiceForm') || document.getElementById('quoteForm');
     const tbody = document.getElementById('lineItemsBody');
@@ -1082,12 +1331,14 @@ window.CRM_AUTH_ROUTES = {
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    initHeaderNotifications();
     initGlobalSearch();
     initInvoiceStockBridge();
     initProTooltips();
   });
 })();
 </script>
+@include('layouts.partials.tauri-bridge')
 @stack('scripts')
 </body>
 </html>

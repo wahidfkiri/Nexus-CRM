@@ -48,6 +48,35 @@ class ProjectCreatedSuggestionProvider implements SuggestionProvider
             );
         }
 
+        $notionInstalled = $this->extensions->isActive($tenantId, 'notion-workspace');
+        $suggestions[] = SuggestionDefinition::make(
+            $notionInstalled ? 'create_notion_page' : 'install_extension',
+            $notionInstalled
+                ? "Créer une page Notion de brief pour {$projectName}"
+                : 'Installer Notion Workspace pour documenter les projets',
+            0.88,
+            $notionInstalled
+                ? [
+                    'project_id' => $projectId,
+                    'extension_slug' => 'notion-workspace',
+                    'template' => 'project_brief',
+                    'context_label' => 'Brief projet',
+                ]
+                : [
+                    'extension_slug' => 'notion-workspace',
+                    'project_id' => $projectId,
+                    'target_action' => 'create_notion_page',
+                    'template' => 'project_brief',
+                ],
+            [
+                'integration' => 'notion-workspace',
+                'installed' => $notionInstalled,
+                'target_url' => $this->extensions->targetUrl('notion-workspace'),
+                'target_blank' => true,
+                'template' => 'project_brief',
+            ]
+        );
+
         $preferredStorage = $this->extensions->preferredInstalled($tenantId, ['google-drive', 'dropbox']);
         $storageInstalled = $preferredStorage !== null;
         $storageSlug = $preferredStorage ?: 'dropbox';
@@ -57,8 +86,8 @@ class ProjectCreatedSuggestionProvider implements SuggestionProvider
             $storageInstalled ? $storageAction : 'install_extension',
             $storageInstalled
                 ? ($storageSlug === 'dropbox'
-                    ? "Creer un dossier Dropbox pour {$projectName}"
-                    : "Creer un dossier Google Drive pour {$projectName}")
+                    ? "Créer un dossier Dropbox pour {$projectName}"
+                    : "Créer un dossier Google Drive pour {$projectName}")
                 : 'Installer Dropbox ou Google Drive pour centraliser les fichiers du projet',
             0.87,
             $storageInstalled
@@ -74,10 +103,11 @@ class ProjectCreatedSuggestionProvider implements SuggestionProvider
         $preferredChannelExtension = $this->extensions->preferredInstalled($tenantId, ['chatbot', 'slack']);
         $channelInstalled = $preferredChannelExtension !== null;
         $channelSlug = $preferredChannelExtension ?: 'chatbot';
+
         $suggestions[] = SuggestionDefinition::make(
             $channelInstalled ? 'create_project_channel' : 'install_extension',
             $channelInstalled
-                ? "Creer un canal d equipe pour {$projectName}"
+                ? "Créer un canal d'équipe pour {$projectName}"
                 : 'Installer Chatbot ou Slack pour ouvrir un canal projet',
             0.76,
             $channelInstalled

@@ -14,10 +14,13 @@ class NotionPage extends Model
 
     protected $fillable = [
         'tenant_id',
+        'workspace_id',
         'parent_id',
         'client_id',
+        'project_id',
         'owner_id',
         'title',
+        'description',
         'slug',
         'icon',
         'cover_color',
@@ -39,6 +42,11 @@ class NotionPage extends Model
         'is_archived' => 'boolean',
         'last_edited_at' => 'datetime',
     ];
+
+    public function workspace()
+    {
+        return $this->belongsTo(NotionWorkspace::class, 'workspace_id');
+    }
 
     public function parent()
     {
@@ -65,6 +73,11 @@ class NotionPage extends Model
         return $this->belongsTo(\Vendor\Client\Models\Client::class, 'client_id');
     }
 
+    public function project()
+    {
+        return $this->belongsTo(\NexusExtensions\Projects\Models\Project::class, 'project_id');
+    }
+
     public function shares()
     {
         return $this->hasMany(NotionPageShare::class, 'notion_page_id');
@@ -74,5 +87,9 @@ class NotionPage extends Model
     {
         return $this->hasMany(NotionPageActivity::class, 'notion_page_id')->latest();
     }
-}
 
+    public function blocks()
+    {
+        return $this->hasMany(NotionBlock::class, 'notion_page_id')->orderBy('sort_order')->orderBy('id');
+    }
+}

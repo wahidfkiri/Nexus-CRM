@@ -2,6 +2,7 @@
 
 namespace Vendor\Invoice\Http\Controllers\Api;
 
+use App\Services\DraftService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ class InvoiceApiController extends Controller
     public function store(InvoiceRequest $request): JsonResponse
     {
         $invoice = $this->service->createInvoice($request->validated());
+        app(DraftService::class)->forgetFromRequest($request);
         return response()->json(['success' => true, 'data' => $invoice], 201);
     }
 
@@ -35,6 +37,7 @@ class InvoiceApiController extends Controller
     public function update(InvoiceRequest $request, Invoice $invoice): JsonResponse
     {
         $invoice = $this->service->updateInvoice($invoice, $request->validated());
+        app(DraftService::class)->forgetFromRequest($request);
         return response()->json(['success' => true, 'data' => $invoice]);
     }
 
@@ -69,6 +72,7 @@ class InvoiceApiController extends Controller
     public function quotesStore(QuoteRequest $request): JsonResponse
     {
         $quote = $this->service->createQuote($request->validated());
+        app(DraftService::class)->forgetFromRequest($request);
         return response()->json(['success' => true, 'data' => $quote], 201);
     }
 
@@ -80,6 +84,7 @@ class InvoiceApiController extends Controller
     public function quotesUpdate(QuoteRequest $request, Quote $quote): JsonResponse
     {
         $quote = $this->service->updateQuote($quote, $request->validated());
+        app(DraftService::class)->forgetFromRequest($request);
         return response()->json(['success' => true, 'data' => $quote]);
     }
 

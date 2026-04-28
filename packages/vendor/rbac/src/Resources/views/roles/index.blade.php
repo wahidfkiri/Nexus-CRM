@@ -12,7 +12,10 @@
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Rôles & Permissions</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-user-shield', 'bg' => '#ede9fe', 'color' => '#7c3aed', 'alt' => 'Roles'])
+      <h1 style="margin:0;">Rôles & Permissions</h1>
+    </div>
     <p>Définissez les rôles de votre équipe et leurs droits d'accès</p>
   </div>
   <div class="page-header-actions">

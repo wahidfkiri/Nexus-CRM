@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Api\DraftController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GlobalSettingsController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SecurityValidationDemoController;
@@ -26,6 +27,8 @@ Route::middleware('web')->group(function () {
         Route::get('/password/reset', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
     });
 
+    Route::get('/auth/google/desktop/finalize/{token}', [AuthController::class, 'finalizeDesktopGoogle'])->name('auth.google.desktop.finalize');
+
     Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
         ->name('verification.verify')
         ->middleware('signed');
@@ -46,6 +49,7 @@ Route::middleware('web')->group(function () {
         Route::post('/onboarding/complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
 
         Route::get('/applications', fn () => redirect()->route('marketplace.index'))->name('applications');
+        Route::get('/notifications/{notification}/open', [NotificationController::class, 'open'])->name('notifications.open');
         Route::get('/settings/global', [GlobalSettingsController::class, 'show'])->name('settings.global');
         Route::put('/settings/global', [GlobalSettingsController::class, 'update'])->name('settings.global.update');
         Route::get('/profile-settings', [ProfileController::class, 'show'])->name('profile-settings');

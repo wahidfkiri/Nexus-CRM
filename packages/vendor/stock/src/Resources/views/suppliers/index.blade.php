@@ -2,7 +2,10 @@
 @section('title', 'Fournisseurs')
 @section('breadcrumb')<span>Stock</span><i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i><span style="color:var(--c-ink)">Fournisseurs</span>@endsection
 @section('content')
-<div class="page-header"><div class="page-header-left"><h1>Fournisseurs</h1></div><div class="page-header-actions"><a href="{{ route('stock.suppliers.export.excel') }}" class="btn btn-secondary">Export Excel</a><a href="{{ route('stock.suppliers.create') }}" class="btn btn-primary">Nouveau fournisseur</a></div></div>
+<div class="page-header"><div class="page-header-left"><div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-building', 'bg' => '#f3e8ff', 'color' => '#7c3aed', 'alt' => 'Fournisseurs'])
+      <h1 style="margin:0;">Fournisseurs</h1>
+    </div></div><div class="page-header-actions"><a href="{{ route('stock.suppliers.export.excel') }}" class="btn btn-secondary">Export Excel</a><a href="{{ route('stock.suppliers.create') }}" class="btn btn-primary">Nouveau fournisseur</a></div></div>
 <div class="table-wrapper">
   <div class="table-header"><span class="table-title">Liste</span><div class="table-spacer"></div><div class="table-search"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Nom, email..."></div></div>
   <table class="crm-table"><thead><tr><th>Nom</th><th>Contact</th><th>Email</th><th>Telephone</th><th></th></tr></thead><tbody id="suppliersTableBody"></tbody></table>

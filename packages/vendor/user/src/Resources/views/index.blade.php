@@ -12,7 +12,10 @@
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Gestion de l'équipe</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-users-cog', 'bg' => '#dbeafe', 'color' => '#1d4ed8', 'alt' => 'Equipe'])
+      <h1 style="margin:0;">Gestion de l'équipe</h1>
+    </div>
     <p>Gérez les membres, rôles et accès de votre organisation</p>
   </div>
   <div class="page-header-actions">

@@ -56,6 +56,7 @@ class DropboxService
 
     public function exchangeCode(string $code, int $tenantId, int $userId): DropboxToken
     {
+        $existingToken = DropboxToken::forTenant($tenantId)->first();
         $response = $this->oauthClient()->post((string) config('dropbox.api.token_url'), [
             'code' => $code,
             'grant_type' => 'authorization_code',
@@ -79,7 +80,7 @@ class DropboxService
             [
                 'connected_by' => $userId,
                 'access_token' => $accessToken,
-                'refresh_token' => $tokenData['refresh_token'] ?? null,
+                'refresh_token' => $tokenData['refresh_token'] ?? $existingToken?->refresh_token,
                 'token_expires_at' => isset($tokenData['expires_in']) ? now()->addSeconds((int) $tokenData['expires_in']) : now()->addHour(),
                 'dropbox_account_id' => (string) ($account['account_id'] ?? ''),
                 'dropbox_email' => (string) ($account['email'] ?? ''),
@@ -602,6 +603,7 @@ class DropboxService
         }
 
         if (empty($token->refresh_token)) {
+            $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
             throw new RuntimeException('Dropbox demande une reconnexion: refresh token manquant.');
         }
 
@@ -612,7 +614,18 @@ class DropboxService
             'client_secret' => (string) config('dropbox.oauth.client_secret'),
         ]);
 
-        $data = $this->parseOauthResponse($response);
+        try {
+            $data = $this->parseOauthResponse($response);
+        } catch (RuntimeException $e) {
+            $message = mb_strtolower($e->getMessage());
+            if (str_contains($message, 'invalid_grant') || str_contains($message, 'refresh token')) {
+                $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
+                throw new RuntimeException('Session Dropbox expiree ou revoquee. Reconnectez Dropbox.');
+            }
+
+            throw $e;
+        }
+
         $newAccessToken = (string) ($data['access_token'] ?? '');
         if ($newAccessToken === '') {
             throw new RuntimeException('Impossible de rafraichir le token Dropbox.');
@@ -625,6 +638,22 @@ class DropboxService
         ]);
 
         return $newAccessToken;
+    }
+
+    private function invalidateTokenAfterOAuthFailure(DropboxToken $token, string $reason): void
+    {
+        try {
+            $token->update([
+                'is_active' => false,
+                'disconnected_at' => now(),
+                'access_token' => '',
+                'refresh_token' => null,
+            ]);
+
+            $this->log((int) $token->tenant_id, null, null, 'oauth_invalidated', ['reason' => $reason]);
+        } catch (\Throwable $e) {
+            Log::warning('[Dropbox] invalidate token failed', ['message' => $e->getMessage()]);
+        }
     }
 
     private function api(int $tenantId, string $endpoint, array $payload = []): array

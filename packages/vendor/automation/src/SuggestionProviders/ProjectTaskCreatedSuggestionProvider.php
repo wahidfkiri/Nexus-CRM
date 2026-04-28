@@ -26,7 +26,7 @@ class ProjectTaskCreatedSuggestionProvider implements SuggestionProvider
             return [];
         }
 
-        $taskTitle = (string) ($task['title'] ?? 'cette tache');
+        $taskTitle = (string) ($task['title'] ?? 'cette tâche');
         $calendarSynced = (bool) ($task['calendar_synced'] ?? false) || (bool) ($meta['calendar_synced'] ?? false);
         $hasStorageFolder = (bool) ($project['has_drive_folder'] ?? false);
         $hasTeamChannel = (bool) ($project['has_team_channel'] ?? false);
@@ -38,8 +38,8 @@ class ProjectTaskCreatedSuggestionProvider implements SuggestionProvider
             $suggestions[] = SuggestionDefinition::make(
                 $calendarInstalled ? 'schedule_project_task_calendar' : 'install_extension',
                 $calendarInstalled
-                    ? 'Planifier la tache ' . $taskTitle . ' dans Google Calendar'
-                    : 'Installer Google Calendar pour planifier les taches du projet',
+                    ? 'Planifier la tâche ' . $taskTitle . ' dans Google Calendar'
+                    : 'Installer Google Calendar pour planifier les tâches du projet',
                 0.92,
                 $calendarInstalled
                     ? ['project_id' => $projectId, 'task_id' => $taskId]
@@ -52,6 +52,37 @@ class ProjectTaskCreatedSuggestionProvider implements SuggestionProvider
             );
         }
 
+        $notionInstalled = $this->extensions->isActive($tenantId, 'notion-workspace');
+        $suggestions[] = SuggestionDefinition::make(
+            $notionInstalled ? 'create_notion_page' : 'install_extension',
+            $notionInstalled
+                ? 'Créer une page Notion de spécification pour la tâche ' . $taskTitle
+                : 'Installer Notion Workspace pour documenter les tâches projet',
+            0.81,
+            $notionInstalled
+                ? [
+                    'project_id' => $projectId,
+                    'task_id' => $taskId,
+                    'extension_slug' => 'notion-workspace',
+                    'template' => 'task_spec',
+                    'context_label' => 'Spécification de tâche',
+                ]
+                : [
+                    'extension_slug' => 'notion-workspace',
+                    'project_id' => $projectId,
+                    'task_id' => $taskId,
+                    'target_action' => 'create_notion_page',
+                    'template' => 'task_spec',
+                ],
+            [
+                'integration' => 'notion-workspace',
+                'installed' => $notionInstalled,
+                'target_url' => $this->extensions->targetUrl('notion-workspace'),
+                'target_blank' => true,
+                'template' => 'task_spec',
+            ]
+        );
+
         if (!$hasStorageFolder) {
             $preferredStorage = $this->extensions->preferredInstalled($tenantId, ['google-drive', 'dropbox']);
             $storageInstalled = $preferredStorage !== null;
@@ -62,8 +93,8 @@ class ProjectTaskCreatedSuggestionProvider implements SuggestionProvider
                 $storageInstalled ? $storageAction : 'install_extension',
                 $storageInstalled
                     ? ($storageSlug === 'dropbox'
-                        ? 'Creer le dossier Dropbox du projet pour cette tache'
-                        : 'Creer le dossier Google Drive du projet pour cette tache')
+                        ? 'Créer le dossier Dropbox du projet pour cette tâche'
+                        : 'Créer le dossier Google Drive du projet pour cette tâche')
                     : 'Installer Dropbox ou Google Drive pour centraliser les fichiers du projet',
                 0.82,
                 $storageInstalled
@@ -85,8 +116,8 @@ class ProjectTaskCreatedSuggestionProvider implements SuggestionProvider
             $suggestions[] = SuggestionDefinition::make(
                 $channelInstalled ? 'create_project_channel' : 'install_extension',
                 $channelInstalled
-                    ? 'Creer un canal d equipe pour coordonner cette tache'
-                    : 'Installer Chatbot ou Slack pour discuter autour des taches du projet',
+                    ? "Créer un canal d'équipe pour coordonner cette tâche"
+                    : 'Installer Chatbot ou Slack pour discuter autour des tâches du projet',
                 0.73,
                 $channelInstalled
                     ? ['project_id' => $projectId, 'task_id' => $taskId, 'extension_slug' => $channelSlug]

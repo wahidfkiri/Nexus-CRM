@@ -38,6 +38,8 @@ const GoogleGmailModule = (() => {
 
   const state = {
     connected: false,
+    tenantId: 0,
+    userId: 0,
     labels: [],
     messages: [],
     currentMessage: null,
@@ -47,9 +49,16 @@ const GoogleGmailModule = (() => {
     nextToken: null,
     prevTokens: [],
     debounceTimer: null,
+    socketConfig: {},
+    socket: null,
+    useSocket: false,
+    socketRefreshTimer: null,
+    visibilityListenerBound: false,
+    unloadListenerBound: false,
     pollTimer: null,
     pollBusy: false,
     pollTick: 0,
+    lastSnapshotAt: 0,
     lastUnread: null,
     lastInboxTotal: null,
     showMoreLabels: false,
@@ -71,7 +80,10 @@ const GoogleGmailModule = (() => {
 
   function boot(bootstrap = {}) {
     state.connected = !!bootstrap.connected;
+    state.tenantId = Number(bootstrap.tenantId || 0);
+    state.userId = Number(bootstrap.userId || 0);
     state.settings = normalizeSettings(bootstrap.settings || {});
+    state.socketConfig = bootstrap.socket || {};
     state.i18n = (bootstrap.i18n && typeof bootstrap.i18n === 'object') ? bootstrap.i18n : {};
 
     bindActions();
@@ -83,7 +95,7 @@ const GoogleGmailModule = (() => {
     if (!state.connected) return;
 
     refreshAll(true, { silent: true }).then(() => {
-      startRealtimePolling();
+      initRealtime();
     });
   }
 
@@ -168,18 +180,96 @@ const GoogleGmailModule = (() => {
 
   async function refreshAll(force = false, options = {}) {
     const btn = document.getElementById('ggmRefreshBtn');
-    if (btn) CrmForm.setLoading(btn, true);
+    const backgroundRefresh = !!(options.silent || options.background);
+    if (btn && !backgroundRefresh) CrmForm.setLoading(btn, true);
 
-    await Promise.all([
-      loadSettings(false),
-      loadLabels(!!force),
-    ]);
-    await Promise.all([
-      loadStats(!!force, options),
-      loadMessages(),
-    ]);
+    try {
+      if (window.GGMAIL_ROUTES.snapshotData) {
+        await loadSnapshot(!!force, options);
+        return;
+      }
 
-    if (btn) CrmForm.setLoading(btn, false);
+      await Promise.all([
+        loadSettings(false),
+        loadLabels(!!force),
+      ]);
+      await Promise.all([
+        loadStats(!!force, options),
+        loadMessages(options),
+      ]);
+      state.lastSnapshotAt = Date.now();
+    } finally {
+      if (btn && !backgroundRefresh) CrmForm.setLoading(btn, false);
+    }
+  }
+
+  async function loadSnapshot(refresh = false, options = {}) {
+    if (!window.GGMAIL_ROUTES.snapshotData) {
+      await Promise.all([
+        loadSettings(false),
+        loadLabels(!!refresh),
+      ]);
+      await Promise.all([
+        loadStats(!!refresh, options),
+        loadMessages(options),
+      ]);
+      state.lastSnapshotAt = Date.now();
+      return true;
+    }
+
+    const list = document.getElementById('ggmMessagesList');
+    if (list && !options.silent) {
+      list.innerHTML = skeletonItems(8);
+    }
+
+    const selectedUpper = (state.selectedLabel || '').toUpperCase();
+    const { ok, data } = await Http.get(window.GGMAIL_ROUTES.snapshotData, {
+      refresh: refresh ? 1 : 0,
+      label_id: state.selectedLabel,
+      q: state.search,
+      page_token: state.currentToken || '',
+      max_results: 25,
+      include_spam_trash: ['TRASH', 'SPAM'].includes(selectedUpper) ? 1 : 0,
+    });
+
+    if (!ok || !data.success) {
+      if (list && !options.silent) {
+        list.innerHTML = '<div class="table-empty" style="padding:18px;"><h3>Erreur</h3><p>Impossible de charger les emails.</p></div>';
+      }
+
+      if (!options.silent) {
+        Toast.error('Erreur', data.message || 'Impossible de charger la boite Gmail.');
+      }
+
+      return false;
+    }
+
+    const payload = data.data || {};
+    state.settings = normalizeSettings(payload.settings || state.settings || {});
+    hydrateSettingsForm();
+
+    applyLabels(payload.labels || []);
+    applyStats(payload.stats || {}, options);
+
+    const messagesPayload = payload.messages || {};
+    state.messages = Array.isArray(messagesPayload.messages) ? messagesPayload.messages : [];
+    state.nextToken = messagesPayload.next_page_token || null;
+
+    renderMessages();
+    updatePagerButtons();
+    updateListTitle();
+    updateVisibleMessageCount();
+
+    if (state.currentMessage?.message_id) {
+      const stillThere = state.messages.find((row) => row.message_id === state.currentMessage.message_id);
+      if (!stillThere) {
+        showEmptyView();
+      }
+    }
+
+    state.lastSnapshotAt = Date.now();
+
+    return true;
   }
 
   async function loadSettings(showErrors = false) {
@@ -273,7 +363,7 @@ const GoogleGmailModule = (() => {
     hydrateSettingsForm();
     renderLabels();
     updateListTitle();
-    startRealtimePolling();
+    initRealtime();
     Toast.success('Succes', data.message || 'Parametres Gmail enregistres.');
     Modal.close(document.getElementById('ggmSettingsModal'));
   }
@@ -287,12 +377,26 @@ const GoogleGmailModule = (() => {
       return;
     }
 
-    const stats = data.data || {};
+    applyStats(data.data || {}, options);
+  }
+
+  async function loadLabels(refresh = false) {
+    const { ok, data } = await Http.get(window.GGMAIL_ROUTES.labelsData, { refresh: refresh ? 1 : 0 });
+
+    if (!ok || !data.success) {
+      Toast.error('Erreur', data.message || 'Impossible de charger les dossiers Gmail.');
+      return;
+    }
+
+    applyLabels(data.data || []);
+  }
+
+  function applyStats(stats = {}, options = {}) {
     const inbox = Number(stats.inbox_total || 0);
     const unread = Number(stats.unread_total || 0);
 
     const hadPreviousUnread = state.lastUnread !== null;
-    const previousUnread = state.lastUnread;
+    const previousUnread = Number(state.lastUnread || 0);
 
     state.lastInboxTotal = inbox;
     state.lastUnread = unread;
@@ -312,21 +416,16 @@ const GoogleGmailModule = (() => {
 
     if (hadPreviousUnread && unread > previousUnread && !options.silentNewMail) {
       const delta = unread - previousUnread;
-      Toast.info('Nouveaux emails', `${delta} nouvel email recu.`);
+      const label = delta > 1 ? `${delta} nouveaux emails recus.` : '1 nouvel email recu.';
+      Toast.info('Nouveaux emails', label);
     }
   }
 
-  async function loadLabels(refresh = false) {
-    const { ok, data } = await Http.get(window.GGMAIL_ROUTES.labelsData, { refresh: refresh ? 1 : 0 });
-
-    if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible de charger les dossiers Gmail.');
-      return;
-    }
-
-    state.labels = (data.data || []).filter((label) => !!label.label_id);
+  function applyLabels(rawLabels = []) {
+    state.labels = (Array.isArray(rawLabels) ? rawLabels : []).filter((label) => !!label.label_id);
     if (state.labels.length && !state.labels.find((label) => label.label_id === state.selectedLabel)) {
       state.selectedLabel = state.labels[0].label_id;
+      resetPagination();
     }
     renderLabels();
     updateListTitle();
@@ -404,9 +503,11 @@ const GoogleGmailModule = (() => {
       </button>`;
   }
 
-  async function loadMessages() {
+  async function loadMessages(options = {}) {
     const list = document.getElementById('ggmMessagesList');
-    if (list) {
+    const backgroundRefresh = !!(options.silent || options.background);
+
+    if (list && !backgroundRefresh) {
       list.innerHTML = skeletonItems(8);
     }
 
@@ -420,10 +521,12 @@ const GoogleGmailModule = (() => {
     });
 
     if (!ok || !data.success) {
-      if (list) {
+      if (list && !backgroundRefresh) {
         list.innerHTML = '<div class="table-empty" style="padding:18px;"><h3>Erreur</h3><p>Impossible de charger les emails.</p></div>';
       }
-      Toast.error('Erreur', data.message || 'Impossible de charger les messages Gmail.');
+      if (!backgroundRefresh) {
+        Toast.error('Erreur', data.message || 'Impossible de charger les messages Gmail.');
+      }
       return;
     }
 
@@ -486,6 +589,27 @@ const GoogleGmailModule = (() => {
     });
   }
 
+  function syncCurrentMessageIntoList() {
+    if (!state.currentMessage?.message_id) return;
+
+    const idx = state.messages.findIndex((row) => row.message_id === state.currentMessage.message_id);
+    if (idx < 0) return;
+
+    state.messages[idx] = {
+      ...state.messages[idx],
+      ...state.currentMessage,
+    };
+  }
+
+  function removeMessageFromList(messageId) {
+    if (!messageId) return;
+    state.messages = state.messages.filter((row) => row.message_id !== messageId);
+  }
+
+  function updateVisibleMessageCount() {
+    setText('ggmListCount', state.messages.length);
+  }
+
   async function openMessage(messageId) {
     if (!messageId) return;
 
@@ -515,9 +639,12 @@ const GoogleGmailModule = (() => {
 
     state.currentMessage = data.data;
     Toast.success('Succes', data.message || 'Statut mis a jour.');
+    syncCurrentMessageIntoList();
     renderCurrentMessage();
-    loadMessages();
-    loadStats(true, { silent: true });
+    renderMessages();
+    if (!isSocketReady()) {
+      loadSnapshot(true, { silent: true, silentNewMail: true });
+    }
   }
 
   async function toggleStar() {
@@ -534,9 +661,12 @@ const GoogleGmailModule = (() => {
 
     state.currentMessage = data.data;
     Toast.success('Succes', data.message || 'Favori mis a jour.');
+    syncCurrentMessageIntoList();
     renderCurrentMessage();
-    loadMessages();
-    loadStats(true, { silent: true });
+    renderMessages();
+    if (!isSocketReady()) {
+      loadSnapshot(true, { silent: true, silentNewMail: true });
+    }
   }
 
   async function archiveMessage() {
@@ -552,9 +682,13 @@ const GoogleGmailModule = (() => {
 
     Toast.success('Succes', data.message || 'Message archive.');
     state.currentMessage = data.data;
+    removeMessageFromList(msg.message_id);
     showEmptyView();
-    loadMessages();
-    loadStats(true, { silent: true });
+    renderMessages();
+    updateVisibleMessageCount();
+    if (!isSocketReady()) {
+      loadSnapshot(true, { silent: true, silentNewMail: true });
+    }
   }
 
   async function trashOrDeleteMessage() {
@@ -576,9 +710,13 @@ const GoogleGmailModule = (() => {
             return;
           }
           Toast.success('Supprime', res.data.message || 'Message supprime.');
+          removeMessageFromList(msg.message_id);
           showEmptyView();
-          loadMessages();
-          loadStats(true, { silent: true });
+          renderMessages();
+          updateVisibleMessageCount();
+          if (!isSocketReady()) {
+            loadSnapshot(true, { silent: true, silentNewMail: true });
+          }
         },
       });
       return;
@@ -592,9 +730,13 @@ const GoogleGmailModule = (() => {
     }
 
     Toast.success('Succes', data.message || 'Message deplace en corbeille.');
+    removeMessageFromList(msg.message_id);
     showEmptyView();
-    loadMessages();
-    loadStats(true, { silent: true });
+    renderMessages();
+    updateVisibleMessageCount();
+    if (!isSocketReady()) {
+      loadSnapshot(true, { silent: true, silentNewMail: true });
+    }
   }
 
   async function sendCompose() {
@@ -645,7 +787,9 @@ const GoogleGmailModule = (() => {
       attachmentListId: 'ggmComposeAttachmentsList',
     });
     Modal.close(document.getElementById('ggmComposeModal'));
-    refreshAll(true, { silent: true });
+    if (!isSocketReady()) {
+      refreshAll(true, { silent: true });
+    }
   }
 
   async function sendReply() {
@@ -689,7 +833,9 @@ const GoogleGmailModule = (() => {
       attachmentListId: 'ggmReplyAttachmentsList',
     });
     Modal.close(document.getElementById('ggmReplyModal'));
-    refreshAll(true, { silent: true });
+    if (!isSocketReady()) {
+      refreshAll(true, { silent: true });
+    }
   }
 
   async function sendForward() {
@@ -732,7 +878,9 @@ const GoogleGmailModule = (() => {
       attachmentListId: 'ggmForwardAttachmentsList',
     });
     Modal.close(document.getElementById('ggmForwardModal'));
-    refreshAll(true, { silent: true });
+    if (!isSocketReady()) {
+      refreshAll(true, { silent: true });
+    }
   }
 
   async function disconnect() {
@@ -1207,26 +1355,143 @@ const GoogleGmailModule = (() => {
     }));
   }
 
-  function startRealtimePolling() {
-    if (state.pollTimer) {
-      clearInterval(state.pollTimer);
+  function isSocketReady() {
+    return !!(state.useSocket && state.socket && state.socket.connected);
+  }
+
+  function initRealtime() {
+    bindRealtimeLifecycle();
+    stopFallbackPolling();
+
+    if (!initSocket()) {
+      startFallbackPolling();
     }
+  }
+
+  function bindRealtimeLifecycle() {
+    if (!state.visibilityListenerBound) {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible' || !state.connected) {
+          return;
+        }
+
+        refreshAll(true, { silent: true, silentNewMail: true });
+      });
+      state.visibilityListenerBound = true;
+    }
+
+    if (!state.unloadListenerBound) {
+      window.addEventListener('beforeunload', () => {
+        stopFallbackPolling();
+
+        if (state.socketRefreshTimer) {
+          clearTimeout(state.socketRefreshTimer);
+          state.socketRefreshTimer = null;
+        }
+
+        if (state.socket) {
+          state.socket.disconnect();
+          state.socket = null;
+        }
+      });
+      state.unloadListenerBound = true;
+    }
+  }
+
+  function disconnectSocket() {
+    if (state.socket) {
+      state.socket.disconnect();
+      state.socket = null;
+    }
+
+    state.useSocket = false;
+  }
+
+  function initSocket() {
+    const cfg = state.socketConfig || {};
+
+    if (!state.connected || !cfg.enabled || typeof window.io !== 'function') {
+      disconnectSocket();
+      return false;
+    }
+
+    const clientUrl = String(cfg.clientUrl || '').trim();
+    if (!clientUrl) {
+      disconnectSocket();
+      return false;
+    }
+
+    const namespace = String(cfg.namespace || '/').trim();
+    const target = namespace && namespace !== '/' ? `${clientUrl}${namespace}` : clientUrl;
+
+    disconnectSocket();
+
+    try {
+      state.socket = window.io(target, {
+        path: cfg.path || '/socket.io',
+        transports: Array.isArray(cfg.transports) && cfg.transports.length ? cfg.transports : ['websocket', 'polling'],
+      });
+    } catch (error) {
+      console.warn('[GoogleGmail] Socket init failed:', error);
+      disconnectSocket();
+      return false;
+    }
+
+    state.socket.on('connect', () => {
+      state.useSocket = true;
+      stopFallbackPolling();
+      state.socket.emit('subscribe', {
+        tenant_id: state.tenantId,
+        module: 'google-gmail',
+      });
+
+      if ((Date.now() - Number(state.lastSnapshotAt || 0)) > 5000) {
+        refreshAll(true, { silent: true, silentNewMail: true });
+      }
+    });
+
+    state.socket.on('disconnect', () => {
+      state.useSocket = false;
+      startFallbackPolling();
+    });
+
+    state.socket.on('connect_error', () => {
+      state.useSocket = false;
+      startFallbackPolling();
+    });
+
+    state.socket.on('google-gmail.event', onSocketEvent);
+    state.socket.on(`tenant:${state.tenantId}:google-gmail`, onSocketEvent);
+
+    return true;
+  }
+
+  function startFallbackPolling() {
+    if (!state.connected || isSocketReady()) {
+      return;
+    }
+
+    stopFallbackPolling();
 
     const intervalMs = normalizePollingInterval(state.settings.polling_interval_seconds) * 1000;
 
     state.pollTimer = setInterval(async () => {
-      if (document.visibilityState !== 'visible' || state.pollBusy) return;
+      if (document.visibilityState !== 'visible' || state.pollBusy || isSocketReady()) return;
 
       state.pollBusy = true;
       try {
-        await loadStats(true, { silent: true, silentNewMail: false, fromPolling: true });
+        if (window.GGMAIL_ROUTES.snapshotData) {
+          await loadSnapshot(true, { silent: true, silentNewMail: false, fromPolling: true });
+        } else {
+          await loadStats(true, { silent: true, silentNewMail: false, fromPolling: true });
 
-        if (state.pollTick % 2 === 0) {
-          await loadLabels(true);
-        }
+          if (state.pollTick % 2 === 0) {
+            await loadLabels(true);
+          }
 
-        if (!state.search && ['INBOX', 'ALL', 'ANY'].includes((state.selectedLabel || '').toUpperCase())) {
-          await loadMessages();
+          if (!state.search && ['INBOX', 'ALL', 'ANY'].includes((state.selectedLabel || '').toUpperCase())) {
+            await loadMessages({ silent: true, background: true });
+          }
         }
 
         state.pollTick += 1;
@@ -1234,18 +1499,202 @@ const GoogleGmailModule = (() => {
         state.pollBusy = false;
       }
     }, intervalMs);
+  }
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        loadStats(true, { silent: true, silentNewMail: true });
-      }
-    });
+  function stopFallbackPolling() {
+    if (state.pollTimer) {
+      clearInterval(state.pollTimer);
+      state.pollTimer = null;
+    }
 
-    window.addEventListener('beforeunload', () => {
-      if (state.pollTimer) {
-        clearInterval(state.pollTimer);
+    state.pollBusy = false;
+  }
+
+  function scheduleSocketRefresh(options = {}) {
+    if (state.socketRefreshTimer) {
+      clearTimeout(state.socketRefreshTimer);
+    }
+
+    state.socketRefreshTimer = setTimeout(async () => {
+      state.socketRefreshTimer = null;
+
+      if (options.labels) {
+        await loadLabels(true);
       }
-    });
+
+      if (options.stats) {
+        await loadStats(true, { silent: true, silentNewMail: true });
+      }
+
+      if (options.messages) {
+        await loadMessages({ silent: true, background: true });
+      }
+
+      if (options.refreshCurrent && state.currentMessage?.message_id) {
+        await openMessage(state.currentMessage.message_id);
+      }
+    }, Number(options.delay || 220));
+  }
+
+  function onSocketEvent(packet) {
+    if (!packet || Number(packet.tenant_id || 0) !== Number(state.tenantId || 0)) {
+      return;
+    }
+
+    const type = String(packet.event || '').toLowerCase();
+    const payload = packet.payload || {};
+    const sameActor = Number(payload.actor_user_id || 0) > 0
+      && Number(payload.actor_user_id || 0) === Number(state.userId || 0);
+
+    if (payload.settings && type === 'settings.updated' && !sameActor) {
+      state.settings = normalizeSettings(payload.settings || {});
+      hydrateSettingsForm();
+      renderLabels();
+      updateListTitle();
+    }
+
+    if (payload.labels) {
+      applyLabels(payload.labels);
+    }
+
+    if (payload.stats) {
+      const allowMailToast = type === 'mailbox.synced' && !sameActor;
+      applyStats(payload.stats, { silent: true, silentNewMail: !allowMailToast });
+    }
+
+    if (type === 'disconnected') {
+      state.connected = false;
+      Toast.info('Connexion Gmail', 'La session Gmail a ete deconnectee. L interface va se recharger.');
+      window.setTimeout(() => window.location.reload(), 450);
+      return;
+    }
+
+    if (['mailbox.synced', 'connected'].includes(type)) {
+      handleSocketMailboxSynced(payload);
+      return;
+    }
+
+    if (['message.updated', 'message.sent', 'message.replied', 'message.forwarded'].includes(type)) {
+      if (payload.message) {
+        handleSocketMessage(payload.message);
+      } else {
+        scheduleSocketRefresh({ messages: true, refreshCurrent: true });
+      }
+      return;
+    }
+
+    if (type === 'message.deleted') {
+      handleSocketDelete(payload.message_id || '');
+    }
+  }
+
+  function handleSocketMailboxSynced(payload = {}) {
+    const selectedUpper = String(state.selectedLabel || '').toUpperCase();
+    const payloadLabelUpper = String(payload.selected_label || 'INBOX').toUpperCase();
+
+    if (Array.isArray(payload.messages) && canApplySocketPreview(payloadLabelUpper)) {
+      state.messages = payload.messages;
+      state.nextToken = payload.next_page_token || null;
+      renderMessages();
+      updatePagerButtons();
+      updateListTitle();
+      updateVisibleMessageCount();
+
+      if (state.currentMessage?.message_id && ['INBOX', 'ALL', 'ANY'].includes(selectedUpper)) {
+        scheduleSocketRefresh({ refreshCurrent: true, delay: 260 });
+      }
+      return;
+    }
+
+    if (!state.search && ['INBOX', 'ALL', 'ANY'].includes(selectedUpper)) {
+      scheduleSocketRefresh({ messages: true, refreshCurrent: !!state.currentMessage });
+    }
+  }
+
+  function handleSocketMessage(message) {
+    const messageId = String(message?.message_id || '').trim();
+    if (!messageId) {
+      return;
+    }
+
+    if (state.currentMessage?.message_id === messageId) {
+      state.currentMessage = {
+        ...state.currentMessage,
+        ...message,
+      };
+      renderCurrentMessage();
+    }
+
+    const idx = state.messages.findIndex((row) => row.message_id === messageId);
+    const visible = currentLabelMatchesMessage(message);
+
+    if (idx >= 0) {
+      if (visible) {
+        state.messages[idx] = {
+          ...state.messages[idx],
+          ...message,
+        };
+      } else {
+        state.messages.splice(idx, 1);
+      }
+    } else if (visible && canPrependSocketMessage()) {
+      state.messages.unshift(message);
+      if (state.messages.length > 25) {
+        state.messages = state.messages.slice(0, 25);
+      }
+    } else if (!visible && state.currentMessage?.message_id === messageId) {
+      showEmptyView();
+    }
+
+    renderMessages();
+    updateVisibleMessageCount();
+
+    if (state.currentMessage?.message_id === messageId) {
+      scheduleSocketRefresh({ refreshCurrent: true, delay: 180 });
+    }
+  }
+
+  function handleSocketDelete(messageId) {
+    const normalized = String(messageId || '').trim();
+    if (!normalized) {
+      return;
+    }
+
+    removeMessageFromList(normalized);
+
+    if (state.currentMessage?.message_id === normalized) {
+      showEmptyView();
+    }
+
+    renderMessages();
+    updateVisibleMessageCount();
+  }
+
+  function currentLabelMatchesMessage(message) {
+    const currentUpper = String(state.selectedLabel || '').toUpperCase();
+    if (!message || ['ALL', 'ANY'].includes(currentUpper)) {
+      return true;
+    }
+
+    const labels = Array.isArray(message.label_ids)
+      ? message.label_ids.map((value) => String(value || '').toUpperCase())
+      : [];
+
+    return labels.includes(currentUpper);
+  }
+
+  function canPrependSocketMessage() {
+    return !state.search && !state.currentToken && state.prevTokens.length === 0;
+  }
+
+  function canApplySocketPreview(labelUpper) {
+    if (!canPrependSocketMessage()) {
+      return false;
+    }
+
+    const currentUpper = String(state.selectedLabel || '').toUpperCase();
+    return currentUpper === String(labelUpper || '').toUpperCase()
+      || (String(labelUpper || '').toUpperCase() === 'INBOX' && ['ALL', 'ANY'].includes(currentUpper));
   }
 
   function initEditors() {

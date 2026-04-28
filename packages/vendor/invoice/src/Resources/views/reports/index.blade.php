@@ -12,7 +12,10 @@
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Rapports & Analytiques</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-chart-line', 'bg' => '#dcfce7', 'color' => '#15803d', 'alt' => 'Rapports'])
+      <h1 style="margin:0;">Rapports & Analytiques</h1>
+    </div>
     <p>Visualisez la performance de votre activité de facturation</p>
   </div>
   <div class="page-header-actions">

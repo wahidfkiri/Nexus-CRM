@@ -1,4 +1,4 @@
-﻿@extends('layouts.global')
+@extends('layouts.global')
 
 @section('title', 'Articles stock')
 
@@ -11,7 +11,10 @@
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Articles</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-boxes', 'bg' => '#e0f2fe', 'color' => '#0891b2', 'alt' => 'Articles'])
+      <h1 style="margin:0;">Articles</h1>
+    </div>
     <p>Gestion du catalogue et des niveaux de stock</p>
   </div>
   <div class="page-header-actions">

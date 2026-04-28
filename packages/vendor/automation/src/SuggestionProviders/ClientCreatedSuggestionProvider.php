@@ -48,6 +48,7 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
         $quoteUrl = Route::has('invoices.quotes.create')
             ? route('invoices.quotes.create') . '?client_id=' . $clientId
             : $this->extensions->targetUrl('invoice');
+
         $suggestions[] = SuggestionDefinition::make(
             $invoiceInstalled ? 'create_quote' : 'install_extension',
             $invoiceInstalled
@@ -61,6 +62,35 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
                 'integration' => 'invoice',
                 'installed' => $invoiceInstalled,
                 'target_url' => $quoteUrl,
+            ]
+        );
+
+        $notionInstalled = $this->extensions->isActive($tenantId, 'notion-workspace');
+        $suggestions[] = SuggestionDefinition::make(
+            $notionInstalled ? 'create_notion_page' : 'install_extension',
+            $notionInstalled
+                ? "Créer une page Notion de notes pour {$clientName}"
+                : 'Installer Notion Workspace pour centraliser les notes client',
+            0.82,
+            $notionInstalled
+                ? [
+                    'client_id' => $clientId,
+                    'extension_slug' => 'notion-workspace',
+                    'template' => 'client_notes',
+                    'context_label' => 'Notes client',
+                ]
+                : [
+                    'extension_slug' => 'notion-workspace',
+                    'client_id' => $clientId,
+                    'target_action' => 'create_notion_page',
+                    'template' => 'client_notes',
+                ],
+            [
+                'integration' => 'notion-workspace',
+                'installed' => $notionInstalled,
+                'target_url' => $this->extensions->targetUrl('notion-workspace'),
+                'target_blank' => true,
+                'template' => 'client_notes',
             ]
         );
 

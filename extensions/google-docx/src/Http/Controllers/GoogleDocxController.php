@@ -13,6 +13,7 @@ use NexusExtensions\GoogleDocx\Http\Requests\GoogleDocxReplaceTextRequest;
 use NexusExtensions\GoogleDocx\Services\GoogleDocxService;
 use RuntimeException;
 use Throwable;
+use Vendor\Automation\Services\AutomationReconnectNotificationService;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
 
@@ -72,6 +73,8 @@ class GoogleDocxController extends Controller
 
             $this->ensureExtensionActivated($tenantId);
             $this->service->exchangeCode((string) $request->string('code'), $tenantId, $userId);
+            app(AutomationReconnectNotificationService::class)
+                ->notifyForProvider($tenantId, $userId, 'google-docx', route('google-docx.index'));
 
             return redirect()->route('google-docx.index')->with('success', 'Google Docs connecté avec succès.');
         } catch (Throwable $e) {

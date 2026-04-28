@@ -4,6 +4,7 @@ namespace Vendor\Automation\Actions;
 
 use NexusExtensions\GoogleGmail\Services\GoogleGmailService;
 use RuntimeException;
+use Throwable;
 use Vendor\Automation\Models\AutomationEvent;
 use Vendor\Automation\Models\AutomationSuggestion;
 use Vendor\Client\Models\Client;
@@ -71,7 +72,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
                 : '')
             . '<p>A bientot,<br>' . e($appName) . '</p>';
 
-        $result = $this->gmailService->sendEmail($tenantId, [
+        $result = $this->sendThroughGmail($tenantId, [
             'to' => $recipientEmail,
             'subject' => $subject,
             'body_text' => $bodyText,
@@ -134,7 +135,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
                 : '')
             . '<p>Merci pour votre confiance.</p>';
 
-        $result = $this->gmailService->sendEmail($tenantId, [
+        $result = $this->sendThroughGmail($tenantId, [
             'to' => $recipientEmail,
             'subject' => $subject,
             'body_text' => $bodyText,
@@ -201,7 +202,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
                 : '')
             . '<p>Nous restons a votre disposition.</p>';
 
-        $result = $this->gmailService->sendEmail($tenantId, [
+        $result = $this->sendThroughGmail($tenantId, [
             'to' => $recipientEmail,
             'subject' => $subject,
             'body_text' => $bodyText,
@@ -278,7 +279,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
             . ($expiresAt ? '<p>Invitation valable jusqu au <strong>' . e($expiresAt) . '</strong>.</p>' : '')
             . '<p>A bientot,<br>' . e($appName) . '</p>';
 
-        $result = $this->gmailService->sendEmail($tenantId, [
+        $result = $this->sendThroughGmail($tenantId, [
             'to' => $recipientEmail,
             'subject' => $subject,
             'body_text' => $bodyText,
@@ -303,6 +304,24 @@ class SendEmailAutomationAction extends AbstractAutomationAction
         }
 
         throw new RuntimeException($message);
+    }
+
+    protected function sendThroughGmail(int $tenantId, array $payload): array
+    {
+        try {
+            return $this->gmailService->sendEmail($tenantId, $payload);
+        } catch (Throwable $e) {
+            $message = mb_strtolower(trim($e->getMessage()));
+
+            if (str_contains($message, 'session google gmail expiree')
+                || str_contains($message, 'session google gmail expir')
+                || str_contains($message, 'reconnectez votre compte google')
+                || str_contains($message, 'reconnectez google gmail')) {
+                throw new RuntimeException('Google Gmail n est plus connecte pour ce tenant. Reconnectez Google Gmail puis relancez cette automation.');
+            }
+
+            throw $e;
+        }
     }
 }
 

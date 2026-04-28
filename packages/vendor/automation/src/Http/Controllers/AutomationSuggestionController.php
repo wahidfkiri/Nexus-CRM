@@ -6,20 +6,34 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Throwable;
+use Vendor\Automation\Models\AutomationEvent;
 use Vendor\Automation\Models\AutomationSuggestion;
 use Vendor\Automation\Services\AutomationEngine;
+use Vendor\Automation\Services\AutomationReconnectNotificationService;
 use Vendor\Automation\Services\AutomationSuggestionPresenter;
+use Vendor\Automation\Support\AutomationReconnectResolver;
 
 class AutomationSuggestionController extends Controller
 {
     public function __construct(
         protected AutomationEngine $engine,
-        protected AutomationSuggestionPresenter $presenter
+        protected AutomationSuggestionPresenter $presenter,
+        protected AutomationReconnectNotificationService $reconnectNotifications,
     ) {
     }
 
     public function index(Request $request): JsonResponse
     {
+        if (is_string($request->input('ids'))) {
+            $request->merge([
+                'ids' => collect(explode(',', (string) $request->input('ids')))
+                    ->map(fn ($id) => (int) trim($id))
+                    ->filter()
+                    ->values()
+                    ->all(),
+            ]);
+        }
+
         $validated = $request->validate([
             'ids' => ['nullable', 'array'],
             'ids.*' => ['integer'],
@@ -49,20 +63,28 @@ class AutomationSuggestionController extends Controller
             $event = $this->engine->accept($suggestion, auth()->id());
             $freshSuggestion = $suggestion->fresh();
             $freshEvent = $event->fresh();
+            $eventPayload = $this->presentEvent($freshEvent);
+            $this->reconnectNotifications->syncForSuggestion($freshSuggestion);
+
+            if ((string) $freshEvent->status === AutomationEvent::STATUS_FAILED) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $freshEvent->last_error ?: 'Cette automation a échoué.',
+                    'data' => [
+                        'suggestions' => $this->presenter->presentCollection(collect([$freshSuggestion])),
+                        'event' => $eventPayload,
+                    ],
+                ], 422);
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Suggestion acceptee et traitee.',
+                'message' => (string) $freshEvent->status === AutomationEvent::STATUS_COMPLETED
+                    ? 'Suggestion acceptée et traitée.'
+                    : 'Suggestion acceptée. Automation en cours.',
                 'data' => [
                     'suggestions' => $this->presenter->presentCollection(collect([$freshSuggestion])),
-                    'event' => [
-                        'id' => (int) $freshEvent->id,
-                        'status' => (string) $freshEvent->status,
-                        'action_type' => (string) $freshEvent->action_type,
-                        'last_error' => $freshEvent->last_error,
-                        'response' => is_array($freshEvent->response) ? $freshEvent->response : null,
-                        'target_url' => is_array($freshEvent->response) ? ($freshEvent->response['target_url'] ?? null) : null,
-                    ],
+                    'event' => $eventPayload,
                 ],
             ]);
         } catch (Throwable $e) {
@@ -83,10 +105,11 @@ class AutomationSuggestionController extends Controller
 
         try {
             $result = $this->engine->reject($suggestion, auth()->id(), $validated['reason'] ?? null);
+            $this->reconnectNotifications->syncForSuggestion($result->fresh());
 
             return response()->json([
                 'success' => true,
-                'message' => 'Suggestion ignoree.',
+                'message' => 'Suggestion ignorée.',
                 'data' => [
                     'suggestions' => $this->presenter->presentCollection(collect([$result->fresh()])),
                 ],
@@ -107,21 +130,48 @@ class AutomationSuggestionController extends Controller
         ]);
 
         [$processed, $errors] = $this->processSuggestions($validated['ids'], function (AutomationSuggestion $suggestion) {
-            $this->engine->accept($suggestion, auth()->id());
-            return $suggestion->fresh();
+            $event = $this->engine->accept($suggestion, auth()->id())->fresh();
+            $freshSuggestion = $suggestion->fresh();
+
+            if ((string) $event->status === AutomationEvent::STATUS_FAILED) {
+                return [
+                    'suggestion' => $freshSuggestion,
+                    'error' => [
+                        'id' => (int) $freshSuggestion->id,
+                        'message' => $event->last_error ?: 'Cette automation a échoué.',
+                        'event' => $this->presentEvent($event),
+                    ],
+                ];
+            }
+
+            return [
+                'suggestion' => $freshSuggestion,
+                'error' => null,
+            ];
         });
 
-        if (empty($processed)) {
+        $acceptedCount = collect($processed)
+            ->filter(fn ($item) => $item instanceof AutomationSuggestion && (string) $item->status === AutomationSuggestion::STATUS_ACCEPTED)
+            ->count();
+
+        collect($processed)
+            ->filter(fn ($item) => $item instanceof AutomationSuggestion)
+            ->each(fn (AutomationSuggestion $suggestion) => $this->reconnectNotifications->syncForSuggestion($suggestion));
+
+        if ($acceptedCount === 0) {
             return response()->json([
                 'success' => false,
-                'message' => $errors[0]['message'] ?? 'Aucune suggestion n a pu etre acceptee.',
-                'data' => ['errors' => $errors],
+                'message' => $errors[0]['message'] ?? "Aucune suggestion n'a pu être acceptée.",
+                'data' => [
+                    'suggestions' => $this->presenter->presentCollection(collect($processed)),
+                    'errors' => $errors,
+                ],
             ], 422);
         }
 
         return response()->json([
             'success' => true,
-            'message' => count($processed) . ' suggestion(s) acceptee(s).',
+            'message' => $acceptedCount . ' suggestion(s) acceptée(s).',
             'data' => [
                 'suggestions' => $this->presenter->presentCollection(collect($processed)),
                 'errors' => $errors,
@@ -141,17 +191,21 @@ class AutomationSuggestionController extends Controller
             return $this->engine->reject($suggestion, auth()->id(), $validated['reason'] ?? null)->fresh();
         });
 
+        collect($processed)
+            ->filter(fn ($item) => $item instanceof AutomationSuggestion)
+            ->each(fn (AutomationSuggestion $suggestion) => $this->reconnectNotifications->syncForSuggestion($suggestion));
+
         if (empty($processed)) {
             return response()->json([
                 'success' => false,
-                'message' => $errors[0]['message'] ?? 'Aucune suggestion n a pu etre ignoree.',
+                'message' => $errors[0]['message'] ?? "Aucune suggestion n'a pu être ignorée.",
                 'data' => ['errors' => $errors],
             ], 422);
         }
 
         return response()->json([
             'success' => true,
-            'message' => count($processed) . ' suggestion(s) ignoree(s).',
+            'message' => count($processed) . ' suggestion(s) ignorée(s).',
             'data' => [
                 'suggestions' => $this->presenter->presentCollection(collect($processed)),
                 'errors' => $errors,
@@ -171,7 +225,21 @@ class AutomationSuggestionController extends Controller
 
         foreach ($suggestions as $suggestion) {
             try {
-                $processed[] = $callback($suggestion);
+                $result = $callback($suggestion);
+
+                if (is_array($result) && array_key_exists('suggestion', $result)) {
+                    if ($result['suggestion']) {
+                        $processed[] = $result['suggestion'];
+                    }
+
+                    if (!empty($result['error'])) {
+                        $errors[] = $result['error'];
+                    }
+
+                    continue;
+                }
+
+                $processed[] = $result;
             } catch (Throwable $e) {
                 $errors[] = [
                     'id' => (int) $suggestion->id,
@@ -191,5 +259,29 @@ class AutomationSuggestionController extends Controller
     protected function tenantId(): int
     {
         return (int) (auth()->user()->tenant_id ?? 0);
+    }
+
+    protected function presentEvent(AutomationEvent $event): array
+    {
+        $targetUrl = is_array($event->response) ? ($event->response['target_url'] ?? null) : null;
+        $targetBlank = is_array($event->response) ? (bool) ($event->response['target_blank'] ?? false) : false;
+        $provider = AutomationReconnectResolver::resolve($event->last_error);
+        $requiresReconnect = $provider !== null;
+
+        return [
+            'id' => (int) $event->id,
+            'status' => (string) $event->status,
+            'action_type' => (string) $event->action_type,
+            'last_error' => $event->last_error,
+            'response' => is_array($event->response) ? $event->response : null,
+            'target_url' => $targetUrl,
+            'target_blank' => $targetBlank,
+            'requires_reconnect' => $requiresReconnect,
+            'reconnect_provider' => $provider['slug'] ?? null,
+            'reconnect_url' => $provider['url'] ?? null,
+            'reconnect_label' => $requiresReconnect
+                ? 'Reconnecter ' . ($provider['label'] ?? 'le service')
+                : null,
+        ];
     }
 }

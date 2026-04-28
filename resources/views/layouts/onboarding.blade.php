@@ -25,6 +25,7 @@
 
   <script src="{{ asset('vendor/client/js/crm.js') }}"></script>
   <script src="{{ asset('vendor/client/js/secure-form.js') }}"></script>
+  @include('layouts.partials.tauri-bridge')
   @stack('scripts')
 </body>
 </html>

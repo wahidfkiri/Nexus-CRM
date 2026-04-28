@@ -13,7 +13,10 @@
 {{-- Page Header --}}
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Clients</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-users', 'bg' => 'var(--c-accent-lt)', 'color' => 'var(--c-accent)', 'alt' => 'Clients'])
+      <h1 style="margin:0;">Clients</h1>
+    </div>
     <p>Gérez et suivez votre portefeuille clients</p>
   </div>
   <div class="page-header-actions">

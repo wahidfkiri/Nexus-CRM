@@ -1,17 +1,20 @@
 @extends('google-meet::layouts.meet')
 
-@section('title', 'Google Meet')
+@section('title', data_get($currentExtensionMeta, 'name', 'Google Meet'))
 
 @section('gm_breadcrumb')
   <a href="{{ route('marketplace.index') }}">Applications</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Google Meet</span>
+  <span style="color:var(--c-ink)">{{ data_get($currentExtensionMeta, 'name', 'Google Meet') }}</span>
 @endsection
 
 @section('gm_content')
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Google Meet</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => (data_get($currentExtensionMeta, 'icon_url') ?: data_get($currentExtensionMeta, 'icon', 'fas fa-video')), 'bg' => '#dcfce7', 'color' => '#34a853', 'alt' => data_get($currentExtensionMeta, 'name', 'Google Meet')])
+      <h1 style="margin:0;">{{ data_get($currentExtensionMeta, 'name', 'Google Meet') }}</h1>
+    </div>
     <p>Planifiez et gerez vos reunions Meet avec OAuth Google.</p>
   </div>
   <div class="page-header-actions">

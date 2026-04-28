@@ -31,10 +31,11 @@ class DraftReminderNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
+            'notification_kind' => 'draft_reminder',
             'draft_id' => (int) $this->draft->id,
             'type' => (string) $this->draft->type,
             'route' => $this->draft->route,
-            'title' => 'Brouillon a finaliser',
+            'title' => 'Rappel brouillon a finaliser',
             'message' => sprintf(
                 'Vous avez un brouillon %s non termine. Voulez-vous le reprendre ?',
                 $this->typeLabel()

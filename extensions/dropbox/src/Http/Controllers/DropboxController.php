@@ -12,6 +12,7 @@ use NexusExtensions\Dropbox\Http\Requests\DropboxUploadRequest;
 use NexusExtensions\Dropbox\Services\DropboxService;
 use RuntimeException;
 use Throwable;
+use Vendor\Automation\Services\AutomationReconnectNotificationService;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
 
@@ -72,6 +73,8 @@ class DropboxController extends Controller
 
             $this->ensureExtensionActivated($tenantId);
             $this->service->exchangeCode((string) $request->string('code'), $tenantId, $userId);
+            app(AutomationReconnectNotificationService::class)
+                ->notifyForProvider($tenantId, $userId, 'dropbox', route('dropbox.index'));
 
             return redirect()->route('dropbox.index')->with('success', 'Dropbox est maintenant connecte a votre espace.');
         } catch (Throwable $e) {

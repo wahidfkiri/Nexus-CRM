@@ -2,11 +2,16 @@
 
 namespace App\Providers;
 
+use App\Notifications\DraftReminderNotification;
+use App\Notifications\DraftSavedNotification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\View;
+use Illuminate\Notifications\DatabaseNotification;
+use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
 use Vendor\Extensions\Services\ExtensionService;
 
@@ -35,6 +40,8 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.global', function ($view): void {
             $apps = collect();
             $appsByCategory = collect();
+            $notifications = collect();
+            $notificationsUnreadCount = 0;
 
             if (
                 Auth::check()
@@ -101,7 +108,7 @@ class AppServiceProvider extends ServiceProvider
                             $url = route('marketplace.show', $slug);
                         }
 
-                        $icon = $normalizeFaClass((string) ($extension->icon ?? ''), (string) ($map['icon'] ?? 'fa-puzzle-piece'));
+                        $icon = $normalizeFaClass((string) ($extension->icon_class ?? $extension->icon ?? ''), (string) ($map['icon'] ?? 'fa-puzzle-piece'));
                         $iconBgColor = (string) ($extension->icon_bg_color ?? ($map['icon_bg_color'] ?? '#334155'));
                         $categoryKey = (string) ($extension->category ?? 'other');
 
@@ -109,6 +116,7 @@ class AppServiceProvider extends ServiceProvider
                             'slug' => $slug,
                             'name' => (string) $extension->name,
                             'icon' => $icon,
+                            'icon_url' => (string) ($extension->icon_url ?? ''),
                             'icon_bg_color' => $iconBgColor,
                             'url' => $url,
                             'status' => (string) $activation->status,
@@ -142,9 +150,160 @@ class AppServiceProvider extends ServiceProvider
                     ->values();
             }
 
+            if (Auth::check() && Schema::hasTable('notifications')) {
+                $user = Auth::user();
+
+                $notificationsUnreadCount = (int) $user->unreadNotifications()->count();
+                $notifications = $user->notifications()
+                    ->latest('updated_at')
+                    ->limit(8)
+                    ->get()
+                    ->map(function (DatabaseNotification $notification) {
+                        $data = is_array($notification->data) ? $notification->data : [];
+                        $resolved = $this->resolveNotificationMeta($notification, $data);
+
+                        return (object) [
+                            'id' => (string) $notification->id,
+                            'title' => (string) ($data['title'] ?? 'Notification CRM'),
+                            'message' => (string) ($data['message'] ?? 'Une nouvelle notification est disponible.'),
+                            'action_url' => !empty($data['action_url'])
+                                ? route('notifications.open', ['notification' => $notification->getKey()])
+                                : '',
+                            'created_at' => $notification->created_at,
+                            'read_at' => $notification->read_at,
+                            'is_unread' => $notification->read_at === null,
+                            'icon' => $resolved['icon'],
+                            'accent' => $resolved['accent'],
+                        ];
+                    })
+                    ->values();
+            }
+
             $view->with('layoutInstalledApps', $apps);
             $view->with('layoutInstalledAppsByCategory', $appsByCategory);
             $view->with('layoutInstalledAppsCount', $apps->count());
+            $view->with('layoutNotifications', $notifications);
+            $view->with('layoutNotificationsUnreadCount', $notificationsUnreadCount);
         });
+
+        View::composer([
+            'google-calendar::calendar.index',
+            'google-docx::docs.index',
+            'google-drive::drive.index',
+            'google-gmail::gmail.index',
+            'google-meet::meet.index',
+            'google-sheets::sheets.index',
+            'dropbox::drive.index',
+            'slack::slack.index',
+            'chatbot::chatbot.index',
+            'notion-workspace::notion.index',
+            'projects::projects.index',
+        ], function ($view): void {
+            $view->with('currentExtensionMeta', $this->resolveCurrentExtensionMeta());
+        });
+    }
+
+    private function resolveCurrentExtensionMeta(): ?object
+    {
+        if (!class_exists(Extension::class) || !Schema::hasTable('extensions')) {
+            return null;
+        }
+
+        $slug = $this->resolveExtensionSlugFromRoute(Route::currentRouteName());
+        if ($slug === null) {
+            return null;
+        }
+
+        static $cache = [];
+
+        if (array_key_exists($slug, $cache)) {
+            return $cache[$slug];
+        }
+
+        $extension = Extension::query()
+            ->where('slug', $slug)
+            ->first();
+
+        if (!$extension) {
+            $cache[$slug] = null;
+            return null;
+        }
+
+        $cache[$slug] = (object) [
+            'slug' => (string) $extension->slug,
+            'name' => (string) $extension->name,
+            'icon' => (string) ($extension->icon_url ?: $extension->icon_class ?: $extension->icon ?: 'fas fa-puzzle-piece'),
+            'icon_url' => (string) ($extension->icon_url ?? ''),
+            'icon_bg_color' => (string) ($extension->icon_bg_color ?? ''),
+        ];
+
+        return $cache[$slug];
+    }
+
+    private function resolveExtensionSlugFromRoute(?string $routeName): ?string
+    {
+        if ($routeName === null || $routeName === '') {
+            return null;
+        }
+
+        $map = [
+            'google-calendar.*' => 'google-calendar',
+            'google-docx.*' => 'google-docx',
+            'google-drive.*' => 'google-drive',
+            'google-gmail.*' => 'google-gmail',
+            'google-meet.*' => 'google-meet',
+            'google-sheets.*' => 'google-sheets',
+            'dropbox.*' => 'dropbox',
+            'slack.*' => 'slack',
+            'chatbot.*' => 'chatbot',
+            'notion-workspace.*' => 'notion-workspace',
+            'projects.*' => 'projects',
+        ];
+
+        foreach ($map as $pattern => $slug) {
+            if (Str::is($pattern, $routeName)) {
+                return $slug;
+            }
+        }
+
+        return null;
+    }
+
+    private function resolveNotificationMeta(DatabaseNotification $notification, array $data): array
+    {
+        $type = (string) $notification->type;
+        $kind = (string) ($data['notification_kind'] ?? '');
+
+        if (
+            $kind === 'draft_saved'
+            || $kind === 'draft_reminder'
+            || in_array($type, [DraftSavedNotification::class, DraftReminderNotification::class], true)
+        ) {
+            return [
+                'icon' => 'fa-pen-to-square',
+                'accent' => $kind === 'draft_reminder' ? '#dc2626' : '#f59e0b',
+            ];
+        }
+
+        if ($kind === 'automation_suggestion_pending') {
+            $providerSlug = (string) ($data['provider_slug'] ?? '');
+
+            return match ($providerSlug) {
+                'google-gmail' => ['icon' => 'fa-envelope', 'accent' => '#ea4335'],
+                'google-calendar' => ['icon' => 'fa-calendar-days', 'accent' => '#0f9d58'],
+                'google-drive' => ['icon' => 'fa-folder-open', 'accent' => '#1a73e8'],
+                'dropbox' => ['icon' => 'fa-dropbox', 'accent' => '#0061ff'],
+                'google-meet' => ['icon' => 'fa-video', 'accent' => '#34a853'],
+                'google-sheets' => ['icon' => 'fa-table-cells', 'accent' => '#188038'],
+                'google-docx' => ['icon' => 'fa-file-word', 'accent' => '#2563eb'],
+                'slack' => ['icon' => 'fa-slack', 'accent' => '#7c3aed'],
+                default => ['icon' => 'fa-wand-magic-sparkles', 'accent' => '#2563eb'],
+            };
+        }
+
+        return [
+            'icon' => 'fa-bell',
+            'accent' => '#2563eb',
+        ];
     }
 }

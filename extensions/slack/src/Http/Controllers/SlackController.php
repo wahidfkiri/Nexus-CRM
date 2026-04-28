@@ -14,6 +14,7 @@ use NexusExtensions\Slack\Models\SlackChannel;
 use NexusExtensions\Slack\Services\SlackService;
 use RuntimeException;
 use Throwable;
+use Vendor\Automation\Services\AutomationReconnectNotificationService;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
 
@@ -86,6 +87,8 @@ class SlackController extends Controller
 
             $this->ensureExtensionActivated($tenantId);
             $this->service->exchangeCode((string) $request->string('code'), $tenantId, $userId);
+            app(AutomationReconnectNotificationService::class)
+                ->notifyForProvider($tenantId, $userId, 'slack', route('slack.index'));
 
             return redirect()->route('slack.index')->with('success', 'Slack connecte avec succes.');
         } catch (Throwable $e) {
@@ -314,4 +317,3 @@ class SlackController extends Controller
         }
     }
 }
-

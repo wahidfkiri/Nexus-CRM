@@ -18,6 +18,7 @@ class ExtensionAvailabilityService
         'google-meet' => 'google-meet.index',
         'google-sheets' => 'google-sheets.index',
         'google-docx' => 'google-docx.index',
+        'notion-workspace' => 'notion-workspace.index',
         'chatbot' => 'chatbot.index',
         'slack' => 'slack.index',
         'invoice' => 'invoices.index',

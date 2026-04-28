@@ -3,7 +3,9 @@
 namespace NexusExtensions\GoogleGmail;
 
 use Illuminate\Support\ServiceProvider;
+use NexusExtensions\GoogleGmail\Console\Commands\GoogleGmailSyncRealtimeCommand;
 use NexusExtensions\GoogleGmail\Services\GoogleGmailService;
+use NexusExtensions\GoogleGmail\Services\GoogleGmailSocketService;
 
 class GoogleGmailServiceProvider extends ServiceProvider
 {
@@ -11,7 +13,10 @@ class GoogleGmailServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/google-gmail.php', 'google-gmail');
 
-        $this->app->bind(GoogleGmailService::class, fn () => new GoogleGmailService());
+        $this->app->bind(GoogleGmailSocketService::class, fn () => new GoogleGmailSocketService());
+        $this->app->bind(GoogleGmailService::class, fn ($app) => new GoogleGmailService(
+            $app->make(GoogleGmailSocketService::class)
+        ));
         $this->app->bind('google-gmail.service', fn ($app) => $app->make(GoogleGmailService::class));
     }
 
@@ -41,5 +46,11 @@ class GoogleGmailServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Resources/lang' => lang_path('vendor/google-gmail'),
         ], 'google-gmail-lang');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                GoogleGmailSyncRealtimeCommand::class,
+            ]);
+        }
     }
 }

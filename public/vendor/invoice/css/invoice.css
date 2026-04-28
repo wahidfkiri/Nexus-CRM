@@ -162,7 +162,7 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
 .sidebar-user-name { font-size: 13px; font-weight: var(--fw-medium); color: rgba(255,255,255,.85); }
 .sidebar-user-role { font-size: 11px; color: rgba(255,255,255,.4); }
 
-.crm-main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+.crm-main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; padding-top: var(--header-h); }
 
 .crm-header {
   height: var(--header-h);
@@ -170,7 +170,7 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
   border-bottom: 1px solid var(--c-ink-05);
   display: flex; align-items: center;
   padding: 0 var(--content-px);
-  position: sticky; top: 0; z-index: 40;
+  position: fixed; top: 0; left: var(--sidebar-w); right: 0; z-index: 40;
   gap: 16px;
 }
 .crm-header-title { font-family: var(--ff-display); font-size: 18px; font-weight: var(--fw-semi); color: var(--c-ink); }
@@ -1027,6 +1027,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
   .crm-sidebar { transform: translateX(-100%); }
   .crm-sidebar.open { transform: translateX(0); }
   .crm-main { margin-left: 0; }
+  .crm-header { left: 0; }
   :root { --content-px: 20px; }
 }
 @media(max-width:768px) {

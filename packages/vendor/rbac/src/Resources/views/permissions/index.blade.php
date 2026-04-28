@@ -12,7 +12,10 @@
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Permissions disponibles</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-shield-alt', 'bg' => '#dbeafe', 'color' => '#1d4ed8', 'alt' => 'Permissions'])
+      <h1 style="margin:0;">Permissions disponibles</h1>
+    </div>
     <p>Référentiel de toutes les permissions du système, organisées par module</p>
   </div>
   <a href="{{ route('rbac.roles.index') }}" class="btn btn-secondary">

@@ -26,9 +26,10 @@ class OpenExtensionWorkspaceAction extends AbstractAutomationAction
 
         return [
             'result' => 'workspace_ready',
-            'message' => trim((string) ($payload['message'] ?? 'Raccourci d application enregistre.')),
+            'message' => trim((string) ($payload['message'] ?? 'Raccourci d application enregistré.')),
             'extension_slug' => $extensionSlug !== '' ? $extensionSlug : null,
             'target_url' => $targetUrl,
+            'target_blank' => (bool) ($payload['target_blank'] ?? $meta['target_blank'] ?? false),
         ];
     }
 }

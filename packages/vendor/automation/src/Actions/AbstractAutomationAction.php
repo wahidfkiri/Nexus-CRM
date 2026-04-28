@@ -16,11 +16,13 @@ use Vendor\Automation\Contracts\AutomationAction;
 use Vendor\Automation\Models\AutomationEvent;
 use Vendor\Automation\Models\AutomationSuggestion;
 use Vendor\Automation\Services\ExtensionAvailabilityService;
+use Vendor\Automation\Support\AutomationReconnectResolver;
 use Vendor\Client\Models\Client;
 use Vendor\Extensions\Models\TenantExtension;
 use Vendor\Invoice\Models\Invoice;
 use Vendor\Invoice\Models\Quote;
 use Vendor\User\Models\UserInvitation;
+use Throwable;
 
 abstract class AbstractAutomationAction implements AutomationAction
 {
@@ -128,6 +130,60 @@ abstract class AbstractAutomationAction implements AutomationAction
         }
 
         throw new RuntimeException($message ?: "L'application {$slug} n'est pas active pour ce tenant.");
+    }
+
+    protected function withReconnectHandling(string $providerSlug, callable $callback): mixed
+    {
+        try {
+            return $callback();
+        } catch (Throwable $e) {
+            $normalized = mb_strtolower(trim($e->getMessage()));
+
+            if ($this->requiresReconnectForProvider($providerSlug, $normalized)) {
+                $label = AutomationReconnectResolver::providerLabel($providerSlug);
+                throw new RuntimeException($label . " n'est plus connecté pour ce tenant. Reconnectez " . $label . ' puis relancez cette automation.');
+            }
+
+            throw $e;
+        }
+    }
+
+    protected function requiresReconnectForProvider(string $providerSlug, string $message): bool
+    {
+        if ($message === '') {
+            return false;
+        }
+
+        $providerLabel = mb_strtolower(AutomationReconnectResolver::providerLabel($providerSlug));
+
+        return match ($providerSlug) {
+            'google-gmail', 'google-calendar', 'google-drive', 'google-meet', 'google-sheets', 'google-docx' => str_contains($message, $providerLabel)
+                || str_contains($message, 'reconnectez votre compte google')
+                || str_contains($message, 'session google')
+                || str_contains($message, 'refresh token is missing')
+                || str_contains($message, 'invalid_grant'),
+            'dropbox' => str_contains($message, 'dropbox')
+                && (
+                    str_contains($message, 'reconnexion')
+                    || str_contains($message, 'reconnect')
+                    || str_contains($message, 'refresh token')
+                    || str_contains($message, 'invalid_grant')
+                    || str_contains($message, 'invalid_access_token')
+                    || str_contains($message, 'expired_access_token')
+                ),
+            'slack' => str_contains($message, 'slack')
+                && (
+                    str_contains($message, 'not connected')
+                    || str_contains($message, "n'est pas connecté")
+                    || str_contains($message, 'n est pas connecte')
+                    || str_contains($message, 'bot token')
+                    || str_contains($message, 'reconnect')
+                    || str_contains($message, 'invalid_auth')
+                    || str_contains($message, 'token_revoked')
+                    || str_contains($message, 'account_inactive')
+                ),
+            default => AutomationReconnectResolver::messageRequiresReconnect($message),
+        };
     }
 
     protected function loadClient(int $tenantId, int $clientId): Client

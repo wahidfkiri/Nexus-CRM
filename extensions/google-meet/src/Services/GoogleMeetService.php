@@ -69,6 +69,7 @@ class GoogleMeetService
     {
         $client = $this->makeClient();
         $tokenData = $client->fetchAccessTokenWithAuthCode($code);
+        $existingToken = GoogleMeetToken::forTenant($tenantId)->first();
 
         if (isset($tokenData['error'])) {
             throw new RuntimeException((string) ($tokenData['error_description'] ?? $tokenData['error']));
@@ -84,7 +85,7 @@ class GoogleMeetService
             [
                 'connected_by' => $userId,
                 'access_token' => $tokenData['access_token'] ?? '',
-                'refresh_token' => $tokenData['refresh_token'] ?? null,
+                'refresh_token' => $tokenData['refresh_token'] ?? $existingToken?->refresh_token,
                 'token_expires_at' => isset($tokenData['expires_in'])
                     ? now()->addSeconds((int) $tokenData['expires_in'])
                     : now()->addHour(),

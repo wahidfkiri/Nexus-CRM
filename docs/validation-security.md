@@ -1,64 +1,103 @@
-# Validation & Sécurité (Laravel + AJAX)
+﻿# Validation et sécurité (Laravel + AJAX)
 
 ## Objectif
-Mettre en place une validation **serveur-first**, robuste, réutilisable et compatible formulaires classiques + AJAX.
 
-## Composants implémentés
+Mettre en place une validation `serveur-first`, robuste, réutilisable et compatible avec :
 
-1. `app/Support/Security/InputSanitizer.php`
-- Sanitization UTF-8.
-- Suppression des caractères de contrôle.
-- Neutralisation de patterns XSS courants (`<script>`, `on*=` et `javascript:`).
-- Compatible tableaux imbriqués et fichiers uploadés.
+- formulaires HTML classiques
+- soumissions AJAX
+- réponses JSON homogènes
 
-2. `app/Http/Middleware/SanitizeInput.php`
-- Applique une sanitization “soft” sur toutes les requêtes.
+## Composants en place
 
-3. `app/Http/Middleware/EnsureIdempotency.php`
-- Anti double soumission (header `Idempotency-Key` / `X-Request-Id` / champ `_request_id`).
-- Retour `409` si requête déjà soumise récemment.
+### 1. Sanitization d'entrée
 
-4. `app/Http/Requests/SecureFormRequest.php`
-- Base FormRequest commune.
-- Sanitization stricte avant validation.
-- Réponse JSON standardisée pour AJAX/API en cas d’erreur `422`.
+- `app/Support/Security/InputSanitizer.php`
+- suppression des caractères de contrôle
+- nettoyage UTF-8
+- neutralisation de patterns XSS courants
+- support des tableaux imbriqués et fichiers
 
-5. FormRequests concrets
-- `app/Http/Requests/Auth/LoginRequest.php`
-- `app/Http/Requests/Auth/RegisterRequest.php`
-- `app/Http/Requests/Auth/ResendVerificationRequest.php`
-- `app/Http/Requests/Profile/UpdateProfileRequest.php`
-- `app/Http/Requests/Security/StoreValidationDemoRequest.php` (exemple complet)
+### 2. Middleware de sanitization
 
-6. Frontend sécurisé
+- `app/Http/Middleware/SanitizeInput.php`
+
+Applique une sanitization douce sur toutes les requêtes.
+
+### 3. Idempotence
+
+- `app/Http/Middleware/EnsureIdempotency.php`
+
+Évite les doubles soumissions via :
+
+- `Idempotency-Key`
+- `X-Request-Id`
+- `_request_id`
+
+Retour prévu :
+
+- `409` si la requête a déjà été soumise récemment
+
+### 4. Base FormRequest sécurisée
+
+- `app/Http/Requests/SecureFormRequest.php`
+
+Cette base ajoute :
+
+- sanitization stricte avant validation
+- format JSON standardisé pour les erreurs `422`
+
+### 5. Front sécurisé
+
 - `public/vendor/client/js/secure-form.js`
-  - Génère un `_request_id`.
-  - Soumet en AJAX avec headers sécurisés.
-  - Gère erreurs `422` champ par champ.
-- Exemples:
-  - `public/vendor/client/js/profile-settings.js`
-  - `public/vendor/client/js/validation-demo.js`
 
-7. Messages FR
-- `lang/fr/validation.php`
-- `lang/fr/security.php`
+Le script :
 
-## Contrôleurs branchés
+- génère un `_request_id`
+- envoie les headers utiles
+- gère les erreurs de validation champ par champ côté front
+
+## Contrôleurs déjà branchés
+
 - `app/Http/Controllers/Auth/AuthController.php`
 - `app/Http/Controllers/Api/AuthController.php`
 - `app/Http/Controllers/ProfileController.php`
-- `app/Http/Controllers/SecurityValidationDemoController.php` (bonus demo AJAX)
+- `app/Http/Controllers/SecurityValidationDemoController.php`
 
-## Route démo complète
-- `GET /security/validation-demo`
-- `POST /security/validation-demo`
+## Règles de sortie
 
-Vue: `resources/views/security/validation-demo.blade.php`
+### XSS
 
-## Bonnes pratiques de sortie (XSS)
-- En Blade, utiliser `{{ $value }}` (échappement automatique).
-- Éviter `{!! !!}` sauf contenu explicitement nettoyé.
+En Blade :
 
-## SQL Injection
-- Utiliser Eloquent / Query Builder avec bindings.
-- Éviter les requêtes SQL brutes concaténées.
+- utiliser `{{ $value }}`
+- éviter `{!! !!}` sauf contenu explicitement maîtrisé
+
+### SQL Injection
+
+- utiliser Eloquent ou Query Builder avec bindings
+- éviter les concaténations SQL brutes
+
+## AJAX et UX
+
+Le front doit toujours considérer le backend comme source de vérité :
+
+- validation faite côté serveur
+- erreurs rendues de façon claire
+- double soumission évitée
+- messages d'état propres pour l'utilisateur
+
+## HTTPS local
+
+Le projet fonctionne aussi en local sécurisé sur `https://localhost`.
+
+Cela renforce la cohérence de :
+
+- `SESSION_SECURE_COOKIE=true`
+- callbacks OAuth locaux
+- tests proches d'un vrai environnement sécurisé
+
+Guide lié :
+
+- [local-https-xampp.md](local-https-xampp.md)
+

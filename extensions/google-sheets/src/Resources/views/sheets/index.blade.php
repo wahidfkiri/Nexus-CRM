@@ -1,17 +1,20 @@
 @extends('google-sheets::layouts.sheets')
 
-@section('title', 'Google Sheets')
+@section('title', data_get($currentExtensionMeta, 'name', 'Google Sheets'))
 
 @section('gs_breadcrumb')
   <a href="{{ route('marketplace.index') }}">Applications</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Google Sheets</span>
+  <span style="color:var(--c-ink)">{{ data_get($currentExtensionMeta, 'name', 'Google Sheets') }}</span>
 @endsection
 
 @section('gs_content')
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Google Sheets</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => (data_get($currentExtensionMeta, 'icon_url') ?: data_get($currentExtensionMeta, 'icon', 'fas fa-file-excel')), 'bg' => '#dcfce7', 'color' => '#0f9d58', 'alt' => data_get($currentExtensionMeta, 'name', 'Google Sheets')])
+      <h1 style="margin:0;">{{ data_get($currentExtensionMeta, 'name', 'Google Sheets') }}</h1>
+    </div>
     <p>Créez, éditez et gérez vos feuilles de calcul directement depuis Google Sheets.</p>
   </div>
   <div class="page-header-actions">

@@ -1,17 +1,20 @@
 @extends('google-calendar::layouts.calendar')
 
-@section('title', __('google-calendar::messages.page.title'))
+@section('title', data_get($currentExtensionMeta, 'name', __('google-calendar::messages.page.title')))
 
 @section('gc_breadcrumb')
   <a href="{{ route('marketplace.index') }}">{{ __('google-calendar::messages.breadcrumb.applications') }}</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">{{ __('google-calendar::messages.page.title') }}</span>
+  <span style="color:var(--c-ink)">{{ data_get($currentExtensionMeta, 'name', __('google-calendar::messages.page.title')) }}</span>
 @endsection
 
 @section('gc_content')
 <div class="page-header">
   <div class="page-header-left">
-    <h1>{{ __('google-calendar::messages.page.title') }}</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => (data_get($currentExtensionMeta, 'icon_url') ?: data_get($currentExtensionMeta, 'icon', 'fas fa-calendar-alt')), 'bg' => '#dbeafe', 'color' => '#2563eb', 'alt' => data_get($currentExtensionMeta, 'name', 'Google Calendar')])
+      <h1 style="margin:0;">{{ data_get($currentExtensionMeta, 'name', __('google-calendar::messages.page.title')) }}</h1>
+    </div>
     <p>{{ __('google-calendar::messages.page.subtitle') }}</p>
   </div>
   <div class="page-header-actions">

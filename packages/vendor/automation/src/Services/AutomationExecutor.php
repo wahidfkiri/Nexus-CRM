@@ -2,6 +2,7 @@
 
 namespace Vendor\Automation\Services;
 
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
 use Vendor\Automation\Events\AutomationEventFailed;
@@ -10,6 +11,7 @@ use Vendor\Automation\Models\AutomationEvent;
 use Vendor\Automation\Models\AutomationLog;
 use Vendor\Automation\Models\AutomationSuggestion;
 use Vendor\Automation\Registries\ActionRegistry;
+use Vendor\Automation\Support\AutomationReconnectResolver;
 
 class AutomationExecutor
 {
@@ -80,25 +82,82 @@ class AutomationExecutor
 
     protected function markFailed(AutomationEvent $automationEvent, string $message, array $context = []): AutomationEvent
     {
-        $automationEvent->forceFill([
-            'status' => AutomationEvent::STATUS_FAILED,
-            'last_error' => $message,
-            'failed_at' => now(),
-        ])->save();
+        $freshEvent = DB::transaction(function () use ($automationEvent, $message, $context) {
+            $lockedEvent = AutomationEvent::query()
+                ->whereKey($automationEvent->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $this->writeLog(
-            $automationEvent,
-            level: 'error',
-            status: AutomationEvent::STATUS_FAILED,
-            message: $message,
-            context: $context
-        );
+            $reopenedSuggestion = $this->reopenSuggestionForReconnectFailure($lockedEvent, $message);
 
-        event(new AutomationEventFailed($automationEvent->fresh(), $message));
+            $lockedEvent->forceFill([
+                'status' => AutomationEvent::STATUS_FAILED,
+                'last_error' => $message,
+                'failed_at' => now(),
+                'idempotency_key' => $reopenedSuggestion ? null : $lockedEvent->idempotency_key,
+            ])->save();
 
-        return $automationEvent->fresh();
+            $this->writeLog(
+                $lockedEvent,
+                level: 'error',
+                status: AutomationEvent::STATUS_FAILED,
+                message: $message,
+                context: array_filter(array_merge($context, [
+                    'suggestion_reopened' => (bool) $reopenedSuggestion,
+                    'reopened_suggestion_id' => $reopenedSuggestion ? (int) $reopenedSuggestion->id : null,
+                ]), static fn ($value) => $value !== null)
+            );
+
+            return $lockedEvent->fresh();
+        });
+
+        event(new AutomationEventFailed($freshEvent, $message));
+
+        return $freshEvent;
     }
 
+    protected function reopenSuggestionForReconnectFailure(AutomationEvent $automationEvent, string $message): ?AutomationSuggestion
+    {
+        if (!AutomationReconnectResolver::messageRequiresReconnect($message) || !$automationEvent->triggered_by_suggestion_id) {
+            return null;
+        }
+
+        $suggestion = AutomationSuggestion::query()
+            ->whereKey((int) $automationEvent->triggered_by_suggestion_id)
+            ->lockForUpdate()
+            ->first();
+
+        if (!$suggestion) {
+            return null;
+        }
+
+        $pendingDedupeKey = $suggestion->dedupe_key
+            ? ((int) $suggestion->tenant_id) . ':' . (string) $suggestion->dedupe_key
+            : null;
+
+        if ($pendingDedupeKey) {
+            $keyAlreadyUsed = AutomationSuggestion::query()
+                ->where('pending_dedupe_key', $pendingDedupeKey)
+                ->whereKeyNot($suggestion->getKey())
+                ->exists();
+
+            if ($keyAlreadyUsed) {
+                $pendingDedupeKey = null;
+            }
+        }
+
+        $suggestion->forceFill([
+            'status' => AutomationSuggestion::STATUS_PENDING,
+            'accepted_at' => null,
+            'accepted_by' => null,
+            'pending_dedupe_key' => $pendingDedupeKey,
+            'expires_at' => $suggestion->expires_at && $suggestion->expires_at->isPast()
+                ? now()->addHours((int) config('automation.suggestions.default_expiration_hours', 72))
+                : $suggestion->expires_at,
+        ])->save();
+
+        return $suggestion->fresh();
+    }
     protected function writeLog(
         AutomationEvent $automationEvent,
         string $level,

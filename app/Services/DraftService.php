@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Draft;
+use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -16,6 +18,7 @@ class DraftService
     {
         $this->ensureDraftsTableIsReady();
         [$userId, $tenantId] = $this->resolveActor();
+        $user = $this->resolveCurrentUser();
         $type = $this->normalizeType($attributes['type'] ?? null);
         $route = $this->normalizeRoute($attributes['route'] ?? null);
         $data = $this->normalizeData($attributes['data'] ?? []);
@@ -40,7 +43,7 @@ class DraftService
         ]);
         $draft->save();
 
-        Draft::query()
+        $obsoleteDraftIds = Draft::query()
             ->forActor($userId, $tenantId)
             ->where('type', $type)
             ->when(
@@ -49,9 +52,23 @@ class DraftService
                 fn (Builder $query) => $query->where('route', $route)
             )
             ->whereKeyNot($draft->getKey())
-            ->delete();
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->values()
+            ->all();
 
-        return $draft->fresh();
+        if (!empty($obsoleteDraftIds)) {
+            Draft::query()->whereKey($obsoleteDraftIds)->delete();
+            $this->clearNotificationsForDraftIds($obsoleteDraftIds, $user);
+        }
+
+        $draft = $draft->fresh();
+        if ($draft) {
+            $this->clearNotificationsForDraftIds([(int) $draft->id], $user);
+        }
+
+        return $draft;
     }
 
     public function loadLatestForCurrentActor(string $type, ?string $route = null): ?Draft
@@ -73,11 +90,23 @@ class DraftService
         }
 
         [$userId, $tenantId] = $this->resolveActor();
+        $user = $this->resolveCurrentUser();
 
-        return (bool) Draft::query()
+        $draft = Draft::query()
             ->forActor($userId, $tenantId)
             ->whereKey($draftId)
-            ->delete();
+            ->first();
+
+        if (!$draft) {
+            return false;
+        }
+
+        $deleted = (bool) $draft->delete();
+        if ($deleted) {
+            $this->clearNotificationsForDraftIds([$draftId], $user);
+        }
+
+        return $deleted;
     }
 
     public function forgetFromRequest(Request $request): void
@@ -143,6 +172,13 @@ class DraftService
         return [(int) $user->getAuthIdentifier(), $tenantId];
     }
 
+    protected function resolveCurrentUser(): ?User
+    {
+        $user = auth()->user();
+
+        return $user instanceof User ? $user : null;
+    }
+
     protected function normalizeType(?string $type): string
     {
         $normalized = trim((string) $type);
@@ -168,7 +204,9 @@ class DraftService
 
         unset($data['_token'], $data['_method'], $data['draft_id']);
 
-        return $data;
+        $normalized = $this->normalizeDraftValue($data);
+
+        return is_array($normalized) ? $normalized : [];
     }
 
     protected function resolveExpiresAt(): ?Carbon
@@ -183,5 +221,80 @@ class DraftService
         if (!Schema::hasTable('drafts')) {
             throw new RuntimeException('Le systeme de brouillons n est pas initialise. Lancez les migrations pour activer la sauvegarde automatique.');
         }
+    }
+
+    protected function normalizeDraftValue(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            $isList = array_is_list($value);
+            $normalized = [];
+
+            foreach ($value as $key => $item) {
+                $entry = $this->normalizeDraftValue($item);
+                if ($entry === null) {
+                    continue;
+                }
+
+                if ($isList) {
+                    $normalized[] = $entry;
+                } else {
+                    $normalized[$key] = $entry;
+                }
+            }
+
+            return $normalized === [] ? null : $normalized;
+        }
+
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_string($value)) {
+            $normalized = trim($value);
+
+            return $normalized === '' ? null : $normalized;
+        }
+
+        if (is_bool($value)) {
+            return $value ? true : null;
+        }
+
+        if (is_float($value) || is_int($value)) {
+            return $value;
+        }
+
+        return $value;
+    }
+
+    protected function clearNotificationsForDraftIds(array $draftIds, ?User $user = null): void
+    {
+        if (!Schema::hasTable('notifications')) {
+            return;
+        }
+
+        $ids = collect($draftIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($ids)) {
+            return;
+        }
+
+        $user = $user instanceof User ? $user : $this->resolveCurrentUser();
+        if (!$user) {
+            return;
+        }
+
+        $user->notifications()
+            ->get()
+            ->filter(function (DatabaseNotification $notification) use ($ids) {
+                return in_array((int) data_get($notification->data, 'draft_id'), $ids, true);
+            })
+            ->each(function (DatabaseNotification $notification): void {
+                $notification->delete();
+            });
     }
 }

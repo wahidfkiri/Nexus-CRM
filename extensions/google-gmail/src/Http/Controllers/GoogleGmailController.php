@@ -2,6 +2,7 @@
 
 namespace NexusExtensions\GoogleGmail\Http\Controllers;
 
+use App\Support\Desktop\DesktopOAuthResponder;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,12 +15,16 @@ use NexusExtensions\GoogleGmail\Http\Requests\GoogleGmailSettingsRequest;
 use NexusExtensions\GoogleGmail\Services\GoogleGmailService;
 use RuntimeException;
 use Throwable;
+use Vendor\Automation\Services\AutomationReconnectNotificationService;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
 
 class GoogleGmailController extends Controller
 {
-    public function __construct(protected GoogleGmailService $service)
+    public function __construct(
+        protected GoogleGmailService $service,
+        protected DesktopOAuthResponder $desktopOAuthResponder
+    )
     {
     }
 
@@ -36,49 +41,117 @@ class GoogleGmailController extends Controller
             'connected' => (bool) $token,
             'token' => $token,
             'settings' => ($storageReady && $extensionActive) ? $this->service->getSettings($tenantId) : [],
+            'socketEnabled' => (bool) config('google-gmail.socket.enabled', false),
+            'socketClientUrl' => (string) config('google-gmail.socket.client_url', ''),
+            'socketPath' => (string) config('google-gmail.socket.path', '/socket.io'),
+            'socketNamespace' => (string) config('google-gmail.socket.namespace', '/'),
             'jsI18n' => $this->jsI18n(),
         ]);
     }
 
-    public function connect()
+    public function connect(Request $request)
     {
+        $desktop = $this->desktopOAuthResponder->isDesktopRequest($request);
+        $desktopReturn = $this->desktopOAuthResponder->sanitizeReturnPath(
+            (string) $request->query('desktop_return', route('google-gmail.index', [], false)),
+            route('google-gmail.index', [], false)
+        );
+
         try {
             $tenantId = $this->tenantId();
             $this->ensureExtensionActivated($tenantId);
-            $authUrl = $this->service->getAuthUrl($tenantId, (int) Auth::id());
+            $authUrl = $this->service->getAuthUrl($tenantId, (int) Auth::id(), [
+                'desktop' => $desktop,
+                'desktop_return' => $desktopReturn,
+            ]);
+
+            if ($desktop && $this->shouldReturnDesktopJson($request)) {
+                return response()->json([
+                    'success' => true,
+                    'open_url' => $authUrl,
+                ]);
+            }
 
             return redirect()->away($authUrl);
         } catch (Throwable $e) {
+            if ($desktop && $this->shouldReturnDesktopJson($request)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
             return redirect()->route('google-gmail.index')->with('error', $e->getMessage());
         }
     }
 
     public function callback(Request $request)
     {
-        if ($request->filled('error')) {
-            return redirect()->route('google-gmail.index')
-                ->with('error', (string) $request->get('error_description', $request->get('error')));
-        }
-
-        $request->validate([
-            'code' => ['required', 'string'],
-            'state' => ['required', 'string'],
-        ]);
+        $desktopFallbackPath = route('google-gmail.index', [], false);
+        $isDesktop = false;
+        $desktopReturn = $desktopFallbackPath;
+        $state = null;
 
         try {
-            $state = $this->service->parseState((string) $request->string('state'));
+            if ($request->filled('state')) {
+                $state = $this->service->parseState((string) $request->string('state'));
+                $isDesktop = (bool) ($state['desktop'] ?? false);
+                $desktopReturn = $this->desktopOAuthResponder->sanitizeReturnPath(
+                    (string) ($state['desktop_return'] ?? $desktopFallbackPath),
+                    $desktopFallbackPath
+                );
+            }
+
+            if ($request->filled('error')) {
+                throw new RuntimeException((string) $request->get('error_description', $request->get('error')));
+            }
+
+            $request->validate([
+                'code' => ['required', 'string'],
+                'state' => ['required', 'string'],
+            ]);
+
+            $state ??= $this->service->parseState((string) $request->string('state'));
             $tenantId = (int) $state['tenant_id'];
             $userId = (int) $state['user_id'];
 
-            if ((int) Auth::id() !== $userId || (int) Auth::user()->tenant_id !== $tenantId) {
+            if (!$isDesktop) {
+                if (!Auth::check() || (int) Auth::id() !== $userId || (int) Auth::user()->tenant_id !== $tenantId) {
+                    throw new RuntimeException('Etat OAuth invalide pour cette session.');
+                }
+            }
+
+            if ($isDesktop && !$desktopReturn) {
+                $desktopReturn = $desktopFallbackPath;
+            }
+
+            if ($tenantId <= 0 || $userId <= 0) {
                 throw new RuntimeException('Etat OAuth invalide pour cette session.');
             }
 
             $this->ensureExtensionActivated($tenantId);
             $this->service->exchangeCode((string) $request->string('code'), $tenantId, $userId);
+            app(AutomationReconnectNotificationService::class)
+                ->notifyForProvider($tenantId, $userId, 'google-gmail', route('google-gmail.index'));
+
+            if ($isDesktop) {
+                return $this->desktopOAuthResponder->renderSuccess(
+                    $desktopReturn,
+                    'Google Gmail connecte avec succes.',
+                    'Google Gmail'
+                );
+            }
 
             return redirect()->route('google-gmail.index')->with('success', 'Google Gmail connecte avec succes.');
         } catch (Throwable $e) {
+            if ($isDesktop) {
+                return $this->desktopOAuthResponder->renderError(
+                    $desktopReturn,
+                    $e->getMessage(),
+                    'Google Gmail'
+                );
+            }
+
             return redirect()->route('google-gmail.index')->with('error', $e->getMessage());
         }
     }
@@ -137,6 +210,43 @@ class GoogleGmailController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $this->service->listLabels($tenantId, $request->boolean('refresh')),
+            ]);
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function snapshotData(Request $request): JsonResponse
+    {
+        $request->validate([
+            'refresh' => ['nullable', 'boolean'],
+            'label_id' => ['nullable', 'string', 'max:120'],
+            'q' => ['nullable', 'string', 'max:500'],
+            'page_token' => ['nullable', 'string', 'max:255'],
+            'max_results' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'include_spam_trash' => ['nullable', 'boolean'],
+        ]);
+
+        try {
+            $tenantId = $this->tenantId();
+            $this->ensureExtensionActivated($tenantId);
+
+            $data = $this->service->getMailboxSnapshot(
+                $tenantId,
+                $request->boolean('refresh', false),
+                (string) $request->string('label_id', 'INBOX'),
+                (string) $request->string('q', ''),
+                $request->filled('page_token') ? (string) $request->string('page_token') : null,
+                (int) $request->integer('max_results', (int) config('google-gmail.api.max_results', 25)),
+                $request->boolean('include_spam_trash', false)
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -487,5 +597,10 @@ class GoogleGmailController extends Controller
             'attachment' => __('google-gmail::messages.attachments.attachment'),
             'close' => __('google-gmail::messages.common.close'),
         ];
+    }
+
+    private function shouldReturnDesktopJson(Request $request): bool
+    {
+        return $request->boolean('desktop_fetch') || $request->expectsJson() || $request->ajax();
     }
 }

@@ -2,7 +2,12 @@
     "private": true,
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "desktop:tauri:install": "npm --prefix desktop/tauri install",
+        "desktop:tauri:dev": "powershell -ExecutionPolicy Bypass -File .\\desktop\\tauri\\scripts\\tauri-env.ps1 dev",
+        "desktop:tauri:build": "powershell -ExecutionPolicy Bypass -File .\\desktop\\tauri\\scripts\\tauri-env.ps1 build",
+        "desktop:tauri:build:no-bundle": "powershell -ExecutionPolicy Bypass -File .\\desktop\\tauri\\scripts\\tauri-env.ps1 build-no-bundle",
+        "desktop:tauri:frontend:build": "npm --prefix desktop/tauri run build"
     },
     "devDependencies": {
         "@popperjs/core": "^2.11.6",

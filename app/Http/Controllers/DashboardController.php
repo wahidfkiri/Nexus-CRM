@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Draft;
+use App\Services\DraftService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -71,6 +73,7 @@ class DashboardController extends Controller
         $recentInvoices = collect();
         $upcomingTasks = collect();
         $history = collect();
+        $currentTenantId = (int) (session('current_tenant_id') ?? $user->tenant_id ?? 0);
 
         if (Schema::hasTable('clients')) {
             $clientQuery = Client::query();
@@ -216,6 +219,30 @@ class DashboardController extends Controller
                             'url' => $activity->project_id
                                 ? $this->routeIfExists('projects.show', ['project' => $activity->project_id])
                                 : null,
+                        ];
+                    })
+            );
+        }
+
+        if (Schema::hasTable('drafts') && $currentTenantId > 0) {
+            $draftService = app(DraftService::class);
+
+            $history = $history->merge(
+                Draft::query()
+                    ->forActor((int) $user->id, $currentTenantId)
+                    ->notExpired()
+                    ->latest('updated_at')
+                    ->limit(8)
+                    ->get(['id', 'type', 'route', 'updated_at'])
+                    ->map(function (Draft $draft) use ($draftService) {
+                        $typeLabel = $this->draftTypeLabel((string) $draft->type);
+
+                        return [
+                            'at' => $draft->updated_at,
+                            'icon' => 'fa-pen-to-square',
+                            'title' => 'Brouillon ' . ucfirst($typeLabel),
+                            'description' => 'Formulaire non finalise a reprendre',
+                            'url' => $draftService->resolveResumeUrl($draft),
                         ];
                     })
             );
@@ -392,5 +419,10 @@ class DashboardController extends Controller
     private function formatMoney(float|int $value, string $currency): string
     {
         return number_format((float) $value, 2, ',', ' ') . ' ' . strtoupper($currency);
+    }
+
+    private function draftTypeLabel(string $type): string
+    {
+        return (string) (config('drafts.type_labels.' . $type) ?: $type);
     }
 }

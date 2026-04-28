@@ -10,10 +10,12 @@ use App\Http\Requests\Auth\ResendVerificationRequest;
 use App\Models\TenantUserMembership;
 use App\Models\User;
 use App\Notifications\WelcomeAccountNotification;
+use App\Support\Desktop\DesktopOAuthResponder;
 use Google\Client as GoogleClient;
 use Google\Service\Oauth2 as GoogleOauth2;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -27,6 +29,10 @@ use Vendor\User\Services\UserService;
 
 class AuthController extends Controller
 {
+    public function __construct(protected DesktopOAuthResponder $desktopOAuthResponder)
+    {
+    }
+
     public function showLoginForm()
     {
         return view('auth.login');
@@ -273,7 +279,14 @@ class AuthController extends Controller
         try {
             $client = $this->buildGoogleClient();
             $state = Str::random(40);
-            $request->session()->put('google_oauth_state', $state);
+            $request->session()->put('google_oauth_state_payload', [
+                'value' => $state,
+                'desktop' => $this->desktopOAuthResponder->isDesktopRequest($request),
+                'desktop_return' => $this->desktopOAuthResponder->sanitizeReturnPath(
+                    (string) $request->query('desktop_return', '/login'),
+                    '/login'
+                ),
+            ]);
             $client->setState($state);
 
             return redirect()->away($client->createAuthUrl());
@@ -286,13 +299,20 @@ class AuthController extends Controller
 
     public function handleGoogleCallback(Request $request)
     {
+        $statePayload = (array) $request->session()->pull('google_oauth_state_payload', []);
+        $isDesktop = (bool) ($statePayload['desktop'] ?? false);
+        $desktopReturn = $this->desktopOAuthResponder->sanitizeReturnPath(
+            (string) ($statePayload['desktop_return'] ?? '/login'),
+            '/login'
+        );
+
         try {
             if ($request->filled('error')) {
                 throw new RuntimeException((string) $request->string('error'));
             }
 
             $state = (string) $request->string('state');
-            $expected = (string) $request->session()->pull('google_oauth_state', '');
+            $expected = (string) ($statePayload['value'] ?? '');
             if (!$expected || !hash_equals($expected, $state)) {
                 throw new RuntimeException('Etat OAuth invalide.');
             }
@@ -380,6 +400,14 @@ class AuthController extends Controller
                 $this->sendWelcomeNotificationSafely($user, 'google_callback');
             }
 
+            if ($isDesktop) {
+                return $this->desktopOAuthResponder->renderSuccess(
+                    $this->buildDesktopGoogleFinalizePath($user, $desktopReturn),
+                    'Connexion Google reussie.',
+                    'Connexion Google'
+                );
+            }
+
             Auth::login($user, true);
             $this->handlePendingInvitationAfterAuthentication($request, $user);
             $request->session()->regenerate();
@@ -393,10 +421,57 @@ class AuthController extends Controller
             return redirect($this->afterAuthRedirect($user))->with('success', 'Connexion Google reussie.');
         } catch (Throwable $e) {
             Log::warning('Google callback failed: ' . $e->getMessage());
+
+            if ($isDesktop) {
+                return $this->desktopOAuthResponder->renderError(
+                    $desktopReturn,
+                    $this->resolveGoogleAuthErrorMessage($e),
+                    'Connexion Google'
+                );
+            }
+
             return redirect()->route('login')->withErrors([
                 'email' => $this->resolveGoogleAuthErrorMessage($e),
             ]);
         }
+    }
+
+    public function finalizeDesktopGoogle(string $token, Request $request)
+    {
+        $payload = Cache::pull($this->desktopGoogleLoginCacheKey($token));
+        if (!is_array($payload)) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'La connexion desktop a expire. Relancez la connexion Google.',
+            ]);
+        }
+
+        /** @var User|null $user */
+        $user = User::find((int) ($payload['user_id'] ?? 0));
+        if (!$user) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'Utilisateur introuvable pour cette connexion desktop.',
+            ]);
+        }
+
+        Auth::login($user, true);
+        $request->session()->regenerate();
+        $request->session()->put('current_tenant_id', (int) ($payload['tenant_id'] ?? $this->resolveActiveTenantIdForUser($user)));
+
+        $user->forceFill([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+        ])->save();
+
+        $target = $this->desktopOAuthResponder->appendMessage(
+            $this->desktopOAuthResponder->sanitizeReturnPath(
+                (string) ($payload['target_path'] ?? $this->afterAuthRedirect($user)),
+                $this->afterAuthRedirect($user)
+            ),
+            (string) ($payload['message'] ?? 'Connexion Google reussie.'),
+            'notice'
+        );
+
+        return redirect($target);
     }
 
     public function verifyEmail(Request $request, int $id, string $hash)
@@ -511,6 +586,38 @@ class AuthController extends Controller
         }
 
         return url('/dashboard');
+    }
+
+    private function buildDesktopGoogleFinalizePath(User $user, ?string $preferredPath = null): string
+    {
+        $token = Str::uuid()->toString();
+        $targetUrl = $this->afterAuthRedirect($user);
+        $fallbackPath = (string) (parse_url($targetUrl, PHP_URL_PATH) ?: '/dashboard');
+        $fallbackQuery = (string) (parse_url($targetUrl, PHP_URL_QUERY) ?: '');
+
+        if ($fallbackQuery !== '') {
+            $fallbackPath .= '?' . $fallbackQuery;
+        }
+
+        $targetPath = $this->desktopOAuthResponder->sanitizeReturnPath($preferredPath, $fallbackPath);
+
+        if (in_array($targetPath, ['/', '/login', '/register', '/password/reset'], true)) {
+            $targetPath = $fallbackPath;
+        }
+
+        Cache::put($this->desktopGoogleLoginCacheKey($token), [
+            'user_id' => (int) $user->id,
+            'tenant_id' => (int) $this->resolveActiveTenantIdForUser($user),
+            'target_path' => $targetPath,
+            'message' => 'Connexion Google reussie.',
+        ], now()->addMinutes(10));
+
+        return route('auth.google.desktop.finalize', ['token' => $token], false);
+    }
+
+    private function desktopGoogleLoginCacheKey(string $token): string
+    {
+        return 'desktop_google_login:' . trim($token);
     }
 
     private function createTenantForUser(User $user, ?string $company = null): void

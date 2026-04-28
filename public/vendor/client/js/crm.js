@@ -85,6 +85,20 @@ window.Toast = Toast;
    MODAL SYSTEM
    ============================================================ */
 const Modal = (() => {
+  async function runConfirmDismiss(overlayEl) {
+    if (!overlayEl || overlayEl.id !== 'confirmModal' || overlayEl.dataset.busy === '1') {
+      return false;
+    }
+
+    const action = overlayEl.__confirmCancelAction;
+    if (typeof action !== 'function') {
+      return false;
+    }
+
+    await action();
+    return true;
+  }
+
   function setConfirmBusy(overlayEl, btn, busy, loadingText = 'Traitement...') {
     if (!overlayEl || !btn) return;
     overlayEl.dataset.busy = busy ? '1' : '0';
@@ -127,12 +141,19 @@ const Modal = (() => {
     document.body.style.overflow = 'hidden';
     overlayEl.dispatchEvent(new CustomEvent('crm:modal-open'));
     // Close on backdrop click
-    overlayEl.addEventListener('click', (e) => {
-      if (e.target === overlayEl) close(overlayEl);
+    overlayEl.addEventListener('click', async (e) => {
+      if (e.target !== overlayEl) return;
+      const handled = await runConfirmDismiss(overlayEl);
+      if (!handled) close(overlayEl);
     }, { once: true });
     // Close on Escape
     const escHandler = (e) => {
-      if (e.key === 'Escape') { close(overlayEl); document.removeEventListener('keydown', escHandler); }
+      if (e.key === 'Escape') {
+        Promise.resolve(runConfirmDismiss(overlayEl)).then((handled) => {
+          if (!handled) close(overlayEl);
+          document.removeEventListener('keydown', escHandler);
+        });
+      }
     };
     document.addEventListener('keydown', escHandler);
   }
@@ -150,11 +171,23 @@ const Modal = (() => {
     }
   }
 
-  function confirm({ title, message, confirmText = 'Confirmer', type = 'danger', iconHtml = '', iconVariant = '', iconColor = '', onConfirm }) {
+  function confirm({
+    title,
+    message,
+    confirmText = 'Confirmer',
+    cancelText = 'Annuler',
+    type = 'danger',
+    iconHtml = '',
+    iconVariant = '',
+    iconColor = '',
+    onConfirm,
+    onCancel,
+  }) {
     const overlay = document.getElementById('confirmModal');
     if (!overlay) { console.warn('confirmModal element not found'); return; }
 
     const iconEl = overlay.querySelector('[data-confirm-icon]');
+    const cancelBtn = overlay.querySelector('[data-modal-close].btn');
     const fallbackIcons = {
       danger: 'fas fa-exclamation-triangle',
       success: 'fas fa-circle-check',
@@ -176,12 +209,42 @@ const Modal = (() => {
     btn.className = `btn btn-${type}`;
     overlay.dataset.busy = '0';
     overlay.dataset.closeOnSuccess = '0';
+    overlay.__confirmCancelAction = null;
 
     // Remove previous listeners
     const newBtn = btn.cloneNode(true);
     btn.parentNode.replaceChild(newBtn, btn);
     newBtn.textContent = confirmText;
     newBtn.className = `btn btn-${type}`;
+
+    if (cancelBtn) {
+      const newCancelBtn = cancelBtn.cloneNode(true);
+      cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+      newCancelBtn.textContent = cancelText;
+
+      overlay.__confirmCancelAction = async () => {
+        if (overlay.dataset.busy === '1') return;
+        const loadingText = /supprim/i.test(cancelText) ? 'Suppression...' : 'Traitement...';
+        setConfirmBusy(overlay, newCancelBtn, true, loadingText);
+        try {
+          if (typeof onCancel === 'function') {
+            await onCancel();
+          } else {
+            close(overlay, true);
+          }
+        } catch (err) {
+          Toast.error('Erreur', err?.message || 'Une erreur est survenue.');
+        } finally {
+          setConfirmBusy(overlay, newCancelBtn, false);
+        }
+      };
+
+      newCancelBtn.addEventListener('click', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        await overlay.__confirmCancelAction();
+      });
+    }
 
     newBtn.addEventListener('click', async () => {
       if (overlay.dataset.busy === '1') return;
@@ -211,6 +274,12 @@ const Modal = (() => {
     const closeBtn = e.target.closest('[data-modal-close]');
     if (closeBtn) {
       const overlay = closeBtn.closest('.modal-overlay');
+      if (overlay?.id === 'confirmModal') {
+        Promise.resolve(runConfirmDismiss(overlay)).then((handled) => {
+          if (!handled) close(overlay);
+        });
+        return;
+      }
       close(overlay);
     }
   });
@@ -883,7 +952,7 @@ const CrmDrafts = (() => {
     debounceMs: Number(window.CRM_DRAFTS_CONFIG?.debounceMs || 1500),
     promptOnLoad: true,
     autoLoad: true,
-    renderUi: true,
+    renderUi: false,
   };
 
   function attach(formRef, options = {}) {
@@ -899,6 +968,8 @@ const CrmDrafts = (() => {
       restoring: false,
       resumed: false,
       prompted: false,
+      skipExitPersist: false,
+      initialData: {},
     };
 
     const draftInput = ensureDraftInput(form);
@@ -919,6 +990,7 @@ const CrmDrafts = (() => {
 
     form.__crmDraftManager = api;
     bind();
+    captureInitialData();
 
     if (settings.autoLoad !== false) {
       window.setTimeout(() => {
@@ -946,6 +1018,26 @@ const CrmDrafts = (() => {
         if (shouldIgnoreEvent(event)) return;
         scheduleSave();
       }, true);
+
+      window.addEventListener('pagehide', flushPendingSave, true);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          flushPendingSave();
+        }
+      });
+    }
+
+    function captureInitialData() {
+      state.initialData = normalizeDraftValue(collectRawData()) || {};
+    }
+
+    function collectRawData() {
+      let data = serializeForm(form);
+      if (typeof settings.collect === 'function') {
+        data = settings.collect(data, form, api) || data;
+      }
+
+      return data;
     }
 
     function shouldIgnoreEvent(event) {
@@ -962,6 +1054,7 @@ const CrmDrafts = (() => {
 
     function scheduleSave() {
       clearTimeout(state.timer);
+      state.skipExitPersist = false;
       setStatus('Sauvegarde...', 'muted');
       state.timer = window.setTimeout(() => {
         saveNow();
@@ -999,21 +1092,13 @@ const CrmDrafts = (() => {
       if (state.loading || state.restoring) return null;
       if (typeof settings.shouldSave === 'function' && settings.shouldSave() === false) return null;
 
-      let data = serializeForm(form);
-      if (typeof settings.collect === 'function') {
-        data = settings.collect(data, form, api) || data;
-      }
-
-      if (!hasMeaningfulValue(data)) {
+      const payload = buildPayload();
+      if (!payload) {
         return null;
       }
 
       state.loading = true;
-      const res = await Http.post(settings.saveUrl, {
-        type: resolveType(),
-        route: resolveRoute(),
-        data,
-      });
+      const res = await Http.post(settings.saveUrl, payload);
       state.loading = false;
 
       if (!res.ok || !res.data?.data) {
@@ -1026,7 +1111,7 @@ const CrmDrafts = (() => {
       state.prompted = false;
       draftInput.value = state.draft.id || '';
       refreshUi();
-      setStatus('Sauvegardee ' + formatRelativeTime(state.draft.updated_at), 'success');
+      setStatus('Sauvegardée ' + formatRelativeTime(state.draft.updated_at), 'success');
       emitStateChange();
 
       if (typeof settings.onSaved === 'function') {
@@ -1053,9 +1138,9 @@ const CrmDrafts = (() => {
       state.resumed = true;
       state.prompted = false;
       refreshUi();
-      setStatus('Brouillon restaure', 'success');
+      setStatus('Brouillon restauré', 'success');
       emitStateChange();
-      Toast.success('Brouillon', 'Le formulaire a ete restaure.');
+      Toast.success('Brouillon', 'Le formulaire a été restauré.');
     }
 
     async function discard() {
@@ -1064,9 +1149,10 @@ const CrmDrafts = (() => {
         await Http.delete(settings.deleteUrlBase + '/' + draftId);
       }
 
-      complete();
-      setStatus('Brouillon supprime', 'muted');
-      Toast.success('Brouillon', 'Le brouillon a ete supprime.');
+      state.skipExitPersist = true;
+      resetLocal();
+      setStatus('Brouillon supprimé', 'muted');
+      Toast.success('Brouillon', 'Le brouillon a été supprimé.');
     }
 
     function resetLocal() {
@@ -1080,7 +1166,67 @@ const CrmDrafts = (() => {
     }
 
     function complete() {
+      state.skipExitPersist = true;
       resetLocal();
+    }
+
+    function buildPayload() {
+      const rawData = collectRawData();
+      const normalizedData = normalizeDraftValue(rawData) || {};
+      if (!hasMeaningfulValue(normalizedData)) {
+        return null;
+      }
+
+      const changedData = extractChangedDraftData(normalizedData, state.initialData) || {};
+      if (!hasMeaningfulValue(changedData)) {
+        return null;
+      }
+
+      if (typeof settings.isMeaningfulData === 'function') {
+        const isMeaningful = settings.isMeaningfulData(changedData, form, api, {
+          rawData,
+          normalizedData,
+          initialData: state.initialData,
+        });
+
+        if (isMeaningful === false) {
+          return null;
+        }
+      }
+
+      return {
+        type: resolveType(),
+        route: resolveRoute(),
+        data: changedData,
+      };
+    }
+
+    function flushPendingSave() {
+      clearTimeout(state.timer);
+      state.timer = null;
+
+      if (state.restoring || state.skipExitPersist) return;
+      if (typeof settings.shouldSave === 'function' && settings.shouldSave() === false) return;
+
+      const payload = buildPayload();
+      if (!payload) return;
+
+      try {
+        fetch(settings.saveUrl, {
+          method: 'POST',
+          credentials: 'same-origin',
+          keepalive: true,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify(payload),
+        });
+      } catch (e) {
+        // Ignore unload persistence failures.
+      }
     }
 
     function promptResumeIfAvailable() {
@@ -1097,9 +1243,13 @@ const CrmDrafts = (() => {
         title: 'Brouillon disponible',
         message: 'Un brouillon ' + resolveLabel() + ' est disponible. Voulez-vous le reprendre ?',
         confirmText: 'Reprendre',
+        cancelText: 'Annuler et supprimer',
         type: 'info',
         onConfirm: async () => {
           await resume();
+        },
+        onCancel: async () => {
+          await discard();
         },
       });
     }
@@ -1320,6 +1470,102 @@ const CrmDrafts = (() => {
     return String(value ?? '').trim() !== '';
   }
 
+  function normalizeDraftValue(value) {
+    if (Array.isArray(value)) {
+      const items = value
+        .map((item) => normalizeDraftValue(item))
+        .filter((item) => item !== undefined);
+
+      return items.length ? items : undefined;
+    }
+
+    if (value && typeof value === 'object') {
+      const entries = Object.entries(value).reduce((carry, [key, item]) => {
+        const normalized = normalizeDraftValue(item);
+        if (normalized !== undefined) {
+          carry[key] = normalized;
+        }
+        return carry;
+      }, {});
+
+      return Object.keys(entries).length ? entries : undefined;
+    }
+
+    if (value == null) {
+      return undefined;
+    }
+
+    if (typeof value === 'string') {
+      const normalized = value.trim();
+      return normalized === '' ? undefined : normalized;
+    }
+
+    if (typeof value === 'number') {
+      return Number.isNaN(value) ? undefined : value;
+    }
+
+    if (typeof value === 'boolean') {
+      return value ? true : undefined;
+    }
+
+    return value;
+  }
+
+  function extractChangedDraftData(currentValue, initialValue) {
+    if (currentValue === undefined) {
+      return undefined;
+    }
+
+    if (Array.isArray(currentValue)) {
+      return isSameDraftValue(currentValue, initialValue) ? undefined : currentValue;
+    }
+
+    if (currentValue && typeof currentValue === 'object') {
+      if (!initialValue || Array.isArray(initialValue) || typeof initialValue !== 'object') {
+        return currentValue;
+      }
+
+      const changedEntries = Object.entries(currentValue).reduce((carry, [key, value]) => {
+        const changed = extractChangedDraftData(value, initialValue[key]);
+        if (changed !== undefined) {
+          carry[key] = changed;
+        }
+        return carry;
+      }, {});
+
+      return Object.keys(changedEntries).length ? changedEntries : undefined;
+    }
+
+    return isSameDraftValue(currentValue, initialValue) ? undefined : currentValue;
+  }
+
+  function isSameDraftValue(left, right) {
+    if (left === right) {
+      return true;
+    }
+
+    if (Array.isArray(left) || Array.isArray(right)) {
+      if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+        return false;
+      }
+
+      return left.every((item, index) => isSameDraftValue(item, right[index]));
+    }
+
+    if (left && right && typeof left === 'object' && typeof right === 'object') {
+      const leftKeys = Object.keys(left);
+      const rightKeys = Object.keys(right);
+
+      if (leftKeys.length !== rightKeys.length) {
+        return false;
+      }
+
+      return leftKeys.every((key) => isSameDraftValue(left[key], right[key]));
+    }
+
+    return false;
+  }
+
   function normalizeCheckboxValue(value) {
     if (typeof value === 'boolean') return value;
     if (typeof value === 'number') return value === 1;
@@ -1395,8 +1641,34 @@ const AutomationSuggestions = (() => {
     return window.CRM_AUTOMATION_ROUTES || {};
   }
 
+  function parseResumeIds(value) {
+    return String(value || '')
+      .split(',')
+      .map((item) => Number(String(item).trim()))
+      .filter((item) => Number.isInteger(item) && item > 0);
+  }
+
+  function clearResumeParams() {
+    const url = new URL(window.location.href);
+    ['automation_resume', 'automation_suggestion_ids', 'automation_provider'].forEach((key) => {
+      url.searchParams.delete(key);
+    });
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  }
+
   function pendingItems() {
     return state.items.filter((item) => item.status === 'pending' && item.is_actionable);
+  }
+
+  function openAutomationTarget(targetUrl, targetBlank) {
+    if (!targetUrl) return;
+
+    if (targetBlank) {
+      const opened = window.open(targetUrl, '_blank', 'noopener');
+      if (opened) return;
+    }
+
+    window.location.href = targetUrl;
   }
 
   function updateItems(updatedItems = []) {
@@ -1437,8 +1709,9 @@ const AutomationSuggestions = (() => {
     list.innerHTML = state.items.map((item) => {
       const actionable = item.status === 'pending' && item.is_actionable;
       const targetUrl = item.integration?.target_url ? esc(item.integration.target_url) : '';
+      const targetBlank = item.integration?.target_blank ? ' target="_blank" rel="noopener"' : '';
       const openLink = targetUrl
-        ? `<a class="btn btn-secondary btn-sm" href="${targetUrl}"><i class="fas fa-up-right-from-square"></i> Ouvrir</a>`
+        ? `<a class="btn btn-secondary btn-sm" href="${targetUrl}"${targetBlank}><i class="fas fa-up-right-from-square"></i> Ouvrir</a>`
         : '';
 
       return `
@@ -1480,24 +1753,34 @@ const AutomationSuggestions = (() => {
     const response = await Http.post(endpointTemplate.replace('__ID__', id), {});
     if (button) CrmForm.setLoading(button, false);
 
-    if (!response.ok) {
-      Toast.error('Automation', response.data?.message || 'Operation automation impossible.');
+    const payload = response.data?.data || {};
+    const eventData = payload?.event || {};
+
+    if (Array.isArray(payload?.suggestions)) {
+      updateItems(payload.suggestions);
+      render();
+    }
+
+    if (eventData?.status === 'failed') {
+      handleAutomationFailure(eventData, response.data?.message || 'Cette automation a échoué.');
       return;
     }
 
-    updateItems(response.data?.data?.suggestions || []);
-    render();
-    Toast.success('Automation', response.data?.message || 'Suggestion mise a jour.');
+    if (!response.ok) {
+      Toast.error('Automation', response.data?.message || 'Opération automation impossible.');
+      return;
+    }
 
-    const eventData = response.data?.data?.event || {};
+    Toast.success('Automation', response.data?.message || 'Suggestion mise à jour.');
     const targetUrl = eventData?.target_url || eventData?.response?.target_url || null;
+    const targetBlank = Boolean(eventData?.target_blank || eventData?.response?.target_blank);
     if (action === 'accept' && eventData?.status === 'completed' && targetUrl) {
       const modal = getModal();
       if (modal) {
         Modal.close(modal);
       }
       window.setTimeout(() => {
-        window.location.href = targetUrl;
+        openAutomationTarget(targetUrl, targetBlank);
       }, 220);
     }
   }
@@ -1517,18 +1800,55 @@ const AutomationSuggestions = (() => {
     if (button) CrmForm.setLoading(button, false);
 
     if (!response.ok) {
-      Toast.error('Automation', response.data?.message || 'Traitement groupe impossible.');
+      if (Array.isArray(response.data?.data?.suggestions)) {
+        updateItems(response.data.data.suggestions);
+        render();
+      }
+      const errors = Array.isArray(response.data?.data?.errors) ? response.data.data.errors : [];
+      const reconnectError = errors.find((item) => item?.event?.requires_reconnect && item?.event?.reconnect_url);
+      if (reconnectError) {
+        handleAutomationFailure(reconnectError.event, reconnectError.message || response.data?.message || 'Certaines automations ont échoué.');
+        return;
+      }
+      Toast.error('Automation', response.data?.message || 'Traitement groupé impossible.');
       return;
     }
 
     updateItems(response.data?.data?.suggestions || []);
     render();
-    Toast.success('Automation', response.data?.message || 'Suggestions mises a jour.');
+    Toast.success('Automation', response.data?.message || 'Suggestions mises à jour.');
 
     const errorCount = Array.isArray(response.data?.data?.errors) ? response.data.data.errors.length : 0;
     if (errorCount > 0) {
-      Toast.warning('Automation', `${errorCount} suggestion(s) n ont pas pu etre traitees.`);
+      Toast.warning('Automation', `${errorCount} suggestion(s) n'ont pas pu être traitées.`);
+      const reconnectError = response.data.data.errors.find((item) => item?.event?.requires_reconnect && item?.event?.reconnect_url);
+      if (reconnectError) {
+        handleAutomationFailure(reconnectError.event, reconnectError.message || 'Un service externe doit être reconnecté avant de rejouer ces automations.');
+      }
     }
+  }
+
+  function handleAutomationFailure(eventData, fallbackMessage) {
+    const message = eventData?.last_error || fallbackMessage || 'Cette automation a échoué.';
+    const reconnectUrl = eventData?.reconnect_url || null;
+    const reconnectLabel = eventData?.reconnect_label || 'Reconnecter';
+    const reconnectTitle = reconnectLabel;
+
+    if (eventData?.requires_reconnect && reconnectUrl && window.Modal && typeof window.Modal.confirm === 'function') {
+      Modal.confirm({
+        title: reconnectTitle,
+        message,
+        confirmText: reconnectLabel,
+        cancelText: 'Fermer',
+        type: 'warning',
+        onConfirm: async () => {
+          window.location.href = reconnectUrl;
+        },
+      });
+      return;
+    }
+
+    Toast.error('Automation', message);
   }
 
   function init() {
@@ -1569,6 +1889,54 @@ const AutomationSuggestions = (() => {
     booted = true;
   }
 
+  async function resumeFromQuery() {
+    init();
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('automation_resume') !== '1') {
+      return;
+    }
+
+    const ids = parseResumeIds(params.get('automation_suggestion_ids'));
+    const providerSlug = params.get('automation_provider') || '';
+    clearResumeParams();
+
+    if (!ids.length || !routes().list) {
+      return;
+    }
+
+    const response = await Http.get(routes().list, {
+      ids,
+      status: 'pending',
+      limit: Math.max(ids.length, 1),
+    });
+
+    if (!response.ok) {
+      Toast.error('Automation', response.data?.message || 'Impossible de recharger la suggestion en attente.');
+      return;
+    }
+
+    const suggestions = Array.isArray(response.data?.data?.suggestions)
+      ? response.data.data.suggestions.filter((item) => ids.includes(Number(item.id)))
+      : [];
+
+    if (!suggestions.length) {
+      Toast.info('Automation', "Cette suggestion n'est plus en attente.");
+      return;
+    }
+
+    const providerLabel = suggestions[0]?.integration?.label
+      || providerSlug.replace(/-/g, ' ')
+      || 'ce service';
+
+    open({
+      should_prompt: true,
+      title: 'Suggestion en attente à reprendre',
+      subtitle: `${providerLabel} est reconnecté. Vous pouvez maintenant relancer cette suggestion.`,
+      suggestions,
+    });
+  }
+
   function open(payload, options = {}) {
     init();
     const { modal } = getEls();
@@ -1592,10 +1960,15 @@ const AutomationSuggestions = (() => {
     });
   }
 
-  return { open, render };
+  return { open, render, resumeFromQuery };
 })();
 
 window.AutomationSuggestions = AutomationSuggestions;
+window.setTimeout(() => {
+  if (window.AutomationSuggestions?.resumeFromQuery) {
+    window.AutomationSuggestions.resumeFromQuery();
+  }
+}, 0);
 
 /* ============================================================
    TAGS INPUT

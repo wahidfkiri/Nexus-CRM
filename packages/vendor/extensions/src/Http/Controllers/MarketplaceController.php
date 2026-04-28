@@ -270,7 +270,7 @@ class MarketplaceController extends Controller
             'category_label' => $e->category_label,
             'category_icon'  => $e->category_icon,
             'category_color' => $e->category_color,
-            'icon'           => $e->icon,
+            'icon'           => $e->icon_class,
             'icon_url'       => $e->icon_url,
             'icon_bg_color'  => $e->icon_bg_color,
             'pricing_type'   => $e->pricing_type,

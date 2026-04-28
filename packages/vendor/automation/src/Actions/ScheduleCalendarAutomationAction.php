@@ -25,15 +25,17 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
 
     public function execute(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion = null): array
     {
-        return match ((string) $automationEvent->action_type) {
-            'create_followup_meeting' => $this->createFollowupMeeting($automationEvent, $suggestion),
-            'schedule_invoice_reminder' => $this->scheduleInvoiceReminder($automationEvent, $suggestion),
-            'schedule_quote_followup' => $this->scheduleQuoteFollowup($automationEvent, $suggestion),
-            'schedule_project_kickoff' => $this->scheduleProjectKickoff($automationEvent, $suggestion),
-            'schedule_project_task_calendar' => $this->scheduleProjectTaskCalendar($automationEvent, $suggestion),
-            'schedule_user_onboarding_meeting' => $this->scheduleUserOnboardingMeeting($automationEvent, $suggestion),
-            default => throw new RuntimeException('Type de planification calendrier non pris en charge.'),
-        };
+        return $this->withReconnectHandling('google-calendar', function () use ($automationEvent, $suggestion) {
+            return match ((string) $automationEvent->action_type) {
+                'create_followup_meeting' => $this->createFollowupMeeting($automationEvent, $suggestion),
+                'schedule_invoice_reminder' => $this->scheduleInvoiceReminder($automationEvent, $suggestion),
+                'schedule_quote_followup' => $this->scheduleQuoteFollowup($automationEvent, $suggestion),
+                'schedule_project_kickoff' => $this->scheduleProjectKickoff($automationEvent, $suggestion),
+                'schedule_project_task_calendar' => $this->scheduleProjectTaskCalendar($automationEvent, $suggestion),
+                'schedule_user_onboarding_meeting' => $this->scheduleUserOnboardingMeeting($automationEvent, $suggestion),
+                default => throw new RuntimeException('Type de planification calendrier non pris en charge.'),
+            };
+        });
     }
 
     protected function createFollowupMeeting(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array

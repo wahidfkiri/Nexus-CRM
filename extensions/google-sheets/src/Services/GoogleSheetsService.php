@@ -78,8 +78,9 @@ class GoogleSheetsService
 
     public function exchangeCode(string $code, int $tenantId, int $userId): GoogleSheetsToken
     {
-        $client    = $this->makeClient();
+        $client = $this->makeClient();
         $tokenData = $client->fetchAccessTokenWithAuthCode($code);
+        $existingToken = GoogleSheetsToken::forTenant($tenantId)->first();
 
         if (isset($tokenData['error'])) {
             throw new RuntimeException((string) ($tokenData['error_description'] ?? $tokenData['error']));
@@ -92,9 +93,9 @@ class GoogleSheetsService
         $token = GoogleSheetsToken::updateOrCreate(
             ['tenant_id' => $tenantId],
             [
-                'connected_by'     => $userId,
-                'access_token'     => $tokenData['access_token'] ?? '',
-                'refresh_token'    => $tokenData['refresh_token'] ?? null,
+                'connected_by' => $userId,
+                'access_token' => $tokenData['access_token'] ?? '',
+                'refresh_token' => $tokenData['refresh_token'] ?? $existingToken?->refresh_token,
                 'token_expires_at' => isset($tokenData['expires_in'])
                     ? now()->addSeconds((int) $tokenData['expires_in'])
                     : now()->addHour(),

@@ -7,6 +7,7 @@ use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ClientsImport implements ToModel, WithHeadingRow, WithValidation
 {
@@ -30,9 +31,19 @@ class ClientsImport implements ToModel, WithHeadingRow, WithValidation
 
     public function rules(): array
     {
+        $tenantId = (int) (Auth::user()->tenant_id ?? 0);
+
         return [
             'company_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:clients,email',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('clients', 'email')->where(function ($query) use ($tenantId) {
+                    return $query
+                        ->where('tenant_id', $tenantId)
+                        ->whereNull('deleted_at');
+                }),
+            ],
             'type' => 'in:entreprise,particulier,startup',
             'status' => 'in:actif,inactif,en_attente',
         ];

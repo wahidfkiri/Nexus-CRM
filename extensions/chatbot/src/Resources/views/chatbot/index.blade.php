@@ -1,17 +1,20 @@
 @extends('chatbot::layouts.chatbot')
 
-@section('title', 'Chatbot')
+@section('title', data_get($currentExtensionMeta, 'name', 'Chatbot'))
 
 @section('chatbot_breadcrumb')
   <a href="{{ route('marketplace.index') }}">Applications</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Chatbot</span>
+  <span style="color:var(--c-ink)">{{ data_get($currentExtensionMeta, 'name', 'Chatbot') }}</span>
 @endsection
 
 @section('chatbot_content')
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Chatbot Interne</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => (data_get($currentExtensionMeta, 'icon_url') ?: data_get($currentExtensionMeta, 'icon', 'fas fa-comments')), 'bg' => '#e0f2fe', 'color' => '#0ea5e9', 'alt' => data_get($currentExtensionMeta, 'name', 'Chatbot')])
+      <h1 style="margin:0;">{{ data_get($currentExtensionMeta, 'name', 'Chatbot') }}</h1>
+    </div>
     <p>Messagerie collaborative en temps reel avec salons, emojis et partage de fichiers.</p>
   </div>
   <div class="page-header-actions">

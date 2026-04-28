@@ -12,7 +12,10 @@
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Devis</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-file-signature', 'bg' => '#e0f2fe', 'color' => '#0369a1', 'alt' => 'Devis'])
+      <h1 style="margin:0;">Devis</h1>
+    </div>
     <p>Gérez vos propositions commerciales et convertissez-les en factures</p>
   </div>
   <div class="page-header-actions">

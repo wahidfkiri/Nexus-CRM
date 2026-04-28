@@ -1,17 +1,20 @@
 @extends('slack::layouts.slack')
 
-@section('title', 'Slack')
+@section('title', data_get($currentExtensionMeta, 'name', 'Slack'))
 
 @section('slack_breadcrumb')
   <a href="{{ route('marketplace.index') }}">Applications</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Slack</span>
+  <span style="color:var(--c-ink)">{{ data_get($currentExtensionMeta, 'name', 'Slack') }}</span>
 @endsection
 
 @section('slack_content')
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Slack</h1>
+    <div class="page-title-heading">
+      @include('layouts.partials.page-title-icon', ['icon' => (data_get($currentExtensionMeta, 'icon_url') ?: data_get($currentExtensionMeta, 'icon', 'fab fa-slack')), 'bg' => '#f3e8ff', 'color' => '#4A154B', 'alt' => data_get($currentExtensionMeta, 'name', 'Slack')])
+      <h1 style="margin:0;">{{ data_get($currentExtensionMeta, 'name', 'Slack') }}</h1>
+    </div>
     <p>Messagerie equipe Slack avec synchronisation API et temps reel Socket.IO.</p>
   </div>
   <div class="page-header-actions">
@@ -179,4 +182,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
-

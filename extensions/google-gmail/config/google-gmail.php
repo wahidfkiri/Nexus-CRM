@@ -28,6 +28,18 @@ return [
         'refresh_buffer' => 300,
     ],
 
+    'socket' => [
+        'enabled' => filter_var(env('GOOGLE_GMAIL_SOCKET_IO_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'client_url' => env('GOOGLE_GMAIL_SOCKET_IO_URL', 'http://127.0.0.1:6004'),
+        'path' => env('GOOGLE_GMAIL_SOCKET_IO_PATH', '/socket.io'),
+        'namespace' => env('GOOGLE_GMAIL_SOCKET_IO_NAMESPACE', '/'),
+        'emit_url' => env('GOOGLE_GMAIL_SOCKET_IO_EMIT_URL', 'http://127.0.0.1:6004/emit'),
+        'server_token' => env('GOOGLE_GMAIL_SOCKET_IO_SERVER_TOKEN'),
+        'transports' => ['websocket', 'polling'],
+        'scheduler_enabled' => filter_var(env('GOOGLE_GMAIL_SOCKET_IO_SCHEDULER_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'scheduler_preview_limit' => (int) env('GOOGLE_GMAIL_SOCKET_IO_PREVIEW_LIMIT', 25),
+    ],
+
     'mailbox_labels' => [
         'INBOX',
         'SENT',
