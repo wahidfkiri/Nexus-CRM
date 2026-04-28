@@ -18,3 +18,18 @@ yarn-error.log
 /.vscode
 rr
 .rr.yaml
+
+# Local desktop / socket artifacts
+/desktop/tauri/node_modules/
+/desktop/tauri/dist/
+/desktop/tauri/tauri-dev.log
+/desktop/tauri/tauri-dev.err.log
+/desktop/tauri/src-tauri/target/
+/desktop/tauri/src-tauri/gen/
+/extensions/google-gmail/socket-server/node_modules/
+/extensions/google-gmail/socket-server/*.log
+
+# Local backups
+/.env.bak-*
+/storage/app/*.backup-*
+/storage/app/hosts.backup-*
