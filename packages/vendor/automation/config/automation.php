@@ -27,11 +27,23 @@ return [
         'client_created' => [
             \Vendor\Automation\SuggestionProviders\ClientCreatedSuggestionProvider::class,
         ],
+        'supplier_created' => [
+            \Vendor\Automation\SuggestionProviders\SupplierCreatedSuggestionProvider::class,
+        ],
         'invoice_created' => [
             \Vendor\Automation\SuggestionProviders\InvoiceCreatedSuggestionProvider::class,
         ],
         'quote_created' => [
             \Vendor\Automation\SuggestionProviders\QuoteCreatedSuggestionProvider::class,
+        ],
+        'stock_order_created' => [
+            \Vendor\Automation\SuggestionProviders\StockOrderCreatedSuggestionProvider::class,
+        ],
+        'delivery_note_validated' => [
+            \Vendor\Automation\SuggestionProviders\DeliveryNoteValidatedSuggestionProvider::class,
+        ],
+        'stock_low_threshold_reached' => [
+            \Vendor\Automation\SuggestionProviders\LowStockThresholdReachedSuggestionProvider::class,
         ],
         'project_created' => [
             \Vendor\Automation\SuggestionProviders\ProjectCreatedSuggestionProvider::class,
@@ -51,12 +63,24 @@ return [
         'send_welcome_email' => \Vendor\Automation\Actions\SendEmailAutomationAction::class,
         'create_followup_meeting' => \Vendor\Automation\Actions\ScheduleCalendarAutomationAction::class,
         'create_quote' => \Vendor\Automation\Actions\CreateQuoteAutomationAction::class,
+        'append_client_sheet_row' => \Vendor\Automation\Actions\AppendGoogleSheetRowAutomationAction::class,
+        'create_client_google_doc' => \Vendor\Automation\Actions\CreateGoogleDocAutomationAction::class,
+        'append_supplier_sheet_row' => \Vendor\Automation\Actions\AppendGoogleSheetRowAutomationAction::class,
+        'create_supplier_google_doc' => \Vendor\Automation\Actions\CreateGoogleDocAutomationAction::class,
         'send_invoice_email' => \Vendor\Automation\Actions\SendEmailAutomationAction::class,
         'schedule_invoice_reminder' => \Vendor\Automation\Actions\ScheduleCalendarAutomationAction::class,
         'create_payment_followup_task' => \Vendor\Automation\Actions\CreateProjectTaskAutomationAction::class,
+        'append_invoice_sheet_row' => \Vendor\Automation\Actions\AppendGoogleSheetRowAutomationAction::class,
+        'create_invoice_google_doc' => \Vendor\Automation\Actions\CreateGoogleDocAutomationAction::class,
         'send_quote_email' => \Vendor\Automation\Actions\SendEmailAutomationAction::class,
         'schedule_quote_followup' => \Vendor\Automation\Actions\ScheduleCalendarAutomationAction::class,
         'create_quote_followup_task' => \Vendor\Automation\Actions\CreateProjectTaskAutomationAction::class,
+        'append_stock_order_sheet_row' => \Vendor\Automation\Actions\AppendGoogleSheetRowAutomationAction::class,
+        'create_stock_order_google_doc' => \Vendor\Automation\Actions\CreateGoogleDocAutomationAction::class,
+        'append_delivery_note_sheet_row' => \Vendor\Automation\Actions\AppendGoogleSheetRowAutomationAction::class,
+        'create_delivery_note_google_doc' => \Vendor\Automation\Actions\CreateGoogleDocAutomationAction::class,
+        'append_low_stock_sheet_row' => \Vendor\Automation\Actions\AppendGoogleSheetRowAutomationAction::class,
+        'create_low_stock_google_doc' => \Vendor\Automation\Actions\CreateGoogleDocAutomationAction::class,
         'schedule_project_kickoff' => \Vendor\Automation\Actions\ScheduleCalendarAutomationAction::class,
         'schedule_project_task_calendar' => \Vendor\Automation\Actions\ScheduleCalendarAutomationAction::class,
         'send_team_invitation_followup_email' => \Vendor\Automation\Actions\SendEmailAutomationAction::class,

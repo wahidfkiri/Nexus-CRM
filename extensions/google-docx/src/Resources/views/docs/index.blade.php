@@ -215,7 +215,11 @@ document.addEventListener('DOMContentLoaded', function () {
   @endif
 
   @if(session('error'))
-  Toast.error('Erreur', @json(session('error')));
+  if (window.GoogleDocxModule?.handleFailure) {
+    window.GoogleDocxModule.handleFailure('Erreur', @json(session('error')), 'Une erreur Google Docs est survenue.');
+  } else {
+    Toast.error('Erreur', @json(session('error')));
+  }
   @endif
 });
 </script>

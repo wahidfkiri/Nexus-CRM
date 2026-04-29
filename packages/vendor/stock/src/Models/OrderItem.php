@@ -28,4 +28,9 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Article::class);
     }
+
+    public function deliveryNoteItems()
+    {
+        return $this->hasMany(DeliveryNoteItem::class, 'stock_order_item_id');
+    }
 }

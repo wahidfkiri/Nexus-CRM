@@ -69,6 +69,7 @@
 
   /* Layout */
   --sidebar-w:  260px;
+  --sidebar-w-collapsed: 92px;
   --header-h:   64px;
   --content-px: 32px;
 
@@ -114,12 +115,13 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
   position: fixed;
   top: 0; left: 0; bottom: 0;
   z-index: 50;
-  transition: transform var(--dur-slow) var(--ease);
+  transition: width var(--dur-base) var(--ease), transform var(--dur-slow) var(--ease);
 }
 .sidebar-brand {
   display: flex; align-items: center; gap: 12px;
   padding: 20px 24px;
   border-bottom: 1px solid rgba(255,255,255,.08);
+  transition: padding var(--dur-base) var(--ease), justify-content var(--dur-base) var(--ease);
 }
 .sidebar-brand-icon {
   width: 36px; height: 36px;
@@ -169,9 +171,10 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
   font-size: 10px; font-weight: var(--fw-bold);
   color: rgba(255,255,255,.3);
   letter-spacing: 1.2px; text-transform: uppercase;
+  transition: opacity var(--dur-fast) var(--ease);
 }
 .sidebar-nav a {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 12px;
   padding: 10px 20px;
   color: rgba(255,255,255,.65);
   text-decoration: none; font-size: 13.5px; font-weight: var(--fw-medium);
@@ -188,7 +191,14 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
   background: var(--c-accent);
   color: #fff;
 }
-.sidebar-nav a i { width: 18px; text-align: center; font-size: 14px; }
+.sidebar-nav a i { width: 22px; text-align: center; font-size: 17px; flex: 0 0 22px; }
+.sidebar-link-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .sidebar-nav a .nav-badge {
   margin-left: auto;
   background: rgba(255,255,255,.15);
@@ -199,13 +209,14 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
 .sidebar-footer {
   padding: 16px;
   border-top: 1px solid rgba(255,255,255,.08);
+  transition: padding var(--dur-base) var(--ease);
 }
 .sidebar-user {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 10px;
   border-radius: var(--r-sm);
   cursor: pointer;
-  transition: background var(--dur-fast);
+  transition: background var(--dur-fast), padding var(--dur-base) var(--ease), justify-content var(--dur-base) var(--ease);
 }
 .sidebar-user:hover { background: rgba(255,255,255,.06); }
 .sidebar-user-avatar {
@@ -227,6 +238,7 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
   max-width: 100%;
   overflow-x: hidden;
   padding-top: var(--header-h);
+  transition: margin-left var(--dur-base) var(--ease);
 }
 
 .crm-top-loader {
@@ -264,6 +276,7 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
   right: 0;
   z-index: 40;
   gap: 16px;
+  transition: left var(--dur-base) var(--ease);
 }
 .crm-header-title { font-family: var(--ff-display); font-size: 18px; font-weight: var(--fw-semi); color: var(--c-ink); }
 .crm-header-breadcrumb {

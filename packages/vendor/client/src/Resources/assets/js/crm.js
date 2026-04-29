@@ -2077,11 +2077,54 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mobile sidebar toggle
   const sidebar = document.querySelector('.crm-sidebar');
   const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebarCompactToggle = document.getElementById('sidebarCompactToggle');
   const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+  const sidebarCompactStorageKey = 'crm.sidebar.compact';
   const closeSidebar = () => sidebar?.classList.remove('open');
+  const readSidebarCompactPreference = () => {
+    try {
+      return window.localStorage.getItem(sidebarCompactStorageKey) === '1';
+    } catch (_) {
+      return false;
+    }
+  };
+  const writeSidebarCompactPreference = (value) => {
+    try {
+      window.localStorage.setItem(sidebarCompactStorageKey, value ? '1' : '0');
+    } catch (_) {
+      // noop
+    }
+  };
+  let sidebarCompactPreferred = readSidebarCompactPreference();
+  const applySidebarCompactState = () => {
+    const enabled = !!sidebarCompactPreferred && window.innerWidth > 1024;
+    document.body.classList.toggle('sidebar-collapsed', enabled);
+
+    if (!sidebarCompactToggle) {
+      return;
+    }
+
+    sidebarCompactToggle.classList.toggle('is-active', enabled);
+    sidebarCompactToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+
+    const label = enabled
+      ? 'Réafficher les libellés du menu'
+      : 'Afficher le menu en mode icônes';
+
+    sidebarCompactToggle.setAttribute('aria-label', label);
+    sidebarCompactToggle.setAttribute('data-tooltip', enabled ? 'Réafficher le menu complet' : 'Mode compact du menu');
+  };
+
+  applySidebarCompactState();
 
   sidebarToggle?.addEventListener('click', () => {
     sidebar?.classList.toggle('open');
+  });
+
+  sidebarCompactToggle?.addEventListener('click', () => {
+    sidebarCompactPreferred = !sidebarCompactPreferred;
+    writeSidebarCompactPreference(sidebarCompactPreferred);
+    applySidebarCompactState();
   });
 
   sidebarBackdrop?.addEventListener('click', closeSidebar);
@@ -2104,6 +2147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.innerWidth > 1024) {
       closeSidebar();
     }
+    applySidebarCompactState();
   });
 
   const sidebarNav = document.querySelector('.sidebar-nav');

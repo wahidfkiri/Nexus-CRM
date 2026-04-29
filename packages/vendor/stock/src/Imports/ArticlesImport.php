@@ -2,25 +2,31 @@
 
 namespace Vendor\Stock\Imports;
 
-use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Vendor\Stock\Models\Article;
+use Maatwebsite\Excel\Row;
+use Vendor\Stock\Services\StockService;
 
-class ArticlesImport implements ToModel, WithHeadingRow
+class ArticlesImport implements OnEachRow, WithHeadingRow
 {
-    public function model(array $row)
+    public function __construct(protected ?StockService $service = null)
     {
-        return new Article([
-            'tenant_id' => auth()->user()->tenant_id,
-            'user_id' => auth()->id(),
-            'sku' => $row['sku'] ?? null,
-            'name' => $row['nom'] ?? ($row['name'] ?? null),
-            'unit' => $row['unite'] ?? ($row['unit'] ?? 'piece'),
-            'purchase_price' => (float)($row['prix_achat'] ?? 0),
-            'sale_price' => (float)($row['prix_vente'] ?? ($row['sale_price'] ?? 0)),
-            'stock_quantity' => (float)($row['stock'] ?? 0),
-            'min_stock' => (float)($row['stock_minimum'] ?? 0),
-            'status' => in_array(($row['statut'] ?? 'active'), ['active', 'inactive'], true) ? ($row['statut'] ?? 'active') : 'active',
+        $this->service = $this->service ?: app(StockService::class);
+    }
+
+    public function onRow(Row $row): void
+    {
+        $data = $row->toArray();
+
+        $this->service->createArticle([
+            'sku' => $data['sku'] ?? null,
+            'name' => $data['nom'] ?? ($data['name'] ?? null),
+            'unit' => $data['unite'] ?? ($data['unit'] ?? 'piece'),
+            'purchase_price' => (float) ($data['prix_achat'] ?? 0),
+            'sale_price' => (float) ($data['prix_vente'] ?? ($data['sale_price'] ?? 0)),
+            'opening_stock' => (float) ($data['stock'] ?? 0),
+            'min_stock' => (float) ($data['stock_minimum'] ?? 0),
+            'status' => in_array(($data['statut'] ?? 'active'), ['active', 'inactive'], true) ? ($data['statut'] ?? 'active') : 'active',
         ]);
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
+use Vendor\Automation\Services\AutomationSuggestionPresenter;
 use Vendor\Stock\Exports\ArticlesExport;
 use Vendor\Stock\Exports\OrdersExport;
 use Vendor\Stock\Exports\SuppliersExport;
@@ -65,10 +66,22 @@ class StockController extends Controller
     {
         try {
             $article = $this->service->createArticle($request->validated());
+            $automation = null;
+
+            if ((float) $article->min_stock > 0 && $article->is_low_stock) {
+                $automation = app(AutomationSuggestionPresenter::class)->buildPromptForSource(
+                    'stock_low_threshold_reached',
+                    $article::class,
+                    $article->getKey(),
+                    (int) $article->tenant_id
+                );
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Article cree avec succes.',
                 'redirect' => route('stock.articles.show', $article),
+                'automation' => $automation,
             ], 201);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -77,7 +90,10 @@ class StockController extends Controller
 
     public function articlesShow(Article $article)
     {
-        $article->load('supplier');
+        $article->load([
+            'supplier',
+            'movements' => fn ($query) => $query->with('deliveryNote')->latest('happened_at')->limit(10),
+        ]);
         return view('stock::articles.show', compact('article'));
     }
 
@@ -109,6 +125,7 @@ class StockController extends Controller
     public function articlesData(Request $request): JsonResponse
     {
         $query = Article::with('supplier')
+            ->withCurrentStock()
             ->search($request->string('search')->toString())
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')->toString()))
             ->when($request->filled('supplier_id'), fn ($q) => $q->where('supplier_id', $request->integer('supplier_id')));
@@ -128,9 +145,11 @@ class StockController extends Controller
 
     public function articlesSearch(Request $request): JsonResponse
     {
-        $items = Article::search($request->string('q')->toString())
+        $items = Article::query()
+            ->withCurrentStock()
+            ->search($request->string('q')->toString())
             ->limit(15)
-            ->get(['id', 'name', 'sku', 'sale_price', 'unit', 'stock_quantity']);
+            ->get(['stock_articles.id', 'name', 'sku', 'sale_price', 'unit']);
         return response()->json(['success' => true, 'data' => $items]);
     }
 
@@ -159,7 +178,17 @@ class StockController extends Controller
     public function suppliersStore(SupplierRequest $request): JsonResponse
     {
         $supplier = $this->service->createSupplier($request->validated());
-        return response()->json(['success' => true, 'message' => 'Fournisseur cree.', 'redirect' => route('stock.suppliers.show', $supplier)], 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Fournisseur cree.',
+            'redirect' => route('stock.suppliers.show', $supplier),
+            'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
+                'supplier_created',
+                $supplier::class,
+                $supplier->getKey(),
+                (int) $supplier->tenant_id
+            ),
+        ], 201);
     }
 
     public function suppliersShow(Supplier $supplier)
@@ -217,7 +246,7 @@ class StockController extends Controller
     {
         return view('stock::orders.create', [
             'suppliers' => Supplier::orderBy('name')->get(),
-            'articles' => Article::where('status', 'active')->orderBy('name')->get(['id', 'name', 'sku', 'sale_price', 'unit']),
+            'articles' => Article::where('status', 'active')->orderBy('name')->get(['id', 'name', 'sku', 'purchase_price', 'sale_price', 'unit']),
             'statuses' => config('stock.order_statuses', []),
         ]);
     }
@@ -225,12 +254,22 @@ class StockController extends Controller
     public function ordersStore(OrderRequest $request): JsonResponse
     {
         $order = $this->service->createOrder($request->validated());
-        return response()->json(['success' => true, 'message' => 'Commande creee.', 'redirect' => route('stock.orders.show', $order)], 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Commande creee.',
+            'redirect' => route('stock.orders.show', $order),
+            'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
+                'stock_order_created',
+                $order::class,
+                $order->getKey(),
+                (int) $order->tenant_id
+            ),
+        ], 201);
     }
 
     public function ordersShow(Order $order)
     {
-        $order->load(['supplier', 'items.article']);
+        $order->load(['supplier', 'items.article', 'deliveryNotes.items.article']);
         return view('stock::orders.show', compact('order'));
     }
 
@@ -240,7 +279,7 @@ class StockController extends Controller
         return view('stock::orders.edit', [
             'order' => $order,
             'suppliers' => Supplier::orderBy('name')->get(),
-            'articles' => Article::where('status', 'active')->orderBy('name')->get(['id', 'name', 'sku', 'sale_price', 'unit']),
+            'articles' => Article::where('status', 'active')->orderBy('name')->get(['id', 'name', 'sku', 'purchase_price', 'sale_price', 'unit']),
             'statuses' => config('stock.order_statuses', []),
         ]);
     }
@@ -293,8 +332,19 @@ class StockController extends Controller
 
     public function ordersReceive(Order $order): JsonResponse
     {
-        $this->service->receiveOrder($order);
-        return response()->json(['success' => true, 'message' => 'Commande marquee comme recue.']);
+        $note = $this->service->receiveOrder($order);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Commande receptionnee via un bon de livraison valide.',
+            'redirect' => route('stock.delivery-notes.show', $note),
+            'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
+                'delivery_note_validated',
+                $note::class,
+                $note->getKey(),
+                (int) $note->tenant_id
+            ),
+        ]);
     }
 
     public function ordersExportExcel()

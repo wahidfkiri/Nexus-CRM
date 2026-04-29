@@ -38,6 +38,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class, 'order_id')->orderBy('position');
     }
 
+    public function deliveryNotes()
+    {
+        return $this->hasMany(DeliveryNote::class, 'stock_order_id')->orderByDesc('created_at');
+    }
+
     public function scopeSearch($query, ?string $term)
     {
         if (!$term) {

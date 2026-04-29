@@ -21,6 +21,10 @@ use Vendor\Client\Models\Client;
 use Vendor\Extensions\Models\TenantExtension;
 use Vendor\Invoice\Models\Invoice;
 use Vendor\Invoice\Models\Quote;
+use Vendor\Stock\Models\Article;
+use Vendor\Stock\Models\DeliveryNote;
+use Vendor\Stock\Models\Order;
+use Vendor\Stock\Models\Supplier;
 use Vendor\User\Models\UserInvitation;
 use Throwable;
 
@@ -141,7 +145,7 @@ abstract class AbstractAutomationAction implements AutomationAction
 
             if ($this->requiresReconnectForProvider($providerSlug, $normalized)) {
                 $label = AutomationReconnectResolver::providerLabel($providerSlug);
-                throw new RuntimeException($label . " n'est plus connecté pour ce tenant. Reconnectez " . $label . ' puis relancez cette automation.');
+                throw new RuntimeException($label . " n'est plus connecte pour ce tenant. Reconnectez " . $label . ' puis relancez cette automation.');
             }
 
             throw $e;
@@ -174,7 +178,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             'slack' => str_contains($message, 'slack')
                 && (
                     str_contains($message, 'not connected')
-                    || str_contains($message, "n'est pas connecté")
+                    || str_contains($message, "n'est pas connecte")
                     || str_contains($message, 'n est pas connecte')
                     || str_contains($message, 'bot token')
                     || str_contains($message, 'reconnect')
@@ -228,6 +232,67 @@ abstract class AbstractAutomationAction implements AutomationAction
         }
 
         return $quote;
+    }
+
+    protected function loadStockOrder(int $tenantId, int $orderId): Order
+    {
+        $order = Order::query()
+            ->with(['supplier', 'items.article', 'deliveryNotes'])
+            ->where('tenant_id', $tenantId)
+            ->whereKey($orderId)
+            ->first();
+
+        if (!$order) {
+            throw new RuntimeException('Commande fournisseur introuvable pour cette automation.');
+        }
+
+        return $order;
+    }
+
+    protected function loadArticle(int $tenantId, int $articleId): Article
+    {
+        $article = Article::query()
+            ->with(['supplier', 'movements'])
+            ->withCurrentStock()
+            ->where('tenant_id', $tenantId)
+            ->whereKey($articleId)
+            ->first();
+
+        if (!$article) {
+            throw new RuntimeException('Article introuvable pour cette automation.');
+        }
+
+        return $article;
+    }
+
+    protected function loadSupplier(int $tenantId, int $supplierId): Supplier
+    {
+        $supplier = Supplier::query()
+            ->with(['articles', 'orders', 'deliveryNotes'])
+            ->where('tenant_id', $tenantId)
+            ->whereKey($supplierId)
+            ->first();
+
+        if (!$supplier) {
+            throw new RuntimeException('Fournisseur introuvable pour cette automation.');
+        }
+
+        return $supplier;
+    }
+
+    protected function loadDeliveryNote(int $tenantId, int $deliveryNoteId): DeliveryNote
+    {
+        $deliveryNote = DeliveryNote::query()
+            ->with(['supplier', 'client', 'order', 'invoice', 'items.article'])
+            ->where('tenant_id', $tenantId)
+            ->whereKey($deliveryNoteId)
+            ->first();
+
+        if (!$deliveryNote) {
+            throw new RuntimeException('Bon de livraison introuvable pour cette automation.');
+        }
+
+        return $deliveryNote;
     }
 
     protected function loadProject(int $tenantId, int $projectId): Project
@@ -504,6 +569,10 @@ abstract class AbstractAutomationAction implements AutomationAction
             Invoice::class => $this->routeUrl('invoices.show', $model),
             Quote::class => $this->routeUrl('invoices.quotes.show', $model),
             Project::class => $this->routeUrl('projects.show', $model),
+            Supplier::class => $this->routeUrl('stock.suppliers.show', $model),
+            Article::class => $this->routeUrl('stock.articles.show', $model),
+            Order::class => $this->routeUrl('stock.orders.show', $model),
+            DeliveryNote::class => $this->routeUrl('stock.delivery-notes.show', $model),
             default => null,
         };
     }

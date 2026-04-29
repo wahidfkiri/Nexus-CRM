@@ -36,7 +36,7 @@ class InvoiceCreatedSuggestionProvider implements SuggestionProvider
             $suggestions[] = SuggestionDefinition::make(
                 $gmailInstalled ? 'send_invoice_email' : 'install_extension',
                 $gmailInstalled
-                    ? "Envoyer la facture à {$clientName}"
+                    ? "Envoyer la facture a {$clientName}"
                     : 'Installer Google Gmail pour envoyer la facture',
                 0.94,
                 $gmailInstalled
@@ -69,12 +69,46 @@ class InvoiceCreatedSuggestionProvider implements SuggestionProvider
             );
         }
 
+        $sheetsInstalled = $this->extensions->isActive($tenantId, 'google-sheets');
+        $suggestions[] = SuggestionDefinition::make(
+            $sheetsInstalled ? 'append_invoice_sheet_row' : 'install_extension',
+            $sheetsInstalled
+                ? 'Ajouter cette facture dans le suivi Google Sheets'
+                : 'Installer Google Sheets pour suivre les factures dans un tableau partage',
+            0.87,
+            $sheetsInstalled
+                ? ['invoice_id' => $invoiceId]
+                : ['extension_slug' => 'google-sheets', 'invoice_id' => $invoiceId, 'target_action' => 'append_invoice_sheet_row'],
+            [
+                'integration' => 'google-sheets',
+                'installed' => $sheetsInstalled,
+                'target_url' => $this->extensions->targetUrl('google-sheets'),
+            ]
+        );
+
+        $docsInstalled = $this->extensions->isActive($tenantId, 'google-docx');
+        $suggestions[] = SuggestionDefinition::make(
+            $docsInstalled ? 'create_invoice_google_doc' : 'install_extension',
+            $docsInstalled
+                ? 'Generer une version Word de cette facture dans Google Docs'
+                : 'Installer Google Docs pour generer une version editable de la facture',
+            0.83,
+            $docsInstalled
+                ? ['invoice_id' => $invoiceId]
+                : ['extension_slug' => 'google-docx', 'invoice_id' => $invoiceId, 'target_action' => 'create_invoice_google_doc'],
+            [
+                'integration' => 'google-docx',
+                'installed' => $docsInstalled,
+                'target_url' => $this->extensions->targetUrl('google-docx'),
+            ]
+        );
+
         $projectsInstalled = $this->extensions->isActive($tenantId, 'projects');
         $suggestions[] = SuggestionDefinition::make(
             $projectsInstalled ? 'create_payment_followup_task' : 'install_extension',
             $projectsInstalled
-                ? 'Créer une tâche de suivi de paiement'
-                : 'Installer Projets pour suivre le paiement dans une tâche',
+                ? 'Creer une tache de suivi de paiement'
+                : 'Installer Projets pour suivre le paiement dans une tache',
             0.79,
             $projectsInstalled
                 ? ['invoice_id' => $invoiceId]
@@ -90,7 +124,7 @@ class InvoiceCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $notionInstalled ? 'create_notion_page' : 'install_extension',
             $notionInstalled
-                ? 'Créer une page Notion de suivi de facture'
+                ? 'Creer une page Notion de suivi de facture'
                 : 'Installer Notion Workspace pour documenter le suivi de paiement',
             0.8,
             $notionInstalled

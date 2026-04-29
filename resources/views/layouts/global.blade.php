@@ -25,6 +25,12 @@
     .global-search-badge{font-size:10px;padding:2px 7px;border-radius:999px;background:var(--c-accent-xl);color:var(--c-accent);font-weight:700;white-space:nowrap}
     .global-search-empty,.global-search-loading{padding:12px 10px;color:var(--c-ink-50);font-size:13px}
     .crm-header-actions{display:flex;align-items:center;gap:10px}
+    .sidebar-compact-toggle.is-active{
+      background:rgba(37,99,235,.12);
+      color:var(--c-accent);
+      border-color:rgba(37,99,235,.18);
+      box-shadow:0 8px 24px rgba(37,99,235,.12);
+    }
     .crm-layout > .crm-main{padding-top:var(--header-h, 64px)}
     .crm-layout > .crm-main > .crm-header{
       position:fixed !important;
@@ -203,9 +209,9 @@
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      width:22px;
-      height:22px;
-      border-radius:7px;
+      width:26px;
+      height:26px;
+      border-radius:8px;
       margin-right:1px;
       background:var(--app-bg, #334155);
       color:#fff;
@@ -213,11 +219,11 @@
     }
     .sidebar-app-link .app-icon-badge i{
       width:auto;
-      font-size:11px;
+      font-size:13px;
     }
     .sidebar-app-link .app-icon-badge img{
-      width:14px;
-      height:14px;
+      width:16px;
+      height:16px;
       object-fit:contain;
       display:block;
     }
@@ -270,6 +276,10 @@
       background:rgba(255,255,255,.1);
       color:#fff;
       flex:0 0 auto;
+    }
+    .sidebar-brand-copy{
+      min-width:0;
+      transition:opacity .18s ease, transform .18s ease;
     }
     #sidebarToggle{display:none}
     .sidebar-mobile-backdrop{
@@ -345,8 +355,42 @@
     #userDropdown.open .dropdown-menu{
       transform:translate(0,0);
     }
+    body.sidebar-collapsed .crm-layout{--sidebar-w:92px}
+    body.sidebar-collapsed .sidebar-brand{
+      justify-content:center;
+      padding:18px 12px;
+    }
+    body.sidebar-collapsed .sidebar-brand-copy,
+    body.sidebar-collapsed .sidebar-nav-section,
+    body.sidebar-collapsed .sidebar-nav-subsection,
+    body.sidebar-collapsed .sidebar-link-label,
+    body.sidebar-collapsed .sidebar-market-link .nav-badge,
+    body.sidebar-collapsed .sidebar-user-copy,
+    body.sidebar-collapsed #userDropdown .sidebar-user .user-chevron{
+      display:none !important;
+    }
+    body.sidebar-collapsed .sidebar-nav a{
+      justify-content:center;
+      gap:0;
+      padding:12px 10px;
+      margin:4px 10px;
+    }
+    body.sidebar-collapsed .sidebar-app-link .app-icon-badge{
+      margin-right:0;
+    }
+    body.sidebar-collapsed .sidebar-footer{
+      padding:14px 10px;
+    }
+    body.sidebar-collapsed .sidebar-user{
+      justify-content:center;
+      padding:8px;
+    }
+    body.sidebar-collapsed #userDropdown .dropdown-menu{
+      left:calc(100% - 8px);
+    }
     @media (max-width: 1024px){
       #sidebarToggle{display:inline-flex !important}
+      .sidebar-compact-toggle{display:none !important}
       .crm-layout > .crm-main > .crm-header{left:0}
       .crm-sidebar{
         z-index:60;
@@ -388,7 +432,7 @@
         onerror="this.style.display='none'; var fb=this.nextElementSibling; if(fb){fb.style.display='inline-flex';}"
       >
       <div class="sidebar-brand-fallback"><i class="fas fa-layer-group"></i></div>
-      <div>
+      <div class="sidebar-brand-copy">
         <div class="sidebar-brand-name">Nexiste CRM</div>
         <div class="sidebar-brand-tag">SaaS Platform</div>
       </div>
@@ -396,13 +440,21 @@
 
     <nav class="sidebar-nav">
       <div class="sidebar-nav-section">Principal</div>
-      <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}"><i class="fas fa-home"></i> Tableau de bord</a>
+      <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}" data-tooltip="Tableau de bord">
+        <i class="fas fa-home"></i>
+        <span class="sidebar-link-label">Tableau de bord</span>
+      </a>
 
       <div class="sidebar-nav-section">Utilisateurs</div>
-      <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') || request()->routeIs('rbac.*') ? 'active' : '' }}"><i class="fa fa-user-cog"></i> Utilisateurs</a>
+      <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') || request()->routeIs('rbac.*') ? 'active' : '' }}" data-tooltip="Utilisateurs">
+        <i class="fa fa-user-cog"></i>
+        <span class="sidebar-link-label">Utilisateurs</span>
+      </a>
       <div class="sidebar-nav-section">Applications</div>
       <a href="{{ route('marketplace.index') }}" class="sidebar-market-link {{ request()->routeIs('marketplace.*') ? 'active' : '' }}" data-tooltip="Marketplace: installer de nouvelles applications">
-        <i class="fa fa-store"></i> Marketplace <span class="nav-badge">Store</span>
+        <i class="fa fa-store"></i>
+        <span class="sidebar-link-label">Marketplace</span>
+        <span class="nav-badge">Store</span>
       </a>
       @php
         $appRoutePatterns = [
@@ -441,7 +493,7 @@
                   <i class="{{ $installedApp->icon }}"></i>
                 @endif
               </span>
-              {{ $installedApp->name }}
+              <span class="sidebar-link-label">{{ $installedApp->name }}</span>
             </a>
           @endforeach
         @endforeach
@@ -450,9 +502,9 @@
 
     <div class="sidebar-footer">
       <div class="dropdown" id="userDropdown" style="margin-top:4px;">
-        <div class="sidebar-user" data-dropdown-toggle>
+        <div class="sidebar-user" data-dropdown-toggle data-tooltip="{{ auth()->user()->name ?? 'Utilisateur' }}: profil et paramètres">
           <div class="sidebar-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}</div>
-          <div style="flex:1;min-width:0;">
+          <div class="sidebar-user-copy" style="flex:1;min-width:0;">
             <div class="sidebar-user-name">{{ auth()->user()->name ?? 'Utilisateur' }}</div>
             <div class="sidebar-user-role">{{ auth()->user()->role_in_tenant ?? 'Membre' }}</div>
           </div>
@@ -479,6 +531,9 @@
   <div class="crm-main">
     <header class="crm-header">
       <button id="sidebarToggle" class="btn-icon" aria-label="Ouvrir le menu"><i class="fas fa-bars"></i></button>
+      <button class="btn-icon sidebar-compact-toggle" id="sidebarCompactToggle" type="button" aria-label="Réduire le menu en mode icônes" aria-pressed="false" data-tooltip="Réduire le menu: afficher seulement les icônes">
+        <i class="fas fa-bolt"></i>
+      </button>
       <div class="crm-header-breadcrumb">@yield('breadcrumb')</div>
       <div class="crm-header-spacer"></div>
 
@@ -945,7 +1000,7 @@ window.CRM_AUTH_ROUTES = {
       }));
       const articleRows = (articles?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.name || 'Article',
-        sub: `SKU: ${row.sku || '-'} | Stock: ${safeNum(row.stock_quantity)}`,
+        sub: `SKU: ${row.sku || '-'} | Stock: ${safeNum(row.current_stock ?? row.stock_quantity)}`,
         url: `/stock/articles/${row.id}`,
         icon: 'fa-box',
       }));
@@ -1230,7 +1285,7 @@ window.CRM_AUTH_ROUTES = {
         if (type === 'article') {
           const { ok, data } = await Http.get('/stock/articles/data/search', { q });
           if (!ok || !data.data) return;
-          const rows = data.data.map((a) => ({ id: a.id, label: `${a.name}${a.sku ? ' (' + a.sku + ')' : ''}`, sub: `Stock: ${a.stock_quantity ?? 0}`, payload: a }));
+          const rows = data.data.map((a) => ({ id: a.id, label: `${a.name}${a.sku ? ' (' + a.sku + ')' : ''}`, sub: `Stock: ${a.current_stock ?? a.stock_quantity ?? 0}`, payload: a }));
           renderSuggestions(rows, (choice) => {
             appendLine({ article_id: choice.payload.id, description: choice.payload.name, reference: choice.payload.sku || '', quantity: 1, unit: choice.payload.unit || 'piece', unit_price: choice.payload.sale_price || 0 });
             searchInput.value = choice.label;

@@ -302,7 +302,11 @@ document.addEventListener('DOMContentLoaded', function () {
   @endif
 
   @if(session('error'))
-  Toast.error('Erreur', @json(session('error')));
+  if (window.GoogleSheetsModule?.handleFailure) {
+    window.GoogleSheetsModule.handleFailure('Erreur', @json(session('error')), 'Une erreur Google Sheets est survenue.');
+  } else {
+    Toast.error('Erreur', @json(session('error')));
+  }
   @endif
 });
 </script>

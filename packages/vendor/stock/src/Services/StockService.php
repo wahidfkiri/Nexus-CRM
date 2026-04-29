@@ -3,49 +3,114 @@
 namespace Vendor\Stock\Services;
 
 use Illuminate\Support\Facades\DB;
+use Vendor\Stock\Events\LowStockThresholdReached;
+use Vendor\Stock\Events\StockOrderCreated;
+use Vendor\Stock\Events\SupplierCreated;
 use Vendor\Stock\Models\Article;
+use Vendor\Stock\Models\DeliveryNote;
 use Vendor\Stock\Models\Order;
 use Vendor\Stock\Models\OrderItem;
+use Vendor\Stock\Models\StockMovement;
 use Vendor\Stock\Models\Supplier;
 use Vendor\Stock\Repositories\StockRepository;
 
 class StockService
 {
-    public function __construct(protected ?StockRepository $repo = null)
-    {
+    public function __construct(
+        protected ?StockRepository $repo = null,
+        protected ?StockMovementService $movementService = null,
+        protected ?DeliveryNoteService $deliveryNoteService = null,
+    ) {
         $this->repo = $this->repo ?: new StockRepository();
+        $this->movementService = $this->movementService ?: app(StockMovementService::class);
+        $this->deliveryNoteService = $this->deliveryNoteService ?: app(DeliveryNoteService::class);
     }
 
     public function stats(): array
     {
         return [
             'articles_total' => Article::count(),
-            'articles_low_stock' => Article::whereColumn('stock_quantity', '<=', 'min_stock')->count(),
+            'articles_low_stock' => $this->movementService->lowStockCount(),
             'suppliers_total' => Supplier::count(),
             'orders_total' => Order::count(),
             'orders_draft' => Order::where('status', 'draft')->count(),
             'orders_received' => Order::where('status', 'received')->count(),
+            'delivery_notes_total' => DeliveryNote::count(),
+            'movements_total' => StockMovement::count(),
         ];
     }
 
     public function createArticle(array $data): Article
     {
+        $openingStock = (float) ($data['opening_stock'] ?? 0);
+        unset($data['opening_stock'], $data['stock_quantity']);
+
         $data['tenant_id'] = auth()->user()->tenant_id;
         $data['user_id'] = auth()->id();
-        return Article::create($data);
+
+        return DB::transaction(function () use ($data, $openingStock) {
+            $article = Article::create($data);
+            $this->movementService->createOpeningBalanceMovement($article, $openingStock);
+            $article = $article->fresh('supplier');
+
+            DB::afterCommit(function () use ($article): void {
+                $lowStockArticle = $this->movementService
+                    ->lowStockArticlesForIds([(int) $article->id])
+                    ->first();
+
+                if ($lowStockArticle) {
+                    event(new LowStockThresholdReached($lowStockArticle, [
+                        'detected_via' => 'article_created',
+                    ]));
+                }
+            });
+
+            return $article;
+        });
     }
 
     public function updateArticle(Article $article, array $data): Article
     {
-        $article->update($data);
-        return $article->fresh('supplier');
+        unset($data['opening_stock'], $data['stock_quantity']);
+
+        return DB::transaction(function () use ($article, $data) {
+            $article->update($data);
+            $article = $article->fresh('supplier');
+
+            DB::afterCommit(function () use ($article): void {
+                $lowStockArticle = $this->movementService
+                    ->lowStockArticlesForIds([(int) $article->id])
+                    ->first();
+
+                if ($lowStockArticle) {
+                    event(new LowStockThresholdReached($lowStockArticle, [
+                        'detected_via' => 'article_updated',
+                    ]));
+                } else {
+                    $this->movementService->expireRecoveredLowStockSuggestions([(int) $article->id]);
+                }
+            });
+
+            return $article;
+        });
     }
 
     public function createSupplier(array $data): Supplier
     {
         $data['tenant_id'] = auth()->user()->tenant_id;
         $data['user_id'] = auth()->id();
-        return Supplier::create($data);
+
+        return DB::transaction(function () use ($data) {
+            $supplier = Supplier::create($data);
+
+            DB::afterCommit(function () use ($supplier): void {
+                event(new SupplierCreated($supplier, [
+                    'created_via' => request()?->expectsJson() ? 'api' : 'web',
+                ]));
+            });
+
+            return $supplier;
+        });
     }
 
     public function updateSupplier(Supplier $supplier, array $data): Supplier
@@ -72,7 +137,15 @@ class StockService
 
             $this->syncOrderItems($order, $data['items'] ?? []);
             $this->recalculateOrder($order);
-            return $order->fresh(['supplier', 'items.article']);
+            $order = $order->fresh(['supplier', 'items.article']);
+
+            DB::afterCommit(function () use ($order): void {
+                event(new StockOrderCreated($order, [
+                    'created_via' => request()?->expectsJson() ? 'api' : 'web',
+                ]));
+            });
+
+            return $order;
         });
     }
 
@@ -95,22 +168,9 @@ class StockService
         });
     }
 
-    public function receiveOrder(Order $order): Order
+    public function receiveOrder(Order $order)
     {
-        return DB::transaction(function () use ($order) {
-            foreach ($order->items as $item) {
-                if ($item->article_id) {
-                    Article::where('id', $item->article_id)->increment('stock_quantity', (float) $item->quantity);
-                }
-            }
-
-            $order->update([
-                'status' => 'received',
-                'received_date' => now()->toDateString(),
-            ]);
-
-            return $order->fresh(['supplier', 'items.article']);
-        });
+        return $this->deliveryNoteService->createValidatedReceiptFromOrder($order);
     }
 
     public function syncOrderItems(Order $order, array $items): void

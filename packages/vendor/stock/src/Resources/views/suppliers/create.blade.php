@@ -13,6 +13,7 @@
   <div class="page-header-left"><h1>Nouveau fournisseur</h1><p>Ajoutez un fournisseur au module stock</p></div>
   <a href="{{ route('stock.suppliers.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Retour</a>
 </div>
+@include('stock::partials.module-nav')
 
 <form id="supplierForm" action="{{ route('stock.suppliers.store') }}" method="POST">
 @csrf

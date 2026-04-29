@@ -42,7 +42,48 @@ const GoogleDocxModule = (() => {
     document.getElementById('gdxAppendBtn')?.addEventListener('click', appendText);
     document.getElementById('gdxReplaceBtn')?.addEventListener('click', replaceText);
   }
-
+  function normalizeReconnectText(message) {
+    return String(message || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+  function isReconnectRequiredMessage(message) {
+    const text = normalizeReconnectText(message);
+    return text.includes('session google docs expiree')
+      || text.includes('reconnectez votre compte google')
+      || text.includes('reconnectez google docs')
+      || text.includes('invalid_grant');
+  }
+  function promptReconnect(message) {
+    const text = String(message || 'Session Google Docs expir\u00e9e ou r\u00e9voqu\u00e9e. Reconnectez votre compte Google.').trim();
+    const reconnectUrl = window.GDOCX_ROUTES?.connect || '';
+    if (!window.Modal || typeof window.Modal.confirm !== 'function' || !reconnectUrl) {
+      Toast.error('Erreur', text);
+      return;
+    }
+    Modal.confirm({
+      title: 'Reconnecter Google Docs ?',
+      message: text,
+      confirmText: 'Reconnecter',
+      type: 'warning',
+      onConfirm: () => {
+        window.location.href = reconnectUrl;
+      },
+      onCancel: () => {
+        window.location.reload();
+      },
+    });
+  }
+  function handleFailure(title, message, fallback) {
+    const resolved = String(message || fallback || 'Une erreur est survenue.').trim();
+    if (isReconnectRequiredMessage(resolved)) {
+      promptReconnect(resolved);
+      return true;
+    }
+    Toast.error(title || 'Erreur', resolved);
+    return false;
+  }
   async function loadStats() {
     const { ok, data } = await Http.get(window.GDOCX_ROUTES.stats);
     if (!ok || !data.success) return;
@@ -62,13 +103,13 @@ const GoogleDocxModule = (() => {
 
     if (!ok || !data.success) {
       if (tbody) tbody.innerHTML = emptyRow('Impossible de charger les documents.');
-      Toast.error('Erreur', data.message || 'Impossible de charger les documents.');
+      handleFailure('Erreur', data?.message, 'Impossible de charger les documents.');
       return;
     }
 
     state.documents = data.data?.documents || [];
     renderDocuments();
-    setText('gdxCount', `${state.documents.length} résultat(s)`);
+    setText('gdxCount', `${state.documents.length} rÃƒÂ©sultat(s)`);
   }
 
   function renderDocuments() {
@@ -76,7 +117,7 @@ const GoogleDocxModule = (() => {
     if (!tbody) return;
 
     if (!state.documents.length) {
-      tbody.innerHTML = emptyRow('Aucun document trouvé.');
+      tbody.innerHTML = emptyRow('Aucun document trouvÃƒÂ©.');
       return;
     }
 
@@ -84,7 +125,7 @@ const GoogleDocxModule = (() => {
       const modified = doc.modified_at ? new Date(doc.modified_at).toLocaleString() : '-';
       const created = doc.created_at ? new Date(doc.created_at).toLocaleString() : '-';
       const shared = doc.is_shared
-        ? '<span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:600;">Partagé</span>'
+        ? '<span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:600;">PartagÃƒÂ©</span>'
         : '';
 
       return `
@@ -147,7 +188,7 @@ const GoogleDocxModule = (() => {
     const { ok, data } = await Http.post(window.GDOCX_ROUTES.createDocument, { title, content });
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible de créer le document.');
+      handleFailure('Erreur', data?.message, 'Impossible de cr?er le document.');
       return;
     }
 
@@ -155,7 +196,7 @@ const GoogleDocxModule = (() => {
     if (contentInput) contentInput.value = '';
     Modal.close(document.getElementById('gdxCreateModal'));
 
-    Toast.success('Succès', data.message || 'Document créé.');
+    Toast.success('SuccÃƒÂ¨s', data.message || 'Document crÃƒÂ©ÃƒÂ©.');
     loadDocuments();
     loadStats();
   }
@@ -163,7 +204,7 @@ const GoogleDocxModule = (() => {
   async function openEditor(doc) {
     const { ok, data } = await Http.get(`${window.GDOCX_ROUTES.documentBase}/${encodeURIComponent(doc.document_id)}`);
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible de charger le document.');
+      handleFailure('Erreur', data?.message, 'Impossible de charger le document.');
       return;
     }
 
@@ -196,11 +237,11 @@ const GoogleDocxModule = (() => {
     );
 
     if (!res.ok || !res.data.success) {
-      Toast.error('Erreur', res.data.message || 'Impossible de renommer le document.');
+      handleFailure('Erreur', res.data?.message, 'Impossible de renommer le document.');
       return;
     }
 
-    Toast.success('Succès', res.data.message || 'Document renommé.');
+    Toast.success('SuccÃƒÂ¨s', res.data.message || 'Document renommÃƒÂ©.');
     loadDocuments();
   }
 
@@ -212,11 +253,11 @@ const GoogleDocxModule = (() => {
     );
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible de dupliquer le document.');
+      handleFailure('Erreur', data?.message, 'Impossible de dupliquer le document.');
       return;
     }
 
-    Toast.success('Succès', data.message || 'Document dupliqué.');
+    Toast.success('SuccÃƒÂ¨s', data.message || 'Document dupliquÃƒÂ©.');
     loadDocuments();
     loadStats();
   }
@@ -224,7 +265,7 @@ const GoogleDocxModule = (() => {
   async function deleteDocument(doc) {
     Modal.confirm({
       title: `Supprimer "${doc.title}" ?`,
-      message: 'Ce document sera supprimé définitivement de Google Drive.',
+      message: 'Ce document sera supprimÃƒÂ© dÃƒÂ©finitivement de Google Drive.',
       confirmText: 'Supprimer',
       type: 'danger',
       onConfirm: async () => {
@@ -235,11 +276,11 @@ const GoogleDocxModule = (() => {
         );
 
         if (!res.ok || !res.data.success) {
-          Toast.error('Erreur', res.data.message || 'Impossible de supprimer le document.');
+          handleFailure('Erreur', res.data?.message, 'Impossible de supprimer le document.');
           return;
         }
 
-        Toast.success('Supprimé', res.data.message || 'Document supprimé.');
+        Toast.success('SupprimÃƒÂ©', res.data.message || 'Document supprimÃƒÂ©.');
         loadDocuments();
         loadStats();
       },
@@ -262,7 +303,7 @@ const GoogleDocxModule = (() => {
     const text = (textEl?.value || '').trim();
 
     if (!text) {
-      Toast.error('Validation', 'Le texte à ajouter est obligatoire.');
+      Toast.error('Validation', 'Le texte ÃƒÂ  ajouter est obligatoire.');
       return;
     }
 
@@ -272,11 +313,11 @@ const GoogleDocxModule = (() => {
     );
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible d\'ajouter le texte.');
+      handleFailure('Erreur', data?.message, 'Impossible d\'ajouter le texte.');
       return;
     }
 
-    Toast.success('Succès', data.message || 'Texte ajouté.');
+    Toast.success('SuccÃƒÂ¨s', data.message || 'Texte ajoutÃƒÂ©.');
 
     if (textEl) textEl.value = '';
     state.currentDocument = data.data;
@@ -296,7 +337,7 @@ const GoogleDocxModule = (() => {
     const replace = (replaceEl?.value || '').trim();
 
     if (!search) {
-      Toast.error('Validation', 'Le texte à rechercher est obligatoire.');
+      Toast.error('Validation', 'Le texte ÃƒÂ  rechercher est obligatoire.');
       return;
     }
 
@@ -306,12 +347,12 @@ const GoogleDocxModule = (() => {
     );
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible de remplacer le texte.');
+      handleFailure('Erreur', data?.message, 'Impossible de remplacer le texte.');
       return;
     }
 
     const changed = data.data?.replace_occurrences ?? 0;
-    Toast.success('Succès', `${changed} occurrence(s) remplacée(s).`);
+    Toast.success('SuccÃƒÂ¨s', `${changed} occurrence(s) remplacÃƒÂ©e(s).`);
 
     state.currentDocument = data.data;
     const current = document.getElementById('gdxCurrentContent');
@@ -323,19 +364,19 @@ const GoogleDocxModule = (() => {
 
   async function disconnect() {
     Modal.confirm({
-      title: 'Déconnecter Google Docs ?',
-      message: 'Les jetons OAuth seront supprimés pour ce tenant.',
-      confirmText: 'Déconnecter',
+      title: 'DÃƒÂ©connecter Google Docs ?',
+      message: 'Les jetons OAuth seront supprimÃƒÂ©s pour ce tenant.',
+      confirmText: 'DÃƒÂ©connecter',
       type: 'danger',
       onConfirm: async () => {
         const { ok, data } = await Http.post(window.GDOCX_ROUTES.disconnect, {});
 
         if (!ok || !data.success) {
-          Toast.error('Erreur', data.message || 'Impossible de déconnecter Google Docs.');
+          handleFailure('Erreur', data?.message, 'Impossible de d?connecter Google Docs.');
           return;
         }
 
-        Toast.success('Déconnecté', data.message || 'Google Docs déconnecté.');
+        Toast.success('DÃƒÂ©connectÃƒÂ©', data.message || 'Google Docs dÃƒÂ©connectÃƒÂ©.');
         setTimeout(() => window.location.reload(), 700);
       },
     });
@@ -365,7 +406,7 @@ const GoogleDocxModule = (() => {
   }
 
   function emptyRow(message) {
-    return `<tr><td colspan="5"><div class="table-empty"><div class="table-empty-icon"><i class="fas fa-file-word"></i></div><h3>Aucune donnée</h3><p>${esc(message)}</p></div></td></tr>`;
+    return `<tr><td colspan="5"><div class="table-empty"><div class="table-empty-icon"><i class="fas fa-file-word"></i></div><h3>Aucune donnÃƒÂ©e</h3><p>${esc(message)}</p></div></td></tr>`;
   }
 
   function setText(id, value) {
@@ -381,6 +422,7 @@ const GoogleDocxModule = (() => {
 
   return {
     boot,
+    handleFailure,
   };
 })();
 

@@ -14,17 +14,17 @@ class Article extends Model
 
     protected $fillable = [
         'tenant_id', 'user_id', 'supplier_id', 'sku', 'name', 'description', 'unit',
-        'purchase_price', 'sale_price', 'stock_quantity', 'min_stock', 'status',
+        'purchase_price', 'sale_price', 'min_stock', 'status',
     ];
 
     protected $casts = [
         'purchase_price' => 'decimal:4',
         'sale_price' => 'decimal:4',
-        'stock_quantity' => 'decimal:4',
         'min_stock' => 'decimal:4',
+        'current_stock' => 'decimal:4',
     ];
 
-    protected $appends = ['is_low_stock'];
+    protected $appends = ['current_stock', 'is_low_stock'];
 
     public function supplier()
     {
@@ -36,9 +36,42 @@ class Article extends Model
         return $this->hasMany(OrderItem::class, 'article_id');
     }
 
+    public function deliveryNoteItems()
+    {
+        return $this->hasMany(DeliveryNoteItem::class, 'article_id');
+    }
+
+    public function movements()
+    {
+        return $this->hasMany(StockMovement::class, 'article_id');
+    }
+
+    public function scopeWithCurrentStock($query)
+    {
+        $articleTable = $this->getTable();
+        $movementTable = (new StockMovement())->getTable();
+
+        return $query->addSelect([
+            'current_stock' => StockMovement::query()
+                ->selectRaw("COALESCE(SUM(CASE WHEN {$movementTable}.direction = 'in' THEN {$movementTable}.quantity ELSE -{$movementTable}.quantity END), 0)")
+                ->whereColumn("{$movementTable}.article_id", "{$articleTable}.id"),
+        ]);
+    }
+
+    public function getCurrentStockAttribute($value): float
+    {
+        if ($value !== null) {
+            return (float) $value;
+        }
+
+        return (float) $this->movements()
+            ->selectRaw("COALESCE(SUM(CASE WHEN direction = 'in' THEN quantity ELSE -quantity END), 0) as stock_balance")
+            ->value('stock_balance');
+    }
+
     public function getIsLowStockAttribute(): bool
     {
-        return (float) $this->stock_quantity <= (float) $this->min_stock;
+        return (float) $this->current_stock <= (float) $this->min_stock;
     }
 
     public function scopeSearch($query, ?string $term)

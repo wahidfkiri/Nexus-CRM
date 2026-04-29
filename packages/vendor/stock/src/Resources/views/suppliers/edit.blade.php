@@ -13,6 +13,7 @@
   <div class="page-header-left"><h1>Modifier {{ $supplier->name }}</h1><p>Mettez a jour les informations fournisseur</p></div>
   <a href="{{ route('stock.suppliers.show', $supplier) }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Retour</a>
 </div>
+@include('stock::partials.module-nav')
 
 <form id="supplierForm" action="{{ route('stock.suppliers.update', $supplier) }}" method="POST">
 @csrf

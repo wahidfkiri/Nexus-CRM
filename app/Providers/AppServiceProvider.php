@@ -92,9 +92,10 @@ class AppServiceProvider extends ServiceProvider
                 $apps = TenantExtension::query()
                     ->where('tenant_id', $tenantId)
                     ->whereIn('status', ['active', 'trial'])
+                    ->whereHas('extension', fn ($query) => $query->where('status', 'active'))
                     ->with('extension')
                     ->get()
-                    ->filter(fn ($activation) => $activation->extension !== null)
+                    ->filter(fn ($activation) => $activation->extension !== null && (string) $activation->extension->status === 'active')
                     ->map(function ($activation) use ($routeMap, $normalizeFaClass) {
                         $extension = $activation->extension;
                         $slug = (string) $extension->slug;

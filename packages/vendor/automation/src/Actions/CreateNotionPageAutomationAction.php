@@ -12,6 +12,9 @@ use Vendor\Automation\Models\AutomationSuggestion;
 use Vendor\Client\Models\Client;
 use Vendor\Invoice\Models\Invoice;
 use Vendor\Invoice\Models\Quote;
+use Vendor\Stock\Models\DeliveryNote;
+use Vendor\Stock\Models\Order;
+use Vendor\Stock\Models\Supplier;
 
 class CreateNotionPageAutomationAction extends AbstractAutomationAction
 {
@@ -26,10 +29,10 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
     {
         return $this->withReconnectHandling('notion-workspace', function () use ($automationEvent, $suggestion) {
             $tenantId = $this->tenantId($automationEvent);
-            $this->assertExtensionActive($tenantId, 'notion-workspace', "Notion Workspace doit être installé pour cette automation.");
+            $this->assertExtensionActive($tenantId, 'notion-workspace', 'Notion Workspace doit etre installe pour cette automation.');
 
             if (!$this->notionService->getToken($tenantId)) {
-                throw new RuntimeException("Notion Workspace n'est pas connecté pour ce tenant.");
+                throw new RuntimeException("Notion Workspace n'est pas connecte pour ce tenant.");
             }
 
             $draft = $this->buildDraft($automationEvent, $suggestion);
@@ -86,14 +89,14 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
         if ($customTitle !== '') {
             return [
                 'title' => $customTitle,
-                'content' => $customContent !== '' ? $customContent : 'Page créée automatiquement depuis une suggestion CRM.',
+                'content' => $customContent !== '' ? $customContent : 'Page creee automatiquement depuis une suggestion CRM.',
                 'icon' => '',
                 'parent_page_id' => $payload['parent_page_id'] ?? null,
                 'client_id' => $payload['client_id'] ?? null,
                 'project_id' => $payload['project_id'] ?? null,
                 'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Documentation')),
-                'notes' => $this->sanitizeText((string) ($payload['notes'] ?? 'Page Notion créée automatiquement depuis le moteur d automation.')),
-                'success_message' => trim((string) ($payload['success_message'] ?? 'Page Notion créée avec succès.')),
+                'notes' => $this->sanitizeText((string) ($payload['notes'] ?? 'Page Notion creee automatiquement depuis le moteur d automation.')),
+                'success_message' => trim((string) ($payload['success_message'] ?? 'Page Notion creee avec succes.')),
             ];
         }
 
@@ -103,16 +106,20 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
             'task_spec' => $this->taskDraft($tenantId, $payload, $suggestion),
             'quote_followup' => $this->quoteDraft($tenantId, $payload, $suggestion),
             'invoice_followup' => $this->invoiceDraft($tenantId, $payload, $suggestion),
+            'supplier_notes' => $this->supplierDraft($tenantId, $payload, $suggestion),
+            'stock_order_note' => $this->stockOrderDraft($tenantId, $payload, $suggestion),
+            'delivery_note_note' => $this->deliveryNoteDraft($tenantId, $payload, $suggestion),
+            'low_stock_note' => $this->lowStockDraft($tenantId, $payload, $suggestion),
             default => [
                 'title' => 'Page Notion CRM',
-                'content' => 'Page créée automatiquement depuis une suggestion CRM.',
+                'content' => 'Page creee automatiquement depuis une suggestion CRM.',
                 'icon' => '',
                 'parent_page_id' => $payload['parent_page_id'] ?? null,
                 'client_id' => $payload['client_id'] ?? null,
                 'project_id' => $payload['project_id'] ?? null,
                 'context_label' => 'Documentation',
-                'notes' => 'Page Notion créée automatiquement depuis le moteur d automation.',
-                'success_message' => 'Page Notion créée avec succès.',
+                'notes' => 'Page Notion creee automatiquement depuis le moteur d automation.',
+                'success_message' => 'Page Notion creee avec succes.',
             ],
         };
     }
@@ -121,7 +128,7 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
     {
         $clientId = $this->modelId($payload, $suggestion, 'client_id', Client::class);
         if (!$clientId) {
-            throw new RuntimeException('Client introuvable pour la création de la page Notion.');
+            throw new RuntimeException('Client introuvable pour la creation de la page Notion.');
         }
 
         $client = $this->loadClient($tenantId, $clientId);
@@ -133,12 +140,12 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
                 'Type de page: Notes client',
                 'Client: ' . $clientName,
                 $client->email ? 'Email: ' . $client->email : null,
-                $client->phone ? 'Téléphone: ' . $client->phone : null,
+                $client->phone ? 'Telephone: ' . $client->phone : null,
                 $client->website ? 'Site web: ' . $client->website : null,
                 '',
                 'A documenter:',
                 '- Contexte commercial',
-                '- Besoins et priorités',
+                '- Besoins et priorites',
                 '- Risques et objections',
                 '- Prochaines actions',
             ])),
@@ -147,8 +154,8 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
             'client_id' => (int) $client->id,
             'project_id' => null,
             'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Notes client')),
-            'notes' => 'Page Notion créée automatiquement après création du client.',
-            'success_message' => 'Page Notion client créée avec succès.',
+            'notes' => 'Page Notion creee automatiquement apres creation du client.',
+            'success_message' => 'Page Notion client creee avec succes.',
         ];
     }
 
@@ -156,7 +163,7 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
     {
         $projectId = $this->modelId($payload, $suggestion, 'project_id', Project::class);
         if (!$projectId) {
-            throw new RuntimeException('Projet introuvable pour la création de la page Notion.');
+            throw new RuntimeException('Projet introuvable pour la creation de la page Notion.');
         }
 
         $project = $this->loadProject($tenantId, $projectId);
@@ -175,16 +182,16 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
                 '- Objectifs du projet',
                 '- Parties prenantes',
                 '- Livrables attendus',
-                '- Risques et dépendances',
-                "- Plan d'exécution",
+                '- Risques et dependances',
+                "- Plan d'execution",
             ])),
             'icon' => '',
             'parent_page_id' => $payload['parent_page_id'] ?? null,
             'client_id' => $project->client_id ? (int) $project->client_id : null,
             'project_id' => (int) $project->id,
             'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Brief projet')),
-            'notes' => 'Page Notion créée automatiquement après création du projet.',
-            'success_message' => 'Page Notion projet créée avec succès.',
+            'notes' => 'Page Notion creee automatiquement apres creation du projet.',
+            'success_message' => 'Page Notion projet creee avec succes.',
         ];
     }
 
@@ -192,24 +199,24 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
     {
         $taskId = $this->modelId($payload, $suggestion, 'task_id', ProjectTask::class);
         if (!$taskId) {
-            throw new RuntimeException('Tâche introuvable pour la création de la page Notion.');
+            throw new RuntimeException('Tache introuvable pour la creation de la page Notion.');
         }
 
         $task = $this->loadProjectTask($tenantId, $taskId);
         $project = $task->project;
 
         return [
-            'title' => 'Tâche - ' . $this->sanitizeText((string) $task->title) . ' - Spec',
+            'title' => 'Tache - ' . $this->sanitizeText((string) $task->title) . ' - Spec',
             'content' => implode(PHP_EOL, array_filter([
-                'Type de page: Spécification de tâche',
-                'Tâche: ' . $this->sanitizeText((string) $task->title),
+                'Type de page: Specification de tache',
+                'Tache: ' . $this->sanitizeText((string) $task->title),
                 $project ? 'Projet: ' . $this->sanitizeText((string) $project->name) : null,
-                $task->due_date ? 'Échéance: ' . $task->due_date : null,
+                $task->due_date ? 'Echeance: ' . $task->due_date : null,
                 $task->description ? 'Description: ' . $this->sanitizeText((string) $task->description) : null,
                 '',
                 'A documenter:',
                 '- Contexte',
-                "- Étapes d'exécution",
+                "- Etapes d'execution",
                 '- Definition of done',
                 '- Points de validation',
             ])),
@@ -217,9 +224,9 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
             'parent_page_id' => $payload['parent_page_id'] ?? null,
             'client_id' => $project?->client_id ? (int) $project->client_id : null,
             'project_id' => $project?->id ? (int) $project->id : null,
-            'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Spécification de tâche')),
-            'notes' => 'Page Notion créée automatiquement pour documenter une tâche projet.',
-            'success_message' => 'Page Notion tâche créée avec succès.',
+            'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Specification de tache')),
+            'notes' => 'Page Notion creee automatiquement pour documenter une tache projet.',
+            'success_message' => 'Page Notion tache creee avec succes.',
         ];
     }
 
@@ -227,7 +234,7 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
     {
         $quoteId = $this->modelId($payload, $suggestion, 'quote_id', Quote::class);
         if (!$quoteId) {
-            throw new RuntimeException('Devis introuvable pour la création de la page Notion.');
+            throw new RuntimeException('Devis introuvable pour la creation de la page Notion.');
         }
 
         $quote = $this->loadQuote($tenantId, $quoteId);
@@ -243,9 +250,9 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
                 $quote->valid_until ? "Valide jusqu'au: " . $quote->valid_until : null,
                 '',
                 'A documenter:',
-                '- Historique des échanges',
+                '- Historique des echanges',
                 '- Objections du client',
-                '- Conditions négociées',
+                '- Conditions negociees',
                 '- Prochaine relance',
             ])),
             'icon' => '',
@@ -253,8 +260,8 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
             'client_id' => $quote->client_id ? (int) $quote->client_id : null,
             'project_id' => $payload['project_id'] ?? null,
             'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Suivi de devis')),
-            'notes' => 'Page Notion créée automatiquement pour suivre un devis.',
-            'success_message' => 'Page Notion devis créée avec succès.',
+            'notes' => 'Page Notion creee automatiquement pour suivre un devis.',
+            'success_message' => 'Page Notion devis creee avec succes.',
         ];
     }
 
@@ -262,7 +269,7 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
     {
         $invoiceId = $this->modelId($payload, $suggestion, 'invoice_id', Invoice::class);
         if (!$invoiceId) {
-            throw new RuntimeException('Facture introuvable pour la création de la page Notion.');
+            throw new RuntimeException('Facture introuvable pour la creation de la page Notion.');
         }
 
         $invoice = $this->loadInvoice($tenantId, $invoiceId);
@@ -276,12 +283,12 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
                 'Reference: ' . $invoiceRef,
                 'Client: ' . $clientName,
                 $invoice->status ? 'Statut: ' . $this->sanitizeText((string) $invoice->status) : null,
-                $invoice->due_date ? "Date d'échéance: " . $invoice->due_date : null,
+                $invoice->due_date ? "Date d'echeance: " . $invoice->due_date : null,
                 '',
                 'A documenter:',
-                '- État du paiement',
-                '- Relances effectuées',
-                '- Blocages signalés',
+                '- Etat du paiement',
+                '- Relances effectuees',
+                '- Blocages signales',
                 '- Prochaine action',
             ])),
             'icon' => '',
@@ -289,8 +296,167 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
             'client_id' => $invoice->client_id ? (int) $invoice->client_id : null,
             'project_id' => $payload['project_id'] ?? null,
             'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Suivi de facture')),
-            'notes' => 'Page Notion créée automatiquement pour suivre une facture.',
-            'success_message' => 'Page Notion facture créée avec succès.',
+            'notes' => 'Page Notion creee automatiquement pour suivre une facture.',
+            'success_message' => 'Page Notion facture creee avec succes.',
+        ];
+    }
+
+    protected function stockOrderDraft(int $tenantId, array $payload, ?AutomationSuggestion $suggestion): array
+    {
+        $orderId = $this->modelId($payload, $suggestion, 'stock_order_id', Order::class);
+        if (!$orderId) {
+            throw new RuntimeException('Commande fournisseur introuvable pour la creation de la page Notion.');
+        }
+
+        $order = $this->loadStockOrder($tenantId, $orderId);
+        $supplierName = $this->sanitizeText((string) optional($order->supplier)->name);
+
+        return [
+            'title' => 'Commande fournisseur - ' . $this->sanitizeText((string) $order->number) . ' - Suivi',
+            'content' => implode(PHP_EOL, array_filter([
+                'Type de page: Suivi de commande fournisseur',
+                'Commande: ' . $this->sanitizeText((string) $order->number),
+                $supplierName !== '' ? 'Fournisseur: ' . $supplierName : null,
+                $order->status ? 'Statut: ' . $this->sanitizeText((string) $order->status) : null,
+                $order->expected_date ? "Date attendue: " . $order->expected_date->format('d/m/Y') : null,
+                $order->reference ? 'Reference: ' . $this->sanitizeText((string) $order->reference) : null,
+                'Nombre de lignes: ' . (string) $order->items->count(),
+                '',
+                'A documenter:',
+                '- Confirmation fournisseur',
+                '- Delais et risques',
+                '- Ecarts quantites / prix',
+                '- Actions de reception',
+                '',
+                'Checklist de suivi:',
+                '- Accuse de reception confirme',
+                '- Date de livraison verifiee',
+                '- Conditions d achat archivees',
+            ])),
+            'icon' => '',
+            'parent_page_id' => $payload['parent_page_id'] ?? null,
+            'client_id' => null,
+            'project_id' => $payload['project_id'] ?? null,
+            'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Suivi commande fournisseur')),
+            'notes' => 'Page Notion creee automatiquement pour documenter une commande fournisseur.',
+            'success_message' => 'Page Notion commande fournisseur creee avec succes.',
+        ];
+    }
+
+    protected function deliveryNoteDraft(int $tenantId, array $payload, ?AutomationSuggestion $suggestion): array
+    {
+        $deliveryNoteId = $this->modelId($payload, $suggestion, 'delivery_note_id', DeliveryNote::class);
+        if (!$deliveryNoteId) {
+            throw new RuntimeException('Bon de livraison introuvable pour la creation de la page Notion.');
+        }
+
+        $deliveryNote = $this->loadDeliveryNote($tenantId, $deliveryNoteId);
+        $counterparty = $deliveryNote->type === 'in'
+            ? $this->sanitizeText((string) optional($deliveryNote->supplier)->name)
+            : $this->sanitizeText((string) optional($deliveryNote->client)->company_name);
+
+        return [
+            'title' => 'BL - ' . $this->sanitizeText((string) $deliveryNote->number) . ' - Trace logistique',
+            'content' => implode(PHP_EOL, array_filter([
+                'Type de page: Trace logistique',
+                'Bon de livraison: ' . $this->sanitizeText((string) $deliveryNote->number),
+                'Type: ' . ($deliveryNote->type === 'in' ? 'Entree' : 'Sortie'),
+                $counterparty !== '' ? 'Tiers: ' . $counterparty : null,
+                $deliveryNote->reference ? 'Reference: ' . $this->sanitizeText((string) $deliveryNote->reference) : null,
+                $deliveryNote->order ? 'Commande liee: ' . $this->sanitizeText((string) $deliveryNote->order->number) : null,
+                'Nombre de lignes: ' . (string) $deliveryNote->items->count(),
+                '',
+                'A documenter:',
+                '- Conformite des quantites',
+                '- Incident ou reserve',
+                '- Documents transmis',
+                '- Action suivante',
+                '',
+                'Points de controle:',
+                '- Signature ou preuve de remise',
+                '- Ecarts identifies',
+                '- Correctif logistique lance si necessaire',
+            ])),
+            'icon' => '',
+            'parent_page_id' => $payload['parent_page_id'] ?? null,
+            'client_id' => $deliveryNote->client_id ? (int) $deliveryNote->client_id : null,
+            'project_id' => $payload['project_id'] ?? null,
+            'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Trace logistique BL')),
+            'notes' => 'Page Notion creee automatiquement pour tracer un bon de livraison.',
+            'success_message' => 'Page Notion bon de livraison creee avec succes.',
+        ];
+    }
+
+    protected function supplierDraft(int $tenantId, array $payload, ?AutomationSuggestion $suggestion): array
+    {
+        $supplierId = $this->modelId($payload, $suggestion, 'supplier_id', Supplier::class);
+        if (!$supplierId) {
+            throw new RuntimeException('Fournisseur introuvable pour la creation de la page Notion.');
+        }
+
+        $supplier = $this->loadSupplier($tenantId, $supplierId);
+
+        return [
+            'title' => 'Fournisseur - ' . $this->sanitizeText((string) $supplier->name) . ' - Notes',
+            'content' => implode(PHP_EOL, array_filter([
+                'Type de page: Notes fournisseur',
+                'Fournisseur: ' . $this->sanitizeText((string) $supplier->name),
+                $supplier->contact_name ? 'Contact principal: ' . $this->sanitizeText((string) $supplier->contact_name) : null,
+                $supplier->email ? 'Email: ' . $this->sanitizeText((string) $supplier->email) : null,
+                $supplier->phone ? 'Telephone: ' . $this->sanitizeText((string) $supplier->phone) : null,
+                $supplier->city ? 'Ville: ' . $this->sanitizeText((string) $supplier->city) : null,
+                $supplier->country ? 'Pays: ' . $this->sanitizeText((string) $supplier->country) : null,
+                '',
+                'A documenter:',
+                '- Conditions tarifaires',
+                '- Delais habituels',
+                '- Niveau de fiabilite',
+                '- Points de contact utiles',
+                '- Historique des incidents',
+            ])),
+            'icon' => '',
+            'parent_page_id' => $payload['parent_page_id'] ?? null,
+            'client_id' => null,
+            'project_id' => $payload['project_id'] ?? null,
+            'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Notes fournisseur')),
+            'notes' => 'Page Notion creee automatiquement pour documenter un fournisseur.',
+            'success_message' => 'Page Notion fournisseur creee avec succes.',
+        ];
+    }
+
+    protected function lowStockDraft(int $tenantId, array $payload, ?AutomationSuggestion $suggestion): array
+    {
+        $articleId = $this->modelId($payload, $suggestion, 'article_id', \Vendor\Stock\Models\Article::class);
+        if (!$articleId) {
+            throw new RuntimeException('Article introuvable pour la creation de la page Notion.');
+        }
+
+        $article = $this->loadArticle($tenantId, $articleId);
+
+        return [
+            'title' => 'Alerte stock - ' . $this->sanitizeText((string) $article->name),
+            'content' => implode(PHP_EOL, array_filter([
+                'Type de page: Alerte stock',
+                'Article: ' . $this->sanitizeText((string) $article->name),
+                $article->sku ? 'SKU: ' . $this->sanitizeText((string) $article->sku) : null,
+                'Stock courant: ' . number_format((float) $article->current_stock, 4, ',', ' ') . ' ' . (string) ($article->unit ?? ''),
+                'Seuil mini: ' . number_format((float) $article->min_stock, 4, ',', ' ') . ' ' . (string) ($article->unit ?? ''),
+                $article->supplier ? 'Fournisseur: ' . $this->sanitizeText((string) $article->supplier->name) : null,
+                '',
+                'A documenter:',
+                '- Cause probable de la baisse',
+                '- Niveau d urgence',
+                '- Decision de reapprovisionnement',
+                '- Responsable du suivi',
+                '- Date de resolution attendue',
+            ])),
+            'icon' => '',
+            'parent_page_id' => $payload['parent_page_id'] ?? null,
+            'client_id' => null,
+            'project_id' => $payload['project_id'] ?? null,
+            'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Alerte stock')),
+            'notes' => 'Page Notion creee automatiquement apres detection d un stock bas.',
+            'success_message' => 'Page Notion alerte stock creee avec succes.',
         ];
     }
 }

@@ -27,6 +27,11 @@ class Supplier extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function deliveryNotes()
+    {
+        return $this->hasMany(DeliveryNote::class);
+    }
+
     public function scopeSearch($query, ?string $term)
     {
         if (!$term) {

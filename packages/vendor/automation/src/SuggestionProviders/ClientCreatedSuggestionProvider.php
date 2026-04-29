@@ -31,7 +31,7 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $calendarInstalled ? 'create_followup_meeting' : 'install_extension',
             $calendarInstalled
-                ? "Créer un rendez-vous de découverte pour {$clientName}"
+                ? "Creer un rendez-vous de decouverte pour {$clientName}"
                 : 'Installer Google Calendar pour planifier un rendez-vous',
             0.89,
             $calendarInstalled
@@ -52,8 +52,8 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $invoiceInstalled ? 'create_quote' : 'install_extension',
             $invoiceInstalled
-                ? "Créer un devis pour {$clientName}"
-                : 'Installer la facturation pour créer un devis',
+                ? "Creer un devis pour {$clientName}"
+                : 'Installer la facturation pour creer un devis',
             0.84,
             $invoiceInstalled
                 ? ['client_id' => $clientId]
@@ -65,11 +65,45 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
             ]
         );
 
+        $sheetsInstalled = $this->extensions->isActive($tenantId, 'google-sheets');
+        $suggestions[] = SuggestionDefinition::make(
+            $sheetsInstalled ? 'append_client_sheet_row' : 'install_extension',
+            $sheetsInstalled
+                ? 'Ajouter ce client dans le registre Google Sheets'
+                : 'Installer Google Sheets pour enregistrer ce client dans un tableau partage',
+            0.83,
+            $sheetsInstalled
+                ? ['client_id' => $clientId]
+                : ['extension_slug' => 'google-sheets', 'client_id' => $clientId, 'target_action' => 'append_client_sheet_row'],
+            [
+                'integration' => 'google-sheets',
+                'installed' => $sheetsInstalled,
+                'target_url' => $this->extensions->targetUrl('google-sheets'),
+            ]
+        );
+
+        $docsInstalled = $this->extensions->isActive($tenantId, 'google-docx');
+        $suggestions[] = SuggestionDefinition::make(
+            $docsInstalled ? 'create_client_google_doc' : 'install_extension',
+            $docsInstalled
+                ? "Creer une fiche client Google Docs pour {$clientName}"
+                : 'Installer Google Docs pour generer une fiche client editable',
+            0.78,
+            $docsInstalled
+                ? ['client_id' => $clientId]
+                : ['extension_slug' => 'google-docx', 'client_id' => $clientId, 'target_action' => 'create_client_google_doc'],
+            [
+                'integration' => 'google-docx',
+                'installed' => $docsInstalled,
+                'target_url' => $this->extensions->targetUrl('google-docx'),
+            ]
+        );
+
         $notionInstalled = $this->extensions->isActive($tenantId, 'notion-workspace');
         $suggestions[] = SuggestionDefinition::make(
             $notionInstalled ? 'create_notion_page' : 'install_extension',
             $notionInstalled
-                ? "Créer une page Notion de notes pour {$clientName}"
+                ? "Creer une page Notion de notes pour {$clientName}"
                 : 'Installer Notion Workspace pour centraliser les notes client',
             0.82,
             $notionInstalled

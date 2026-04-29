@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Vendor\Stock\Http\Controllers\DeliveryNoteController;
 use Vendor\Stock\Http\Controllers\StockController;
+use Vendor\Stock\Http\Controllers\StockMovementController;
 
 Route::middleware(['web', 'auth', 'tenant', 'extension.active:stock'])->prefix('stock')->name('stock.')->group(function () {
     Route::get('/', fn () => redirect()->route('stock.articles.index'));
@@ -48,6 +50,28 @@ Route::middleware(['web', 'auth', 'tenant', 'extension.active:stock'])->prefix('
         Route::get('/data/{order}', [StockController::class, 'ordersDetail'])->whereNumber('order')->name('detail');
         Route::post('/{order}/receive', [StockController::class, 'ordersReceive'])->whereNumber('order')->name('receive');
         Route::get('/export/excel', [StockController::class, 'ordersExportExcel'])->name('export.excel');
+    });
+
+    Route::prefix('delivery-notes')->name('delivery-notes.')->group(function () {
+        Route::get('/', [DeliveryNoteController::class, 'index'])->name('index');
+        Route::get('/create', [DeliveryNoteController::class, 'create'])->name('create');
+        Route::post('/', [DeliveryNoteController::class, 'store'])->name('store');
+        Route::get('/{deliveryNote}', [DeliveryNoteController::class, 'show'])->whereNumber('deliveryNote')->name('show');
+        Route::get('/{deliveryNote}/edit', [DeliveryNoteController::class, 'edit'])->whereNumber('deliveryNote')->name('edit');
+        Route::put('/{deliveryNote}', [DeliveryNoteController::class, 'update'])->whereNumber('deliveryNote')->name('update');
+        Route::delete('/{deliveryNote}', [DeliveryNoteController::class, 'destroy'])->whereNumber('deliveryNote')->name('destroy');
+
+        Route::get('/data/table', [DeliveryNoteController::class, 'data'])->name('data');
+        Route::post('/{deliveryNote}/validate', [DeliveryNoteController::class, 'validateNote'])->whereNumber('deliveryNote')->name('validate');
+        Route::post('/{deliveryNote}/cancel', [DeliveryNoteController::class, 'cancel'])->whereNumber('deliveryNote')->name('cancel');
+        Route::get('/{deliveryNote}/pdf', [DeliveryNoteController::class, 'downloadPdf'])->whereNumber('deliveryNote')->name('pdf');
+        Route::get('/export/excel', [DeliveryNoteController::class, 'exportExcel'])->name('export.excel');
+    });
+
+    Route::prefix('movements')->name('movements.')->group(function () {
+        Route::get('/', [StockMovementController::class, 'index'])->name('index');
+        Route::get('/data/table', [StockMovementController::class, 'data'])->name('data');
+        Route::get('/export/excel', [StockMovementController::class, 'exportExcel'])->name('export.excel');
     });
 
     Route::get('/data/stats', [StockController::class, 'stats'])->name('stats');

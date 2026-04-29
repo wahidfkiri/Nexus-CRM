@@ -55,11 +55,65 @@ const GoogleSheetsModule = (() => {
     document.getElementById('gsAddSheetBtn')?.addEventListener('click', addSheet);
   }
 
+  function normalizeReconnectText(message) {
+    return String(message || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+
+  function isReconnectRequiredMessage(message) {
+    const text = normalizeReconnectText(message);
+    return text.includes('session google sheets expiree')
+      || text.includes('session google sheets expi?ee')
+      || text.includes('reconnectez votre compte google')
+      || text.includes('reconnectez google sheets')
+      || text.includes('invalid_grant');
+  }
+
+  function promptReconnect(message) {
+    const text = String(message || 'Session Google Sheets expir\u00e9e ou r\u00e9voqu\u00e9e. Reconnectez votre compte Google.').trim();
+    const reconnectUrl = window.GS_ROUTES?.connect || '';
+
+    if (!window.Modal || typeof window.Modal.confirm !== 'function' || !reconnectUrl) {
+      Toast.error('Erreur', text);
+      return;
+    }
+
+    Modal.confirm({
+      title: 'Reconnecter Google Sheets ?',
+      message: text,
+      confirmText: 'Reconnecter',
+      type: 'warning',
+      onConfirm: () => {
+        window.location.href = reconnectUrl;
+      },
+      onCancel: () => {
+        window.location.reload();
+      },
+    });
+  }
+
+  function handleFailure(title, message, fallback) {
+    const resolved = String(message || fallback || 'Une erreur est survenue.').trim();
+
+    if (isReconnectRequiredMessage(resolved)) {
+      promptReconnect(resolved);
+      return true;
+    }
+
+    Toast.error(title || 'Erreur', resolved);
+    return false;
+  }
+
   // ── Stats ──────────────────────────────────────────────────────────────
 
   async function loadStats() {
     const { ok, data } = await Http.get(window.GS_ROUTES.stats);
-    if (!ok || !data.success) return;
+    if (!ok || !data.success) {
+      handleFailure('Erreur', data?.message, 'Impossible de charger les statistiques Google Sheets.');
+      return;
+    }
     const s = data.data || {};
     setText('gsStatSpreadsheets', s.total_spreadsheets || 0);
     setText('gsStatSheets', s.total_sheets || 0);
@@ -77,7 +131,7 @@ const GoogleSheetsModule = (() => {
 
     if (!ok || !data.success) {
       if (tbody) tbody.innerHTML = emptyRow('Impossible de charger les feuilles de calcul.');
-      Toast.error('Erreur', data.message || 'Impossible de charger les feuilles de calcul.');
+      handleFailure('Erreur', data?.message, 'Impossible de charger les feuilles de calcul.');
       return;
     }
 
@@ -166,7 +220,7 @@ const GoogleSheetsModule = (() => {
     });
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible de créer la feuille.');
+      handleFailure('Erreur', data?.message, 'Impossible de créer la feuille.');
       return;
     }
 
@@ -191,7 +245,7 @@ const GoogleSheetsModule = (() => {
     );
 
     if (!resp.ok || !resp.data.success) {
-      Toast.error('Erreur', resp.data.message || 'Impossible de renommer.');
+      handleFailure('Erreur', resp.data?.message, 'Impossible de renommer.');
       return;
     }
     Toast.success('Succès', resp.data.message || 'Feuille renommée.');
@@ -208,7 +262,7 @@ const GoogleSheetsModule = (() => {
     );
 
     if (!resp.ok || !resp.data.success) {
-      Toast.error('Erreur', resp.data.message || 'Impossible de dupliquer.');
+      handleFailure('Erreur', resp.data?.message, 'Impossible de dupliquer.');
       return;
     }
     Toast.success('Succès', resp.data.message || 'Feuille dupliquée.');
@@ -231,7 +285,7 @@ const GoogleSheetsModule = (() => {
           {}
         );
         if (!resp.ok || !resp.data.success) {
-          Toast.error('Erreur', resp.data.message || 'Impossible de supprimer.');
+          handleFailure('Erreur', resp.data?.message, 'Impossible de supprimer.');
           return;
         }
         Toast.success('Supprimée', resp.data.message || 'Feuille supprimée.');
@@ -256,7 +310,7 @@ const GoogleSheetsModule = (() => {
     const { ok, data } = await Http.get(`${window.GS_ROUTES.spreadsheetBase}/${encodeURIComponent(ss.spreadsheet_id)}`);
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible de charger la feuille.');
+      handleFailure('Erreur', data?.message, 'Impossible de charger la feuille.');
       return;
     }
 
@@ -317,7 +371,7 @@ const GoogleSheetsModule = (() => {
 
     if (!ok || !data.success) {
       if (wrap) wrap.innerHTML = `<div style="text-align:center;padding:40px;color:var(--c-danger);">${esc(data.message || 'Erreur')}</div>`;
-      Toast.error('Erreur', data.message || 'Impossible de lire la plage.');
+      handleFailure('Erreur', data?.message, 'Impossible de lire la plage.');
       return;
     }
 
@@ -394,7 +448,7 @@ const GoogleSheetsModule = (() => {
     );
 
     if (!resp.ok || !resp.data.success) {
-      Toast.error('Erreur', resp.data.message || 'Impossible d’écrire les données.');
+      handleFailure('Erreur', resp.data?.message, 'Impossible d’écrire les données.');
       return;
     }
 
@@ -432,7 +486,7 @@ const GoogleSheetsModule = (() => {
     );
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible d’ajouter les lignes.');
+      handleFailure('Erreur', data?.message, 'Impossible d’ajouter les lignes.');
       return;
     }
 
@@ -460,7 +514,7 @@ const GoogleSheetsModule = (() => {
           { range }
         );
         if (!resp.ok || !resp.data.success) {
-          Toast.error('Erreur', resp.data.message || 'Impossible de vider la plage.');
+          handleFailure('Erreur', resp.data?.message, 'Impossible de vider la plage.');
           return;
         }
         Toast.success('Plage vidée', resp.data.message || 'Plage vidée.');
@@ -482,7 +536,7 @@ const GoogleSheetsModule = (() => {
     );
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible d’ajouter un onglet.');
+      handleFailure('Erreur', data?.message, 'Impossible d’ajouter un onglet.');
       return;
     }
 
@@ -501,7 +555,7 @@ const GoogleSheetsModule = (() => {
       'PATCH',
       { title: name.trim() }
     ).then(resp => {
-      if (!resp.ok || !resp.data.success) { Toast.error('Erreur', resp.data.message || 'Impossible de renommer.'); return; }
+      if (!resp.ok || !resp.data.success) { handleFailure('Erreur', resp.data?.message, 'Impossible de renommer.'); return; }
       Toast.success('Renommé', resp.data.message || 'Onglet renommé.');
       openDataModal(state.currentSpreadsheet);
     });
@@ -519,7 +573,7 @@ const GoogleSheetsModule = (() => {
           'DELETE',
           {}
         );
-        if (!resp.ok || !resp.data.success) { Toast.error('Erreur', resp.data.message || 'Impossible de supprimer.'); return; }
+        if (!resp.ok || !resp.data.success) { handleFailure('Erreur', resp.data?.message, 'Impossible de supprimer.'); return; }
         Toast.success('Supprimé', resp.data.message || 'Onglet supprimé.');
         openDataModal(state.currentSpreadsheet);
       },
@@ -536,7 +590,7 @@ const GoogleSheetsModule = (() => {
       type:        'danger',
       onConfirm:   async () => {
         const { ok, data } = await Http.post(window.GS_ROUTES.disconnect, {});
-        if (!ok || !data.success) { Toast.error('Erreur', data.message || 'Impossible de déconnecter Google Sheets.'); return; }
+        if (!ok || !data.success) { handleFailure('Erreur', data?.message, 'Impossible de déconnecter Google Sheets.'); return; }
         Toast.success('Déconnecté', data.message || 'Google Sheets déconnecté.');
         setTimeout(() => window.location.reload(), 700);
       },
@@ -610,6 +664,7 @@ const GoogleSheetsModule = (() => {
 
   return {
     boot,
+    handleFailure,
     selectSheet,
     renameSheetPrompt,
     deleteSheetConfirm,

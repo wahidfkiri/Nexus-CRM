@@ -18,7 +18,7 @@ class ArticleRequest extends FormRequest
             'unit' => 'nullable|string|max:30',
             'purchase_price' => 'nullable|numeric|min:0',
             'sale_price' => 'required|numeric|min:0',
-            'stock_quantity' => 'nullable|numeric|min:0',
+            'opening_stock' => 'nullable|numeric|min:0',
             'min_stock' => 'nullable|numeric|min:0',
             'status' => 'required|in:active,inactive',
         ];

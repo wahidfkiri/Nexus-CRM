@@ -15,13 +15,18 @@
       @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-boxes', 'bg' => '#e0f2fe', 'color' => '#0891b2', 'alt' => 'Articles'])
       <h1 style="margin:0;">Articles</h1>
     </div>
-    <p>Gestion du catalogue et des niveaux de stock</p>
+    <p>Catalogue produit, stock calculé via mouvements et seuils de vigilance.</p>
   </div>
   <div class="page-header-actions">
+    <a href="{{ route('stock.movements.index') }}" class="btn btn-secondary"><i class="fas fa-arrows-rotate"></i> Historique stock</a>
+    <a href="{{ route('stock.delivery-notes.index') }}" class="btn btn-secondary"><i class="fas fa-truck-ramp-box"></i> Bons de livraison</a>
     <a href="{{ route('stock.articles.export.excel') }}" class="btn btn-secondary"><i class="fas fa-file-excel"></i> Export Excel</a>
     <a href="{{ route('stock.articles.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Nouvel article</a>
   </div>
 </div>
+
+@include('stock::partials.module-nav')
+
 @if(!empty($marketplaceSuggestions))
   <div class="module-app-suggestions">
     @foreach($marketplaceSuggestions as $suggestion)
@@ -33,9 +38,7 @@
           <h3>{{ $suggestion['name'] ?? 'Application' }}</h3>
           <p>{{ $suggestion['description'] ?? '' }}</p>
         </div>
-        <a href="{{ $suggestion['url'] ?? route('marketplace.index') }}" class="btn btn-secondary btn-sm">
-          <i class="fas fa-store"></i> Installer
-        </a>
+        <a href="{{ $suggestion['url'] ?? route('marketplace.index') }}" class="btn btn-secondary btn-sm"><i class="fas fa-store"></i> Installer</a>
       </article>
     @endforeach
   </div>
@@ -46,6 +49,8 @@
   <div class="stock-card"><h4>Rupture imminente</h4><div id="kpiLowStock" class="v stock-kpi-low">-</div></div>
   <div class="stock-card"><h4>Fournisseurs</h4><div id="kpiSuppliers" class="v">-</div></div>
   <div class="stock-card"><h4>Commandes</h4><div id="kpiOrders" class="v">-</div></div>
+  <div class="stock-card"><h4>Bons de livraison</h4><div id="kpiDeliveryNotes" class="v">-</div></div>
+  <div class="stock-card"><h4>Mouvements</h4><div id="kpiMovements" class="v">-</div></div>
 </div>
 
 <div class="table-wrapper">
@@ -53,17 +58,12 @@
     <span class="table-title">Catalogue</span>
     <div class="table-spacer"></div>
     <div class="table-search"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Nom, SKU..."></div>
-    <select class="filter-select" data-filter="status">
-      <option value="">Tous statuts</option>
-      @foreach($statuses as $key => $label)
-        <option value="{{ $key }}">{{ $label }}</option>
-      @endforeach
-    </select>
+    <select class="filter-select" data-filter="status"><option value="">Tous statuts</option>@foreach($statuses as $key => $label)<option value="{{ $key }}">{{ $label }}</option>@endforeach</select>
   </div>
   <table class="crm-table">
     <thead>
       <tr>
-        <th>SKU</th><th>Nom</th><th>Fournisseur</th><th>Stock</th><th>Prix vente</th><th>Statut</th><th></th>
+        <th>SKU</th><th>Nom</th><th>Fournisseur</th><th>Stock courant</th><th>Seuil mini</th><th>Prix vente</th><th></th>
       </tr>
     </thead>
     <tbody id="articlesTableBody"></tbody>
@@ -78,24 +78,25 @@
 
 @push('scripts')
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    Stock.loadStats('{{ route('stock.stats') }}');
-    window._stockArticlesTable = new CrmTable({
-      tbodyId: 'articlesTableBody',
-      dataUrl: '{{ route('stock.articles.data') }}',
-      renderRow: (a) => `
+document.addEventListener('DOMContentLoaded', () => {
+  Stock.loadStats('{{ route('stock.stats') }}');
+  window._stockArticlesTable = new CrmTable({
+    tbodyId: 'articlesTableBody',
+    dataUrl: '{{ route('stock.articles.data') }}',
+    renderRow: (a) => {
+      const isLow = Number(a.current_stock ?? 0) <= Number(a.min_stock ?? 0);
+      return `
         <tr>
           <td>${a.sku ?? '—'}</td>
           <td><a href="/stock/articles/${a.id}" style="color:var(--c-accent);font-weight:600;text-decoration:none;">${a.name}</a></td>
           <td>${a.supplier?.name ?? '—'}</td>
-          <td>${a.stock_quantity}</td>
+          <td><span style="font-weight:600;color:${isLow ? 'var(--c-danger)' : 'var(--c-ink)'};">${a.current_stock ?? 0}</span></td>
+          <td>${a.min_stock ?? 0}</td>
           <td>${a.sale_price}</td>
-          <td><span class="badge badge-${a.status === 'active' ? 'paid' : 'cancelled'}">${a.status}</span></td>
           <td><a class="btn-icon" href="/stock/articles/${a.id}/edit"><i class="fas fa-pen"></i></a></td>
-        </tr>
-      `,
-    });
+        </tr>`;
+    },
   });
+});
 </script>
 @endpush
-

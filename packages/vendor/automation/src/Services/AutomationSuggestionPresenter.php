@@ -73,7 +73,7 @@ class AutomationSuggestionPresenter
                 'source_type' => $sourceType,
                 'source_id' => $sourceId !== null ? (string) $sourceId : null,
                 'title' => $this->titleForSourceEvent($sourceEvent),
-                'subtitle' => 'Les suggestions intelligentes sont désactivées dans les paramètres globaux.',
+                'subtitle' => 'Les suggestions intelligentes sont desactivees dans les parametres globaux.',
                 'count' => 0,
                 'pending_count' => 0,
                 'settings_url' => $this->preferences->settingsUrl(),
@@ -121,12 +121,13 @@ class AutomationSuggestionPresenter
     {
         $meta = (array) ($suggestion->meta ?? []);
         $payload = (array) ($suggestion->payload ?? []);
-        $installéd = !array_key_exists('installéd', $meta) || (bool) $meta['installéd'];
-        $isInstall = $suggestion->type === 'install_extension' || !$installéd;
+        $installed = !array_key_exists('installed', $meta) || (bool) $meta['installed'];
+        $isInstall = $suggestion->type === 'install_extension' || !$installed;
         $theme = $this->themeFor($suggestion);
         $confidencePercent = (int) round(((float) $suggestion->confidence) * 100);
         $primaryLabel = (string) ($meta['primary_label'] ?? ($isInstall ? 'Installer' : 'Accepter'));
         $secondaryLabel = (string) ($meta['secondary_label'] ?? 'Ignorer');
+        $integrationSlug = (string) ($meta['integration'] ?? ($payload['extension_slug'] ?? 'automation'));
 
         return [
             'id' => (int) $suggestion->id,
@@ -143,9 +144,9 @@ class AutomationSuggestionPresenter
             'payload' => $payload,
             'meta' => $meta,
             'integration' => [
-                'slug' => (string) ($meta['integration'] ?? ($payload['extension_slug'] ?? 'automation')),
-                'label' => $this->integrationLabel((string) ($meta['integration'] ?? ($payload['extension_slug'] ?? 'automation'))),
-                'installéd' => $installéd,
+                'slug' => $integrationSlug,
+                'label' => $this->integrationLabel($integrationSlug),
+                'installed' => $installed,
                 'target_url' => $meta['target_url'] ?? null,
                 'target_blank' => (bool) ($meta['target_blank'] ?? false),
             ],
@@ -164,12 +165,16 @@ class AutomationSuggestionPresenter
     {
         return match ($sourceEvent) {
             'client_created' => 'Automatisations suggerees pour ce client',
+            'supplier_created' => 'Automatisations suggerees pour ce fournisseur',
             'invoice_created' => 'Automatisations suggerees pour cette facture',
             'quote_created' => 'Automatisations suggerees pour ce devis',
+            'stock_order_created' => 'Automatisations suggerees pour cette commande fournisseur',
+            'delivery_note_validated' => 'Automatisations suggerees pour ce bon de livraison',
+            'stock_low_threshold_reached' => 'Automatisations suggerees pour ce stock bas',
             'project_created' => 'Automatisations suggerees pour ce projet',
-            'project_task_created' => 'Automatisations suggerees pour cette tâche',
+            'project_task_created' => 'Automatisations suggerees pour cette tache',
             'user_invited' => 'Automatisations suggerees pour cette invitation',
-            'extension_activated' => 'Suggestions après activation de cette application',
+            'extension_activated' => 'Suggestions apres activation de cette application',
             default => 'Automatisations suggerees',
         };
     }
@@ -204,6 +209,7 @@ class AutomationSuggestionPresenter
             'google-meet' => 'Google Meet',
             'google-sheets' => 'Google Sheets',
             'google-docx' => 'Google Docs',
+            'notion-workspace' => 'Notion Workspace',
             'invoice' => 'Facturation',
             'projects' => 'Projets',
             'chatbot' => 'Chatbot',
@@ -261,6 +267,11 @@ class AutomationSuggestionPresenter
                 'icon' => 'fas fa-file-word',
                 'color' => '#1a73e8',
                 'background' => 'rgba(26,115,232,.12)',
+            ],
+            $integration === 'notion-workspace' => [
+                'icon' => 'fas fa-book-open',
+                'color' => '#111827',
+                'background' => 'rgba(17,24,39,.10)',
             ],
             $integration === 'invoice' => [
                 'icon' => 'fas fa-file-invoice-dollar',
