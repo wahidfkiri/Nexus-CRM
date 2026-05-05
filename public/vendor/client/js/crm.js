@@ -2,7 +2,7 @@ if (!window.__CRM_CORE_LOADED__) {
   window.__CRM_CORE_LOADED__ = true;
 
 /**
- * CRM SaaS — Core JavaScript
+ * CRM SaaS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Core JavaScript
  * Toast notifications, Modals, Table manager, Form helpers, AJAX utils
  */
 
@@ -36,8 +36,8 @@ const Toast = (() => {
   }
 
   const icons = {
-    success: '✓',
-    error:   '✕',
+    success: 'ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“',
+    error:   'ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢',
     info:    'i',
     warning: '!',
   };
@@ -51,7 +51,7 @@ const Toast = (() => {
         <p class="toast-title">${title}</p>
         ${message ? `<p class="toast-message">${message}</p>` : ''}
       </div>
-      <button class="toast-close" aria-label="Fermer">×</button>
+      <button class="toast-close" aria-label="Fermer">ÃƒÆ’Ã¢â‚¬â€</button>
     `;
 
     getContainer().appendChild(toast);
@@ -647,7 +647,7 @@ class CrmTable {
     const { ok, data } = await Http.get(this.options.dataUrl, params);
     this.state.loading = false;
 
-    if (!ok) { Toast.error('Erreur', 'Impossible de charger les données.'); return; }
+    if (!ok) { Toast.error('Erreur', 'Impossible de charger les donnÃƒÆ’Ã‚Â©es.'); return; }
 
     this.state.total = data.total || 0;
     this._renderRows(data.data || []);
@@ -696,8 +696,8 @@ class CrmTable {
         <tr><td colspan="8">
           <div class="table-empty">
             <div class="table-empty-icon"><i class="fas fa-users"></i></div>
-            <h3>Aucun client trouvé</h3>
-            <p>Modifiez vos filtres ou créez votre premier client.</p>
+            <h3>Aucun client trouvÃƒÆ’Ã‚Â©</h3>
+            <p>Modifiez vos filtres ou crÃƒÆ’Ã‚Â©ez votre premier client.</p>
             <a href="${window.CRM_ROUTES?.create || '#'}" class="btn btn-primary">
               <i class="fas fa-plus"></i> Nouveau client
             </a>
@@ -741,7 +741,7 @@ class CrmTable {
         </td>
         <td>${typeBadge}</td>
         <td style="color:var(--c-ink-60)">${this._esc(c.email)}</td>
-        <td style="color:var(--c-ink-40)">${c.phone || '—'}</td>
+        <td style="color:var(--c-ink-40)">${c.phone || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â'}</td>
         <td>${statusBadge}</td>
         <td style="font-weight:500">${revenue}</td>
         <td>
@@ -767,7 +767,7 @@ class CrmTable {
     if (!wrap) return;
 
     const { current_page, last_page, from, to, total } = data;
-    if (info) info.textContent = `Affichage de ${from || 0} à ${to || 0} sur ${total || 0} clients`;
+    if (info) info.textContent = `Affichage de ${from || 0} ÃƒÆ’Ã‚Â  ${to || 0} sur ${total || 0} clients`;
 
     const pages = [];
     for (let i = Math.max(1, current_page - 2); i <= Math.min(last_page, current_page + 2); i++) pages.push(i);
@@ -810,13 +810,13 @@ class CrmTable {
   static deleteClient(id, name) {
     Modal.confirm({
       title:       'Supprimer ce client ?',
-      message:     `Vous allez supprimer "${name}". Cette action est irréversible.`,
+      message:     `Vous allez supprimer "${name}". Cette action est irrÃƒÆ’Ã‚Â©versible.`,
       confirmText: 'Supprimer',
       type:        'danger',
       onConfirm:   async () => {
         const { ok, data } = await Http.delete(`/clients/${id}`);
         if (ok) {
-          Toast.success('Supprimé !', data.message || 'Client supprimé avec succès.');
+          Toast.success('SupprimÃƒÆ’Ã‚Â© !', data.message || 'Client supprimÃƒÆ’Ã‚Â© avec succÃƒÆ’Ã‚Â¨s.');
           window._crmTable?.load();
           window._crmTable?.loadStats();
         } else {
@@ -837,13 +837,13 @@ async function bulkDelete() {
   if (!ids?.length) return;
   Modal.confirm({
     title:       `Supprimer ${ids.length} client(s) ?`,
-    message:     'Cette action est irréversible.',
+    message:     'Cette action est irrÃƒÆ’Ã‚Â©versible.',
     confirmText: 'Supprimer',
     type:        'danger',
     onConfirm:   async () => {
       const { ok, data } = await Http.post(window.CRM_ROUTES?.bulkDelete, { ids });
       if (ok) {
-        Toast.success('Succès', data.message);
+        Toast.success('SuccÃƒÆ’Ã‚Â¨s', data.message);
         window._crmTable?.load();
         window._crmTable?.loadStats();
         window._crmTable?.selectedIds.clear();
@@ -860,7 +860,7 @@ async function bulkStatus(status) {
   if (!ids?.length) return;
   const { ok, data } = await Http.post(window.CRM_ROUTES?.bulkStatus, { ids, status });
   if (ok) {
-    Toast.success('Succès', data.message);
+    Toast.success('SuccÃƒÆ’Ã‚Â¨s', data.message);
     window._crmTable?.load();
     window._crmTable?.selectedIds.clear();
     window._crmTable?._updateBulkBar();
@@ -909,7 +909,7 @@ function ajaxForm(formId, options = {}) {
         form.__crmDraftManager.complete(res.data);
       }
 
-      Toast.success('Succès !', res.data.message || 'Opération réussie.');
+      Toast.success('SuccÃƒÆ’Ã‚Â¨s !', res.data.message || 'OpÃƒÆ’Ã‚Â©ration rÃƒÆ’Ã‚Â©ussie.');
       const automationFlow = !options.skipAutomation
         && window.AutomationSuggestions
         && res.data?.automation?.should_prompt
@@ -1111,7 +1111,7 @@ const CrmDrafts = (() => {
       state.prompted = false;
       draftInput.value = state.draft.id || '';
       refreshUi();
-      setStatus('Sauvegardée ' + formatRelativeTime(state.draft.updated_at), 'success');
+      setStatus('SauvegardÃƒÆ’Ã‚Â©e ' + formatRelativeTime(state.draft.updated_at), 'success');
       emitStateChange();
 
       if (typeof settings.onSaved === 'function') {
@@ -1138,9 +1138,9 @@ const CrmDrafts = (() => {
       state.resumed = true;
       state.prompted = false;
       refreshUi();
-      setStatus('Brouillon restauré', 'success');
+      setStatus('Brouillon restaurÃƒÆ’Ã‚Â©', 'success');
       emitStateChange();
-      Toast.success('Brouillon', 'Le formulaire a été restauré.');
+      Toast.success('Brouillon', 'Le formulaire a ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© restaurÃƒÆ’Ã‚Â©.');
     }
 
     async function discard() {
@@ -1151,8 +1151,8 @@ const CrmDrafts = (() => {
 
       state.skipExitPersist = true;
       resetLocal();
-      setStatus('Brouillon supprimé', 'muted');
-      Toast.success('Brouillon', 'Le brouillon a été supprimé.');
+      setStatus('Brouillon supprimÃƒÆ’Ã‚Â©', 'muted');
+      Toast.success('Brouillon', 'Le brouillon a ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© supprimÃƒÆ’Ã‚Â©.');
     }
 
     function resetLocal() {
@@ -1608,6 +1608,9 @@ const AutomationSuggestions = (() => {
     resolver: null,
     title: '',
     subtitle: '',
+    mode: 'default',
+    successTitle: '',
+    successMessage: '',
   };
 
   function getModal() {
@@ -1622,8 +1625,12 @@ const AutomationSuggestions = (() => {
       modal,
       title: modal.querySelector('[data-automation-title]'),
       subtitle: modal.querySelector('[data-automation-subtitle]'),
+      summary: modal.querySelector('.automation-summary'),
       list: modal.querySelector('[data-automation-list]'),
       empty: modal.querySelector('[data-automation-empty]'),
+      success: modal.querySelector('[data-automation-success]'),
+      successTitle: modal.querySelector('[data-automation-success-title]'),
+      successText: modal.querySelector('[data-automation-success-text]'),
       counter: modal.querySelector('[data-automation-count]'),
       acceptAll: modal.querySelector('[data-automation-bulk="accept"]'),
       rejectAll: modal.querySelector('[data-automation-bulk="reject"]'),
@@ -1650,7 +1657,7 @@ const AutomationSuggestions = (() => {
 
   function clearResumeParams() {
     const url = new URL(window.location.href);
-    ['automation_resume', 'automation_suggestion_ids', 'automation_provider'].forEach((key) => {
+    ['automation_resume', 'automation_suggestion_ids', 'automation_provider', 'automation_resume_state'].forEach((key) => {
       url.searchParams.delete(key);
     });
     window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
@@ -1660,12 +1667,71 @@ const AutomationSuggestions = (() => {
     return state.items.filter((item) => item.status === 'pending' && item.is_actionable);
   }
 
-  function openAutomationTarget(targetUrl, targetBlank) {
+  function findItemById(id) {
+    const numericId = Number(id);
+    return state.items.find((item) => Number(item.id) === numericId) || null;
+  }
+
+  function reserveAutomationTargetWindow(item) {
+    if (!item?.integration?.target_blank) {
+      return null;
+    }
+
+    const reservedWindow = window.open('', '_blank');
+    if (!reservedWindow) {
+      return null;
+    }
+
+    try {
+      reservedWindow.opener = null;
+      reservedWindow.document.title = item.integration?.label
+        ? `Ouverture de ${item.integration.label}...`
+        : 'Ouverture...';
+      reservedWindow.document.body.innerHTML = `
+        <div style="font-family:Inter,Arial,sans-serif;padding:32px;color:#0f172a;background:#f8fafc;">
+          <div style="max-width:420px;margin:48px auto;padding:24px;border-radius:18px;background:#ffffff;box-shadow:0 18px 45px rgba(15,23,42,.12);">
+            <div style="width:44px;height:44px;border-radius:14px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;">ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â€</div>
+            <h1 style="font-size:18px;line-height:1.4;margin:0 0 8px;">Ouverture en cours...</h1>
+            <p style="margin:0;color:#475569;font-size:14px;line-height:1.6;">Nous ouvrons votre suggestion dans une nouvelle fenÃƒÆ’Ã‚Âªtre pour garder le modal disponible.</p>
+          </div>
+        </div>
+      `;
+    } catch (_) {
+      // Ignore browser-specific limitations; the reserved window is enough.
+    }
+
+    return reservedWindow;
+  }
+
+  function closeReservedWindow(reservedWindow) {
+    if (!reservedWindow || reservedWindow.closed) {
+      return;
+    }
+
+    try {
+      reservedWindow.close();
+    } catch (_) {
+      // noop
+    }
+  }
+
+  function openAutomationTarget(targetUrl, targetBlank, reservedWindow = null) {
     if (!targetUrl) return;
+
+    if (targetBlank && reservedWindow && !reservedWindow.closed) {
+      try {
+        reservedWindow.location.href = targetUrl;
+        return;
+      } catch (_) {
+        closeReservedWindow(reservedWindow);
+      }
+    }
 
     if (targetBlank) {
       const opened = window.open(targetUrl, '_blank', 'noopener');
       if (opened) return;
+      Toast.warning('Automation', "La nouvelle fenÃƒÆ’Ã‚Âªtre a ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© bloquÃƒÆ’Ã‚Â©e par le navigateur. Autorisez les popups pour ouvrir ce lien sans quitter la page.");
+      return;
     }
 
     window.location.href = targetUrl;
@@ -1676,27 +1742,157 @@ const AutomationSuggestions = (() => {
     state.items = state.items.map((item) => updates.get(Number(item.id)) || item);
   }
 
+  function resetState() {
+    state = {
+      items: [],
+      redirectUrl: null,
+      resolver: null,
+      title: '',
+      subtitle: '',
+      mode: 'default',
+      successTitle: '',
+      successMessage: '',
+    };
+  }
+
+  function resolvedItemIds(updatedItems = []) {
+    return (updatedItems || [])
+      .filter((item) => ['accepted', 'rejected', 'expired'].includes(String(item.status)))
+      .map((item) => Number(item.id))
+      .filter((id) => Number.isInteger(id) && id > 0);
+  }
+
+  function showSuccessState(title, message) {
+    state.mode = 'success';
+    state.successTitle = title || 'SuccÃƒÆ’Ã‚Â¨s';
+    state.successMessage = message || 'Toutes les suggestions ont ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© traitÃƒÆ’Ã‚Â©es avec succÃƒÆ’Ã‚Â¨s.';
+    render();
+  }
+
+  async function animateCardRemoval(card, delay = 0) {
+    if (!card) return;
+
+    await new Promise((resolve) => {
+      window.setTimeout(() => {
+        const styles = window.getComputedStyle(card);
+        card.style.height = `${card.offsetHeight}px`;
+        card.style.marginTop = styles.marginTop;
+        card.style.marginBottom = styles.marginBottom;
+        card.style.paddingTop = styles.paddingTop;
+        card.style.paddingBottom = styles.paddingBottom;
+
+        // Force layout so the browser sees the fixed dimensions before animating out.
+        void card.offsetHeight;
+
+        card.classList.add('is-removing');
+
+        window.setTimeout(() => {
+          card.style.height = '0px';
+          card.style.marginTop = '0px';
+          card.style.marginBottom = '0px';
+          card.style.paddingTop = '0px';
+          card.style.paddingBottom = '0px';
+          card.style.borderWidth = '0px';
+
+          window.setTimeout(resolve, 240);
+        }, 300);
+      }, delay);
+    });
+  }
+
+  async function dismissItems(ids = [], options = {}) {
+    const uniqueIds = [...new Set((ids || []).map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))];
+    if (!uniqueIds.length) {
+      if (options.successState) {
+        showSuccessState(options.successState.title, options.successState.message);
+      } else {
+        render();
+      }
+      return;
+    }
+
+    const { modal, list } = getEls();
+    if (list) {
+      for (let index = 0; index < uniqueIds.length; index += 1) {
+        const card = list.querySelector(`[data-automation-id="${uniqueIds[index]}"]`);
+        await animateCardRemoval(card, index * 90);
+      }
+    }
+
+    state.items = state.items.filter((item) => !uniqueIds.includes(Number(item.id)));
+
+    if (options.closeModal && modal) {
+      Modal.close(modal);
+      return;
+    }
+
+    if (options.successState) {
+      showSuccessState(options.successState.title, options.successState.message);
+      return;
+    }
+
+    render();
+  }
+
   function render() {
-    const { title, subtitle, list, empty, counter, acceptAll, rejectAll, close } = getEls();
+    const {
+      title,
+      subtitle,
+      summary,
+      list,
+      empty,
+      success,
+      successTitle,
+      successText,
+      counter,
+      acceptAll,
+      rejectAll,
+      close,
+    } = getEls();
     if (!list) return;
 
     if (title) title.textContent = state.title || 'Suggestions intelligentes';
     if (subtitle) subtitle.textContent = state.subtitle || 'Le CRM vous propose la suite la plus utile.';
 
     const pendingCount = pendingItems().length;
+    const successMode = state.mode === 'success';
+
     if (counter) {
       counter.textContent = pendingCount > 0
         ? `${pendingCount} suggestion(s) en attente`
         : 'Toutes les suggestions ont ete traitees';
     }
 
-    if (acceptAll) acceptAll.disabled = pendingCount === 0;
-    if (rejectAll) rejectAll.disabled = pendingCount === 0;
+    if (summary) summary.style.display = successMode ? 'none' : 'flex';
+    if (acceptAll) acceptAll.disabled = pendingCount === 0 || successMode;
+    if (rejectAll) rejectAll.disabled = pendingCount === 0 || successMode;
     if (close) {
-      close.innerHTML = pendingCount === 0
-        ? '<i class="fas fa-check"></i> Continuer'
-        : '<i class="fas fa-arrow-right"></i> Continuer';
+      close.innerHTML = successMode
+        ? '<i class="fas fa-check"></i> Fermer'
+        : pendingCount === 0
+          ? '<i class="fas fa-check"></i> Continuer'
+          : '<i class="fas fa-arrow-right"></i> Continuer';
     }
+
+    if (success) {
+      success.classList.toggle('is-visible', successMode);
+      success.style.display = successMode ? 'flex' : 'none';
+    }
+    if (successTitle) {
+      successTitle.textContent = state.successTitle || 'SuccÃƒÆ’Ã‚Â¨s';
+    }
+    if (successText) {
+      successText.textContent = state.successMessage || 'Toutes les suggestions ont ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© traitÃƒÆ’Ã‚Â©es avec succÃƒÆ’Ã‚Â¨s.';
+    }
+
+    if (successMode) {
+      list.innerHTML = '';
+      list.style.display = 'none';
+      if (empty) empty.style.display = 'none';
+      return;
+    }
+
+    list.style.display = 'flex';
 
     if (!state.items.length) {
       list.innerHTML = '';
@@ -1713,6 +1909,17 @@ const AutomationSuggestions = (() => {
       const openLink = targetUrl
         ? `<a class="btn btn-secondary btn-sm" href="${targetUrl}"${targetBlank}><i class="fas fa-up-right-from-square"></i> Ouvrir</a>`
         : '';
+      const statusPill = item.status === 'pending'
+        ? ''
+        : `<span class="automation-status-pill is-${esc(item.status)}">${esc(item.status_label || item.status)}</span>`;
+      const inlineActions = actionable
+        ? `
+            <span class="automation-card-inline-actions">
+              <button type="button" class="btn btn-primary btn-sm" data-automation-action="accept" data-id="${item.id}">Accepter</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-automation-action="reject" data-id="${item.id}">Annuler</button>
+            </span>
+          `
+        : '';
 
       return `
         <article class="automation-card is-${esc(item.status)}" data-automation-id="${item.id}">
@@ -1722,8 +1929,13 @@ const AutomationSuggestions = (() => {
             </div>
             <div class="automation-card-copy">
               <div class="automation-card-title-row">
-                <h4>${esc(item.label)}</h4>
-                <span class="automation-status-pill is-${esc(item.status)}">${esc(item.status_label || item.status)}</span>
+                <div class="automation-card-title-main">
+                  <h4>${esc(item.label)}</h4>
+                  <div class="automation-card-title-actions">
+                    ${statusPill}
+                    ${inlineActions}
+                  </div>
+                </div>
               </div>
               <div class="automation-card-meta">
                 <span><i class="fas fa-bolt"></i> ${esc(item.integration?.label || 'Automation')}</span>
@@ -1734,8 +1946,6 @@ const AutomationSuggestions = (() => {
           </div>
           <div class="automation-card-actions">
             ${openLink}
-            ${actionable ? `<button type="button" class="btn btn-secondary btn-sm" data-automation-action="reject" data-id="${item.id}">${esc(item.secondary_label || 'Ignorer')}</button>` : ''}
-            ${actionable ? `<button type="button" class="btn btn-primary btn-sm" data-automation-action="accept" data-id="${item.id}">${esc(item.primary_label || 'Accepter')}</button>` : ''}
           </div>
         </article>
       `;
@@ -1749,40 +1959,52 @@ const AutomationSuggestions = (() => {
       return;
     }
 
+    const currentItem = findItemById(id);
+    const reservedWindow = action === 'accept'
+      ? reserveAutomationTargetWindow(currentItem)
+      : null;
+
     if (button) CrmForm.setLoading(button, true);
     const response = await Http.post(endpointTemplate.replace('__ID__', id), {});
     if (button) CrmForm.setLoading(button, false);
 
     const payload = response.data?.data || {};
     const eventData = payload?.event || {};
+    const updatedSuggestions = Array.isArray(payload?.suggestions) ? payload.suggestions : [];
 
-    if (Array.isArray(payload?.suggestions)) {
-      updateItems(payload.suggestions);
-      render();
+    if (updatedSuggestions.length) {
+      updateItems(updatedSuggestions);
     }
 
     if (eventData?.status === 'failed') {
-      handleAutomationFailure(eventData, response.data?.message || 'Cette automation a échoué.');
+      closeReservedWindow(reservedWindow);
+      render();
+      handleAutomationFailure(eventData, response.data?.message || 'Cette automation a ÃƒÆ’Ã‚Â©chouÃƒÆ’Ã‚Â©.');
       return;
     }
 
     if (!response.ok) {
-      Toast.error('Automation', response.data?.message || 'Opération automation impossible.');
+      closeReservedWindow(reservedWindow);
+      render();
+      Toast.error('Automation', response.data?.message || 'OpÃƒÆ’Ã‚Â©ration automation impossible.');
       return;
     }
 
-    Toast.success('Automation', response.data?.message || 'Suggestion mise à jour.');
+    const dismissedIds = updatedSuggestions.length
+      ? resolvedItemIds(updatedSuggestions)
+      : [Number(id)];
+    await dismissItems(dismissedIds.length ? dismissedIds : [Number(id)]);
+
     const targetUrl = eventData?.target_url || eventData?.response?.target_url || null;
     const targetBlank = Boolean(eventData?.target_blank || eventData?.response?.target_blank);
     if (action === 'accept' && eventData?.status === 'completed' && targetUrl) {
-      const modal = getModal();
-      if (modal) {
-        Modal.close(modal);
-      }
       window.setTimeout(() => {
-        openAutomationTarget(targetUrl, targetBlank);
-      }, 220);
+        openAutomationTarget(targetUrl, targetBlank, reservedWindow);
+      }, 160);
+      return;
     }
+
+    closeReservedWindow(reservedWindow);
   }
 
   async function processBulk(action, button) {
@@ -1807,29 +2029,45 @@ const AutomationSuggestions = (() => {
       const errors = Array.isArray(response.data?.data?.errors) ? response.data.data.errors : [];
       const reconnectError = errors.find((item) => item?.event?.requires_reconnect && item?.event?.reconnect_url);
       if (reconnectError) {
-        handleAutomationFailure(reconnectError.event, reconnectError.message || response.data?.message || 'Certaines automations ont échoué.');
+        handleAutomationFailure(reconnectError.event, reconnectError.message || response.data?.message || 'Certaines automations ont ÃƒÆ’Ã‚Â©chouÃƒÆ’Ã‚Â©.');
         return;
       }
-      Toast.error('Automation', response.data?.message || 'Traitement groupé impossible.');
+      Toast.error('Automation', response.data?.message || 'Traitement groupÃƒÆ’Ã‚Â© impossible.');
       return;
     }
 
-    updateItems(response.data?.data?.suggestions || []);
-    render();
-    Toast.success('Automation', response.data?.message || 'Suggestions mises à jour.');
+    const updatedSuggestions = Array.isArray(response.data?.data?.suggestions)
+      ? response.data.data.suggestions
+      : [];
+    updateItems(updatedSuggestions);
 
     const errorCount = Array.isArray(response.data?.data?.errors) ? response.data.data.errors.length : 0;
+    const processedIds = resolvedItemIds(updatedSuggestions).filter((id) => ids.includes(id));
+
+    if (action === 'reject') {
+      const shouldClose = errorCount === 0 && processedIds.length === ids.length;
+      await dismissItems(processedIds.length ? processedIds : ids, { closeModal: shouldClose });
+    } else {
+      const allAccepted = errorCount === 0 && processedIds.length === ids.length;
+      await dismissItems(processedIds, allAccepted ? {
+        successState: {
+          title: 'SuccÃƒÆ’Ã‚Â¨s',
+          message: response.data?.message || 'Toutes les suggestions ont ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© traitÃƒÆ’Ã‚Â©es avec succÃƒÆ’Ã‚Â¨s.',
+        },
+      } : {});
+    }
+
     if (errorCount > 0) {
-      Toast.warning('Automation', `${errorCount} suggestion(s) n'ont pas pu être traitées.`);
+      Toast.warning('Automation', `${errorCount} suggestion(s) n'ont pas pu ÃƒÆ’Ã‚Âªtre traitÃƒÆ’Ã‚Â©es.`);
       const reconnectError = response.data.data.errors.find((item) => item?.event?.requires_reconnect && item?.event?.reconnect_url);
       if (reconnectError) {
-        handleAutomationFailure(reconnectError.event, reconnectError.message || 'Un service externe doit être reconnecté avant de rejouer ces automations.');
+        handleAutomationFailure(reconnectError.event, reconnectError.message || 'Un service externe doit ÃƒÆ’Ã‚Âªtre reconnectÃƒÆ’Ã‚Â© avant de rejouer ces automations.');
       }
     }
   }
 
   function handleAutomationFailure(eventData, fallbackMessage) {
-    const message = eventData?.last_error || fallbackMessage || 'Cette automation a échoué.';
+    const message = eventData?.last_error || fallbackMessage || 'Cette automation a ÃƒÆ’Ã‚Â©chouÃƒÆ’Ã‚Â©.';
     const reconnectUrl = eventData?.reconnect_url || null;
     const reconnectLabel = eventData?.reconnect_label || 'Reconnecter';
     const reconnectTitle = reconnectLabel;
@@ -1880,7 +2118,7 @@ const AutomationSuggestions = (() => {
     modal.addEventListener('crm:modal-close', () => {
       const resolver = state.resolver;
       const redirectUrl = state.redirectUrl;
-      state = { items: [], redirectUrl: null, resolver: null, title: '', subtitle: '' };
+      resetState();
       if (typeof resolver === 'function') {
         resolver({ redirectUrl });
       }
@@ -1899,6 +2137,7 @@ const AutomationSuggestions = (() => {
 
     const ids = parseResumeIds(params.get('automation_suggestion_ids'));
     const providerSlug = params.get('automation_provider') || '';
+    const resumeState = params.get('automation_resume_state') || 'reconnected';
     clearResumeParams();
 
     if (!ids.length || !routes().list) {
@@ -1929,10 +2168,16 @@ const AutomationSuggestions = (() => {
       || providerSlug.replace(/-/g, ' ')
       || 'ce service';
 
+    const subtitle = resumeState === 'pending_reconnect'
+      ? `${providerLabel} doit etre reconnecte pour rejouer cette suggestion. Vous pouvez aussi relancer l'action apres correction.`
+      : `${providerLabel} est reconnecte. Vous pouvez maintenant relancer cette suggestion.`;
+
     open({
       should_prompt: true,
-      title: 'Suggestion en attente à reprendre',
-      subtitle: `${providerLabel} est reconnecté. Vous pouvez maintenant relancer cette suggestion.`,
+      title: resumeState === 'pending_reconnect'
+        ? 'Suggestion en attente de reconnexion'
+        : 'Suggestion en attente a reprendre',
+      subtitle,
       suggestions,
     });
   }
@@ -1950,6 +2195,9 @@ const AutomationSuggestions = (() => {
       resolver: null,
       title: payload.title || 'Suggestions intelligentes',
       subtitle: payload.subtitle || 'Le CRM vous propose les prochaines actions utiles.',
+      mode: 'default',
+      successTitle: '',
+      successMessage: '',
     };
 
     render();
@@ -2108,11 +2356,11 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebarCompactToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
 
     const label = enabled
-      ? 'Réafficher les libellés du menu'
-      : 'Afficher le menu en mode icônes';
+      ? 'RÃƒÆ’Ã‚Â©afficher les libellÃƒÆ’Ã‚Â©s du menu'
+      : 'Afficher le menu en mode icÃƒÆ’Ã‚Â´nes';
 
     sidebarCompactToggle.setAttribute('aria-label', label);
-    sidebarCompactToggle.setAttribute('data-tooltip', enabled ? 'Réafficher le menu complet' : 'Mode compact du menu');
+    sidebarCompactToggle.setAttribute('data-tooltip', enabled ? 'RÃƒÆ’Ã‚Â©afficher le menu complet' : 'Mode compact du menu');
   };
 
   applySidebarCompactState();

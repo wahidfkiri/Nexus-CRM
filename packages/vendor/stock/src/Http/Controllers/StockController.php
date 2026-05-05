@@ -66,15 +66,31 @@ class StockController extends Controller
     {
         try {
             $article = $this->service->createArticle($request->validated());
-            $automation = null;
+            $automation = app(AutomationSuggestionPresenter::class)->buildPromptForSource(
+                'article_created',
+                $article::class,
+                $article->getKey(),
+                (int) $article->tenant_id
+            );
 
             if ((float) $article->min_stock > 0 && $article->is_low_stock) {
-                $automation = app(AutomationSuggestionPresenter::class)->buildPromptForSource(
+                $lowStockPrompt = app(AutomationSuggestionPresenter::class)->buildPromptForSource(
                     'stock_low_threshold_reached',
                     $article::class,
                     $article->getKey(),
                     (int) $article->tenant_id
                 );
+
+                if (!empty($lowStockPrompt['count'])) {
+                    $automation['suggestions'] = array_values(array_merge(
+                        $automation['suggestions'] ?? [],
+                        $lowStockPrompt['suggestions'] ?? []
+                    ));
+                    $automation['count'] = count($automation['suggestions']);
+                    $automation['pending_count'] = $automation['count'];
+                    $automation['should_prompt'] = $automation['count'] > 0;
+                    $automation['subtitle'] = 'Suggestions disponibles pour cet article et pour son niveau de stock.';
+                }
             }
 
             return response()->json([

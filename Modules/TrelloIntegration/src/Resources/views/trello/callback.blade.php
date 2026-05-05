@@ -21,7 +21,7 @@
     <div class="loader" aria-hidden="true"></div>
     <div class="pill">Connexion Trello</div>
     <h1>Validation de votre workspace</h1>
-    <p id="trelloCallbackMessage">Nous finalisons la connexion et la première synchronisation de vos boards.</p>
+    <p id="trelloCallbackMessage">Nous finalisons la connexion et la premiere synchronisation de vos boards.</p>
     <div id="trelloCallbackError" class="error" style="display:none;"></div>
   </div>
 
@@ -53,13 +53,13 @@
           if (!response.ok || !data.success) {
             throw new Error(data.message || 'Connexion Trello impossible.');
           }
-          messageEl.textContent = data.message || 'Trello est maintenant connecté.';
+          messageEl.textContent = data.message || 'Trello est maintenant connecte.';
           window.location.replace(data.redirect || @json(route('trello-integration.index')));
         })
         .catch((err) => {
           errorEl.style.display = 'block';
           errorEl.textContent = err?.message || 'Connexion Trello impossible.';
-          messageEl.textContent = 'La connexion n’a pas pu être finalisée automatiquement.';
+          messageEl.textContent = 'La connexion n a pas pu etre finalisee automatiquement.';
         });
     })();
   </script>

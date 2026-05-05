@@ -3,8 +3,11 @@
 namespace Vendor\Automation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 use Vendor\Automation\Models\AutomationEvent;
 use Vendor\Automation\Models\AutomationSuggestion;
@@ -12,6 +15,7 @@ use Vendor\Automation\Services\AutomationEngine;
 use Vendor\Automation\Services\AutomationReconnectNotificationService;
 use Vendor\Automation\Services\AutomationSuggestionPresenter;
 use Vendor\Automation\Support\AutomationReconnectResolver;
+use Vendor\Automation\Support\AutomationTenantResolver;
 
 class AutomationSuggestionController extends Controller
 {
@@ -67,12 +71,14 @@ class AutomationSuggestionController extends Controller
             $this->reconnectNotifications->syncForSuggestion($freshSuggestion);
 
             if ((string) $freshEvent->status === AutomationEvent::STATUS_FAILED) {
+                $failureMessage = $this->safeStoredErrorMessage($freshEvent->last_error);
+
                 return response()->json([
                     'success' => false,
-                    'message' => $freshEvent->last_error ?: 'Cette automation a échoué.',
+                    'message' => $failureMessage,
                     'data' => [
                         'suggestions' => $this->presenter->presentCollection(collect([$freshSuggestion])),
-                        'event' => $eventPayload,
+                        'event' => array_merge($eventPayload, ['last_error' => $failureMessage]),
                     ],
                 ], 422);
             }
@@ -80,18 +86,15 @@ class AutomationSuggestionController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => (string) $freshEvent->status === AutomationEvent::STATUS_COMPLETED
-                    ? 'Suggestion acceptée et traitée.'
-                    : 'Suggestion acceptée. Automation en cours.',
+                    ? 'Suggestion acceptee et traitee.'
+                    : 'Suggestion acceptee. Automation en cours.',
                 'data' => [
                     'suggestions' => $this->presenter->presentCollection(collect([$freshSuggestion])),
                     'event' => $eventPayload,
                 ],
             ]);
         } catch (Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 422);
+            return $this->errorResponse($e);
         }
     }
 
@@ -109,16 +112,13 @@ class AutomationSuggestionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Suggestion ignorée.',
+                'message' => 'Suggestion ignoree.',
                 'data' => [
                     'suggestions' => $this->presenter->presentCollection(collect([$result->fresh()])),
                 ],
             ]);
         } catch (Throwable $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 422);
+            return $this->errorResponse($e);
         }
     }
 
@@ -134,12 +134,17 @@ class AutomationSuggestionController extends Controller
             $freshSuggestion = $suggestion->fresh();
 
             if ((string) $event->status === AutomationEvent::STATUS_FAILED) {
+                $failureMessage = $this->safeStoredErrorMessage($event->last_error);
+
                 return [
                     'suggestion' => $freshSuggestion,
                     'error' => [
                         'id' => (int) $freshSuggestion->id,
-                        'message' => $event->last_error ?: 'Cette automation a échoué.',
-                        'event' => $this->presentEvent($event),
+                        'message' => $failureMessage,
+                        'event' => array_merge(
+                            $this->presentEvent($event),
+                            ['last_error' => $failureMessage]
+                        ),
                     ],
                 ];
             }
@@ -161,7 +166,7 @@ class AutomationSuggestionController extends Controller
         if ($acceptedCount === 0) {
             return response()->json([
                 'success' => false,
-                'message' => $errors[0]['message'] ?? "Aucune suggestion n'a pu être acceptée.",
+                'message' => $errors[0]['message'] ?? "Aucune suggestion n'a pu etre acceptee.",
                 'data' => [
                     'suggestions' => $this->presenter->presentCollection(collect($processed)),
                     'errors' => $errors,
@@ -171,7 +176,7 @@ class AutomationSuggestionController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $acceptedCount . ' suggestion(s) acceptée(s).',
+            'message' => $acceptedCount . ' suggestion(s) acceptee(s).',
             'data' => [
                 'suggestions' => $this->presenter->presentCollection(collect($processed)),
                 'errors' => $errors,
@@ -198,14 +203,14 @@ class AutomationSuggestionController extends Controller
         if (empty($processed)) {
             return response()->json([
                 'success' => false,
-                'message' => $errors[0]['message'] ?? "Aucune suggestion n'a pu être ignorée.",
+                'message' => $errors[0]['message'] ?? "Aucune suggestion n'a pu etre ignoree.",
                 'data' => ['errors' => $errors],
             ], 422);
         }
 
         return response()->json([
             'success' => true,
-            'message' => count($processed) . ' suggestion(s) ignorée(s).',
+            'message' => count($processed) . ' suggestion(s) ignoree(s).',
             'data' => [
                 'suggestions' => $this->presenter->presentCollection(collect($processed)),
                 'errors' => $errors,
@@ -243,7 +248,7 @@ class AutomationSuggestionController extends Controller
             } catch (Throwable $e) {
                 $errors[] = [
                     'id' => (int) $suggestion->id,
-                    'message' => $e->getMessage(),
+                    'message' => $this->safeExceptionMessage($e),
                 ];
             }
         }
@@ -258,7 +263,7 @@ class AutomationSuggestionController extends Controller
 
     protected function tenantId(): int
     {
-        return (int) (auth()->user()->tenant_id ?? 0);
+        return AutomationTenantResolver::resolve();
     }
 
     protected function presentEvent(AutomationEvent $event): array
@@ -272,7 +277,7 @@ class AutomationSuggestionController extends Controller
             'id' => (int) $event->id,
             'status' => (string) $event->status,
             'action_type' => (string) $event->action_type,
-            'last_error' => $event->last_error,
+            'last_error' => $this->safeStoredErrorMessage($event->last_error),
             'response' => is_array($event->response) ? $event->response : null,
             'target_url' => $targetUrl,
             'target_blank' => $targetBlank,
@@ -283,5 +288,79 @@ class AutomationSuggestionController extends Controller
                 ? 'Reconnecter ' . ($provider['label'] ?? 'le service')
                 : null,
         ];
+    }
+
+    protected function errorResponse(Throwable $e): JsonResponse
+    {
+        if ($e instanceof HttpExceptionInterface) {
+            throw $e;
+        }
+
+        if ($e instanceof ModelNotFoundException) {
+            abort(404);
+        }
+
+        if ($e instanceof RuntimeException) {
+            return response()->json([
+                'success' => false,
+                'message' => $this->safeExceptionMessage($e),
+            ], 422);
+        }
+
+        report($e);
+
+        return response()->json([
+            'success' => false,
+            'message' => "Une erreur inattendue est survenue pendant le traitement de l'automation.",
+        ], 500);
+    }
+
+    protected function safeExceptionMessage(Throwable $e): string
+    {
+        if (!$e instanceof RuntimeException) {
+            report($e);
+
+            return "Une erreur inattendue est survenue pendant le traitement de l'automation.";
+        }
+
+        return $this->sanitizeMessage($e->getMessage());
+    }
+
+    protected function safeStoredErrorMessage(?string $message): string
+    {
+        return $this->sanitizeMessage($message, 'Cette automation a echoue.');
+    }
+
+    protected function sanitizeMessage(?string $message, string $fallback = "Une erreur inattendue est survenue pendant le traitement de l'automation."): string
+    {
+        $message = trim((string) $message);
+        if ($message === '') {
+            return $fallback;
+        }
+
+        $normalized = mb_strtolower($message);
+        $unsafeFragments = [
+            'sqlstate',
+            'syntax error',
+            'stack trace',
+            '.php',
+            'vendor\\',
+            'vendor/',
+            'd:\\',
+            'c:\\',
+            'call to undefined',
+            'typeerror',
+            'queryexception',
+            'failed to open stream',
+            'on line ',
+        ];
+
+        foreach ($unsafeFragments as $fragment) {
+            if (str_contains($normalized, $fragment)) {
+                return $fallback;
+            }
+        }
+
+        return $message;
     }
 }

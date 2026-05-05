@@ -6,12 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Throwable;
 use Vendor\CrmCore\Models\Tenant;
 use Vendor\Rbac\Services\TenantRoleService;
@@ -108,7 +112,7 @@ class AuthController extends Controller
                 'status' => 'active',
             ]);
 
-            $tenantName = !empty($data['company']) ? $data['company'] : ('Entreprise de ' . $data['first_name']);
+            $tenantName = !empty($data['company']) ? $data['company'] : ('Espace de ' . $data['first_name']);
             $tenant = Tenant::create([
                 'name' => $tenantName,
                 'slug' => Tenant::generateSlug($tenantName),
@@ -176,6 +180,117 @@ class AuthController extends Controller
                 'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => ['required', 'email:rfc'],
+        ], [
+            'email.required' => 'L email est obligatoire.',
+            'email.email' => 'Le format de l email est invalide.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merci de corriger les champs signales.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $status = Password::sendResetLink([
+            'email' => mb_strtolower((string) $validator->validated()['email']),
+        ]);
+
+        if ($status === Password::RESET_THROTTLED) {
+            $message = 'Un email de reinitialisation a deja ete envoye recemment. Merci de patienter un moment.';
+
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => [
+                    'email' => [$message],
+                ],
+            ], 429);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Si un compte existe avec cette adresse email, un lien de reinitialisation vient d etre envoye.',
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email:rfc'],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'max:128',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/',
+            ],
+        ], [
+            'token.required' => 'Le jeton de reinitialisation est obligatoire.',
+            'email.required' => 'L email est obligatoire.',
+            'email.email' => 'Le format de l email est invalide.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit contenir au moins :min caracteres.',
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
+            'password.regex' => 'Le mot de passe doit contenir une minuscule, une majuscule, un chiffre et un caractere special.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merci de corriger les champs signales.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+        $status = Password::reset(
+            [
+                'email' => mb_strtolower((string) $validated['email']),
+                'password' => (string) $validated['password'],
+                'password_confirmation' => (string) $request->input('password_confirmation', ''),
+                'token' => (string) $validated['token'],
+            ],
+            function (User $user, string $password): void {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            $message = match ($status) {
+                Password::INVALID_TOKEN => 'Le lien de reinitialisation est invalide ou expire.',
+                Password::INVALID_USER => 'Ce compte est introuvable.',
+                default => 'La reinitialisation du mot de passe a echoue. Merci de reessayer.',
+            };
+
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => [
+                    'email' => [$message],
+                ],
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Votre mot de passe a ete reinitialise. Vous pouvez maintenant vous connecter.',
+        ]);
     }
 
     public function logout(Request $request)

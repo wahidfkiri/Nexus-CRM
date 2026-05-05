@@ -24,6 +24,9 @@ return [
     ],
 
     'providers' => [
+        'article_created' => [
+            \Vendor\Automation\SuggestionProviders\ArticleCreatedSuggestionProvider::class,
+        ],
         'client_created' => [
             \Vendor\Automation\SuggestionProviders\ClientCreatedSuggestionProvider::class,
         ],
@@ -38,6 +41,9 @@ return [
         ],
         'stock_order_created' => [
             \Vendor\Automation\SuggestionProviders\StockOrderCreatedSuggestionProvider::class,
+        ],
+        'delivery_note_created' => [
+            \Vendor\Automation\SuggestionProviders\DeliveryNoteCreatedSuggestionProvider::class,
         ],
         'delivery_note_validated' => [
             \Vendor\Automation\SuggestionProviders\DeliveryNoteValidatedSuggestionProvider::class,
@@ -61,8 +67,11 @@ return [
 
     'actions' => [
         'send_welcome_email' => \Vendor\Automation\Actions\SendEmailAutomationAction::class,
+        'send_followup_meeting_email' => \Vendor\Automation\Actions\SendEmailAutomationAction::class,
         'create_followup_meeting' => \Vendor\Automation\Actions\ScheduleCalendarAutomationAction::class,
         'create_quote' => \Vendor\Automation\Actions\CreateQuoteAutomationAction::class,
+        'append_article_sheet_row' => \Vendor\Automation\Actions\AppendGoogleSheetRowAutomationAction::class,
+        'create_article_google_doc' => \Vendor\Automation\Actions\CreateGoogleDocAutomationAction::class,
         'append_client_sheet_row' => \Vendor\Automation\Actions\AppendGoogleSheetRowAutomationAction::class,
         'create_client_google_doc' => \Vendor\Automation\Actions\CreateGoogleDocAutomationAction::class,
         'append_supplier_sheet_row' => \Vendor\Automation\Actions\AppendGoogleSheetRowAutomationAction::class,

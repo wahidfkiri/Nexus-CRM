@@ -8,12 +8,11 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SecurityValidationDemoController;
+use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('web')->group(function () {
-    Route::get('/', function () {
-        return auth()->check() ? redirect('/dashboard') : redirect('/login');
-    });
+    Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
     Route::middleware('guest')->group(function () {
         Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -25,6 +24,9 @@ Route::middleware('web')->group(function () {
         Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 
         Route::get('/password/reset', [AuthController::class, 'showForgotPasswordForm'])->name('password.request');
+        Route::post('/password/email', [AuthController::class, 'sendPasswordResetLink'])->name('password.email');
+        Route::get('/password/reset/{token}', [AuthController::class, 'showResetPasswordForm'])->name('password.reset');
+        Route::post('/password/reset', [AuthController::class, 'resetPassword'])->name('password.update');
     });
 
     Route::get('/auth/google/desktop/finalize/{token}', [AuthController::class, 'finalizeDesktopGoogle'])->name('auth.google.desktop.finalize');
@@ -52,6 +54,9 @@ Route::middleware('web')->group(function () {
         Route::get('/notifications/{notification}/open', [NotificationController::class, 'open'])->name('notifications.open');
         Route::get('/settings/global', [GlobalSettingsController::class, 'show'])->name('settings.global');
         Route::put('/settings/global', [GlobalSettingsController::class, 'update'])->name('settings.global.update');
+        Route::post('/settings/global/data-exports', [GlobalSettingsController::class, 'startDataExport'])->name('settings.global.exports.start');
+        Route::get('/settings/global/data-exports/{dataExport}', [GlobalSettingsController::class, 'showDataExport'])->name('settings.global.exports.show');
+        Route::post('/settings/global/data-exports/{dataExport}/process', [GlobalSettingsController::class, 'processDataExport'])->name('settings.global.exports.process');
         Route::get('/profile-settings', [ProfileController::class, 'show'])->name('profile-settings');
         Route::put('/profile-settings', [ProfileController::class, 'update'])->name('profile-settings.update');
         Route::get('/security/validation-demo', [SecurityValidationDemoController::class, 'create'])->name('security.validation-demo');

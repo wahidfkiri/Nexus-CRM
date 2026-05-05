@@ -185,6 +185,9 @@ class MarketplaceController extends Controller
         if ($extension->slug === 'notion-workspace' && \Route::has('notion-workspace.index')) {
             return redirect()->route('notion-workspace.index');
         }
+        if ($extension->slug === 'trello-integration' && \Route::has('trello-integration.index')) {
+            return redirect()->route('trello-integration.index');
+        }
         if ($extension->slug === 'google-calendar' && \Route::has('google-calendar.index')) {
             return redirect()->route('google-calendar.index');
         }

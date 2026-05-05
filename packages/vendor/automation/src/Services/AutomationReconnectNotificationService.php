@@ -6,20 +6,17 @@ use App\Models\User;
 use App\Notifications\AutomationSuggestionPendingNotification;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Collection;
-use Vendor\Automation\Models\AutomationEvent;
 use Vendor\Automation\Models\AutomationSuggestion;
 use Vendor\Automation\Support\AutomationReconnectResolver;
+use Vendor\Automation\Support\AutomationTenantResolver;
 
 class AutomationReconnectNotificationService
 {
     public function notifyForProvider(int $tenantId, int $userId, string $providerSlug, string $targetUrl): int
     {
-        $user = User::query()
-            ->whereKey($userId)
-            ->where('tenant_id', $tenantId)
-            ->first();
+        $user = User::query()->find($userId);
 
-        if (!$user) {
+        if (!AutomationTenantResolver::userCanAccessTenant($user, $tenantId)) {
             return 0;
         }
 
@@ -29,28 +26,14 @@ class AutomationReconnectNotificationService
         $bySuggestionId = $notifications->keyBy(fn (DatabaseNotification $notification) => (int) data_get($notification->data, 'suggestion_id'));
 
         foreach ($suggestions as $suggestion) {
-            $suggestionId = (int) $suggestion->id;
-            $payload = (new AutomationSuggestionPendingNotification(
+            $this->upsertNotification(
+                $user,
                 $suggestion,
                 $providerSlug,
-                $this->buildResumeUrl($targetUrl, $suggestionId, $providerSlug)
-            ))->toArray($user);
-
-            $notification = $bySuggestionId->get($suggestionId);
-            if ($notification) {
-                $notification->forceFill([
-                    'data' => $payload,
-                    'read_at' => null,
-                ])->save();
-
-                continue;
-            }
-
-            $user->notify(new AutomationSuggestionPendingNotification(
-                $suggestion,
-                $providerSlug,
-                $this->buildResumeUrl($targetUrl, $suggestionId, $providerSlug)
-            ));
+                $targetUrl,
+                'reconnected',
+                $bySuggestionId->get((int) $suggestion->id)
+            );
         }
 
         $notifications
@@ -70,7 +53,7 @@ class AutomationReconnectNotificationService
             ? $suggestion->user
             : User::query()->find($suggestion->user_id);
 
-        if (!$user) {
+        if (!AutomationTenantResolver::userCanAccessTenant($user, (int) $suggestion->tenant_id)) {
             return;
         }
 
@@ -82,14 +65,27 @@ class AutomationReconnectNotificationService
             return;
         }
 
+        $provider = AutomationReconnectResolver::resolve($suggestion->latestFailedEvent?->last_error);
+        $targetUrl = (string) ($provider['url'] ?? route('dashboard'));
+
+        $this->upsertNotification(
+            $user,
+            $suggestion,
+            $providerSlug,
+            $targetUrl,
+            'pending_reconnect',
+            $notifications->first()
+        );
+
         $notifications
-            ->filter(fn (DatabaseNotification $notification) => (string) data_get($notification->data, 'provider_slug') !== $providerSlug)
+            ->skip(1)
             ->each(fn (DatabaseNotification $notification) => $notification->delete());
     }
 
     protected function pendingSuggestionsForProvider(int $tenantId, int $userId, string $providerSlug): Collection
     {
         return AutomationSuggestion::query()
+            ->with(['latestFailedEvent:automation_events.id,automation_events.triggered_by_suggestion_id,automation_events.last_error'])
             ->where('tenant_id', $tenantId)
             ->where('user_id', $userId)
             ->where('status', AutomationSuggestion::STATUS_PENDING)
@@ -104,10 +100,8 @@ class AutomationReconnectNotificationService
 
     protected function resolveSuggestionProvider(AutomationSuggestion $suggestion): ?string
     {
-        $latestFailedEvent = $suggestion->automationEvents()
-            ->where('status', AutomationEvent::STATUS_FAILED)
-            ->latest('id')
-            ->first();
+        $suggestion->loadMissing(['latestFailedEvent:automation_events.id,automation_events.triggered_by_suggestion_id,automation_events.last_error']);
+        $latestFailedEvent = $suggestion->latestFailedEvent;
 
         if (!$latestFailedEvent) {
             return null;
@@ -119,28 +113,59 @@ class AutomationReconnectNotificationService
     protected function providerNotifications(User $user, string $providerSlug): Collection
     {
         return $user->notifications()
+            ->where('type', AutomationSuggestionPendingNotification::class)
+            ->where('data', 'like', '%"notification_kind":"automation_suggestion_pending"%')
+            ->where('data', 'like', '%"provider_slug":"' . $providerSlug . '"%')
             ->latest('updated_at')
             ->get()
-            ->filter(function (DatabaseNotification $notification) use ($providerSlug) {
-                return (string) data_get($notification->data, 'notification_kind') === 'automation_suggestion_pending'
-                    && (string) data_get($notification->data, 'provider_slug') === $providerSlug;
-            })
             ->values();
     }
 
     protected function suggestionNotifications(User $user, int $suggestionId): Collection
     {
         return $user->notifications()
+            ->where('type', AutomationSuggestionPendingNotification::class)
+            ->where('data', 'like', '%"notification_kind":"automation_suggestion_pending"%')
+            ->where('data', 'like', '%"suggestion_id":' . $suggestionId . ',%')
             ->latest('updated_at')
             ->get()
-            ->filter(function (DatabaseNotification $notification) use ($suggestionId) {
-                return (string) data_get($notification->data, 'notification_kind') === 'automation_suggestion_pending'
-                    && (int) data_get($notification->data, 'suggestion_id') === $suggestionId;
-            })
             ->values();
     }
 
-    protected function buildResumeUrl(string $targetUrl, int $suggestionId, string $providerSlug): string
+    protected function upsertNotification(
+        User $user,
+        AutomationSuggestion $suggestion,
+        string $providerSlug,
+        string $targetUrl,
+        string $resumeState,
+        ?DatabaseNotification $notification = null
+    ): void {
+        $suggestionId = (int) $suggestion->id;
+        $payload = (new AutomationSuggestionPendingNotification(
+            $suggestion,
+            $providerSlug,
+            $this->buildResumeUrl($targetUrl, $suggestionId, $providerSlug, $resumeState),
+            $resumeState
+        ))->toArray($user);
+
+        if ($notification) {
+            $notification->forceFill([
+                'data' => $payload,
+                'read_at' => null,
+            ])->save();
+
+            return;
+        }
+
+        $user->notify(new AutomationSuggestionPendingNotification(
+            $suggestion,
+            $providerSlug,
+            $this->buildResumeUrl($targetUrl, $suggestionId, $providerSlug, $resumeState),
+            $resumeState
+        ));
+    }
+
+    protected function buildResumeUrl(string $targetUrl, int $suggestionId, string $providerSlug, string $resumeState = 'reconnected'): string
     {
         $separator = str_contains($targetUrl, '?') ? '&' : '?';
 
@@ -148,6 +173,7 @@ class AutomationReconnectNotificationService
             'automation_resume' => 1,
             'automation_suggestion_ids' => (string) $suggestionId,
             'automation_provider' => $providerSlug,
+            'automation_resume_state' => $resumeState,
         ]);
     }
 }

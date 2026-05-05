@@ -420,20 +420,20 @@ class NotionWorkspaceApiService
             ['tenant_id' => $tenantId],
             [
                 'connected_by' => $connectedBy ?: null,
-                'access_token' => (string) ($data['access_token'] ?? ''),
+                'access_token' => (string) ($data['access_token'] ?? $existingToken?->access_token ?? ''),
                 'refresh_token' => $data['refresh_token'] ?? $existingToken?->refresh_token,
-                'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds((int) $data['expires_in']) : null,
-                'notion_workspace_id' => $data['workspace_id'] ?? null,
-                'notion_workspace_name' => $data['workspace_name'] ?? null,
-                'notion_workspace_icon' => $data['workspace_icon'] ?? null,
-                'notion_bot_id' => $data['bot_id'] ?? null,
-                'notion_owner_type' => $ownerType ?: null,
-                'notion_user_id' => $ownerUser['id'] ?? null,
-                'notion_user_name' => $ownerUser['name'] ?? null,
-                'notion_user_email' => data_get($ownerUser, 'person.email'),
-                'notion_user_avatar_url' => $ownerUser['avatar_url'] ?? null,
+                'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds((int) $data['expires_in']) : $existingToken?->token_expires_at,
+                'notion_workspace_id' => $data['workspace_id'] ?? $existingToken?->notion_workspace_id,
+                'notion_workspace_name' => $data['workspace_name'] ?? $existingToken?->notion_workspace_name,
+                'notion_workspace_icon' => $data['workspace_icon'] ?? $existingToken?->notion_workspace_icon,
+                'notion_bot_id' => $data['bot_id'] ?? $existingToken?->notion_bot_id,
+                'notion_owner_type' => $ownerType ?: $existingToken?->notion_owner_type,
+                'notion_user_id' => $ownerUser['id'] ?? $existingToken?->notion_user_id,
+                'notion_user_name' => $ownerUser['name'] ?? $existingToken?->notion_user_name,
+                'notion_user_email' => data_get($ownerUser, 'person.email') ?? $existingToken?->notion_user_email,
+                'notion_user_avatar_url' => $ownerUser['avatar_url'] ?? $existingToken?->notion_user_avatar_url,
                 'is_active' => true,
-                'connected_at' => now(),
+                'connected_at' => $existingToken?->connected_at ?? now(),
                 'disconnected_at' => null,
             ]
         )->fresh();
@@ -515,6 +515,10 @@ class NotionWorkspaceApiService
     private function apiRequest(int $tenantId, string $method, string $uri, array $options = [], bool $retrying = false): array
     {
         $token = $this->getTokenOrFail($tenantId);
+
+        if ($token->is_expired) {
+            $token = $this->refreshAccessToken($token);
+        }
 
         $headers = array_merge([
             'Authorization' => 'Bearer ' . $token->access_token,

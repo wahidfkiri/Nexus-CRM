@@ -27,6 +27,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
     public function execute(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion = null): array
     {
         return match ((string) $automationEvent->action_type) {
+            'append_article_sheet_row' => $this->appendArticleRow($automationEvent, $suggestion),
             'append_client_sheet_row' => $this->appendClientRow($automationEvent, $suggestion),
             'append_invoice_sheet_row' => $this->appendInvoiceRow($automationEvent, $suggestion),
             'append_supplier_sheet_row' => $this->appendSupplierRow($automationEvent, $suggestion),
@@ -35,6 +36,57 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
             'append_low_stock_sheet_row' => $this->appendLowStockRow($automationEvent, $suggestion),
             default => throw new RuntimeException('Type de synchronisation Google Sheets non pris en charge.'),
         };
+    }
+
+    protected function appendArticleRow(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
+    {
+        $tenantId = $this->tenantId($automationEvent);
+        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit etre installe pour enregistrer cet article.');
+
+        return $this->withReconnectHandling('google-sheets', function () use ($automationEvent, $suggestion, $tenantId) {
+            $payload = $this->payload($automationEvent);
+            $articleId = $this->modelId($payload, $suggestion, 'article_id', Article::class);
+            if (!$articleId) {
+                throw new RuntimeException('Article introuvable pour la synchronisation Google Sheets.');
+            }
+
+            $article = $this->loadArticle($tenantId, $articleId);
+            $sheet = $this->ensureSpreadsheet(
+                $tenantId,
+                'article_catalog',
+                'CRM - Catalogue articles',
+                'Articles',
+                ['Date', 'Article ID', 'Nom', 'SKU', 'Unite', 'Prix achat', 'Prix vente', 'Stock courant', 'Seuil mini', 'Fournisseur', 'Statut', 'Source CRM']
+            );
+
+            $this->sheetsService->appendRows(
+                $tenantId,
+                $sheet['spreadsheet_id'],
+                $sheet['sheet_title'] . '!A:L',
+                [[
+                    now()->format('Y-m-d H:i'),
+                    (int) $article->id,
+                    (string) $article->name,
+                    (string) ($article->sku ?? ''),
+                    (string) ($article->unit ?? ''),
+                    (float) ($article->purchase_price ?? 0),
+                    (float) ($article->sale_price ?? 0),
+                    (float) $article->current_stock,
+                    (float) $article->min_stock,
+                    (string) optional($article->supplier)->name,
+                    (string) ($article->status ?? ''),
+                    (string) ($this->sourceUrlForModel($article) ?? ''),
+                ]]
+            );
+
+            return [
+                'result' => 'sheet_row_appended',
+                'message' => 'Article ajoute au catalogue Google Sheets.',
+                'spreadsheet_id' => $sheet['spreadsheet_id'],
+                'target_url' => $sheet['spreadsheet_url'] ?? $this->routeUrl('google-sheets.index'),
+                'target_blank' => true,
+            ];
+        });
     }
 
     protected function appendClientRow(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array

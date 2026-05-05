@@ -14,6 +14,7 @@ use Vendor\Automation\Models\AutomationEvent;
 use Vendor\Automation\Models\AutomationSuggestion;
 use Vendor\Automation\Registries\ActionRegistry;
 use Vendor\Automation\Registries\SuggestionRegistry;
+use Vendor\Automation\Support\AutomationTenantResolver;
 
 class AutomationEngine
 {
@@ -259,7 +260,7 @@ class AutomationEngine
 
     protected function resolveTenantId(?int $tenantId = null): int
     {
-        $tenantId = $tenantId ?? (auth()->check() ? (int) auth()->user()->tenant_id : 0);
+        $tenantId = $tenantId ?? AutomationTenantResolver::resolve();
         if ($tenantId <= 0) {
             throw new RuntimeException('Impossible de résoudre le tenant pour cette automation.');
         }
@@ -269,7 +270,7 @@ class AutomationEngine
 
     protected function assertTenantScope(int $tenantId): void
     {
-        if (auth()->check() && (int) auth()->user()->tenant_id !== $tenantId) {
+        if (auth()->check() && !AutomationTenantResolver::userCanAccessTenant(auth()->user(), $tenantId)) {
             throw new RuntimeException('Accès interdit à cette automation pour un autre tenant.');
         }
     }

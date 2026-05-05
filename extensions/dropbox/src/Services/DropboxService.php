@@ -4,6 +4,7 @@ namespace NexusExtensions\Dropbox\Services;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -678,13 +679,17 @@ class DropboxService
 
     private function sendJsonRequest(PendingRequest $client, string $endpoint, array $payload = []): Response
     {
-        if ($payload === []) {
-            return $client
-                ->withBody('null', 'application/json')
-                ->post($endpoint);
-        }
+        try {
+            if ($payload === []) {
+                return $client
+                    ->withBody('null', 'application/json')
+                    ->post($endpoint);
+            }
 
-        return $client->post($endpoint, $payload);
+            return $client->post($endpoint, $payload);
+        } catch (ConnectionException $e) {
+            throw new RuntimeException($this->networkErrorMessage($endpoint, $e), 0, $e);
+        }
     }
 
     private function jsonClient(string $accessToken): PendingRequest
@@ -693,21 +698,27 @@ class DropboxService
             ->withToken($accessToken)
             ->acceptJson()
             ->asJson()
-            ->timeout((int) config('dropbox.api.timeout', 45));
+            ->connectTimeout((int) config('dropbox.api.connect_timeout', 30))
+            ->timeout((int) config('dropbox.api.timeout', 45))
+            ->retry((int) config('dropbox.api.retry_attempts', 3), 400, null, false);
     }
 
     private function contentClient(string $accessToken): PendingRequest
     {
         return Http::baseUrl((string) config('dropbox.api.content_url'))
             ->withToken($accessToken)
-            ->timeout((int) config('dropbox.api.timeout', 45));
+            ->connectTimeout((int) config('dropbox.api.connect_timeout', 30))
+            ->timeout((int) config('dropbox.api.content_timeout', 180))
+            ->retry((int) config('dropbox.api.retry_attempts', 3), 600, null, false);
     }
 
     private function oauthClient(): PendingRequest
     {
         return Http::asForm()
             ->acceptJson()
-            ->timeout((int) config('dropbox.api.timeout', 45));
+            ->connectTimeout((int) config('dropbox.api.connect_timeout', 30))
+            ->timeout((int) config('dropbox.api.timeout', 45))
+            ->retry((int) config('dropbox.api.retry_attempts', 3), 400, null, false);
     }
 
     private function sendContentRequest(
@@ -725,9 +736,13 @@ class DropboxService
             $headers['Content-Type'] = $contentType;
         }
 
-        return $client
-            ->withHeaders($headers)
-            ->send('POST', $endpoint, ['body' => $body]);
+        try {
+            return $client
+                ->withHeaders($headers)
+                ->send('POST', $endpoint, ['body' => $body]);
+        } catch (ConnectionException $e) {
+            throw new RuntimeException($this->networkErrorMessage($endpoint, $e), 0, $e);
+        }
     }
 
     private function handleResponse(Response $response, string $endpoint): array
@@ -768,6 +783,23 @@ class DropboxService
         $body = trim((string) $response->body());
 
         return $body !== '' ? $body : $fallback;
+    }
+
+    private function networkErrorMessage(string $endpoint, ConnectionException $e): string
+    {
+        $message = mb_strtolower($e->getMessage());
+
+        if (str_contains($message, 'curl error 28') || str_contains($message, 'timeout was reached')) {
+            return str_contains($endpoint, 'files/upload')
+                ? 'Le transfert vers Dropbox a pris trop de temps. Verifiez votre connexion Internet puis relancez la sauvegarde.'
+                : 'Dropbox ne repond pas dans les temps. Verifiez votre connexion Internet puis reessayez.';
+        }
+
+        if (str_contains($message, 'failed to connect') || str_contains($message, 'could not resolve host')) {
+            return 'Impossible de joindre Dropbox pour le moment. Verifiez votre connexion Internet puis reessayez.';
+        }
+
+        return 'Une erreur reseau a empeche la communication avec Dropbox. Reessayez dans quelques instants.';
     }
 
     private function ensureRootFolder(int $tenantId, string $accessToken): array

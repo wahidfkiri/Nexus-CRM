@@ -25,6 +25,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
     {
         return match ((string) $automationEvent->action_type) {
             'send_welcome_email' => $this->sendWelcomeEmail($automationEvent, $suggestion),
+            'send_followup_meeting_email' => $this->sendFollowupMeetingEmail($automationEvent, $suggestion),
             'send_invoice_email' => $this->sendInvoiceEmail($automationEvent, $suggestion),
             'send_quote_email' => $this->sendQuoteEmail($automationEvent, $suggestion),
             'send_team_invitation_followup_email' => $this->sendInvitationFollowupEmail($automationEvent, $suggestion),
@@ -157,6 +158,65 @@ class SendEmailAutomationAction extends AbstractAutomationAction
             'gmail_message_id' => (string) ($result['message_id'] ?? ''),
             'thread_id' => (string) ($result['thread_id'] ?? ''),
             'target_url' => $result['web_url'] ?? ($invoiceUrl ?: $this->routeUrl('google-gmail.index')),
+        ];
+    }
+
+    protected function sendFollowupMeetingEmail(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
+    {
+        $tenantId = $this->tenantId($automationEvent);
+        $this->assertExtensionActive($tenantId, 'google-gmail', 'Google Gmail doit etre installe pour envoyer un email de proposition de rendez-vous.');
+
+        $payload = $this->payload($automationEvent);
+        $clientId = $this->modelId($payload, $suggestion, 'client_id', Client::class);
+        if (!$clientId) {
+            throw new RuntimeException('Client introuvable pour cet email de rendez-vous.');
+        }
+
+        $client = $this->loadClient($tenantId, $clientId);
+        $recipientEmail = trim((string) $client->email);
+        $this->assertRecipientEmail($recipientEmail, 'Ce client ne possede pas d adresse email valide.');
+
+        $displayName = $this->clientDisplayName($client);
+        $contactName = trim((string) ($client->contact_name ?: $displayName));
+        $appName = $this->appName();
+        $clientUrl = $this->sourceUrlForModel($client);
+
+        $subject = 'Proposition de rendez-vous - ' . $appName;
+        $bodyText = implode("\n\n", array_filter([
+            'Bonjour ' . $contactName . ',',
+            'Nous aimerions organiser un rendez-vous de découverte pour mieux comprendre vos besoins et préparer les prochaines étapes.',
+            'Dites-nous simplement vos disponibilités et nous vous proposerons un créneau adapté.',
+            $clientUrl ? 'Votre fiche client dans le CRM: ' . $clientUrl : null,
+            'À bientôt,',
+            $appName,
+        ]));
+
+        $bodyHtml = '<p>Bonjour ' . e($contactName) . ',</p>'
+            . '<p>Nous aimerions organiser un <strong>rendez-vous de découverte</strong> pour mieux comprendre vos besoins et préparer les prochaines étapes.</p>'
+            . '<p>Dites-nous simplement vos disponibilités et nous vous proposerons un créneau adapté.</p>'
+            . ($clientUrl
+                ? '<p><a href="' . e($clientUrl) . '" target="_blank" rel="noopener">Ouvrir la fiche client</a></p>'
+                : '')
+            . '<p>À bientôt,<br>' . e($appName) . '</p>';
+
+        $result = $this->sendThroughGmail($tenantId, [
+            'to' => $recipientEmail,
+            'subject' => $subject,
+            'body_text' => $bodyText,
+            'body_html' => $bodyHtml,
+        ]);
+
+        $client->forceFill(['last_contact_at' => now()])->save();
+
+        return [
+            'result' => 'email_sent',
+            'message' => 'Email de proposition de rendez-vous envoye avec succes.',
+            'client_id' => (int) $client->id,
+            'client_name' => $displayName,
+            'recipient_email' => $recipientEmail,
+            'gmail_message_id' => (string) ($result['message_id'] ?? ''),
+            'thread_id' => (string) ($result['thread_id'] ?? ''),
+            'target_url' => $result['web_url'] ?? $this->routeUrl('google-gmail.index'),
         ];
     }
 

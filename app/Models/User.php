@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Notifications\AccountActivationNotification;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -203,6 +204,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function canManageTenant(): bool
     {
         return $this->hasTenantRole(['owner', 'admin']);
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification((string) $token));
     }
 
     /**

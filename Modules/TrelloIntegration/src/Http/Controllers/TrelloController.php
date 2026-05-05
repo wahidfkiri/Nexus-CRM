@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rule;
 use Modules\TrelloIntegration\Models\TrelloBoard;
 use Modules\TrelloIntegration\Models\TrelloCard;
 use Modules\TrelloIntegration\Models\TrelloList;
@@ -31,7 +32,9 @@ class TrelloController extends Controller
         $tenantId = $this->tenantId();
         $storageReady = $this->isStorageReady();
         $extensionActive = $storageReady && $this->isExtensionActive($tenantId);
-        $oauthConfigured = $this->authService->isConfigured();
+        $configurationStatus = $this->authService->configurationStatus();
+        $oauthConfigured = (bool) ($configurationStatus['configured'] ?? false);
+        $oauthReady = (bool) ($configurationStatus['ready'] ?? false);
         $token = ($storageReady && $extensionActive) ? $this->authService->getToken($tenantId) : null;
 
         if ($token && TrelloBoard::query()->count() === 0) {
@@ -72,6 +75,8 @@ class TrelloController extends Controller
             'storageReady' => $storageReady,
             'extensionActive' => $extensionActive,
             'oauthConfigured' => $oauthConfigured,
+            'oauthReady' => $oauthReady,
+            'configurationStatus' => $configurationStatus,
             'connected' => (bool) $token,
             'token' => $token,
             'boards' => $boards,
@@ -270,11 +275,19 @@ class TrelloController extends Controller
 
     public function updateCard(Request $request, TrelloCard $card): JsonResponse
     {
+        $projectRule = ['nullable', 'integer'];
+
+        if (class_exists(Project::class) && Schema::hasTable('projects')) {
+            $projectRule[] = Rule::exists('projects', 'id')->where(function ($query) {
+                $query->where('tenant_id', $this->tenantId());
+            });
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'due' => ['nullable', 'date'],
-            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
+            'project_id' => $projectRule,
             'link_notes' => ['nullable', 'string'],
         ]);
 

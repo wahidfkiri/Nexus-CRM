@@ -17,6 +17,7 @@ const GoogleCalendarModule = (() => {
     calendarEvents: [],
     calendars: [],
     editingEvent: null,
+    detailEvent: null,
     loadingEvents: false,
     debounceTimer: null,
     viewMode: 'month',
@@ -148,7 +149,19 @@ const GoogleCalendarModule = (() => {
 
     document.getElementById('gcSaveEventBtn')?.addEventListener('click', saveEvent);
 
+    document.getElementById('gcDetailEditBtn')?.addEventListener('click', openDetailEditMode);
+    document.getElementById('gcDetailDeleteBtn')?.addEventListener('click', deleteDetailEvent);
+    document.getElementById('gcDetailOpenGoogleBtn')?.addEventListener('click', openDetailGoogleLink);
     document.getElementById('gcEventsTableBody')?.addEventListener('click', (e) => {
+      const detailBtn = e.target.closest('[data-gc-detail]');
+      if (detailBtn) {
+        const idx = parseInt(detailBtn.dataset.gcDetail, 10);
+        if (!Number.isNaN(idx)) {
+          openEventDetails(state.events[idx]);
+        }
+        return;
+      }
+
       const editBtn = e.target.closest('[data-gc-edit]');
       if (editBtn) {
         const idx = parseInt(editBtn.dataset.gcEdit, 10);
@@ -168,24 +181,9 @@ const GoogleCalendarModule = (() => {
     });
 
     document.getElementById('gcCalendarModeWrap')?.addEventListener('click', (e) => {
-      const openBtn = e.target.closest('[data-gc-open-link]');
-      if (openBtn) {
-        const href = openBtn.dataset.gcOpenLink;
-        if (href) {
-          window.open(href, '_blank', 'noopener,noreferrer');
-        }
-        return;
-      }
-
-      const editBtn = e.target.closest('[data-gc-edit-id]');
-      if (editBtn) {
-        editEventById(editBtn.dataset.gcEditId);
-        return;
-      }
-
-      const deleteBtn = e.target.closest('[data-gc-delete-id]');
-      if (deleteBtn) {
-        deleteEventById(deleteBtn.dataset.gcDeleteId);
+      const eventCard = e.target.closest('[data-gc-event-id]');
+      if (eventCard) {
+        openEventDetailsById(eventCard.dataset.gcEventId);
         return;
       }
 
@@ -673,14 +671,15 @@ const GoogleCalendarModule = (() => {
     if (event.is_holiday) classes.push('is-holiday');
     if (event.client_name) classes.push('is-client-linked');
 
+    const palette = eventPalette(event);
     const timeLabel = eventTimeLabel(event);
-    const openLink = event.html_link ? `<button type="button" class="gc-event-action" data-gc-open-link="${esc(event.html_link)}" title="${esc(t('open_google', 'Ouvrir dans Google'))}"><i class="fas fa-arrow-up-right-from-square"></i></button>` : '';
     const clientBadge = event.client_name
       ? `<span class="gc-event-client"><i class="fas fa-building"></i> ${esc(event.client_name)}</span>`
       : '';
 
     return `
-      <div class="${classes.join(' ')}">
+      <button type="button" class="${classes.join(' ')}" data-gc-event-id="${esc(localId)}" style="${eventPaletteStyle(palette)}" aria-label="${esc(event.summary || t('no_title', '(Sans titre)'))}">
+        <span class="gc-event-indicator" aria-hidden="true"></span>
         <div class="gc-event-main">
           <div class="gc-event-title-row">
             <span class="gc-event-time">${esc(timeLabel)}</span>
@@ -689,12 +688,7 @@ const GoogleCalendarModule = (() => {
           ${clientBadge}
           ${event.location && !compact ? `<div class="gc-event-location"><i class="fas fa-location-dot"></i> ${esc(event.location)}</div>` : ''}
         </div>
-        <div class="gc-event-actions">
-          ${openLink}
-          <button type="button" class="gc-event-action" data-gc-edit-id="${esc(localId)}" title="${esc(t('edit', 'Modifier'))}"><i class="fas fa-pen"></i></button>
-          <button type="button" class="gc-event-action danger" data-gc-delete-id="${esc(localId)}" title="${esc(t('delete', 'Supprimer'))}"><i class="fas fa-trash"></i></button>
-        </div>
-      </div>
+      </button>
     `;
   }
 
@@ -795,7 +789,7 @@ const GoogleCalendarModule = (() => {
       return `
         <tr>
           <td>
-            <div style="font-weight:var(--fw-medium);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${esc(event.summary || t('no_title', '(Sans titre)'))} ${holidayBadge}</div>
+            <button type="button" data-gc-detail="${idx}" style="all:unset;cursor:pointer;font-weight:var(--fw-medium);display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--c-ink-90);">${esc(event.summary || t('no_title', '(Sans titre)'))} ${holidayBadge}</button>
             ${event.client_name ? `<div style="font-size:12px;color:var(--c-ink-40);"><i class="fas fa-building"></i> ${esc(event.client_name)}</div>` : ''}
             ${event.location ? `<div style="font-size:12px;color:var(--c-ink-40);"><i class="fas fa-location-dot"></i> ${esc(event.location)}</div>` : ''}
           </td>
@@ -952,6 +946,8 @@ const GoogleCalendarModule = (() => {
   }
 
   function editEventObject(event) {
+    Modal.close(document.getElementById('gcEventDetailModal'));
+    state.detailEvent = null;
     state.editingEvent = event;
     setModalTitle(t('modal_edit', 'Modifier un événement'));
 
@@ -997,6 +993,8 @@ const GoogleCalendarModule = (() => {
   }
 
   async function deleteEventObject(event) {
+    Modal.close(document.getElementById('gcEventDetailModal'));
+    state.detailEvent = null;
     Modal.confirm({
       title: t('delete_confirm_title', 'Supprimer cet événement ?'),
       message: t('delete_confirm_message', 'L’événement ":title" sera supprimé de Google Calendar.', {
@@ -1187,6 +1185,236 @@ const GoogleCalendarModule = (() => {
     return state.calendarEvents.find((event) => String(event.id) === key)
       || state.events.find((event) => String(event.id) === key)
       || null;
+  }
+
+  function openEventDetailsById(localId) {
+    const event = findEventById(localId);
+    if (!event) return;
+    openEventDetails(event);
+  }
+
+  function openEventDetails(event) {
+    if (!event) return;
+
+    state.detailEvent = event;
+
+    const palette = eventPalette(event);
+    const icon = document.getElementById('gcDetailModalIcon');
+    const googleBtn = document.getElementById('gcDetailOpenGoogleBtn');
+    const attendees = Array.isArray(event.attendees) ? event.attendees.filter((att) => att && att.email) : [];
+    const description = String(event.description || '').trim();
+    const clientName = String(event.client_name || '').trim();
+    const sourceLabel = String(event.source_label || '').trim();
+    const location = String(event.location || '').trim();
+
+    if (icon) {
+      icon.style.background = palette.soft;
+      icon.style.color = palette.text;
+    }
+
+    const dot = document.getElementById('gcDetailCalendarDot');
+    if (dot) {
+      dot.style.background = palette.borderStrong;
+    }
+
+    setText('gcDetailCalendarName', calendarLabel(event.calendar_id));
+    setText('gcDetailEventTitle', event.summary || t('no_title', '(Sans titre)'));
+    setText('gcDetailWhen', eventDetailWhenLabel(event));
+    setText('gcDetailLocation', location || t('detail_empty', 'Non renseigne'));
+    setText('gcDetailClient', clientName || t('detail_empty', 'Non renseigne'));
+    setText('gcDetailSource', sourceLabel || t('detail_empty', 'Non renseigne'));
+    setText('gcDetailVisibility', visibilityLabel(event.visibility || 'default'));
+    setText('gcDetailUpdatedAt', formatDetailDateTime(event.google_updated_at || event.updated_at));
+
+    const statusWrap = document.getElementById('gcDetailStatus');
+    if (statusWrap) {
+      statusWrap.innerHTML = statusToBadge(event.status || 'confirmed');
+    }
+
+    const attendeesWrap = document.getElementById('gcDetailAttendees');
+    if (attendeesWrap) {
+      attendeesWrap.innerHTML = attendees.length
+        ? attendees.map((att) => `<span class="gc-detail-attendee"><i class="fas fa-user"></i> ${esc(att.email)}</span>`).join('')
+        : `<span class="gc-detail-empty">${esc(t('detail_no_attendees', 'Aucun participant'))}</span>`;
+    }
+
+    const descriptionWrap = document.getElementById('gcDetailDescription');
+    if (descriptionWrap) {
+      descriptionWrap.textContent = description || t('detail_no_description', 'Aucune description.');
+      descriptionWrap.classList.toggle('gc-detail-empty', !description);
+    }
+
+    if (googleBtn) {
+      googleBtn.hidden = !event.html_link;
+    }
+
+    Modal.open(document.getElementById('gcEventDetailModal'));
+  }
+
+  function openDetailEditMode() {
+    if (!state.detailEvent) return;
+    editEventObject(state.detailEvent);
+  }
+
+  async function deleteDetailEvent() {
+    if (!state.detailEvent) return;
+    await deleteEventObject(state.detailEvent);
+  }
+
+  function openDetailGoogleLink() {
+    if (!state.detailEvent?.html_link) return;
+    window.open(state.detailEvent.html_link, '_blank', 'noopener,noreferrer');
+  }
+
+  function eventPalette(event) {
+    if (event.is_holiday) {
+      return {
+        background: '#b45309',
+        foreground: '#fff8eb',
+        soft: '#b45309',
+        hover: '#92400e',
+        border: '#92400e',
+        borderStrong: '#78350f',
+        timeBg: 'rgba(255, 248, 235, .18)',
+        chipBg: 'rgba(255, 248, 235, .16)',
+        chipText: '#fff8eb',
+        subtle: 'rgba(255, 248, 235, .88)',
+        text: '#fff8eb',
+      };
+    }
+
+    const calendar = state.calendars.find((item) => item.calendar_id === event.calendar_id) || null;
+    const background = normalizeHex(calendar?.background_color) || '#2563eb';
+    const foreground = normalizeHex(calendar?.foreground_color) || readableTextOn(background);
+    const prefersLightText = readableTextOn(background) === '#ffffff';
+
+    return {
+      background,
+      foreground,
+      soft: background,
+      hover: shiftColor(background, prefersLightText ? -18 : -10),
+      border: shiftColor(background, prefersLightText ? -10 : -14),
+      borderStrong: shiftColor(background, prefersLightText ? -22 : -22),
+      timeBg: prefersLightText ? 'rgba(255, 255, 255, .16)' : 'rgba(255, 255, 255, .42)',
+      chipBg: prefersLightText ? 'rgba(255, 255, 255, .14)' : 'rgba(255, 255, 255, .36)',
+      chipText: foreground,
+      subtle: prefersLightText ? 'rgba(255, 255, 255, .88)' : alpha(foreground, 0.82),
+      text: foreground,
+    };
+  }
+
+  function eventPaletteStyle(palette) {
+    return [
+      `--gc-event-bg:${palette.soft}`,
+      `--gc-event-bg-hover:${palette.hover}`,
+      `--gc-event-border:${palette.border}`,
+      `--gc-event-border-strong:${palette.borderStrong}`,
+      `--gc-event-text:${palette.text}`,
+      `--gc-event-subtle:${palette.subtle}`,
+      `--gc-event-time-bg:${palette.timeBg}`,
+      `--gc-event-time-text:${palette.text}`,
+      `--gc-event-chip-bg:${palette.chipBg}`,
+      `--gc-event-chip-text:${palette.chipText}`,
+      `--gc-event-dot:${palette.background}`,
+    ].join(';');
+  }
+
+  function normalizeHex(value) {
+    const color = String(value || '').trim();
+    if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color)) {
+      return null;
+    }
+
+    if (color.length === 4) {
+      return `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`.toLowerCase();
+    }
+
+    return color.toLowerCase();
+  }
+
+  function alpha(hex, opacity) {
+    const normalized = normalizeHex(hex);
+    if (!normalized) return hex;
+
+    const rgb = hexToRgb(normalized);
+    if (!rgb) return hex;
+
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+  }
+
+  function hexToRgb(hex) {
+    const normalized = normalizeHex(hex);
+    if (!normalized) return null;
+
+    const bigint = parseInt(normalized.slice(1), 16);
+    return {
+      r: (bigint >> 16) & 255,
+      g: (bigint >> 8) & 255,
+      b: bigint & 255,
+    };
+  }
+
+  function readableTextOn(hex) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) return '#1f2937';
+
+    const luminance = ((0.299 * rgb.r) + (0.587 * rgb.g) + (0.114 * rgb.b)) / 255;
+    return luminance > 0.68 ? '#1f2937' : '#ffffff';
+  }
+
+  function shiftColor(hex, delta) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) return hex;
+
+    const clamp = (value) => Math.max(0, Math.min(255, value));
+    const channels = [rgb.r, rgb.g, rgb.b]
+      .map((channel) => clamp(channel + delta).toString(16).padStart(2, '0'))
+      .join('');
+
+    return `#${channels}`;
+  }
+
+  function eventDetailWhenLabel(event) {
+    if (event.all_day) {
+      if (event.start_display && event.end_display && event.start_display !== event.end_display) {
+        return `${event.start_display} - ${event.end_display}`;
+      }
+
+      return event.start_display || t('all_day', 'Toute la journee');
+    }
+
+    if (event.start_display && event.end_display) {
+      return `${event.start_display} - ${event.end_display}`;
+    }
+
+    return event.start_display || event.end_display || '-';
+  }
+
+  function visibilityLabel(value) {
+    const map = {
+      default: t('visibility_default', 'Par defaut'),
+      public: t('visibility_public', 'Public'),
+      private: t('visibility_private', 'Prive'),
+      confidential: t('visibility_confidential', 'Confidentiel'),
+    };
+
+    return map[value] || value || '-';
+  }
+
+  function formatDetailDateTime(value) {
+    if (!value) return t('detail_empty', 'Non renseigne');
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return t('detail_empty', 'Non renseigne');
+
+    return new Intl.DateTimeFormat(state.locale, {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date);
   }
 
   function getCurrentRange() {

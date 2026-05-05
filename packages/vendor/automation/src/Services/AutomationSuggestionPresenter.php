@@ -4,6 +4,7 @@ namespace Vendor\Automation\Services;
 
 use Illuminate\Support\Collection;
 use Vendor\Automation\Models\AutomationSuggestion;
+use Vendor\Automation\Support\AutomationTenantResolver;
 
 class AutomationSuggestionPresenter
 {
@@ -148,7 +149,7 @@ class AutomationSuggestionPresenter
                 'label' => $this->integrationLabel($integrationSlug),
                 'installed' => $installed,
                 'target_url' => $meta['target_url'] ?? null,
-                'target_blank' => (bool) ($meta['target_blank'] ?? false),
+                'target_blank' => $this->shouldOpenInNewTab($integrationSlug, $meta, $payload),
             ],
             'theme' => $theme,
             'intent' => $isInstall ? 'install' : 'automation',
@@ -164,11 +165,13 @@ class AutomationSuggestionPresenter
     protected function titleForSourceEvent(string $sourceEvent): string
     {
         return match ($sourceEvent) {
+            'article_created' => 'Automatisations suggerees pour cet article',
             'client_created' => 'Automatisations suggerees pour ce client',
             'supplier_created' => 'Automatisations suggerees pour ce fournisseur',
             'invoice_created' => 'Automatisations suggerees pour cette facture',
             'quote_created' => 'Automatisations suggerees pour ce devis',
             'stock_order_created' => 'Automatisations suggerees pour cette commande fournisseur',
+            'delivery_note_created' => 'Automatisations suggerees pour ce bon de livraison',
             'delivery_note_validated' => 'Automatisations suggerees pour ce bon de livraison',
             'stock_low_threshold_reached' => 'Automatisations suggerees pour ce stock bas',
             'project_created' => 'Automatisations suggerees pour ce projet',
@@ -313,6 +316,19 @@ class AutomationSuggestionPresenter
 
     protected function resolveTenantId(): int
     {
-        return max(0, (int) (auth()->user()->tenant_id ?? 0));
+        return AutomationTenantResolver::resolve();
+    }
+
+    protected function shouldOpenInNewTab(string $integrationSlug, array $meta, array $payload): bool
+    {
+        if (array_key_exists('target_blank', $meta)) {
+            return (bool) $meta['target_blank'];
+        }
+
+        if (array_key_exists('target_blank', $payload)) {
+            return (bool) $payload['target_blank'];
+        }
+
+        return in_array($integrationSlug, ['notion-workspace', 'google-calendar'], true);
     }
 }

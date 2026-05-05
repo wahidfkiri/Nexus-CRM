@@ -12,6 +12,7 @@ use Vendor\Automation\Models\AutomationLog;
 use Vendor\Automation\Models\AutomationSuggestion;
 use Vendor\Automation\Registries\ActionRegistry;
 use Vendor\Automation\Support\AutomationReconnectResolver;
+use Vendor\Automation\Support\AutomationTenantResolver;
 
 class AutomationExecutor
 {
@@ -187,7 +188,7 @@ class AutomationExecutor
 
     protected function assertTenantScope(int $tenantId): void
     {
-        if (auth()->check() && (int) auth()->user()->tenant_id !== $tenantId) {
+        if (auth()->check() && !AutomationTenantResolver::userCanAccessTenant(auth()->user(), $tenantId)) {
             throw new RuntimeException('Accès interdit à cette automation pour un autre tenant.');
         }
     }

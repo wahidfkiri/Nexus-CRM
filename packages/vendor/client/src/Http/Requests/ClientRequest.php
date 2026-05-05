@@ -2,8 +2,8 @@
 
 namespace Vendor\Client\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
@@ -35,7 +35,7 @@ class ClientRequest extends FormRequest
 
         return [
             'company_name'      => 'required|string|max:255',
-            'contact_name'      => 'nullable|string|max:255',
+            'contact_name'      => 'required|string|max:255',
             'email'             => ['required', 'email', 'max:255', $emailRule],
             'phone'             => 'nullable|string|max:20',
             'mobile'            => 'nullable|string|max:20',
@@ -66,6 +66,7 @@ class ClientRequest extends FormRequest
     {
         return [
             'company_name.required' => 'Le nom de l\'entreprise est requis.',
+            'contact_name.required' => 'Le nom du contact est requis.',
             'email.required'        => 'L\'adresse email est requise.',
             'email.email'           => 'Veuillez saisir une adresse email valide.',
             'email.unique'          => 'Cet email est déjà utilisé par un autre client.',

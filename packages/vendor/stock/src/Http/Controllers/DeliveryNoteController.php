@@ -44,11 +44,18 @@ class DeliveryNoteController extends Controller
     {
         try {
             $note = $this->service->create($request->validated());
+            $automation = app(AutomationSuggestionPresenter::class)->buildPromptForSource(
+                'delivery_note_created',
+                $note::class,
+                $note->getKey(),
+                (int) $note->tenant_id
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Bon de livraison cree avec succes.',
                 'redirect' => route('stock.delivery-notes.show', $note),
+                'automation' => $automation,
             ], 201);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);

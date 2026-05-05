@@ -71,7 +71,6 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
             'source_type' => 'manual',
             'source_id' => (int) $client->id,
             'source_label' => $this->clientDisplayName($client),
-            'attendees' => filter_var((string) $client->email, FILTER_VALIDATE_EMAIL) ? (string) $client->email : '',
             'reminder_minutes' => 60,
         ]);
 
@@ -79,11 +78,12 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'calendar_event_created',
-            'message' => 'Rendez-vous client planifie avec succes.',
+            'message' => 'Rendez-vous interne planifie avec succes.',
             'calendar_id' => (string) ($event['calendar_id'] ?? ''),
             'event_id' => (string) ($event['event_id'] ?? ''),
             'client_id' => (int) $client->id,
             'target_url' => $event['html_link'] ?? $this->routeUrl('google-calendar.index'),
+            'target_blank' => true,
         ];
     }
 
@@ -134,6 +134,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
             'event_id' => (string) ($event['event_id'] ?? ''),
             'invoice_id' => (int) $invoice->id,
             'target_url' => $event['html_link'] ?? $this->routeUrl('google-calendar.index'),
+            'target_blank' => true,
         ];
     }
 
@@ -184,6 +185,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
             'event_id' => (string) ($event['event_id'] ?? ''),
             'quote_id' => (int) $quote->id,
             'target_url' => $event['html_link'] ?? $this->routeUrl('google-calendar.index'),
+            'target_blank' => true,
         ];
     }
 
@@ -264,6 +266,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
             'calendar_id' => (string) ($event['calendar_id'] ?? ''),
             'event_id' => (string) ($event['event_id'] ?? ''),
             'target_url' => $event['html_link'] ?? ($this->routeUrl('projects.show', $project) ?: $this->routeUrl('google-calendar.index')),
+            'target_blank' => true,
         ];
     }
 
@@ -355,6 +358,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
             'calendar_id' => (string) ($event['calendar_id'] ?? ''),
             'event_id' => (string) ($event['event_id'] ?? ''),
             'target_url' => $event['html_link'] ?? ($this->routeUrl('projects.show', $project) ?: $this->routeUrl('google-calendar.index')),
+            'target_blank' => true,
         ];
     }
 
@@ -406,6 +410,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
             'calendar_id' => (string) ($event['calendar_id'] ?? ''),
             'event_id' => (string) ($event['event_id'] ?? ''),
             'target_url' => $event['html_link'] ?? ($this->routeUrl('users.invitations') ?: $this->routeUrl('google-calendar.index')),
+            'target_blank' => true,
         ];
     }
 

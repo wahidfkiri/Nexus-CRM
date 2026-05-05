@@ -31,6 +31,7 @@ class SlackService
 
         $redirectUri = $this->redirectUri();
         $this->assertWebRedirectUri($redirectUri);
+        $this->assertRedirectUriCompatibleWithSlackOauth($redirectUri);
 
         $state = encrypt([
             'tenant_id' => $tenantId,
@@ -76,6 +77,7 @@ class SlackService
         $this->assertValidSlackClientId($clientId);
         $redirectUri = $this->redirectUri();
         $this->assertWebRedirectUri($redirectUri);
+        $this->assertRedirectUriCompatibleWithSlackOauth($redirectUri);
 
         $response = Http::asForm()
             ->acceptJson()
@@ -664,6 +666,30 @@ class SlackService
                 'Redirect URI OAuth invalide. Utilisez une URL web http/https (ex: http://127.0.0.1:8000/extensions/slack/oauth/callback).'
             );
         }
+    }
+
+    private function assertRedirectUriCompatibleWithSlackOauth(string $redirectUri): void
+    {
+        $host = strtolower((string) parse_url($redirectUri, PHP_URL_HOST));
+        if ($host !== 'localhost') {
+            return;
+        }
+
+        $botScopes = array_values(array_filter(array_map(
+            static fn ($scope) => trim((string) $scope),
+            (array) config('slack.oauth.scopes', [])
+        )));
+
+        if ($botScopes === []) {
+            return;
+        }
+
+        throw new RuntimeException(
+            'Slack refuse cette connexion car l application utilise localhost comme redirect URI avec des scopes bot. '
+            . 'Depuis les changements PKCE de Slack, localhost est traite comme une redirection desktop dans ce cas. '
+            . 'Utilisez une URL web non-localhost pour SLACK_REDIRECT_URI (ex: https://crm.test/extensions/slack/oauth/callback) '
+            . 'et ajoutez-la aussi dans les Redirect URLs de votre app Slack, ou desactivez PKCE si vous devez rester sur localhost.'
+        );
     }
 
     private function assertValidSlackClientId(string $clientId): void

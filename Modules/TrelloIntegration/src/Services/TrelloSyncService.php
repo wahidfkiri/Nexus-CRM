@@ -3,6 +3,7 @@
 namespace Modules\TrelloIntegration\Services;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Modules\TrelloIntegration\Models\TrelloBoard;
@@ -408,9 +409,9 @@ class TrelloSyncService
         }
     }
 
-    private function parseDate(?string $value): ?string
+    private function parseDate(?string $value): ?Carbon
     {
-        return $value ? now()->parse($value) : null;
+        return $value ? Carbon::parse($value) : null;
     }
 
     private function normalizePosition(mixed $value): ?string

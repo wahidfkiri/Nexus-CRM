@@ -17,6 +17,7 @@ class AutomationSuggestionPendingNotification extends Notification
         protected AutomationSuggestion $suggestion,
         protected string $providerSlug,
         protected string $actionUrl,
+        protected string $resumeState = 'reconnected',
     ) {
     }
 
@@ -34,12 +35,21 @@ class AutomationSuggestionPendingNotification extends Notification
             'suggestion_id' => (int) $this->suggestion->id,
             'provider_slug' => $this->providerSlug,
             'provider_label' => $providerLabel,
-            'title' => 'Suggestion en attente à reprendre',
-            'message' => sprintf(
-                '%s est reconnecté. Vous pouvez maintenant reprendre: %s.',
-                $providerLabel,
-                (string) $this->suggestion->label
-            ),
+            'resume_state' => $this->resumeState,
+            'title' => $this->resumeState === 'pending_reconnect'
+                ? 'Suggestion en attente de reconnexion'
+                : 'Suggestion en attente a reprendre',
+            'message' => $this->resumeState === 'pending_reconnect'
+                ? sprintf(
+                    '%s doit etre reconnecte pour reprendre: %s.',
+                    $providerLabel,
+                    (string) $this->suggestion->label
+                )
+                : sprintf(
+                    '%s est reconnecte. Vous pouvez maintenant reprendre: %s.',
+                    $providerLabel,
+                    (string) $this->suggestion->label
+                ),
             'action_url' => $this->actionUrl,
             'updated_at' => optional($this->suggestion->updated_at)?->toIso8601String(),
         ];

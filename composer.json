@@ -54,7 +54,8 @@
             "NexusExtensions\\GoogleGmail\\": "extensions/google-gmail/src/",
             "NexusExtensions\\GoogleMeet\\": "extensions/google-meet/src/",
             "NexusExtensions\\Slack\\": "extensions/slack/src/",
-            "NexusExtensions\\Chatbot\\": "extensions/chatbot/src/"
+            "NexusExtensions\\Chatbot\\": "extensions/chatbot/src/",
+            "Modules\\TrelloIntegration\\": "Modules/TrelloIntegration/src/"
          
         }
     },

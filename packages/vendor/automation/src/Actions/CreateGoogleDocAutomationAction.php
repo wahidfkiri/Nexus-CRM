@@ -25,6 +25,7 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
     public function execute(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion = null): array
     {
         return match ((string) $automationEvent->action_type) {
+            'create_article_google_doc' => $this->createArticleDocument($automationEvent, $suggestion),
             'create_client_google_doc' => $this->createClientDocument($automationEvent, $suggestion),
             'create_invoice_google_doc' => $this->createInvoiceDocument($automationEvent, $suggestion),
             'create_supplier_google_doc' => $this->createSupplierDocument($automationEvent, $suggestion),
@@ -33,6 +34,53 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
             'create_low_stock_google_doc' => $this->createLowStockDocument($automationEvent, $suggestion),
             default => throw new RuntimeException('Type de document Google Docs non pris en charge.'),
         };
+    }
+
+    protected function createArticleDocument(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
+    {
+        $tenantId = $this->tenantId($automationEvent);
+        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit etre installe pour generer ce document.');
+
+        return $this->withReconnectHandling('google-docx', function () use ($automationEvent, $suggestion, $tenantId) {
+            $articleId = $this->modelId($this->payload($automationEvent), $suggestion, 'article_id', Article::class);
+            if (!$articleId) {
+                throw new RuntimeException('Article introuvable pour la creation du document.');
+            }
+
+            $article = $this->loadArticle($tenantId, $articleId);
+            $title = 'Fiche article - ' . (string) $article->name;
+            $content = implode("\n", array_filter([
+                'Fiche article generee automatiquement depuis le module stock.',
+                '',
+                'Article: ' . (string) $article->name,
+                'SKU: ' . (string) ($article->sku ?? ''),
+                'Unite: ' . (string) ($article->unit ?? ''),
+                'Prix achat: ' . number_format((float) ($article->purchase_price ?? 0), 4, ',', ' '),
+                'Prix vente: ' . number_format((float) ($article->sale_price ?? 0), 4, ',', ' '),
+                'Stock courant: ' . number_format((float) $article->current_stock, 4, ',', ' '),
+                'Seuil mini: ' . number_format((float) $article->min_stock, 4, ',', ' '),
+                'Fournisseur: ' . (string) optional($article->supplier)->name,
+                'Statut: ' . (string) ($article->status ?? ''),
+                $this->sourceUrlForModel($article) ? 'Lien CRM: ' . $this->sourceUrlForModel($article) : null,
+                '',
+                'A documenter:',
+                '- Positionnement produit',
+                '- Conditions d achat',
+                '- Usages et variantes',
+                '- Risques de rupture',
+                '- Informations logistiques',
+            ]));
+
+            $document = $this->docxService->createDocument($tenantId, $title, $content);
+
+            return [
+                'result' => 'document_created',
+                'message' => 'Document Google Docs cree pour cet article.',
+                'document_id' => $document['document_id'] ?? null,
+                'target_url' => $document['document_url'] ?? $this->routeUrl('google-docx.index'),
+                'target_blank' => true,
+            ];
+        });
     }
 
     protected function createClientDocument(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array

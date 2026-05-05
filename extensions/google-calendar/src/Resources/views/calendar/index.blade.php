@@ -315,6 +315,82 @@
     </div>
   </div>
 </div>
+
+<div class="modal-overlay" id="gcEventDetailModal">
+  <div class="modal modal-lg gc-detail-modal">
+    <div class="modal-header">
+      <div class="modal-header-icon" id="gcDetailModalIcon" style="background:#dbeafe;color:#2563eb">
+        <i class="fas fa-calendar-day"></i>
+      </div>
+      <div>
+        <div class="modal-title" id="gcDetailTitle">Details de l evenement</div>
+        <div class="modal-subtitle" id="gcDetailSubtitle">Consultez les informations avant modification ou suppression.</div>
+      </div>
+      <button class="modal-close" data-modal-close>&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="gc-detail-head">
+        <div class="gc-detail-title-wrap">
+          <div class="gc-detail-calendar-pill" id="gcDetailCalendarPill">
+            <span class="gc-detail-calendar-dot" id="gcDetailCalendarDot"></span>
+            <span id="gcDetailCalendarName">Calendrier</span>
+          </div>
+          <h2 class="gc-detail-event-title" id="gcDetailEventTitle">(Sans titre)</h2>
+        </div>
+        <div class="gc-detail-status" id="gcDetailStatus"></div>
+      </div>
+
+      <div class="gc-detail-grid">
+        <div class="gc-detail-item">
+          <div class="gc-detail-label">Quand</div>
+          <div class="gc-detail-value" id="gcDetailWhen">-</div>
+        </div>
+        <div class="gc-detail-item">
+          <div class="gc-detail-label">Lieu</div>
+          <div class="gc-detail-value" id="gcDetailLocation">-</div>
+        </div>
+        <div class="gc-detail-item">
+          <div class="gc-detail-label">Client</div>
+          <div class="gc-detail-value" id="gcDetailClient">-</div>
+        </div>
+        <div class="gc-detail-item">
+          <div class="gc-detail-label">Source</div>
+          <div class="gc-detail-value" id="gcDetailSource">-</div>
+        </div>
+        <div class="gc-detail-item">
+          <div class="gc-detail-label">Visibilite</div>
+          <div class="gc-detail-value" id="gcDetailVisibility">-</div>
+        </div>
+        <div class="gc-detail-item">
+          <div class="gc-detail-label">Mise a jour</div>
+          <div class="gc-detail-value" id="gcDetailUpdatedAt">-</div>
+        </div>
+      </div>
+
+      <div class="gc-detail-section">
+        <div class="gc-detail-label">Participants</div>
+        <div class="gc-detail-attendees" id="gcDetailAttendees">Aucun participant</div>
+      </div>
+
+      <div class="gc-detail-section">
+        <div class="gc-detail-label">Description</div>
+        <div class="gc-detail-description" id="gcDetailDescription">Aucune description.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" data-modal-close>Fermer</button>
+      <button class="btn btn-secondary" id="gcDetailOpenGoogleBtn" hidden>
+        <i class="fas fa-arrow-up-right-from-square"></i> Ouvrir dans Google
+      </button>
+      <button class="btn btn-secondary" id="gcDetailEditBtn">
+        <i class="fas fa-pen"></i> Modifier
+      </button>
+      <button class="btn btn-danger" id="gcDetailDeleteBtn">
+        <i class="fas fa-trash"></i> Supprimer
+      </button>
+    </div>
+  </div>
+</div>
 @endsection
 
 @push('scripts')

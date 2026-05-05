@@ -57,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
                     'invoice' => ['route' => 'invoices.index', 'icon' => 'fa-file-invoice', 'icon_bg_color' => '#7c3aed'],
                     'projects' => ['route' => 'projects.index', 'icon' => 'fa-diagram-project', 'icon_bg_color' => '#0ea5e9'],
                     'notion-workspace' => ['route' => 'notion-workspace.index', 'icon' => 'fa-book-open', 'icon_bg_color' => '#111827'],
+                    'trello-integration' => ['route' => 'trello-integration.index', 'icon' => 'fab fa-trello', 'icon_bg_color' => '#026aa7'],
                     'google-drive' => ['route' => 'google-drive.index', 'icon' => 'fa-google-drive', 'icon_bg_color' => '#4285F4'],
                     'gdrive' => ['route' => 'google-drive.index', 'icon' => 'fa-google-drive', 'icon_bg_color' => '#4285F4'],
                     'google-calendar' => ['route' => 'google-calendar.index', 'icon' => 'fa-calendar-days', 'icon_bg_color' => '#4285F4'],
@@ -198,6 +199,7 @@ class AppServiceProvider extends ServiceProvider
             'slack::slack.index',
             'chatbot::chatbot.index',
             'notion-workspace::notion.index',
+            'trello-integration::trello.index',
             'projects::projects.index',
         ], function ($view): void {
             $view->with('currentExtensionMeta', $this->resolveCurrentExtensionMeta());
@@ -258,6 +260,7 @@ class AppServiceProvider extends ServiceProvider
             'slack.*' => 'slack',
             'chatbot.*' => 'chatbot',
             'notion-workspace.*' => 'notion-workspace',
+            'trello-integration.*' => 'trello-integration',
             'projects.*' => 'projects',
         ];
 

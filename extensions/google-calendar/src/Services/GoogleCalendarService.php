@@ -439,7 +439,7 @@ class GoogleCalendarService
         $query = GoogleCalendarEvent::query()
             ->forTenant($tenantId)
             ->where('is_deleted', false)
-            ->orderBy('start_at');
+            ->orderByDesc('start_at');
 
         if (!empty($filters['calendar_id'])) {
             $query->where('google_calendar_id', $filters['calendar_id']);

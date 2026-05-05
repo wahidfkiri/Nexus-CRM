@@ -101,6 +101,7 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
         }
 
         return match ($template) {
+            'article_note' => $this->articleDraft($tenantId, $payload, $suggestion),
             'client_notes' => $this->clientDraft($tenantId, $payload, $suggestion),
             'project_brief' => $this->projectDraft($tenantId, $payload, $suggestion),
             'task_spec' => $this->taskDraft($tenantId, $payload, $suggestion),
@@ -122,6 +123,43 @@ class CreateNotionPageAutomationAction extends AbstractAutomationAction
                 'success_message' => 'Page Notion creee avec succes.',
             ],
         };
+    }
+
+    protected function articleDraft(int $tenantId, array $payload, ?AutomationSuggestion $suggestion): array
+    {
+        $articleId = $this->modelId($payload, $suggestion, 'article_id', \Vendor\Stock\Models\Article::class);
+        if (!$articleId) {
+            throw new RuntimeException('Article introuvable pour la creation de la page Notion.');
+        }
+
+        $article = $this->loadArticle($tenantId, $articleId);
+
+        return [
+            'title' => 'Article - ' . $this->sanitizeText((string) $article->name) . ' - Fiche',
+            'content' => implode(PHP_EOL, array_filter([
+                'Type de page: Fiche article',
+                'Article: ' . $this->sanitizeText((string) $article->name),
+                $article->sku ? 'SKU: ' . $this->sanitizeText((string) $article->sku) : null,
+                $article->unit ? 'Unite: ' . $this->sanitizeText((string) $article->unit) : null,
+                'Stock courant: ' . number_format((float) $article->current_stock, 4, ',', ' '),
+                'Seuil mini: ' . number_format((float) $article->min_stock, 4, ',', ' '),
+                $article->supplier ? 'Fournisseur: ' . $this->sanitizeText((string) $article->supplier->name) : null,
+                '',
+                'A documenter:',
+                '- Positionnement produit',
+                '- Cycle d approvisionnement',
+                '- Variantes ou references voisines',
+                '- Contraintes logistiques',
+                '- Risques de rupture',
+            ])),
+            'icon' => '',
+            'parent_page_id' => $payload['parent_page_id'] ?? null,
+            'client_id' => null,
+            'project_id' => $payload['project_id'] ?? null,
+            'context_label' => $this->sanitizeText((string) ($payload['context_label'] ?? 'Fiche article')),
+            'notes' => 'Page Notion creee automatiquement pour documenter un article.',
+            'success_message' => 'Page Notion article creee avec succes.',
+        ];
     }
 
     protected function clientDraft(int $tenantId, array $payload, ?AutomationSuggestion $suggestion): array

@@ -4,6 +4,8 @@ namespace Vendor\Client\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Models\User;
 use Vendor\CrmCore\Models\Tenant;
 use Vendor\CrmCore\Traits\MultiTenantTrait;
@@ -11,6 +13,8 @@ use Vendor\CrmCore\Traits\MultiTenantTrait;
 class Client extends Model
 {
     use SoftDeletes, MultiTenantTrait;
+
+    private const DELETED_EMAIL_DOMAIN = 'archived.local';
 
     protected $table = 'clients';
 
@@ -58,6 +62,30 @@ class Client extends Model
         'last_contact_at' => 'datetime',
         'next_follow_up_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        static::deleted(function (self $client): void {
+            if ($client->isHardDeleting() || blank($client->email)) {
+                return;
+            }
+
+            $archivedEmail = $client->buildArchivedEmail($client->email);
+
+            if ($archivedEmail === $client->email) {
+                return;
+            }
+
+            DB::table($client->getTable())
+                ->where($client->getKeyName(), $client->getKey())
+                ->update([
+                    'email' => $archivedEmail,
+                    'updated_at' => now(),
+                ]);
+
+            $client->forceFill(['email' => $archivedEmail]);
+        });
+    }
 
     // ==================== RELATIONS ====================
     
@@ -211,7 +239,11 @@ class Client extends Model
             'public' => 'Public',
         ];
         
-        return $types[$this->type] ?? $this->type;
+        if (blank($this->type)) {
+            return '';
+        }
+
+        return $types[$this->type] ?? Str::headline((string) $this->type);
     }
 
     public function getStatusLabelAttribute(): string
@@ -223,7 +255,11 @@ class Client extends Model
             'suspendu' => 'Suspendu',
         ];
         
-        return $statuses[$this->status] ?? $this->status;
+        if (blank($this->status)) {
+            return '';
+        }
+
+        return $statuses[$this->status] ?? Str::headline((string) $this->status);
     }
 
     public function getStatusColorAttribute(): string
@@ -248,11 +284,46 @@ class Client extends Model
             'autre' => 'Autre',
         ];
         
-        return $sources[$this->source] ?? $this->source;
+        if (blank($this->source)) {
+            return '';
+        }
+
+        return $sources[$this->source] ?? Str::headline((string) $this->source);
     }
 
     public function getInitialsAttribute(): string
     {
         return strtoupper(substr($this->company_name, 0, 2));
+    }
+
+    public function buildArchivedEmail(?string $email = null): ?string
+    {
+        $email ??= $this->email;
+
+        if (blank($email) || $this->isArchivedEmail($email)) {
+            return $email;
+        }
+
+        $timestamp = now()->format('YmdHis');
+        $localPart = sprintf(
+            'deleted+client%s+%s+%s',
+            $this->getKey(),
+            $timestamp,
+            substr(md5((string) $email), 0, 10)
+        );
+
+        return Str::limit($localPart, 64, '').'@'.self::DELETED_EMAIL_DOMAIN;
+    }
+
+    public function isArchivedEmail(?string $email = null): bool
+    {
+        $email ??= $this->email;
+
+        return filled($email) && str_ends_with((string) $email, '@'.self::DELETED_EMAIL_DOMAIN);
+    }
+
+    protected function isHardDeleting(): bool
+    {
+        return method_exists($this, 'isForceDeleting') && $this->isForceDeleting();
     }
 }

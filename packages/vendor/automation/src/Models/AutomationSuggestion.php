@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Vendor\CrmCore\Models\Tenant;
 
 class AutomationSuggestion extends Model
@@ -71,6 +72,14 @@ class AutomationSuggestion extends Model
     public function automationEvents(): HasMany
     {
         return $this->hasMany(AutomationEvent::class, 'triggered_by_suggestion_id');
+    }
+
+    public function latestFailedEvent(): HasOne
+    {
+        return $this->hasOne(AutomationEvent::class, 'triggered_by_suggestion_id')
+            ->ofMany(['id' => 'max'], function ($query) {
+                $query->where('status', AutomationEvent::STATUS_FAILED);
+            });
     }
 
     public function logs(): HasMany

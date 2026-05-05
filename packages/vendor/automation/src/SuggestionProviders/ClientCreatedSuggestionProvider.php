@@ -31,7 +31,7 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $calendarInstalled ? 'create_followup_meeting' : 'install_extension',
             $calendarInstalled
-                ? "Creer un rendez-vous de decouverte pour {$clientName}"
+                ? "Planifier un rendez-vous interne de decouverte pour {$clientName}"
                 : 'Installer Google Calendar pour planifier un rendez-vous',
             0.89,
             $calendarInstalled
@@ -41,6 +41,23 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
                 'integration' => 'google-calendar',
                 'installed' => $calendarInstalled,
                 'target_url' => $this->extensions->targetUrl('google-calendar'),
+            ]
+        );
+
+        $gmailInstalled = $this->extensions->isActive($tenantId, 'google-gmail');
+        $suggestions[] = SuggestionDefinition::make(
+            $gmailInstalled ? 'send_followup_meeting_email' : 'install_extension',
+            $gmailInstalled
+                ? "Envoyer un email a {$clientName} pour proposer un rendez-vous"
+                : 'Installer Google Gmail pour proposer un rendez-vous par email',
+            0.86,
+            $gmailInstalled
+                ? ['client_id' => $clientId]
+                : ['extension_slug' => 'google-gmail', 'client_id' => $clientId, 'target_action' => 'send_followup_meeting_email'],
+            [
+                'integration' => 'google-gmail',
+                'installed' => $gmailInstalled,
+                'target_url' => $this->extensions->targetUrl('google-gmail'),
             ]
         );
 

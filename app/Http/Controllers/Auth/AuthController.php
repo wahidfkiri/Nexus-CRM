@@ -13,16 +13,20 @@ use App\Notifications\WelcomeAccountNotification;
 use App\Support\Desktop\DesktopOAuthResponder;
 use Google\Client as GoogleClient;
 use Google\Service\Oauth2 as GoogleOauth2;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 use Vendor\CrmCore\Models\Tenant;
+use Vendor\Extensions\Models\Extension;
 use Vendor\Rbac\Services\TenantRoleService;
 use Vendor\User\Repositories\UserRepository;
 use Vendor\User\Services\UserService;
@@ -35,17 +39,149 @@ class AuthController extends Controller
 
     public function showLoginForm()
     {
-        return view('auth.login');
+        return view('auth.login', [
+            'loginApps' => $this->resolveLoginApps(),
+        ]);
     }
 
     public function showRegisterForm()
     {
-        return view('auth.register');
+        return view('auth.register', [
+            'loginApps' => $this->resolveLoginApps(),
+        ]);
     }
 
     public function showForgotPasswordForm()
     {
-        return view('auth.passwords.email');
+        return view('auth.passwords.email', [
+            'loginApps' => $this->resolveLoginApps(),
+        ]);
+    }
+
+    public function sendPasswordResetLink(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email:rfc'],
+        ], [
+            'email.required' => 'L email est obligatoire.',
+            'email.email' => 'Le format de l email est invalide.',
+        ]);
+
+        $status = Password::sendResetLink([
+            'email' => mb_strtolower((string) $validated['email']),
+        ]);
+
+        if ($status === Password::RESET_THROTTLED) {
+            $message = 'Un email de reinitialisation a deja ete envoye recemment. Merci de patienter un moment.';
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'errors' => [
+                        'email' => [$message],
+                    ],
+                ], 429);
+            }
+
+            return back()->withErrors([
+                'email' => $message,
+            ])->withInput();
+        }
+
+        $successMessage = 'Si un compte existe avec cette adresse email, un lien de reinitialisation vient d etre envoye.';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $successMessage,
+            ]);
+        }
+
+        return back()->with('status', $successMessage);
+    }
+
+    public function showResetPasswordForm(Request $request, string $token)
+    {
+        return view('auth.passwords.reset', [
+            'loginApps' => $this->resolveLoginApps(),
+            'token' => $token,
+            'email' => (string) $request->query('email', old('email', '')),
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => ['required', 'string'],
+            'email' => ['required', 'email:rfc'],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'max:128',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/',
+            ],
+        ], [
+            'email.required' => 'L email est obligatoire.',
+            'email.email' => 'Le format de l email est invalide.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit contenir au moins :min caracteres.',
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
+            'password.regex' => 'Le mot de passe doit contenir une minuscule, une majuscule, un chiffre et un caractere special.',
+        ]);
+
+        $status = Password::reset(
+            [
+                'email' => mb_strtolower((string) $validated['email']),
+                'password' => (string) $validated['password'],
+                'password_confirmation' => (string) $request->input('password_confirmation', ''),
+                'token' => (string) $validated['token'],
+            ],
+            function (User $user, string $password): void {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                    'remember_token' => Str::random(60),
+                ])->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            $message = match ($status) {
+                Password::INVALID_TOKEN => 'Le lien de reinitialisation est invalide ou expire.',
+                Password::INVALID_USER => 'Ce compte est introuvable.',
+                default => 'La reinitialisation du mot de passe a echoue. Merci de reessayer.',
+            };
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'errors' => [
+                        'email' => [$message],
+                    ],
+                ], 422);
+            }
+
+            return back()->withErrors([
+                'email' => $message,
+            ])->withInput($request->except('password', 'password_confirmation'));
+        }
+
+        $successMessage = 'Votre mot de passe a ete reinitialise. Vous pouvez maintenant vous connecter.';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $successMessage,
+                'redirect' => route('login'),
+            ]);
+        }
+
+        return redirect()->route('login')->with('success', $successMessage);
     }
 
     public function login(LoginRequest $request)
@@ -208,7 +344,7 @@ class AuthController extends Controller
                 if ($pendingInvitation && $pendingInvitation->isUsable()) {
                     app(UserService::class)->acceptInvitation($pendingInvitation, ['user' => $user]);
                 } else {
-                    $companyName = $company !== '' ? $company : ('Entreprise de ' . $data['first_name']);
+                    $companyName = $company !== '' ? $company : ('Espace de ' . $data['first_name']);
 
                     $tenant = Tenant::create([
                         'name' => $companyName,
@@ -342,8 +478,8 @@ class AuthController extends Controller
                     [$first, $last] = $this->splitName($fullName);
 
                     $tenant = Tenant::create([
-                        'name' => 'Entreprise de ' . ($first ?: 'Nouveau client'),
-                        'slug' => Tenant::generateSlug('entreprise-' . Str::slug($fullName ?: $email)),
+                        'name' => 'Espace de ' . ($first ?: 'Nouveau client'),
+                        'slug' => Tenant::generateSlug('espace-' . Str::slug($fullName ?: $email)),
                         'email' => $email,
                         'timezone' => 'Europe/Paris',
                         'locale' => 'fr',
@@ -623,8 +759,8 @@ class AuthController extends Controller
     private function createTenantForUser(User $user, ?string $company = null): void
     {
         $tenant = Tenant::create([
-            'name' => $company ?: ('Entreprise de ' . ($user->first_name ?: $user->name ?: 'Client')),
-            'slug' => Tenant::generateSlug($company ?: ('entreprise-' . Str::slug($user->name ?: $user->email))),
+            'name' => $company ?: ('Espace de ' . ($user->first_name ?: $user->name ?: 'Client')),
+            'slug' => Tenant::generateSlug($company ?: ('espace-' . Str::slug($user->name ?: $user->email))),
             'email' => $user->email,
             'timezone' => 'Europe/Paris',
             'locale' => 'fr',
@@ -679,6 +815,57 @@ class AuthController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    private function resolveLoginApps(): array
+    {
+        if (!Schema::hasTable('extensions')) {
+            return [];
+        }
+
+        $extensions = Extension::query()
+            ->where('status', 'active')
+            ->orderByDesc('active_installs_count')
+            ->orderBy('sort_order')
+            ->get()
+            ->values();
+
+        return $extensions
+            ->map(function (Extension $extension, int $index) {
+                $scatterPositions = [
+                    ['x' => 31, 'y' => 18],
+                    ['x' => 69, 'y' => 20],
+                    ['x' => 24, 'y' => 30],
+                    ['x' => 76, 'y' => 33],
+                    ['x' => 34, 'y' => 41],
+                    ['x' => 66, 'y' => 44],
+                    ['x' => 22, 'y' => 54],
+                    ['x' => 78, 'y' => 57],
+                    ['x' => 30, 'y' => 67],
+                    ['x' => 70, 'y' => 70],
+                    ['x' => 25, 'y' => 80],
+                    ['x' => 75, 'y' => 82],
+                    ['x' => 36, 'y' => 26],
+                    ['x' => 64, 'y' => 28],
+                    ['x' => 33, 'y' => 75],
+                    ['x' => 67, 'y' => 76],
+                ];
+
+                $position = $scatterPositions[$index % count($scatterPositions)];
+
+                return [
+                    'name' => (string) $extension->name,
+                    'icon_url' => $extension->icon_url,
+                    'icon_class' => (string) ($extension->icon_class ?: 'fas fa-puzzle-piece'),
+                    'color' => (string) ($extension->icon_bg_color ?: '#2563eb'),
+                    'x' => $position['x'],
+                    'y' => $position['y'],
+                    'size' => [92, 80, 70][$index % 3],
+                    'delay' => round($index * 0.12, 2),
+                    'drift' => 9 + ($index % 4),
+                ];
+            })
+            ->all();
     }
 
     private function resolveGoogleAuthErrorMessage(Throwable $e): string

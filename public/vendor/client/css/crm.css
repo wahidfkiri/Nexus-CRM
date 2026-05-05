@@ -182,8 +182,7 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
   margin: 2px 8px;
   transition: all var(--dur-fast) var(--ease);
 }
-.sidebar-nav a:hover,
-.sidebar-nav a.active {
+.sidebar-nav a:hover {
   background: rgba(255,255,255,.08);
   color: #fff;
 }
@@ -191,7 +190,9 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
   background: var(--c-accent);
   color: #fff;
 }
-.sidebar-nav a i { width: 22px; text-align: center; font-size: 17px; flex: 0 0 22px; }
+.sidebar-nav a i {
+  width: 22px; text-align: center; font-size: 17px; flex: 0 0 22px;
+}
 .sidebar-link-label {
   flex: 1 1 auto;
   min-width: 0;
@@ -218,7 +219,9 @@ h1,h2,h3,h4,h5,h6 { font-family: var(--ff-display); font-weight: var(--fw-semi);
   cursor: pointer;
   transition: background var(--dur-fast), padding var(--dur-base) var(--ease), justify-content var(--dur-base) var(--ease);
 }
-.sidebar-user:hover { background: rgba(255,255,255,.06); }
+.sidebar-user:hover {
+  background: rgba(255,255,255,.06);
+}
 .sidebar-user-avatar {
   width: 32px; height: 32px; border-radius: 50%;
   background: var(--c-accent);

@@ -2,6 +2,7 @@
 
 namespace Vendor\Automation\Services;
 
+use Vendor\Automation\Support\AutomationTenantResolver;
 use Vendor\CrmCore\Models\TenantSetting;
 
 class AutomationPreferenceService
@@ -10,7 +11,7 @@ class AutomationPreferenceService
 
     public function suggestionsEnabled(?int $tenantId = null): bool
     {
-        $tenantId = $tenantId ?? (auth()->check() ? (int) auth()->user()->tenant_id : 0);
+        $tenantId = $tenantId ?? AutomationTenantResolver::resolve();
         $default = (bool) config('automation.suggestions.enabled_by_default', true);
 
         if ($tenantId <= 0) {

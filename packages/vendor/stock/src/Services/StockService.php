@@ -3,6 +3,7 @@
 namespace Vendor\Stock\Services;
 
 use Illuminate\Support\Facades\DB;
+use Vendor\Stock\Events\ArticleCreated;
 use Vendor\Stock\Events\LowStockThresholdReached;
 use Vendor\Stock\Events\StockOrderCreated;
 use Vendor\Stock\Events\SupplierCreated;
@@ -54,6 +55,10 @@ class StockService
             $article = $article->fresh('supplier');
 
             DB::afterCommit(function () use ($article): void {
+                event(new ArticleCreated($article, [
+                    'created_via' => request()?->expectsJson() ? 'api' : 'web',
+                ]));
+
                 $lowStockArticle = $this->movementService
                     ->lowStockArticlesForIds([(int) $article->id])
                     ->first();

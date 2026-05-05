@@ -54,10 +54,10 @@
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Personne de contact</label>
+              <label class="form-label">Personne de contact <span class="required">*</span></label>
               <div class="input-group">
                 <i class="fas fa-user input-icon"></i>
-                <input type="text" name="contact_name" class="form-control" placeholder="Jean Dupont">
+                <input type="text" name="contact_name" class="form-control" placeholder="Jean Dupont" required>
               </div>
             </div>
           </div>

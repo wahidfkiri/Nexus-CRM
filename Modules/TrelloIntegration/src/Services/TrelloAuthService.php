@@ -18,14 +18,24 @@ class TrelloAuthService
         return trim((string) config('trello-integration.api.key')) !== '';
     }
 
+    public function configurationStatus(): array
+    {
+        return $this->api->diagnoseConfiguration();
+    }
+
     public function getAuthUrl(int $tenantId, int $userId): string
     {
         if (!$this->isConfigured()) {
             throw new RuntimeException('La connexion Trello n est pas encore configuree.');
         }
 
+        $status = $this->configurationStatus();
+        if (!($status['ready'] ?? false)) {
+            throw new RuntimeException((string) ($status['message'] ?? 'La configuration Trello n est pas valide.'));
+        }
+
         $state = $this->buildState($tenantId, $userId);
-        $returnUrl = route('trello-integration.callback', ['state' => $state]);
+        $returnUrl = $this->resolveReturnUrl($state);
 
         return $this->api->getAuthorizeUrl($returnUrl);
     }
@@ -127,6 +137,23 @@ class TrelloAuthService
             'nonce' => Str::uuid()->toString(),
             'ts' => now()->timestamp,
         ], JSON_THROW_ON_ERROR));
+    }
+
+    private function resolveReturnUrl(string $state): string
+    {
+        $configured = trim((string) config('trello-integration.auth.redirect_uri', ''));
+
+        if ($configured === '') {
+            return route('trello-integration.callback', ['state' => $state]);
+        }
+
+        $base = Str::startsWith($configured, ['http://', 'https://'])
+            ? $configured
+            : url($configured);
+
+        $separator = str_contains($base, '?') ? '&' : '?';
+
+        return $base . $separator . 'state=' . urlencode($state);
     }
 
     private function resolveTokenExpiry(): ?\Illuminate\Support\Carbon

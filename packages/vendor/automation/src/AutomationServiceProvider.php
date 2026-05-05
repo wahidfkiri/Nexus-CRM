@@ -4,9 +4,11 @@ namespace Vendor\Automation;
 
 use Illuminate\Support\ServiceProvider;
 use Vendor\Automation\Contracts\AutomationContextEvent;
+use Vendor\Automation\Events\AutomationEventFailed;
 use Vendor\Automation\Events\AutomationEventQueued;
 use Vendor\Automation\Listeners\CaptureAutomationSuggestions;
 use Vendor\Automation\Listeners\QueueAutomationExecution;
+use Vendor\Automation\Listeners\SyncReconnectNotificationOnFailure;
 use Vendor\Automation\Registries\ActionRegistry;
 use Vendor\Automation\Registries\SuggestionRegistry;
 use Vendor\Automation\Services\AutomationPreferenceService;
@@ -80,6 +82,11 @@ class AutomationServiceProvider extends ServiceProvider
         $this->app['events']->listen(
             AutomationEventQueued::class,
             QueueAutomationExecution::class
+        );
+
+        $this->app['events']->listen(
+            AutomationEventFailed::class,
+            SyncReconnectNotificationOnFailure::class
         );
 
         $this->app['events']->listen(

@@ -4,6 +4,7 @@ namespace Vendor\Stock\Services;
 
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Vendor\Stock\Events\DeliveryNoteCreated;
 use Vendor\Stock\Events\DeliveryNoteValidated;
 use Vendor\Stock\Events\LowStockThresholdReached;
 use Vendor\Stock\Models\DeliveryNote;
@@ -34,7 +35,15 @@ class DeliveryNoteService
 
             $this->syncItems($note, $data['items'] ?? []);
 
-            return $note->fresh(['supplier', 'client', 'order', 'invoice', 'items.article']);
+            $note = $note->fresh(['supplier', 'client', 'order', 'invoice', 'items.article']);
+
+            DB::afterCommit(function () use ($note): void {
+                event(new DeliveryNoteCreated($note, [
+                    'created_via' => request()?->expectsJson() ? 'api' : 'web',
+                ]));
+            });
+
+            return $note;
         });
     }
 

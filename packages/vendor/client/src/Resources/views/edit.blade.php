@@ -63,10 +63,10 @@
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Personne de contact</label>
+              <label class="form-label">Personne de contact <span class="required">*</span></label>
               <div class="input-group">
                 <i class="fas fa-user input-icon"></i>
-                <input type="text" name="contact_name" class="form-control" value="{{ old('contact_name', $client->contact_name) }}">
+                <input type="text" name="contact_name" class="form-control" value="{{ old('contact_name', $client->contact_name) }}" required>
               </div>
             </div>
           </div>

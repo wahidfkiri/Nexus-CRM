@@ -63,10 +63,19 @@ class ClientRepository implements ClientRepositoryInterface
 
     public function bulkDelete(array $ids): int
     {
-        return $this->model
+        $count = 0;
+
+        $this->model
             ->byTenant(Auth::user()->tenant_id)
             ->whereIn('id', $ids)
-            ->delete();
+            ->get()
+            ->each(function (Client $client) use (&$count): void {
+                if ($client->delete()) {
+                    $count++;
+                }
+            });
+
+        return $count;
     }
 
     public function bulkStatusUpdate(array $ids, string $status): int

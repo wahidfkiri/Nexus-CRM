@@ -154,14 +154,51 @@
     .automation-summary-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
     .automation-list{display:flex;flex-direction:column;gap:12px;margin-top:14px;max-height:calc(min(86vh,920px) - 280px);overflow:auto;padding-right:4px}
     .automation-empty{margin-top:14px;padding:18px 16px;border:1px dashed var(--c-ink-10);border-radius:14px;text-align:center;color:var(--c-ink-50);background:var(--surface-0)}
-    .automation-card{border:1px solid var(--c-ink-05);border-radius:16px;padding:14px;background:#fff;box-shadow:0 10px 24px rgba(15,23,42,.05)}
+    .automation-success{
+      display:none;
+      margin-top:16px;
+      min-height:280px;
+      padding:36px 24px;
+      border:1px solid rgba(15,157,88,.14);
+      border-radius:18px;
+      background:linear-gradient(180deg,rgba(15,157,88,.08),rgba(255,255,255,0));
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+    }
+    .automation-success.is-visible{display:flex}
+    .automation-success-shell{max-width:380px;display:flex;flex-direction:column;align-items:center;gap:14px}
+    .automation-success-icon{
+      width:78px;
+      height:78px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(15,157,88,.12);
+      color:#0f9d58;
+      box-shadow:0 18px 36px rgba(15,157,88,.16), inset 0 0 0 1px rgba(15,157,88,.12);
+      font-size:34px;
+    }
+    .automation-success-title{font-size:24px;font-weight:800;color:var(--c-ink);letter-spacing:-.02em}
+    .automation-success-text{font-size:14px;line-height:1.7;color:var(--c-ink-50)}
+    .automation-card{border:1px solid var(--c-ink-05);border-radius:16px;padding:14px;background:#fff;box-shadow:0 10px 24px rgba(15,23,42,.05);transition:height .24s ease,margin .24s ease,padding .24s ease,border-width .24s ease,border-color .18s ease,background .18s ease;overflow:hidden;transform-origin:center top;will-change:transform,opacity,height}
     .automation-card.is-accepted{border-color:rgba(15,157,88,.24);background:rgba(15,157,88,.03)}
     .automation-card.is-rejected{border-color:rgba(148,163,184,.24);background:rgba(148,163,184,.06)}
+    .automation-card.is-removing{pointer-events:none;animation:automation-card-dismiss .3s cubic-bezier(.22,.61,.36,1) forwards}
+    @keyframes automation-card-dismiss{
+      0%{opacity:1;transform:translateX(0) scale(1);filter:blur(0)}
+      100%{opacity:0;transform:translateX(22px) scale(.975);filter:blur(2px)}
+    }
     .automation-card-head{display:flex;align-items:flex-start;gap:12px}
     .automation-card-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:18px}
     .automation-card-copy{flex:1;min-width:0}
     .automation-card-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .automation-card-title-main{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex:1;min-width:0}
     .automation-card-title-row h4{margin:0;font-size:15px;line-height:1.4;color:var(--c-ink)}
+    .automation-card-title-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .automation-card-inline-actions{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .automation-card-inline-actions .btn{padding:6px 10px;font-size:11px;min-height:32px}
     .automation-card-meta{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:8px;font-size:12px;color:var(--c-ink-45)}
     .automation-card-meta span{display:inline-flex;align-items:center;gap:6px}
     .automation-card-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}
@@ -182,6 +219,15 @@
       .automation-summary-actions{justify-content:stretch}
       .automation-summary-actions .btn{flex:1}
       .automation-list{max-height:calc(100vh - 360px)}
+      .automation-card-title-row,
+      .automation-card-title-main{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .automation-card-title-actions{
+        width:100%;
+        justify-content:flex-start;
+      }
     }
     .module-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 20px 0;padding:10px 14px;background:var(--surface-0);border:1px solid var(--c-ink-05);border-radius:12px}
     .module-toolbar-title{font-size:13px;font-weight:700;color:var(--c-ink-60);text-transform:uppercase;letter-spacing:.04em}
@@ -209,13 +255,14 @@
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      width:26px;
-      height:26px;
+      width:38px;
+      height:38px;
       border-radius:8px;
       margin-right:1px;
       background:var(--app-bg, #334155);
       color:#fff;
       box-shadow:0 2px 10px rgba(2,6,23,.26);
+      flex:0 0 38px;
     }
     .sidebar-app-link .app-icon-badge i{
       width:auto;
@@ -255,7 +302,10 @@
       object-fit:contain;
       display:block;
     }
-    .sidebar-market-link .nav-badge{background:rgba(37,99,235,.32);color:#dbeafe}
+    .sidebar-market-link .nav-badge{
+      background:rgba(37,99,235,.32);
+      color:#dbeafe;
+    }
     .sidebar-brand-logo{
       width:42px;
       height:42px;
@@ -707,6 +757,13 @@
       <div class="automation-list" data-automation-list></div>
       <div class="automation-empty" data-automation-empty style="display:none;">
         Aucune suggestion en attente pour cette action.
+      </div>
+      <div class="automation-success" data-automation-success>
+        <div class="automation-success-shell">
+          <div class="automation-success-icon"><i class="fas fa-circle-check"></i></div>
+          <div class="automation-success-title" data-automation-success-title>Succès</div>
+          <div class="automation-success-text" data-automation-success-text>Toutes les suggestions ont été traitées avec succès.</div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">

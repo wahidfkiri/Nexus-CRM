@@ -44,6 +44,17 @@ class NotionWorkspaceToken extends Model
 
     protected $hidden = ['access_token', 'refresh_token'];
 
+    public function getIsExpiredAttribute(): bool
+    {
+        if (!$this->token_expires_at) {
+            return false;
+        }
+
+        $buffer = (int) config('notion-workspace.token.refresh_buffer', 300);
+
+        return $this->token_expires_at->copy()->subSeconds($buffer)->isPast();
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);

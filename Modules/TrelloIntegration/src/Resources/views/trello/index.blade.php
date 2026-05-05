@@ -28,12 +28,12 @@
         </div>
       </div>
       <p class="ti-hero-lead">
-        Une vue Trello dédiée, pensée productivité: boards en galerie, colonnes horizontales, cartes éditables, glisser-deposer et liaison optionnelle vers vos projets CRM.
+        Une vue Trello dediee, pensee productivite: boards en galerie, colonnes horizontales, cartes editables, drag and drop et liaison optionnelle vers vos projets CRM.
       </p>
       <div class="ti-hero-notes">
         <span><i class="fas fa-table-cells-large"></i> Vue boards moderne</span>
         <span><i class="fas fa-grip"></i> Colonnes et cartes vivantes</span>
-        <span><i class="fas fa-link"></i> Liaison Trello → projet CRM</span>
+        <span><i class="fas fa-link"></i> Liaison Trello vers projet CRM</span>
       </div>
     </div>
 
@@ -48,6 +48,8 @@
           </a>
         @elseif(!$oauthConfigured && !$connected)
           <button class="btn btn-warning" disabled><i class="fas fa-key"></i> Cle API requise</button>
+        @elseif(!$oauthReady && !$connected)
+          <button class="btn btn-warning" disabled><i class="fas fa-circle-exclamation"></i> Configuration a corriger</button>
         @elseif($connected)
           <button class="btn btn-primary" type="button" id="trelloSyncBtn">
             <i class="fas fa-rotate"></i> Synchroniser Trello
@@ -73,7 +75,7 @@
         <div class="ti-empty-icon"><i class="fas fa-database"></i></div>
         <div>
           <h2>Migration requise</h2>
-          <p>Les tables locales Trello ne sont pas encore presentes. Lancez les migrations avant d’utiliser cette extension.</p>
+          <p>Les tables locales Trello ne sont pas encore presentes. Lancez les migrations avant d utiliser cette extension.</p>
           <div class="ti-code-chip">php artisan migrate</div>
         </div>
       </section>
@@ -82,7 +84,7 @@
         <div class="ti-empty-icon"><i class="fas fa-lock"></i></div>
         <div>
           <h2>Extension non active</h2>
-          <p>Cette integration Trello doit d’abord etre activee pour le tenant courant depuis le Marketplace.</p>
+          <p>Cette integration Trello doit d abord etre activee pour le tenant courant depuis le Marketplace.</p>
           <div class="ti-inline-actions">
             <a href="{{ route('marketplace.show', 'trello-integration') }}" class="btn btn-primary"><i class="fas fa-store"></i> Ouvrir la fiche application</a>
             <a href="{{ route('marketplace.index') }}" class="btn btn-secondary"><i class="fas fa-puzzle-piece"></i> Parcourir les applications</a>
@@ -94,7 +96,21 @@
         <div class="ti-empty-icon"><i class="fas fa-key"></i></div>
         <div>
           <h2>Configuration Trello requise</h2>
-          <p>La cle API Trello n’est pas encore configuree. Un administrateur doit finaliser la configuration avant la connexion utilisateur.</p>
+          <p>La cle API Trello n est pas encore configuree. Un administrateur doit finaliser la configuration avant la connexion utilisateur.</p>
+        </div>
+      </section>
+    @elseif(!$oauthReady && !$connected)
+      <section class="ti-empty-stage">
+        <div class="ti-empty-icon"><i class="fas fa-circle-exclamation"></i></div>
+        <div>
+          <h2>Configuration Trello invalide</h2>
+          <p>{{ data_get($configurationStatus, 'message', 'La configuration Trello doit etre corrigee avant de continuer.') }}</p>
+          @if(data_get($configurationStatus, 'status') === 'invalid_key')
+            <div class="ti-code-chip">Verifiez Trello Power-Ups Admin &gt; votre Power-Up &gt; API Key</div>
+          @elseif(data_get($configurationStatus, 'status') === 'invalid_return_url')
+            <div class="ti-code-chip">Allowed Origins: https://localhost</div>
+            <div class="ti-code-chip">{{ data_get($configurationStatus, 'details.redirect_uri') }}</div>
+          @endif
         </div>
       </section>
     @elseif(!$connected)
@@ -102,7 +118,7 @@
         <div class="ti-empty-icon"><i class="fab fa-trello"></i></div>
         <div>
           <h2>Connecter votre workspace Trello</h2>
-          <p>Apportez vos boards dans le CRM avec une interface SaaS dediee: galerie de boards, colonnes horizontales, cartes drag & drop et edition rapide sans toucher au module Projet interne.</p>
+          <p>Apportez vos boards dans le CRM avec une interface SaaS dediee: galerie de boards, colonnes horizontales, cartes drag and drop et edition rapide sans toucher au module Projet interne.</p>
           <div class="ti-inline-actions">
             <a class="btn btn-primary" href="{{ route('trello-integration.connect') }}">
               <i class="fas fa-link"></i> Connecter maintenant
@@ -174,7 +190,7 @@
           <div class="ti-toolbar">
             <div>
               <h2>Boards Trello</h2>
-              <p>Choisissez un board, ouvrez ses cartes et deplacez-les comme dans Trello, avec une experience plus integrée au CRM.</p>
+              <p>Choisissez un board, ouvrez ses cartes et deplacez-les comme dans Trello, avec une experience plus integree au CRM.</p>
             </div>
             <div class="ti-toolbar-actions">
               <a class="btn btn-ghost btn-sm" href="{{ $selectedBoard?->url ?? '#' }}" target="_blank" rel="noopener" id="trelloOpenBoardLink" @if(!$selectedBoard) style="display:none" @endif>
@@ -184,15 +200,15 @@
           </div>
 
           <div class="ti-status-row">
-            <div class="ti-status" id="trelloStatus">Prêt à afficher vos boards Trello.</div>
-            <div class="ti-status-note">Le déplacement de cartes se synchronise avec Trello puis recharge le board pour garantir un état fiable.</div>
+            <div class="ti-status" id="trelloStatus">Pret a afficher vos boards Trello.</div>
+            <div class="ti-status-note">Le deplacement de cartes se synchronise avec Trello puis recharge le board pour garantir un etat fiable.</div>
           </div>
 
           <section class="ti-board-gallery-shell">
             <div class="ti-section-head">
               <div>
                 <h3>Galerie des boards</h3>
-                <p>Un accès rapide à tous vos espaces ouverts, avec compteur de listes et de cartes.</p>
+                <p>Un acces rapide a tous vos espaces ouverts, avec compteur de listes et de cartes.</p>
               </div>
             </div>
             <div class="ti-board-gallery" id="trelloBoardGallery"></div>
@@ -201,7 +217,7 @@
           <section class="ti-board-workspace" id="trelloBoardWorkspace">
             <div class="ti-board-empty" id="trelloBoardEmpty" @if($selectedBoard) style="display:none" @endif>
               <div class="ti-empty-icon"><i class="fas fa-table-columns"></i></div>
-              <h3>Sélectionnez un board</h3>
+              <h3>Selectionnez un board</h3>
               <p>Choisissez un board dans la galerie ou la sidebar pour charger ses listes et ses cartes.</p>
             </div>
 
@@ -221,7 +237,7 @@
     <div class="modal-header">
       <div class="modal-header-copy">
         <h3 id="trelloCardModalTitle">Carte Trello</h3>
-        <p class="text-muted" id="trelloCardModalMeta">Détails et liaison CRM</p>
+        <p class="text-muted" id="trelloCardModalMeta">Details et liaison CRM</p>
       </div>
       <div class="modal-header-actions">
         <a href="#" class="modal-icon-link" id="trelloCardModalOpenLink" target="_blank" rel="noopener" title="Ouvrir dans Trello">
@@ -238,7 +254,7 @@
           <input type="text" id="trelloCardName" name="name" class="form-control" required>
         </div>
         <div class="form-group">
-          <label for="trelloCardDue">Échéance</label>
+          <label for="trelloCardDue">Echeance</label>
           <input type="datetime-local" id="trelloCardDue" name="due" class="form-control">
         </div>
         <div class="form-group full">
@@ -246,9 +262,9 @@
           <textarea id="trelloCardDescription" name="description" class="form-control" rows="7" placeholder="Ajoutez du contexte, des notes ou des instructions."></textarea>
         </div>
         <div class="form-group">
-          <label for="trelloCardProject">Projet CRM lié</label>
+          <label for="trelloCardProject">Projet CRM lie</label>
           <select id="trelloCardProject" name="project_id" class="form-control">
-            <option value="">Aucun projet lié</option>
+            <option value="">Aucun projet lie</option>
           </select>
         </div>
         <div class="form-group full">

@@ -205,6 +205,7 @@ return [
         NexusExtensions\GoogleMeet\GoogleMeetServiceProvider::class,
         NexusExtensions\Slack\SlackServiceProvider::class,
         NexusExtensions\Chatbot\ChatbotServiceProvider::class,
+        Modules\TrelloIntegration\TrelloIntegrationServiceProvider::class,
 
         /*
          * Application Service Providers...

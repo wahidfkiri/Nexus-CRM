@@ -29,7 +29,20 @@ class OpenExtensionWorkspaceAction extends AbstractAutomationAction
             'message' => trim((string) ($payload['message'] ?? 'Raccourci d application enregistré.')),
             'extension_slug' => $extensionSlug !== '' ? $extensionSlug : null,
             'target_url' => $targetUrl,
-            'target_blank' => (bool) ($payload['target_blank'] ?? $meta['target_blank'] ?? false),
+            'target_blank' => $this->shouldOpenInNewTab($extensionSlug, $payload, $meta),
         ];
+    }
+
+    protected function shouldOpenInNewTab(string $extensionSlug, array $payload, array $meta): bool
+    {
+        if (array_key_exists('target_blank', $payload)) {
+            return (bool) $payload['target_blank'];
+        }
+
+        if (array_key_exists('target_blank', $meta)) {
+            return (bool) $meta['target_blank'];
+        }
+
+        return in_array($extensionSlug, ['notion-workspace', 'google-calendar'], true);
     }
 }

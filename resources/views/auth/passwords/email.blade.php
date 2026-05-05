@@ -1,47 +1,131 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Reset Password') }}</div>
-
-                <div class="card-body">
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
-                    <form method="POST" action="{{ route('password.email') }}">
-                        @csrf
-
-                        <div class="row mb-3">
-                            <label for="email" class="col-md-4 col-form-label text-md-end">{{ __('Email Address') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
-
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Send Password Reset Link') }}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mot de passe oublie | NexusCRM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/password-recovery.css') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
+<body class="recovery-page recovery-request-page">
+    <div class="recovery-shell">
+        <div class="recovery-backdrop" aria-hidden="true">
+            <div class="recovery-glow recovery-glow-a"></div>
+            <div class="recovery-glow recovery-glow-b"></div>
+            <div class="recovery-grid"></div>
+            <div class="recovery-app-cloud">
+                @foreach(($loginApps ?? []) as $app)
+                    <span
+                        class="recovery-app-mark"
+                        style="--x: {{ $app['x'] }}%; --y: {{ $app['y'] }}%; --size: {{ $app['size'] }}px; --delay: {{ $app['delay'] }}s; --drift: {{ $app['drift'] }}s; --accent: {{ $app['color'] }};"
+                        title="{{ $app['name'] }}"
+                    >
+                        <span class="recovery-app-mark-core">
+                            @if(!empty($app['icon_url']))
+                                <img src="{{ $app['icon_url'] }}" alt="{{ $app['name'] }}">
+                            @else
+                                <i class="{{ $app['icon_class'] }}"></i>
+                            @endif
+                        </span>
+                    </span>
+                @endforeach
             </div>
         </div>
+
+        <main class="recovery-stage">
+            <section class="recovery-card" aria-labelledby="recoveryTitle">
+                <div class="recovery-brand-row">
+                    <div class="recovery-brand-badge">
+                        <span class="recovery-brand-icon"><i class="fas fa-shield-heart"></i></span>
+                        <span class="recovery-brand-name">Recuperation securisee</span>
+                    </div>
+                </div>
+
+                <div class="recovery-copy">
+                    <p class="recovery-eyebrow">Acces au compte</p>
+                    <h1 id="recoveryTitle">Mot de passe oublie</h1>
+                    <p class="recovery-description">
+                        Entrez votre adresse email professionnelle. Nous vous enverrons un lien securise pour definir un nouveau mot de passe.
+                    </p>
+                </div>
+
+                @php
+                    $initialFeedbackType = $errors->any() ? 'error' : ((session('status') || session('success')) ? 'success' : (session('error') ? 'error' : ''));
+                    $initialFeedbackMessage = $errors->any()
+                        ? $errors->first()
+                        : (session('status') ?: (session('success') ?: (session('error') ?: '')));
+                @endphp
+
+                <div
+                    id="recoveryFeedback"
+                    class="recovery-feedback {{ $initialFeedbackType ? 'is-visible is-' . $initialFeedbackType : '' }}"
+                    @if($initialFeedbackType)
+                        data-initial-type="{{ $initialFeedbackType }}"
+                        data-initial-message="{{ $initialFeedbackMessage }}"
+                    @endif
+                >
+                    <span class="recovery-feedback-icon" id="recoveryFeedbackIcon">
+                        <i class="fas {{ $initialFeedbackType === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation' }}"></i>
+                    </span>
+                    <span id="recoveryFeedbackText">{{ $initialFeedbackMessage }}</span>
+                </div>
+
+                <form method="POST" action="{{ route('password.email') }}" id="forgotPasswordForm" class="recovery-form" data-secure-form="1" novalidate>
+                    @csrf
+
+                    <div class="recovery-field">
+                        <label for="email" class="recovery-label">Email professionnel</label>
+                        <div class="recovery-input-wrap">
+                            <span class="recovery-input-icon"><i class="fas fa-envelope"></i></span>
+                            <input
+                                type="email"
+                                class="form-control-recovery @error('email') is-invalid @enderror"
+                                id="email"
+                                name="email"
+                                value="{{ old('email') }}"
+                                placeholder="nom@entreprise.com"
+                                required
+                                autocomplete="email"
+                                autofocus
+                            >
+                        </div>
+                        @error('email')<span class="form-error">{{ $message }}</span>@enderror
+                    </div>
+
+                    <button type="submit" class="btn-recovery" id="forgotPasswordBtn">
+                        <span class="btn-recovery-label">Envoyer le lien de reinitialisation</span>
+                        <span class="btn-recovery-spinner" aria-hidden="true"></span>
+                    </button>
+                </form>
+
+                <div class="recovery-helper-box">
+                    <span class="recovery-helper-icon"><i class="fas fa-clock-rotate-left"></i></span>
+                    <div>
+                        <strong>Lien temporaire</strong>
+                        <p>Le lien de reinitialisation expire automatiquement pour proteger votre compte.</p>
+                    </div>
+                </div>
+
+                <div class="recovery-footer">
+                    <span>Vous vous souvenez de votre mot de passe ?</span>
+                    <a href="{{ route('login') }}">Retour a la connexion</a>
+                </div>
+            </section>
+        </main>
     </div>
-</div>
-@endsection
+
+    <script>
+        window.PasswordRecoveryPage = {
+            mode: 'request',
+            defaultRedirect: @json(route('login')),
+            genericErrorMessage: 'Operation impossible pour le moment. Reessayez dans un instant.'
+        };
+    </script>
+    @include('layouts.partials.tauri-bridge')
+    <script src="{{ asset('vendor/client/js/secure-form.js') }}"></script>
+    <script src="{{ asset('js/password-recovery.js') }}"></script>
+</body>
+</html>

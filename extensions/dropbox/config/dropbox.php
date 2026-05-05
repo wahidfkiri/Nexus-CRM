@@ -28,6 +28,8 @@ return [
         'page_size' => 100,
         'max_file_size_mb' => 100,
         'timeout' => 45,
+        'content_timeout' => 180,
+        'connect_timeout' => 30,
         'retry_attempts' => 3,
     ],
 
