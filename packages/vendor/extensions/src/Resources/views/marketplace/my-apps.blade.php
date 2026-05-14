@@ -1,11 +1,11 @@
 @extends('layouts.global')
 
-@section('title', 'Mes Applications')
+@section('title', __('extensions::extensions.marketplace.my_apps.title'))
 
 @section('breadcrumb')
-  <a href="{{ route('marketplace.index') }}">Applications</a>
+  <a href="{{ route('marketplace.index') }}">{{ __('extensions::extensions.common.marketplace') }}</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Mes applications</span>
+  <span style="color:var(--c-ink)">{{ __('extensions::extensions.marketplace.my_apps.title') }}</span>
 @endsection
 
 @section('content')
@@ -16,19 +16,19 @@
 <div class="page-header">
   <div class="page-header-left">
     <div class="page-title-heading">
-      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-th-large', 'bg' => '#dbeafe', 'color' => '#2563eb', 'alt' => 'Mes applications'])
-      <h1 style="margin:0;">Mes applications</h1>
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-th-large', 'bg' => '#dbeafe', 'color' => '#2563eb', 'alt' => __('extensions::extensions.common.my_apps')])
+      <h1 style="margin:0;">{{ __('extensions::extensions.marketplace.my_apps.heading') }}</h1>
     </div>
-    <p>Gérez vos extensions installées et leurs configurations</p>
+    <p>{{ __('extensions::extensions.marketplace.my_apps.description') }}</p>
   </div>
   <div class="page-header-actions">
     @if($marketplaceAdmin)
       <a href="{{ route('superadmin.extensions.index') }}" class="btn btn-secondary">
-        <i class="fas fa-sliders-h"></i> Parametres marketplace
+        <i class="fas fa-sliders-h"></i> {{ __('extensions::extensions.common.marketplace_settings') }}
       </a>
     @endif
     <a href="{{ route('marketplace.index') }}" class="btn btn-primary">
-      <i class="fas fa-plus"></i> Decouvrir des applications
+      <i class="fas fa-plus"></i> {{ __('extensions::extensions.common.discover_apps') }}
     </a>
   </div>
 </div>
@@ -43,19 +43,19 @@
   @endphp
   <div class="stat-card">
     <div class="stat-icon" style="background:#f3e8ff;color:#7c3aed;"><i class="fas fa-puzzle-piece"></i></div>
-    <div class="stat-body"><div class="stat-value">{{ $total }}</div><div class="stat-label">Installées</div></div>
+    <div class="stat-body"><div class="stat-value">{{ $total }}</div><div class="stat-label">{{ __('extensions::extensions.marketplace.my_apps.stats_installed') }}</div></div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background:var(--c-success-lt);color:var(--c-success);"><i class="fas fa-check-circle"></i></div>
-    <div class="stat-body"><div class="stat-value">{{ $active }}</div><div class="stat-label">Actives</div></div>
+    <div class="stat-body"><div class="stat-value">{{ $active }}</div><div class="stat-label">{{ __('extensions::extensions.marketplace.my_apps.stats_active') }}</div></div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background:var(--c-info-lt);color:var(--c-info);"><i class="fas fa-clock"></i></div>
-    <div class="stat-body"><div class="stat-value">{{ $trial }}</div><div class="stat-label">En essai</div></div>
+    <div class="stat-body"><div class="stat-value">{{ $trial }}</div><div class="stat-label">{{ __('extensions::extensions.marketplace.my_apps.stats_trial') }}</div></div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background:var(--c-ink-02);color:var(--c-ink-40);"><i class="fas fa-pause-circle"></i></div>
-    <div class="stat-body"><div class="stat-value">{{ $inactive }}</div><div class="stat-label">Désactivées</div></div>
+    <div class="stat-body"><div class="stat-value">{{ $inactive }}</div><div class="stat-label">{{ __('extensions::extensions.marketplace.my_apps.stats_inactive') }}</div></div>
   </div>
 </div>
 
@@ -65,17 +65,17 @@
     <div style="width:72px;height:72px;background:var(--surface-2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px;color:var(--c-ink-20);">
       <i class="fas fa-puzzle-piece"></i>
     </div>
-    <h2 style="font-size:20px;color:var(--c-ink);margin-bottom:8px;">Aucune application installée</h2>
-    <p style="color:var(--c-ink-40);margin-bottom:24px;">Découvrez nos extensions pour booster votre productivité.</p>
+    <h2 style="font-size:20px;color:var(--c-ink);margin-bottom:8px;">{{ __('extensions::extensions.marketplace.my_apps.empty_title') }}</h2>
+    <p style="color:var(--c-ink-40);margin-bottom:24px;">{{ __('extensions::extensions.marketplace.my_apps.empty_description') }}</p>
     <a href="{{ route('marketplace.index') }}" class="btn btn-primary">
-      <i class="fas fa-store"></i> Explorer le marketplace
+      <i class="fas fa-store"></i> {{ __('extensions::extensions.actions.explore_marketplace') }}
     </a>
   </div>
 @else
 
   {{-- Filtres statut --}}
   <div style="display:flex;gap:8px;margin-bottom:20px;">
-    @foreach(['' => 'Toutes', 'active' => 'Actives', 'trial' => 'Essais', 'inactive' => 'Désactivées', 'suspended' => 'Suspendues'] as $st => $stLabel)
+    @foreach(['' => __('extensions::extensions.marketplace.my_apps.status_all'), 'active' => __('extensions::extensions.marketplace.my_apps.status_active'), 'trial' => __('extensions::extensions.marketplace.my_apps.status_trial'), 'inactive' => __('extensions::extensions.marketplace.my_apps.status_inactive'), 'suspended' => __('extensions::extensions.marketplace.my_apps.status_suspended')] as $st => $stLabel)
     <button class="mkt-cat-btn {{ $st === '' ? 'active' : '' }}" data-status="{{ $st }}" onclick="filterByStatus('{{ $st }}', this)">
       {{ $stLabel }}
     </button>
@@ -93,11 +93,11 @@
       $color = $ext->category_color ?? '#64748b';
       $extIconClass = (string) ($ext->icon_class ?? 'fas fa-puzzle-piece');
       $st    = $activation->status;
-      $stCfg = ['active'=>['bg'=>'#dcfce7','color'=>'#15803d','label'=>'Active'],
-                 'trial' =>['bg'=>'#dbeafe','color'=>'#1d4ed8','label'=>'Essai'],
-                 'inactive'=>['bg'=>'var(--c-ink-02)','color'=>'var(--c-ink-40)','label'=>'Désactivée'],
-                 'suspended'=>['bg'=>'#fee2e2','color'=>'#b91c1c','label'=>'Suspendue'],
-                 'pending'=>['bg'=>'#fef3c7','color'=>'#92400e','label'=>'En attente'],
+      $stCfg = ['active'=>['bg'=>'#dcfce7','color'=>'#15803d','label'=>__('extensions::extensions.status.active')],
+                 'trial' =>['bg'=>'#dbeafe','color'=>'#1d4ed8','label'=>__('extensions::extensions.status.trial')],
+                 'inactive'=>['bg'=>'var(--c-ink-02)','color'=>'var(--c-ink-40)','label'=>__('extensions::extensions.marketplace.my_apps.status_inactive')],
+                 'suspended'=>['bg'=>'#fee2e2','color'=>'#b91c1c','label'=>__('extensions::extensions.status.suspended')],
+                 'pending'=>['bg'=>'#fef3c7','color'=>'#92400e','label'=>__('extensions::extensions.status.pending')],
                 ][$st] ?? ['bg'=>'var(--c-ink-02)','color'=>'var(--c-ink-40)','label'=>ucfirst($st)];
     @endphp
     <div class="my-app-card" data-status="{{ $st }}"
@@ -128,18 +128,18 @@
       @if($activation->is_trial && $activation->trial_ends_at)
       <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--r-sm);padding:8px 12px;margin-bottom:12px;font-size:12px;color:#92400e;display:flex;align-items:center;gap:8px;">
         <i class="fas fa-clock" style="flex-shrink:0;"></i>
-        <span>Essai expire le <strong>{{ $activation->trial_ends_at->format('d/m/Y') }}</strong>
-          ({{ $activation->trial_days_remaining }}j restants)</span>
+        <span>{{ __('extensions::extensions.marketplace.my_apps.trial_expires') }} <strong>{{ $activation->trial_ends_at->format('d/m/Y') }}</strong>
+          ({{ __('extensions::extensions.marketplace.my_apps.trial_remaining', ['count' => $activation->trial_days_remaining]) }})</span>
       </div>
       @endif
 
       {{-- Infos --}}
       <div style="display:flex;gap:10px;font-size:11.5px;color:var(--c-ink-40);margin-bottom:14px;">
-        <span><i class="fas fa-calendar" style="margin-right:3px;"></i>Depuis {{ $activation->activated_at?->format('d/m/Y') ?? '—' }}</span>
+        <span><i class="fas fa-calendar" style="margin-right:3px;"></i>{{ __('extensions::extensions.marketplace.my_apps.since', ['date' => $activation->activated_at?->format('d/m/Y') ?? __('extensions::extensions.common.none_short')]) }}</span>
         @if($activation->price_paid > 0)
           <span><i class="fas fa-euro-sign" style="margin-right:3px;"></i>{{ number_format($activation->price_paid,2) }} {{ $activation->currency }}</span>
         @else
-          <span style="color:var(--c-success);"><i class="fas fa-gift" style="margin-right:3px;"></i>Gratuit</span>
+          <span style="color:var(--c-success);"><i class="fas fa-gift" style="margin-right:3px;"></i>{{ __('extensions::extensions.marketplace.my_apps.free_label') }}</span>
         @endif
       </div>
 
@@ -147,7 +147,7 @@
       <div style="display:flex;gap:8px;">
         @if($activation->is_active)
           <a href="{{ route('marketplace.settings', $ext->slug) }}" class="btn btn-secondary btn-sm" style="flex:1;justify-content:center;">
-            <i class="fas fa-cog"></i> Configurer
+            <i class="fas fa-cog"></i> {{ __('extensions::extensions.actions.configure') }}
           </a>
           <button class="btn btn-ghost btn-sm" style="color:var(--c-danger);"
                   onclick="deactivateMyApp(@js($ext->slug), @js($ext->name), @js($ext->icon_url), @js($extIconClass), @js($color))">
@@ -156,15 +156,15 @@
         @elseif($st === 'inactive')
           <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center;"
                   onclick="reactivateMyApp(@js($ext->slug), @js($ext->name), @js($ext->icon_url), @js($extIconClass), @js($color))">
-            <i class="fas fa-plug"></i> Réactiver
+            <i class="fas fa-plug"></i> {{ __('extensions::extensions.marketplace.my_apps.reactivate_button') }}
           </button>
         @elseif($st === 'suspended')
           <div style="font-size:12px;color:var(--c-danger);flex:1;">
             <i class="fas fa-ban" style="margin-right:4px;"></i>
-            {{ $activation->suspension_reason ?? 'Suspendue par l\'administrateur' }}
+            {{ $activation->suspension_reason ?? __('extensions::extensions.marketplace.my_apps.suspended_fallback') }}
           </div>
         @endif
-        <a href="{{ route('marketplace.show', $ext->slug) }}" class="btn btn-ghost btn-sm" title="Voir détails">
+        <a href="{{ route('marketplace.show', $ext->slug) }}" class="btn btn-ghost btn-sm" title="{{ __('extensions::extensions.marketplace.my_apps.details_title') }}">
           <i class="fas fa-arrow-right"></i>
         </a>
       </div>
@@ -207,17 +207,17 @@ function buildMarketplaceConfirmIcon(name, iconUrl, iconClass) {
 
 async function deactivateMyApp(slug, name, iconUrl = '', iconClass = 'fas fa-puzzle-piece', color = '#2563eb') {
   Modal.confirm({
-    title: `Désactiver « ${name} » ?`,
-    message: 'L\'application sera désactivée mais vos données resteront intactes.',
-    confirmText: 'Désactiver',
+    title: @json(__('extensions::extensions.marketplace.my_apps.deactivate_title', ['name' => ':name'])).replace(':name', name),
+    message: @json(__('extensions::extensions.marketplace.my_apps.deactivate_message')),
+    confirmText: @json(__('extensions::extensions.marketplace.my_apps.deactivate_confirm')),
     type: 'danger',
     iconHtml: buildMarketplaceConfirmIcon(name, iconUrl, iconClass),
     iconVariant: 'app',
     iconColor: color,
     onConfirm: async () => {
       const { ok, data } = await Http.post(`/marketplace/${slug}/deactivate`, {});
-      if (ok) { Toast.success('Désactivée', data.message); setTimeout(() => location.reload(), 900); }
-      else Toast.error('Erreur', data.message);
+      if (ok) { Toast.success(@json(__('extensions::extensions.marketplace.my_apps.deactivate_success')), data.message); setTimeout(() => location.reload(), 900); }
+      else Toast.error(@json(__('extensions::extensions.common.error')), data.message);
     }
   });
 }
@@ -225,14 +225,14 @@ async function deactivateMyApp(slug, name, iconUrl = '', iconClass = 'fas fa-puz
 async function reactivateMyApp(slug, name, iconUrl = '', iconClass = 'fas fa-puzzle-piece', color = '#2563eb') {
   const { ok, data } = await Http.post(`/marketplace/${slug}/activate`, {});
   if (ok) {
-    Toast.success('Réactivée !', data.message);
+    Toast.success(@json(__('extensions::extensions.marketplace.my_apps.reactivate_success')), data.message);
     if (data.redirect) {
       setTimeout(() => { window.location.href = data.redirect; }, 450);
       return;
     }
     setTimeout(() => location.reload(), 900);
   }
-  else Toast.error('Erreur', data.message);
+  else Toast.error(@json(__('extensions::extensions.common.error')), data.message);
 }
 </script>
 @endpush

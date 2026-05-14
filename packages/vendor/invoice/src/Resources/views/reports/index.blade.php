@@ -1,11 +1,16 @@
 @extends('invoice::layouts.invoice')
 
-@section('title', 'Rapports')
+@php
+  $reportsPage = trans('invoice::invoices.pages.reports_index');
+  $common = trans('invoice::invoices.common');
+@endphp
+
+@section('title', __('invoice::invoices.reports'))
 
 @section('breadcrumb')
-  <span>Facturation</span>
+  <span>{{ __('invoice::invoices.billing') }}</span>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Rapports</span>
+  <span style="color:var(--c-ink)">{{ __('invoice::invoices.reports') }}</span>
 @endsection
 
 @section('content')
@@ -13,10 +18,10 @@
 <div class="page-header">
   <div class="page-header-left">
     <div class="page-title-heading">
-      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-chart-line', 'bg' => '#dcfce7', 'color' => '#15803d', 'alt' => 'Rapports'])
-      <h1 style="margin:0;">Rapports & Analytiques</h1>
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-chart-line', 'bg' => '#dcfce7', 'color' => '#15803d', 'alt' => __('invoice::invoices.reports')])
+      <h1 style="margin:0;">{{ $reportsPage['title'] }}</h1>
     </div>
-    <p>Visualisez la performance de votre activité de facturation</p>
+    <p>{{ $reportsPage['subtitle'] }}</p>
   </div>
   <div class="page-header-actions">
     <div class="dropdown">
@@ -31,11 +36,11 @@
       </div>
     </div>
     <button class="btn btn-secondary" onclick="window.print()">
-      <i class="fas fa-print"></i> Imprimer
+      <i class="fas fa-print"></i> {{ $reportsPage['print'] }}
     </button>
     <div class="dropdown">
       <button class="btn btn-primary" data-dropdown-toggle>
-        <i class="fas fa-arrow-down-to-line"></i> Exporter
+        <i class="fas fa-arrow-down-to-line"></i> {{ __('invoice::invoices.actions.export') }}
         <i class="fas fa-chevron-down" style="font-size:10px;margin-left:2px;"></i>
       </button>
       <div class="dropdown-menu">
@@ -52,21 +57,21 @@
     <div class="stat-icon" style="background:var(--c-accent-lt);color:var(--c-accent)"><i class="fas fa-chart-line"></i></div>
     <div class="stat-body">
       <div class="stat-value" id="rCA">{{ number_format($stats['revenue']['year'] ?? 0, 0, ',', ' ') }} €</div>
-      <div class="stat-label">CA Annuel</div>
+      <div class="stat-label">{{ $reportsPage['annual_revenue'] }}</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background:var(--c-success-lt);color:var(--c-success)"><i class="fas fa-circle-check"></i></div>
     <div class="stat-body">
       <div class="stat-value" id="rPaid">{{ number_format($stats['invoices']['paid_total'] ?? 0, 0, ',', ' ') }} €</div>
-      <div class="stat-label">Encaissé</div>
+      <div class="stat-label">{{ $reportsPage['collected'] }}</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background:var(--c-danger-lt);color:var(--c-danger)"><i class="fas fa-hourglass-half"></i></div>
     <div class="stat-body">
       <div class="stat-value" id="rDue">{{ number_format($stats['invoices']['due_total'] ?? 0, 0, ',', ' ') }} €</div>
-      <div class="stat-label">À encaisser</div>
+      <div class="stat-label">{{ $reportsPage['to_collect'] }}</div>
     </div>
   </div>
   <div class="stat-card">
@@ -80,14 +85,14 @@
         @endphp
         {{ $rate }}%
       </div>
-      <div class="stat-label">Conversion devis</div>
+      <div class="stat-label">{{ $reportsPage['quote_conversion'] }}</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background:var(--c-info-lt);color:var(--c-info)"><i class="fas fa-file-invoice"></i></div>
     <div class="stat-body">
       <div class="stat-value" id="rInvTotal">{{ $stats['invoices']['total'] ?? 0 }}</div>
-      <div class="stat-label">Total factures</div>
+      <div class="stat-label">{{ $reportsPage['total_invoices'] }}</div>
     </div>
   </div>
 </div>
@@ -100,14 +105,14 @@
       <div class="chart-card-header">
         <span class="chart-card-title">
           <i class="fas fa-chart-bar" style="color:var(--c-accent);margin-right:8px;"></i>
-          Chiffre d'affaires mensuel
+          {{ $reportsPage['monthly_revenue'] }}
         </span>
         <div style="display:flex;gap:12px;font-size:12px;">
           <span style="display:flex;align-items:center;gap:6px;color:var(--c-ink-40);">
-            <span style="width:10px;height:10px;border-radius:2px;background:var(--c-accent);display:inline-block;"></span> CA facturé
+            <span style="width:10px;height:10px;border-radius:2px;background:var(--c-accent);display:inline-block;"></span> {{ $reportsPage['billed_revenue'] }}
           </span>
           <span style="display:flex;align-items:center;gap:6px;color:var(--c-ink-40);">
-            <span style="width:10px;height:10px;border-radius:2px;background:var(--c-success);display:inline-block;"></span> Encaissé
+            <span style="width:10px;height:10px;border-radius:2px;background:var(--c-success);display:inline-block;"></span> {{ $reportsPage['collected'] }}
           </span>
         </div>
       </div>
@@ -134,8 +139,8 @@
           @endforeach
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:12px;font-size:12px;color:var(--c-ink-40);">
-          <span>Total facturé : <strong style="color:var(--c-ink);">{{ number_format(array_sum($monthlyRevenue ?? [0]), 0, ',', ' ') }} €</strong></span>
-          <span>Total encaissé : <strong style="color:var(--c-success);">{{ number_format(array_sum($monthlyPaid ?? [0]), 0, ',', ' ') }} €</strong></span>
+          <span>{{ $reportsPage['billed_revenue'] }} : <strong style="color:var(--c-ink);">{{ number_format(array_sum($monthlyRevenue ?? [0]), 0, ',', ' ') }} €</strong></span>
+          <span>{{ $reportsPage['collected'] }} : <strong style="color:var(--c-success);">{{ number_format(array_sum($monthlyPaid ?? [0]), 0, ',', ' ') }} €</strong></span>
         </div>
       </div>
     </div>
@@ -143,17 +148,17 @@
     {{-- Tableau récap par mois --}}
     <div class="table-wrapper">
       <div class="table-header">
-        <span class="table-title">Récapitulatif mensuel</span>
+        <span class="table-title">{{ $reportsPage['monthly_summary'] }}</span>
       </div>
       <table class="crm-table">
         <thead>
           <tr>
             <th>Mois</th>
-            <th style="text-align:right">Factures émises</th>
-            <th style="text-align:right">CA facturé</th>
-            <th style="text-align:right">Encaissé</th>
-            <th style="text-align:right">Taux</th>
-            <th style="text-align:right">En retard</th>
+            <th style="text-align:right">{{ $reportsPage['invoices_issued'] }}</th>
+            <th style="text-align:right">{{ $reportsPage['billed_revenue'] }}</th>
+            <th style="text-align:right">{{ $reportsPage['collected'] }}</th>
+            <th style="text-align:right">{{ $reportsPage['rate'] }}</th>
+            <th style="text-align:right">{{ $reportsPage['late'] }}</th>
           </tr>
         </thead>
         <tbody>
@@ -184,7 +189,7 @@
         </tbody>
         <tfoot>
           <tr style="background:var(--surface-1);font-weight:var(--fw-semi);">
-            <td>Total {{ date('Y') }}</td>
+            <td>{{ __('invoice::invoices.pages.reports_index.year_total', ['year' => date('Y')]) }}</td>
             <td class="text-right">{{ array_sum($monthlyCount ?? [0]) }}</td>
             <td class="text-right font-mono">{{ number_format(array_sum($monthlyRevenue ?? [0]), 2, ',', ' ') }} €</td>
             <td class="text-right font-mono" style="color:var(--c-success);">{{ number_format(array_sum($monthlyPaid ?? [0]), 2, ',', ' ') }} €</td>
@@ -207,16 +212,16 @@
       <div class="chart-card-header">
         <span class="chart-card-title">
           <i class="fas fa-chart-pie" style="color:var(--c-accent);margin-right:8px;"></i>
-          Répartition statuts
+          {{ $reportsPage['status_breakdown'] }}
         </span>
       </div>
       <div class="chart-body">
         @php
           $statusData = [
-            'paid'      => ['label'=>'Payées', 'color'=>'var(--c-success)', 'value'=> $stats['invoices']['paid'] ?? 0],
-            'sent'      => ['label'=>'Envoyées', 'color'=>'var(--c-info)', 'value'=> $stats['invoices']['sent'] ?? 0],
-            'overdue'   => ['label'=>'En retard', 'color'=>'var(--c-danger)', 'value'=> $stats['invoices']['overdue'] ?? 0],
-            'draft'     => ['label'=>'Brouillons', 'color'=>'var(--c-ink-20)', 'value'=> $stats['invoices']['draft'] ?? 0],
+            'paid'      => ['label' => $reportsPage['paid_invoices'], 'color'=>'var(--c-success)', 'value'=> $stats['invoices']['paid'] ?? 0],
+            'sent'      => ['label' => $reportsPage['sent_invoices'], 'color'=>'var(--c-info)', 'value'=> $stats['invoices']['sent'] ?? 0],
+            'overdue'   => ['label' => $reportsPage['overdue_invoices'], 'color'=>'var(--c-danger)', 'value'=> $stats['invoices']['overdue'] ?? 0],
+            'draft'     => ['label' => $reportsPage['draft_invoices'], 'color'=>'var(--c-ink-20)', 'value'=> $stats['invoices']['draft'] ?? 0],
           ];
           $totalInv = array_sum(array_column($statusData, 'value')) ?: 1;
         @endphp
@@ -240,7 +245,7 @@
       <div class="chart-card-header">
         <span class="chart-card-title">
           <i class="fas fa-trophy" style="color:var(--c-warning);margin-right:8px;"></i>
-          Top clients
+          {{ $reportsPage['top_clients'] }}
         </span>
       </div>
       <div class="chart-body" style="padding:0;">
@@ -255,7 +260,7 @@
           <div style="font-weight:var(--fw-semi);font-size:13px;font-family:var(--ff-display);color:var(--c-ink);">{{ number_format($c->total_revenue, 0, ',', ' ') }} €</div>
         </div>
         @empty
-        <div style="padding:20px;text-align:center;color:var(--c-ink-40);font-size:13px;">Aucune donnée disponible</div>
+        <div style="padding:20px;text-align:center;color:var(--c-ink-40);font-size:13px;">{{ $common['no_data'] }}</div>
         @endforelse
       </div>
     </div>
@@ -265,7 +270,7 @@
       <div class="chart-card-header">
         <span class="chart-card-title">
           <i class="fas fa-credit-card" style="color:var(--c-accent);margin-right:8px;"></i>
-          Modes de paiement
+          {{ $reportsPage['payment_methods'] }}
         </span>
       </div>
       <div class="chart-body">
@@ -280,7 +285,7 @@
             <span class="donut-legend-value">{{ number_format($pm->total, 0, ',', ' ') }} €</span>
           </div>
           @empty
-          <div style="text-align:center;color:var(--c-ink-40);font-size:13px;">Aucune donnée</div>
+          <div style="text-align:center;color:var(--c-ink-40);font-size:13px;">{{ $common['no_data'] }}</div>
           @endforelse
         </div>
       </div>

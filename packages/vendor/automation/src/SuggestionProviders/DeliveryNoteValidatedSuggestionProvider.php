@@ -48,7 +48,7 @@ class DeliveryNoteValidatedSuggestionProvider implements SuggestionProvider
             $docsInstalled ? 'create_delivery_note_google_doc' : 'install_extension',
             $docsInstalled
                 ? 'Generer un document Google Docs a partir du BL'
-                : 'Installer Google Docs pour generer une version editable du BL',
+                : 'Installer Google Docs pour générer une version éditable du BL',
             0.85,
             $docsInstalled
                 ? ['delivery_note_id' => $deliveryNoteId]
@@ -64,8 +64,8 @@ class DeliveryNoteValidatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $notionInstalled ? 'create_notion_page' : 'install_extension',
             $notionInstalled
-                ? 'Creer une note Notion de trace logistique'
-                : 'Installer Notion Workspace pour documenter le BL et ses ecarts',
+                ? 'Créer une note Notion de traçabilité logistique'
+                : 'Installer Notion Workspace pour documenter le BL et ses écarts',
             0.8,
             $notionInstalled
                 ? [

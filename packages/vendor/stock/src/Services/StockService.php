@@ -192,7 +192,7 @@ class StockService
                 'name' => $item['name'],
                 'description' => $item['description'] ?? null,
                 'quantity' => $quantity,
-                'unit' => $item['unit'] ?? 'piece',
+                'unit' => $item['unit'] ?? 'pièce',
                 'unit_price' => $unitPrice,
                 'total' => $quantity * $unitPrice,
             ]);

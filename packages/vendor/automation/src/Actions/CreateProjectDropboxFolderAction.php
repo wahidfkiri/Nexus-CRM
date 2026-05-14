@@ -22,16 +22,16 @@ class CreateProjectDropboxFolderAction extends AbstractAutomationAction
     {
         return $this->withReconnectHandling('dropbox', function () use ($automationEvent, $suggestion) {
             $tenantId = $this->tenantId($automationEvent);
-            $this->assertExtensionActive($tenantId, 'dropbox', 'Dropbox doit etre installe pour creer un dossier projet.');
+            $this->assertExtensionActive($tenantId, 'dropbox', 'Dropbox doit être installé pour créer un dossier projet.');
 
             if (!$this->dropboxService->getToken($tenantId)) {
-                throw new RuntimeException('Dropbox n est pas connecte pour ce tenant.');
+                throw new RuntimeException("Dropbox n'est pas connecté pour ce tenant.");
             }
 
             $payload = $this->payload($automationEvent);
             $projectId = $this->modelId($payload, $suggestion, 'project_id', Project::class);
             if (!$projectId) {
-                throw new RuntimeException('Projet introuvable pour la creation du dossier Dropbox.');
+                throw new RuntimeException('Projet introuvable pour la création du dossier Dropbox.');
             }
 
             $project = $this->loadProject($tenantId, $projectId);
@@ -42,7 +42,7 @@ class CreateProjectDropboxFolderAction extends AbstractAutomationAction
 
                     return [
                         'result' => 'dropbox_folder_exists',
-                        'message' => 'Le dossier Dropbox du projet existe deja.',
+                        'message' => 'Le dossier Dropbox du projet existe déjà.',
                         'project_id' => (int) $project->id,
                         'folder_id' => $existingFolderId,
                         'target_url' => $existingFolder['web_view_link'] ?? $this->routeUrl('dropbox.index'),
@@ -71,7 +71,7 @@ class CreateProjectDropboxFolderAction extends AbstractAutomationAction
             }
 
             if ($projectsFolderRef === '') {
-                throw new RuntimeException('Impossible de creer le dossier racine Projets dans Dropbox.');
+                throw new RuntimeException('Impossible de créer le dossier racine Projets dans Dropbox.');
             }
 
             $projectFolderName = 'Projet-' . (int) $project->id;
@@ -91,7 +91,7 @@ class CreateProjectDropboxFolderAction extends AbstractAutomationAction
             }
 
             if ($projectFolderId === '') {
-                throw new RuntimeException('Impossible de creer le dossier Dropbox du projet.');
+                throw new RuntimeException('Impossible de créer le dossier Dropbox du projet.');
             }
 
             $this->updateProjectMetadata($project, 'dropbox_folder_id', $projectFolderId);
@@ -107,14 +107,14 @@ class CreateProjectDropboxFolderAction extends AbstractAutomationAction
                 $project,
                 null,
                 'project_dropbox_folder_created',
-                'Dossier Dropbox cree pour le projet',
+                'Dossier Dropbox créé pour le projet',
                 ['folder_id' => $projectFolderId],
                 $this->actorId($automationEvent)
             );
 
             return [
                 'result' => 'dropbox_folder_created',
-                'message' => 'Dossier Dropbox cree pour le projet.',
+                'message' => 'Dossier Dropbox créé pour le projet.',
                 'project_id' => (int) $project->id,
                 'folder_id' => $projectFolderId,
                 'target_url' => $folderData['web_view_link'] ?? $this->routeUrl('dropbox.index'),

@@ -62,7 +62,7 @@ window.Stock = {
       <td><select name="items[${idx}][article_id]" class="form-control" onchange="Stock.fillOrderLineFromArticle(this)">${window.StockArticleOptionsHtml || '<option value="">-</option>'}</select></td>
       <td><input type="text" name="items[${idx}][name]" class="form-control" required></td>
       <td><input type="number" name="items[${idx}][quantity]" class="form-control" min="0.0001" step="any" value="1" required></td>
-      <td><input type="text" name="items[${idx}][unit]" class="form-control" value="piece"></td>
+      <td><input type="text" name="items[${idx}][unit]" class="form-control" value="pièce"></td>
       <td><input type="number" name="items[${idx}][unit_price]" class="form-control" min="0" step="any" value="0" required></td>
       <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button></td>
     `;
@@ -79,7 +79,7 @@ window.Stock = {
       <td><input type="text" name="items[${idx}][sku]" class="form-control" placeholder="SKU"></td>
       <td><input type="text" name="items[${idx}][name]" class="form-control" required></td>
       <td><input type="number" name="items[${idx}][quantity]" class="form-control" min="0.0001" step="any" value="1" required></td>
-      <td><input type="text" name="items[${idx}][unit]" class="form-control" value="piece"></td>
+      <td><input type="text" name="items[${idx}][unit]" class="form-control" value="pièce"></td>
       <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button></td>
     `;
     tbody.appendChild(tr);

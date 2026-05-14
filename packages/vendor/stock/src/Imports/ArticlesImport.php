@@ -21,7 +21,7 @@ class ArticlesImport implements OnEachRow, WithHeadingRow
         $this->service->createArticle([
             'sku' => $data['sku'] ?? null,
             'name' => $data['nom'] ?? ($data['name'] ?? null),
-            'unit' => $data['unite'] ?? ($data['unit'] ?? 'piece'),
+            'unit' => $data['unite'] ?? ($data['unit'] ?? 'pièce'),
             'purchase_price' => (float) ($data['prix_achat'] ?? 0),
             'sale_price' => (float) ($data['prix_vente'] ?? ($data['sale_price'] ?? 0)),
             'opening_stock' => (float) ($data['stock'] ?? 0),

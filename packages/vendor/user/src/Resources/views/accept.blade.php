@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>Accepter l'invitation - {{ config('app.name') }}</title>
+  <title>{{ __('user::users.titles.accept_invitation') }} - {{ config('app.name') }}</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="{{ asset('vendor/client/css/crm.css') }}">
   <style>
@@ -23,6 +23,11 @@
   </style>
 </head>
 <body>
+@php
+  $acceptI18n = [
+      'welcome' => __('user::users.messages.welcome'),
+  ];
+@endphp
 <div class="accept-page">
   <div class="accept-card">
     <div class="accept-header">
@@ -32,26 +37,26 @@
       <div style="font-family:var(--ff-display);font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;">
         {{ $invitation->tenant?->name ?? config('app.name') }}
       </div>
-      <div style="font-size:13px;color:rgba(255,255,255,.55);">Votre compte va être ajouté à cet espace.</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.55);">{{ __('user::users.subtitles.accept_space') }}</div>
     </div>
 
     <div class="accept-body">
       <div class="accept-info">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--c-ink-40);margin-bottom:10px;">Détails de votre invitation</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--c-ink-40);margin-bottom:10px;">{{ __('user::users.headings.invitation_details') }}</div>
         <div class="accept-info-row">
-          <span class="accept-info-label">Email</span>
+          <span class="accept-info-label">{{ __('user::users.fields.email') }}</span>
           <span class="accept-info-value">{{ $invitation->email }}</span>
         </div>
         <div class="accept-info-row">
-          <span class="accept-info-label">Rôle attribué</span>
+          <span class="accept-info-label">{{ __('user::users.fields.assigned_role') }}</span>
           <span class="accept-info-value">{{ config("user.tenant_roles.{$invitation->role_in_tenant}", $invitation->role_in_tenant) }}</span>
         </div>
         <div class="accept-info-row">
-          <span class="accept-info-label">Invité par</span>
-          <span class="accept-info-value">{{ $invitation->invitedBy?->name ?? "L'équipe" }}</span>
+          <span class="accept-info-label">{{ __('user::users.fields.invited_by') }}</span>
+          <span class="accept-info-value">{{ $invitation->invitedBy?->name ?? __('user::users.breadcrumbs.team') }}</span>
         </div>
         <div class="accept-info-row">
-          <span class="accept-info-label">Expire le</span>
+          <span class="accept-info-label">{{ __('user::users.fields.expires_at') }}</span>
           <span class="accept-info-value" style="{{ $invitation->expires_at->diffInDays(now()) < 2 ? 'color:var(--c-danger);' : '' }}">
             {{ $invitation->expires_at->format('d/m/Y à H:i') }}
           </span>
@@ -60,19 +65,19 @@
 
       <div class="form-group">
         <div style="background:var(--c-accent-xl);border:1px solid var(--c-accent-lt);border-radius:var(--r-md);padding:10px 12px;font-size:12px;color:var(--c-ink-60);">
-          Vous êtes connecté avec <strong>{{ auth()->user()->email }}</strong>. L’acceptation ajoutera uniquement cet espace à votre compte existant.
+          {{ __('user::users.subtitles.existing_account_accept', ['email' => auth()->user()->email]) }}
         </div>
       </div>
 
       <form id="acceptForm" action="{{ route('users.accept.submit', $invitation->token) }}" method="POST">
         @csrf
         <button type="submit" class="btn btn-primary" id="submitBtn" style="width:100%;justify-content:center;margin-top:8px;">
-          <i class="fas fa-check"></i> Rejoindre cette équipe
+          <i class="fas fa-check"></i> {{ __('user::users.actions.join_team') }}
         </button>
       </form>
 
       <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--c-ink-40);">
-        Besoin d’un autre compte ? <a href="{{ route('login') }}" style="color:var(--c-accent);">Changer de connexion</a>
+        {{ __('user::users.subtitles.need_another_account') }} <a href="{{ route('login') }}" style="color:var(--c-accent);">{{ __('user::users.subtitles.change_connection') }}</a>
       </div>
     </div>
   </div>
@@ -82,9 +87,10 @@
 
 <script src="{{ asset('vendor/client/js/crm.js') }}"></script>
 <script>
+window.ACCEPT_USER_I18N = @json($acceptI18n);
 ajaxForm('acceptForm', {
   onSuccess: (data) => {
-    Toast.success('Bienvenue', data.message, 3000);
+    Toast.success(window.ACCEPT_USER_I18N.welcome, data.message, 3000);
     setTimeout(() => window.location.href = data.redirect || '{{ url("/dashboard") }}', 1200);
   }
 });

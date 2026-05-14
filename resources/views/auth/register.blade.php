@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Inscription | NexusCRM</title>
+    <title>{{ __('auth-ui.register.page_title') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
@@ -40,15 +40,15 @@
                 <div class="register-brand-row">
                     <div class="register-brand-badge">
                         <span class="register-brand-icon"><i class="fas fa-chart-line"></i></span>
-                        <span class="register-brand-name">NexusCRM</span>
+                        <span class="register-brand-name">{{ __('auth-ui.brand') }}</span>
                     </div>
                 </div>
 
                 <div class="register-copy">
-                    <p class="register-eyebrow">Demarrage rapide</p>
-                    <h1 id="registerTitle">Creer votre compte</h1>
+                    <p class="register-eyebrow">{{ __('auth-ui.register.eyebrow') }}</p>
+                    <h1 id="registerTitle">{{ __('auth-ui.register.title') }}</h1>
                     <p class="register-description">
-                        Lancez votre espace CRM en quelques minutes et retrouvez vos integrations dans une interface claire et fluide.
+                        {{ __('auth-ui.register.description') }}
                     </p>
                 </div>
 
@@ -78,7 +78,7 @@
 
                     <div class="register-grid-fields register-grid-fields-two">
                         <div class="register-field">
-                            <label for="firstName" class="register-label">Prenom</label>
+                            <label for="firstName" class="register-label">{{ __('auth-ui.register.first_name') }}</label>
                             <div class="register-input-wrap">
                                 <span class="register-input-icon"><i class="fas fa-user"></i></span>
                                 <input
@@ -87,7 +87,7 @@
                                     id="firstName"
                                     name="first_name"
                                     value="{{ old('first_name') }}"
-                                    placeholder="Votre prenom"
+                                    placeholder="{{ __('auth-ui.register.first_name_placeholder') }}"
                                     required
                                     autocomplete="given-name"
                                 >
@@ -96,7 +96,7 @@
                         </div>
 
                         <div class="register-field">
-                            <label for="lastName" class="register-label">Nom</label>
+                            <label for="lastName" class="register-label">{{ __('auth-ui.register.last_name') }}</label>
                             <div class="register-input-wrap">
                                 <span class="register-input-icon"><i class="fas fa-user"></i></span>
                                 <input
@@ -105,7 +105,7 @@
                                     id="lastName"
                                     name="last_name"
                                     value="{{ old('last_name') }}"
-                                    placeholder="Votre nom"
+                                    placeholder="{{ __('auth-ui.register.last_name_placeholder') }}"
                                     required
                                     autocomplete="family-name"
                                 >
@@ -115,7 +115,7 @@
                     </div>
 
                     <div class="register-field">
-                        <label for="email" class="register-label">Email professionnel</label>
+                        <label for="email" class="register-label">{{ __('auth-ui.register.email_label') }}</label>
                         <div class="register-input-wrap">
                             <span class="register-input-icon"><i class="fas fa-envelope"></i></span>
                             <input
@@ -124,7 +124,7 @@
                                 id="email"
                                 name="email"
                                 value="{{ old('email') }}"
-                                placeholder="nom@entreprise.com"
+                                placeholder="{{ __('auth-ui.register.email_placeholder') }}"
                                 required
                                 autocomplete="email"
                             >
@@ -134,7 +134,7 @@
 
                     <div class="register-grid-fields register-grid-fields-two">
                         <div class="register-field">
-                            <label for="password" class="register-label">Mot de passe</label>
+                            <label for="password" class="register-label">{{ __('auth-ui.register.password_label') }}</label>
                             <div class="register-input-wrap">
                                 <span class="register-input-icon"><i class="fas fa-lock"></i></span>
                                 <input
@@ -142,11 +142,11 @@
                                     class="form-control-modern @error('password') is-invalid @enderror"
                                     id="password"
                                     name="password"
-                                    placeholder="Choisissez un mot de passe"
+                                    placeholder="{{ __('auth-ui.register.password_placeholder') }}"
                                     required
                                     autocomplete="new-password"
                                 >
-                                <button type="button" class="toggle-password" data-target="password" aria-label="Afficher ou masquer le mot de passe">
+                                <button type="button" class="toggle-password" data-target="password" aria-label="{{ __('auth-ui.register.toggle_password') }}">
                                     <i class="far fa-eye"></i>
                                 </button>
                             </div>
@@ -154,7 +154,7 @@
                         </div>
 
                         <div class="register-field">
-                            <label for="confirmPassword" class="register-label">Confirmation</label>
+                            <label for="confirmPassword" class="register-label">{{ __('auth-ui.register.password_confirmation') }}</label>
                             <div class="register-input-wrap">
                                 <span class="register-input-icon"><i class="fas fa-lock"></i></span>
                                 <input
@@ -162,11 +162,11 @@
                                     class="form-control-modern"
                                     id="confirmPassword"
                                     name="password_confirmation"
-                                    placeholder="Confirmez le mot de passe"
+                                    placeholder="{{ __('auth-ui.register.password_confirmation_placeholder') }}"
                                     required
                                     autocomplete="new-password"
                                 >
-                                <button type="button" class="toggle-password" data-target="confirmPassword" aria-label="Afficher ou masquer le mot de passe">
+                                <button type="button" class="toggle-password" data-target="confirmPassword" aria-label="{{ __('auth-ui.register.toggle_password') }}">
                                     <i class="far fa-eye"></i>
                                 </button>
                             </div>
@@ -183,25 +183,25 @@
                     <label class="register-checkbox">
                         <input type="checkbox" id="termsCheckbox" required>
                         <span class="register-checkbox-mark"></span>
-                        <span>J'accepte les conditions d'utilisation et la politique de confidentialite.</span>
+                        <span>{{ __('auth-ui.register.terms') }}</span>
                     </label>
 
                     <button type="submit" class="btn-register" id="registerBtn">
-                        <span class="btn-register-label">Creer mon compte</span>
+                        <span class="btn-register-label">{{ __('auth-ui.register.submit') }}</span>
                         <span class="btn-register-spinner" aria-hidden="true"></span>
                     </button>
                 </form>
 
-                <div class="register-divider"><span>ou</span></div>
+                <div class="register-divider"><span>{{ __('auth-ui.register.divider') }}</span></div>
 
                 <a href="{{ route('auth.google.redirect') }}" class="register-google-btn">
                     <i class="fab fa-google"></i>
-                    <span>Continuer avec Google</span>
+                    <span>{{ __('auth-ui.register.google') }}</span>
                 </a>
 
                 <div class="register-footer">
-                    <span>Vous avez deja un compte ?</span>
-                    <a href="{{ route('login') }}">Se connecter</a>
+                    <span>{{ __('auth-ui.register.already_account') }}</span>
+                    <a href="{{ route('login') }}">{{ __('auth-ui.register.login') }}</a>
                 </div>
             </section>
         </main>
@@ -210,7 +210,7 @@
     <script>
         window.RegisterPage = {
             defaultRedirect: @json(route('login')),
-            registerErrorMessage: 'Inscription impossible pour le moment. Reessayez dans un instant.'
+            registerErrorMessage: @json(__('auth-ui.register.error'))
         };
     </script>
     @include('layouts.partials.tauri-bridge')

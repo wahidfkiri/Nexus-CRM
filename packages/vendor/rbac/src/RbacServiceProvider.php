@@ -31,6 +31,7 @@ class RbacServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
         $this->loadViewsFrom(__DIR__ . '/Resources/views', 'rbac');
+        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'rbac');
 
         $this->publishes([
             __DIR__ . '/../config/rbac.php' => config_path('rbac.php'),

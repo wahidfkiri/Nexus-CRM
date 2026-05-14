@@ -1,11 +1,11 @@
 @extends('layouts.global')
 
-@section('title', 'Applications & Intégrations')
+@section('title', __('extensions::extensions.marketplace.index.title'))
 
 @section('breadcrumb')
-  <span>Espace de travail</span>
+  <span>{{ __('extensions::extensions.common.workspace') }}</span>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Applications</span>
+  <span style="color:var(--c-ink)">{{ __('extensions::extensions.common.applications') }}</span>
 @endsection
 
 @section('content')
@@ -23,24 +23,24 @@
     <div>
       <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);padding:5px 14px;border-radius:99px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:16px;">
         <i class="fas fa-store" style="color:#60a5fa;"></i>
-        NexusCRM Marketplace
+        {{ __('extensions::extensions.marketplace.index.hero_badge') }}
       </div>
       <div class="page-title-heading" style="margin-bottom:8px;">
-        @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-store', 'bg' => 'rgba(255,255,255,.12)', 'color' => '#60a5fa', 'alt' => 'Marketplace'])
-        <h1 style="font-size:2.2rem;font-weight:800;color:#fff;margin:0;line-height:1.2;">Applications & Integrations</h1>
+        @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-store', 'bg' => 'rgba(255,255,255,.12)', 'color' => '#60a5fa', 'alt' => __('extensions::extensions.common.marketplace')])
+        <h1 style="font-size:2.2rem;font-weight:800;color:#fff;margin:0;line-height:1.2;">{{ __('extensions::extensions.marketplace.index.hero_title') }}</h1>
       </div>
       <p style="color:rgba(255,255,255,.6);font-size:15px;max-width:480px;margin:0;">
-        Connectez vos outils préférés et étendez les fonctionnalités de votre CRM en un clic.
+        {{ __('extensions::extensions.marketplace.index.hero_description') }}
       </p>
     </div>
     <div style="display:flex;gap:12px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
       @if($marketplaceAdmin)
         <a href="{{ route('superadmin.extensions.index') }}" class="btn btn-secondary" style="border-color:rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.06);">
-          <i class="fas fa-sliders-h"></i> Parametres marketplace
+          <i class="fas fa-sliders-h"></i> {{ __('extensions::extensions.common.marketplace_settings') }}
         </a>
       @endif
       <a href="{{ route('marketplace.my-apps') }}" class="btn btn-secondary" style="border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8);background:rgba(255,255,255,.08);">
-        <i class="fas fa-th-list"></i> Mes apps
+        <i class="fas fa-th-list"></i> {{ __('extensions::extensions.common.my_apps') }}
         @if($myAppsCount > 0)
           <span style="background:var(--c-accent);color:#fff;padding:1px 7px;border-radius:99px;font-size:11px;margin-left:4px;">{{ $myAppsCount }}</span>
         @endif
@@ -52,10 +52,10 @@
   <div style="position:relative;z-index:1;display:flex;gap:24px;margin-top:28px;flex-wrap:wrap;">
     @php
       $heroStats = [
-        ['icon'=>'fa-puzzle-piece','value'=>'50+','label'=>'Applications'],
-        ['icon'=>'fa-gift','value'=>'Gratuit','label'=>'Pour commencer'],
-        ['icon'=>'fa-bolt','value'=>'1-clic','label'=>'Installation'],
-        ['icon'=>'fa-shield-alt','value'=>'Sécurisé','label'=>'Certifié'],
+        ['icon'=>'fa-puzzle-piece','value'=>'50+','label'=>__('extensions::extensions.marketplace.index.hero_stats.apps')],
+        ['icon'=>'fa-gift','value'=>__('extensions::extensions.common.free'),'label'=>__('extensions::extensions.marketplace.index.hero_stats.free')],
+        ['icon'=>'fa-bolt','value'=>'1-clic','label'=>__('extensions::extensions.marketplace.index.hero_stats.install')],
+        ['icon'=>'fa-shield-alt','value'=>'Sécurisé','label'=>__('extensions::extensions.marketplace.index.hero_stats.secure')],
       ];
     @endphp
     @foreach($heroStats as $s)
@@ -77,7 +77,7 @@
   {{-- Search --}}
   <div style="position:relative;flex:1;min-width:200px;">
     <i class="fas fa-search" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--c-ink-20);font-size:13px;"></i>
-    <input type="text" id="searchInput" placeholder="Rechercher une application…"
+    <input type="text" id="searchInput" placeholder="{{ __('extensions::extensions.common.search_app_placeholder') }}"
            style="width:100%;padding:10px 14px 10px 38px;border:1.5px solid var(--c-ink-10);border-radius:var(--r-md);font-size:14px;background:var(--surface-1);outline:none;transition:border-color .2s;"
            onfocus="this.style.borderColor='var(--c-accent)'" onblur="this.style.borderColor='var(--c-ink-10)'">
   </div>
@@ -98,21 +98,21 @@
 
   {{-- Pricing filter --}}
   <select id="pricingFilter" class="filter-select" onchange="applyFilters()">
-    <option value="">Tous les prix</option>
-    <option value="free">Gratuit</option>
-    <option value="paid">Payant</option>
+    <option value="">{{ __('extensions::extensions.marketplace.index.pricing_all') }}</option>
+    <option value="free">{{ __('extensions::extensions.marketplace.index.pricing_free') }}</option>
+    <option value="paid">{{ __('extensions::extensions.marketplace.index.pricing_paid') }}</option>
   </select>
 
   {{-- Sort --}}
   <select id="sortFilter" class="filter-select" onchange="applyFilters()">
-    <option value="sort_order">Recommandés</option>
-    <option value="installs_count">Populaires</option>
-    <option value="rating">Mieux notés</option>
-    <option value="created_at">Récents</option>
-    <option value="name">A-Z</option>
+    <option value="sort_order">{{ __('extensions::extensions.marketplace.index.sort_recommended') }}</option>
+    <option value="installs_count">{{ __('extensions::extensions.marketplace.index.sort_popular') }}</option>
+    <option value="rating">{{ __('extensions::extensions.marketplace.index.sort_best_rated') }}</option>
+    <option value="created_at">{{ __('extensions::extensions.marketplace.index.sort_recent') }}</option>
+    <option value="name">{{ __('extensions::extensions.marketplace.index.sort_az') }}</option>
   </select>
 
-  <button class="btn btn-ghost btn-sm" id="resetFilters" title="Réinitialiser">
+  <button class="btn btn-ghost btn-sm" id="resetFilters" title="{{ __('extensions::extensions.common.cancel') }}">
     <i class="fas fa-rotate-left"></i>
   </button>
 </div>
@@ -120,14 +120,14 @@
 {{-- Résultats counter --}}
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
   <div style="font-size:13.5px;color:var(--c-ink-60);">
-    <span id="appsCount" style="font-weight:var(--fw-semi);color:var(--c-ink);">—</span> application(s) trouvée(s)
+    <span id="appsCount" style="font-weight:var(--fw-semi);color:var(--c-ink);">{{ __('extensions::extensions.common.none_short') }}</span> {{ __('extensions::extensions.marketplace.index.found') }}
   </div>
   {{-- Vue switcher --}}
   <div style="display:flex;gap:4px;background:var(--surface-1);padding:4px;border-radius:var(--r-sm);">
-    <button id="gridViewBtn" onclick="setView('grid')" style="padding:5px 8px;border:none;border-radius:6px;background:var(--c-accent);color:#fff;cursor:pointer;transition:all .2s;" title="Grille">
+    <button id="gridViewBtn" onclick="setView('grid')" style="padding:5px 8px;border:none;border-radius:6px;background:var(--c-accent);color:#fff;cursor:pointer;transition:all .2s;" title="{{ __('extensions::extensions.marketplace.index.grid') }}">
       <i class="fas fa-th-large" style="font-size:12px;"></i>
     </button>
-    <button id="listViewBtn" onclick="setView('list')" style="padding:5px 8px;border:none;border-radius:6px;background:transparent;color:var(--c-ink-40);cursor:pointer;transition:all .2s;" title="Liste">
+    <button id="listViewBtn" onclick="setView('list')" style="padding:5px 8px;border:none;border-radius:6px;background:transparent;color:var(--c-ink-40);cursor:pointer;transition:all .2s;" title="{{ __('extensions::extensions.marketplace.index.list') }}">
       <i class="fas fa-list" style="font-size:12px;"></i>
     </button>
   </div>
@@ -291,6 +291,35 @@ window.MKT_ROUTES = {
 
 const CATEGORIES = @json($categories);
 
+@php
+  $marketplaceI18n = [
+      'error' => __('extensions::extensions.common.error'),
+      'loadError' => __('extensions::extensions.marketplace.index.load_error'),
+      'emptyTitle' => __('extensions::extensions.marketplace.index.empty_title'),
+      'emptyDescription' => __('extensions::extensions.marketplace.index.empty_description'),
+      'activatedBadge' => __('extensions::extensions.marketplace.index.activated_badge'),
+      'trialBadge' => __('extensions::extensions.marketplace.index.trial_badge'),
+      'newBadge' => __('extensions::extensions.marketplace.index.new_badge'),
+      'officialBadge' => __('extensions::extensions.marketplace.index.official_badge'),
+      'installButton' => __('extensions::extensions.marketplace.index.install_button'),
+      'tryButton' => __('extensions::extensions.marketplace.index.try_button'),
+      'freeLabel' => __('extensions::extensions.marketplace.index.free_label'),
+      'activateSuccess' => __('extensions::extensions.marketplace.index.activate_success'),
+      'deactivateSuccess' => __('extensions::extensions.marketplace.index.deactivate_success'),
+      'activateTrialTitle' => __('extensions::extensions.marketplace.index.delete_modal_activate_trial', ['name' => ':name']),
+      'activateFreeTitle' => __('extensions::extensions.marketplace.index.delete_modal_activate_free', ['name' => ':name']),
+      'activatePaidTitle' => __('extensions::extensions.marketplace.index.delete_modal_activate_paid', ['name' => ':name']),
+      'activateMessageTrial' => __('extensions::extensions.marketplace.index.activate_message_trial'),
+      'activateMessageDefault' => __('extensions::extensions.marketplace.index.activate_message_default'),
+      'activateConfirmTrial' => __('extensions::extensions.marketplace.index.activate_confirm_trial'),
+      'activateConfirmInstall' => __('extensions::extensions.marketplace.index.activate_confirm_install'),
+      'deactivateTitle' => __('extensions::extensions.marketplace.index.deactivate_title', ['name' => ':name']),
+      'deactivateMessage' => __('extensions::extensions.marketplace.index.deactivate_message'),
+      'deactivateConfirm' => __('extensions::extensions.marketplace.index.deactivate_confirm'),
+  ];
+@endphp
+const MKT_I18N = @json($marketplaceI18n);
+
 let state = { page: 1, category: 'all', search: '', pricing: '', sort: 'sort_order', view: 'grid', loading: false };
 let debounce;
 
@@ -357,7 +386,7 @@ async function loadApps() {
   const { ok, data } = await Http.get(window.MKT_ROUTES.data + '?' + params);
   state.loading = false;
 
-  if (!ok) { Toast.error('Erreur', 'Impossible de charger les applications.'); return; }
+  if (!ok) { Toast.error(MKT_I18N.error, MKT_I18N.loadError); return; }
 
   renderApps(data.data || []);
   renderPagination(data);
@@ -382,8 +411,8 @@ function renderApps(apps) {
   if (!apps.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
       <div style="width:64px;height:64px;background:var(--surface-2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;color:var(--c-ink-20);"><i class="fas fa-search"></i></div>
-      <h3 style="color:var(--c-ink);margin-bottom:8px;">Aucune application trouvée</h3>
-      <p style="color:var(--c-ink-40);">Essayez d'autres filtres ou recherches.</p>
+      <h3 style="color:var(--c-ink);margin-bottom:8px;">${MKT_I18N.emptyTitle}</h3>
+      <p style="color:var(--c-ink-40);">${MKT_I18N.emptyDescription}</p>
     </div>`;
     return;
   }
@@ -409,27 +438,27 @@ function renderCardGrid(a) {
     ? `<img src="${iconSrc}" style="width:32px;height:32px;object-fit:contain;" alt="${_esc(a.name)}">`
     : `<i class="${appIconClass}" style="color:white;font-size:24px;"></i>`;
   const priceHtml  = a.is_free
-    ? `<span style="background:#dcfce7;color:#15803d;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;">Gratuit</span>`
+    ? `<span style="background:#dcfce7;color:#15803d;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;">${MKT_I18N.freeLabel}</span>`
     : `<span style="background:var(--c-accent-lt);color:var(--c-accent);padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;">${_esc(a.pricing_label)}</span>`;
   const activeBadge= a.is_activated
-    ? `<div class="activated-ring"></div><span style="position:absolute;top:14px;left:14px;background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:99px;font-size:10px;font-weight:700;"><i class="fas fa-check" style="margin-right:3px;font-size:9px;"></i>Activée</span>`
+    ? `<div class="activated-ring"></div><span style="position:absolute;top:14px;left:14px;background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:99px;font-size:10px;font-weight:700;"><i class="fas fa-check" style="margin-right:3px;font-size:9px;"></i>${MKT_I18N.activatedBadge}</span>`
     : '';
   const trialBadge = a.has_trial && !a.is_activated
-    ? `<span class="app-badge-pill" style="background:#fef3c7;color:#92400e;">Essai gratuit</span>`
+    ? `<span class="app-badge-pill" style="background:#fef3c7;color:#92400e;">${MKT_I18N.trialBadge}</span>`
     : '';
   const newBadge   = a.is_new
-    ? `<span class="app-badge-pill" style="background:#dbeafe;color:#1d4ed8;">Nouveau</span>`
+    ? `<span class="app-badge-pill" style="background:#dbeafe;color:#1d4ed8;">${MKT_I18N.newBadge}</span>`
     : '';
   const offBadge   = a.is_official
-    ? `<span class="app-badge-pill" style="background:#f3e8ff;color:#7c3aed;"><i class="fas fa-certificate" style="font-size:9px;margin-right:2px;"></i>Officiel</span>`
+    ? `<span class="app-badge-pill" style="background:#f3e8ff;color:#7c3aed;"><i class="fas fa-certificate" style="font-size:9px;margin-right:2px;"></i>${MKT_I18N.officialBadge}</span>`
     : '';
 
   const actionBtn = a.is_activated
     ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();deactivateApp(${slugArg},${nameArg},${iconUrlArg},${iconClassArg},${colorArg})">
-         <i class="fas fa-plug-circle-xmark"></i> Désactiver
+         <i class="fas fa-plug-circle-xmark"></i> ${MKT_I18N.deactivateConfirm}
        </button>`
     : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();activateApp(${slugArg},${nameArg},${a.is_free},${a.has_trial},${iconUrlArg},${iconClassArg},${colorArg})">
-         <i class="fas fa-plug"></i> ${a.has_trial ? 'Essayer' : 'Installer'}
+         <i class="fas fa-plug"></i> ${a.has_trial ? MKT_I18N.tryButton : MKT_I18N.installButton}
        </button>`;
 
   return `
@@ -478,7 +507,7 @@ function renderCardList(a) {
     : `<i class="${appIconClass}" style="color:${color};font-size:20px;"></i>`;
   const actionBtn = a.is_activated
     ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();deactivateApp(${slugArg},${nameArg},${iconUrlArg},${iconClassArg},${colorArg})"><i class="fas fa-plug-circle-xmark"></i></button>`
-    : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();activateApp(${slugArg},${nameArg},${a.is_free},${a.has_trial},${iconUrlArg},${iconClassArg},${colorArg})"><i class="fas fa-plug"></i> Installer</button>`;
+    : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();activateApp(${slugArg},${nameArg},${a.is_free},${a.has_trial},${iconUrlArg},${iconClassArg},${colorArg})"><i class="fas fa-plug"></i> ${MKT_I18N.installButton}</button>`;
 
   return `
   <div class="app-list-item" onclick="openAppModal('${a.slug}')">
@@ -486,12 +515,12 @@ function renderCardList(a) {
     <div style="flex:1;min-width:0;">
       <div style="font-weight:var(--fw-semi);color:var(--c-ink);display:flex;align-items:center;gap:8px;">
         ${_esc(a.name)}
-        ${a.is_activated ? '<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">Activée</span>' : ''}
+        ${a.is_activated ? `<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;">${MKT_I18N.activatedBadge}</span>` : ''}
       </div>
       <div style="font-size:12.5px;color:var(--c-ink-40);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_esc(a.tagline || a.description || '')}</div>
     </div>
     <div style="flex-shrink:0;display:flex;align-items:center;gap:12px;">
-      <span style="font-size:12px;color:var(--c-ink-60);">${a.is_free ? 'Gratuit' : _esc(a.pricing_label)}</span>
+      <span style="font-size:12px;color:var(--c-ink-60);">${a.is_free ? MKT_I18N.freeLabel : _esc(a.pricing_label)}</span>
       ${actionBtn}
     </div>
   </div>`;
@@ -525,13 +554,13 @@ function buildAppConfirmIcon(name, iconUrl, iconClass) {
 
 async function activateApp(slug, name, isFree, hasTrial, iconUrl = '', iconClass = 'fas fa-puzzle-piece', color = '#2563eb') {
   const msg = hasTrial
-    ? `Démarrer un essai gratuit de « ${name} » ?`
-    : (isFree ? `Installer « ${name} » gratuitement ?` : `Activer « ${name} » ?`);
+    ? MKT_I18N.activateTrialTitle.replace(':name', name)
+    : (isFree ? MKT_I18N.activateFreeTitle.replace(':name', name) : MKT_I18N.activatePaidTitle.replace(':name', name));
 
   Modal.confirm({
     title: msg,
-    message: hasTrial ? `Vous bénéficierez d'une période d'essai gratuite.` : 'L\'application sera immédiatement disponible.',
-    confirmText: hasTrial ? 'Démarrer l\'essai' : 'Installer',
+    message: hasTrial ? MKT_I18N.activateMessageTrial : MKT_I18N.activateMessageDefault,
+    confirmText: hasTrial ? MKT_I18N.activateConfirmTrial : MKT_I18N.activateConfirmInstall,
     type: 'success',
     iconHtml: buildAppConfirmIcon(name, iconUrl, iconClass),
     iconVariant: 'app',
@@ -539,14 +568,14 @@ async function activateApp(slug, name, isFree, hasTrial, iconUrl = '', iconClass
     onConfirm: async () => {
       const { ok, data } = await Http.post(`/marketplace/${slug}/activate`, {});
       if (ok) {
-        Toast.success('Installée !', data.message);
+        Toast.success(MKT_I18N.activateSuccess, data.message);
         if (data.redirect) {
           setTimeout(() => { window.location.href = data.redirect; }, 450);
           return;
         }
         loadApps();
       } else {
-        Toast.error('Erreur', data.message);
+        Toast.error(MKT_I18N.error, data.message);
       }
     }
   });
@@ -554,17 +583,17 @@ async function activateApp(slug, name, isFree, hasTrial, iconUrl = '', iconClass
 
 async function deactivateApp(slug, name, iconUrl = '', iconClass = 'fas fa-puzzle-piece', color = '#2563eb') {
   Modal.confirm({
-    title: `Désactiver « ${name} » ?`,
-    message: 'Vos données seront conservées. Vous pourrez réactiver l\'application à tout moment.',
-    confirmText: 'Désactiver',
+    title: MKT_I18N.deactivateTitle.replace(':name', name),
+    message: MKT_I18N.deactivateMessage,
+    confirmText: MKT_I18N.deactivateConfirm,
     type: 'danger',
     iconHtml: buildAppConfirmIcon(name, iconUrl, iconClass),
     iconVariant: 'app',
     iconColor: color,
     onConfirm: async () => {
       const { ok, data } = await Http.post(`/marketplace/${slug}/deactivate`, {});
-      if (ok) { Toast.success('Désactivée', data.message); loadApps(); }
-      else Toast.error('Erreur', data.message);
+      if (ok) { Toast.success(MKT_I18N.deactivateSuccess, data.message); loadApps(); }
+      else Toast.error(MKT_I18N.error, data.message);
     }
   });
 }

@@ -21,7 +21,7 @@ class GoogleCalendarSelectCalendarRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'calendar_id.required' => 'A calendar must be selected.',
+            'calendar_id.required' => __('google-calendar::messages.validation.calendar'),
         ];
     }
 }

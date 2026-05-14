@@ -2,12 +2,12 @@
 
 namespace Vendor\Client\Imports;
 
-use Vendor\Client\Models\Client;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
+use Vendor\Client\Models\Client;
 
 class ClientsImport implements ToModel, WithHeadingRow, WithValidation
 {
@@ -46,6 +46,34 @@ class ClientsImport implements ToModel, WithHeadingRow, WithValidation
             ],
             'type' => 'in:entreprise,particulier,startup',
             'status' => 'in:actif,inactif,en_attente',
+        ];
+    }
+
+    public function customValidationMessages(): array
+    {
+        return [
+            'company_name.required' => __('client::clients.validation.company_name.required'),
+            'email.required' => __('client::clients.validation.email.required'),
+            'email.email' => __('client::clients.validation.email.email'),
+            'email.unique' => __('client::clients.validation.email.unique'),
+            'type.in' => __('client::clients.validation.type.in'),
+            'status.in' => __('client::clients.validation.status.in'),
+        ];
+    }
+
+    public function customValidationAttributes(): array
+    {
+        return [
+            'company_name' => __('client::clients.fields.company_name'),
+            'contact_name' => __('client::clients.fields.contact_name'),
+            'email' => __('client::clients.fields.email'),
+            'phone' => __('client::clients.fields.phone'),
+            'type' => __('client::clients.fields.type'),
+            'status' => __('client::clients.fields.status'),
+            'source' => __('client::clients.fields.source'),
+            'city' => __('client::clients.fields.city'),
+            'postal_code' => __('client::clients.fields.postal_code'),
+            'country' => __('client::clients.fields.country'),
         ];
     }
 }

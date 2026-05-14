@@ -4,10 +4,12 @@ namespace Vendor\User\Services;
 
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Vendor\Rbac\Services\TenantRoleService;
 use Vendor\User\Events\UserActivated;
@@ -124,13 +126,13 @@ class UserService
         });
     }
 
-    public function updateAvatar(User $user, \Illuminate\Http\UploadedFile $file): User
+    public function updateAvatar(User $user, UploadedFile $file): User
     {
         $disk = config('user.avatar.upload_disk', 'public');
         $path = config('user.avatar.upload_path', 'avatars');
 
         if ($user->avatar) {
-            \Illuminate\Support\Facades\Storage::disk($disk)->delete($user->avatar);
+            Storage::disk($disk)->delete($user->avatar);
         }
 
         $filename = $file->store($path, $disk);
@@ -158,11 +160,11 @@ class UserService
             $existingUser = User::query()->whereRaw('LOWER(email) = ?', [$email])->first();
 
             if ($existingUser && $existingUser->hasTenantAccess($tenantId)) {
-                throw new \RuntimeException('Cet email est déjà associé à un membre de votre équipe.');
+                throw new \RuntimeException(__('user::users.errors.member_email_exists'));
             }
 
             if ($this->repository->pendingInvitationForEmail($email, $tenantId)) {
-                throw new \RuntimeException('Une invitation active existe déjà pour cet email.');
+                throw new \RuntimeException(__('user::users.errors.pending_invitation_exists'));
             }
 
             $invitation = $this->repository->createInvitation([
@@ -197,12 +199,12 @@ class UserService
         $invitation->markExpiredIfNeeded();
 
         if (!$invitation->isUsable()) {
-            throw new \RuntimeException('Cette invitation ne peut plus être renvoyée.');
+            throw new \RuntimeException(__('user::users.errors.invitation_not_resendable'));
         }
 
         $cooldown = (int) config('user.invitation.resend_cooldown', 24);
         if ($invitation->last_resent_at && $invitation->last_resent_at->diffInHours(now()) < $cooldown) {
-            throw new \RuntimeException("Veuillez attendre {$cooldown}h avant de renvoyer l’invitation.");
+            throw new \RuntimeException(__('user::users.errors.invitation_resend_wait', ['hours' => $cooldown]));
         }
 
         $invitation->update([
@@ -221,7 +223,7 @@ class UserService
 
     public function revokeInvitation(UserInvitation $invitation): UserInvitation
     {
-        return $this->repository->revokeInvitation($invitation, 'Révoquée manuellement');
+        return $this->repository->revokeInvitation($invitation, __('user::users.statuses.revoked'));
     }
 
     public function acceptInvitation(UserInvitation $invitation, array $userData = []): User
@@ -231,7 +233,7 @@ class UserService
             $invitation->markExpiredIfNeeded();
 
             if (!$invitation->isUsable()) {
-                throw new \RuntimeException('Cette invitation n’est plus valide.');
+                throw new \RuntimeException(__('user::users.errors.invitation_not_valid'));
             }
 
             $tenantId = (int) $invitation->tenant_id;
@@ -243,15 +245,15 @@ class UserService
 
             if ($actingUser instanceof User) {
                 if (mb_strtolower((string) $actingUser->email) !== $email) {
-                    throw new \RuntimeException('Cette invitation est liée à un autre email.');
+                    throw new \RuntimeException(__('user::users.errors.invitation_linked_other_email'));
                 }
 
                 if ($existingUser && (int) $existingUser->id !== (int) $actingUser->id) {
-                    throw new \RuntimeException('Un autre compte utilise déjà cette invitation.');
+                    throw new \RuntimeException(__('user::users.errors.invitation_other_account'));
                 }
 
                 if ($actingUser->hasTenantAccess($tenantId)) {
-                    throw new \RuntimeException('Cet utilisateur est déjà membre de cette équipe.');
+                    throw new \RuntimeException(__('user::users.errors.already_member'));
                 }
 
                 $this->attachMembershipFromInvitation($actingUser, $invitation);
@@ -263,14 +265,14 @@ class UserService
             }
 
             if ($existingUser) {
-                throw new \RuntimeException('Un compte existe déjà avec cet email. Connectez-vous pour accepter cette invitation.');
+                throw new \RuntimeException(__('user::users.errors.existing_account_login'));
             }
 
             $name = trim((string) ($userData['name'] ?? ''));
             $password = (string) ($userData['password'] ?? '');
 
             if ($name === '' || $password === '') {
-                throw new \RuntimeException('Nom et mot de passe requis pour créer un nouveau compte.');
+                throw new \RuntimeException(__('user::users.errors.name_password_required'));
             }
 
             $user = User::create([
@@ -307,7 +309,7 @@ class UserService
         $resolvedRole = $this->tenantRoleService->resolveTenantRole($tenantId, $roleId ?: $roleName);
 
         if ($resolvedRole->name === 'owner' || !array_key_exists($resolvedRole->name, config('user.tenant_roles', []))) {
-            throw new \RuntimeException('Ce rôle ne peut pas être attribué.');
+            throw new \RuntimeException(__('user::users.errors.role_not_assignable'));
         }
 
         return [
@@ -321,7 +323,7 @@ class UserService
         $tenantId = (int) $invitation->tenant_id;
 
         if ($user->hasTenantAccess($tenantId)) {
-            throw new \RuntimeException('Cet utilisateur est déjà membre de cette équipe.');
+            throw new \RuntimeException(__('user::users.errors.already_member'));
         }
 
         $this->tenantRoleService->syncUserRole(

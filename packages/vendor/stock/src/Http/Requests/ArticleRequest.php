@@ -23,4 +23,14 @@ class ArticleRequest extends FormRequest
             'status' => 'required|in:active,inactive',
         ];
     }
+
+    public function messages(): array
+    {
+        return trans('stock::stock.validation');
+    }
+
+    public function attributes(): array
+    {
+        return trans('stock::stock.attributes');
+    }
 }

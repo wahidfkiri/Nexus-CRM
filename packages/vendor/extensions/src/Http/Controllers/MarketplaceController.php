@@ -118,8 +118,8 @@ class MarketplaceController extends Controller
             );
 
             $msg = $activation->is_trial
-                ? "Essai gratuit de {$extension->trial_days} jours démarré !"
-                : "« {$extension->name} » activée avec succès.";
+                ? __('extensions::extensions.messages.trial_started_named', ['days' => $extension->trial_days])
+                : __('extensions::extensions.messages.activated_named', ['name' => $extension->name]);
 
             return response()->json([
                 'success'   => true,
@@ -142,14 +142,14 @@ class MarketplaceController extends Controller
         $activation = $extension->getActivationFor($tenantId);
 
         if (!$activation) {
-            return response()->json(['success' => false, 'message' => 'Extension non activée.'], 422);
+            return response()->json(['success' => false, 'message' => __('extensions::extensions.common.not_activated')], 422);
         }
 
         try {
             $this->service->deactivate($activation, auth()->id(), $request->get('reason', ''));
             return response()->json([
                 'success' => true,
-                'message' => "« {$extension->name} » désactivée.",
+                'message' => __('extensions::extensions.messages.deactivated_named', ['name' => $extension->name]),
             ]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
@@ -166,7 +166,7 @@ class MarketplaceController extends Controller
 
         if (!$activation || !$activation->is_active) {
             return redirect()->route('marketplace.show', $extension->slug)
-                ->with('error', 'Activez d\'abord cette extension.');
+                ->with('error', __('extensions::extensions.common.activate_first'));
         }
 
         // Les extensions qui possèdent un module dédié redirigent vers leur écran natif.
@@ -246,12 +246,12 @@ class MarketplaceController extends Controller
         $activation = $extension->getActivationFor($tenantId);
 
         if (!$activation || !$activation->is_active) {
-            return response()->json(['success' => false, 'message' => 'Extension non activée.'], 422);
+            return response()->json(['success' => false, 'message' => __('extensions::extensions.common.not_activated')], 422);
         }
 
         try {
             $this->service->saveSettings($activation, $request->except(['_token', '_method']));
-            return response()->json(['success' => true, 'message' => 'Paramètres sauvegardés.']);
+            return response()->json(['success' => true, 'message' => __('extensions::extensions.messages.settings_saved')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }

@@ -44,7 +44,7 @@ class GoogleCalendarService
         $scopes = (array) config('google-calendar.oauth.scopes', []);
 
         if ($clientId === '') {
-            throw new RuntimeException('GOOGLE_CALENDAR_CLIENT_ID is missing.');
+            throw new RuntimeException(__('google-calendar::messages.errors.client_id_missing'));
         }
 
         $state = encrypt([
@@ -73,7 +73,7 @@ class GoogleCalendarService
         $state = decrypt($encryptedState);
 
         if (!is_array($state) || !isset($state['tenant_id'], $state['user_id'])) {
-            throw new RuntimeException('Invalid OAuth state.');
+            throw new RuntimeException(__('google-calendar::messages.errors.invalid_oauth_state'));
         }
 
         return $state;
@@ -86,7 +86,7 @@ class GoogleCalendarService
         $existingToken = GoogleCalendarToken::where('tenant_id', $tenantId)->first();
 
         if ($clientId === '' || $clientSecret === '') {
-            throw new RuntimeException('Google Calendar OAuth credentials are missing.');
+            throw new RuntimeException(__('google-calendar::messages.errors.oauth_credentials_missing'));
         }
 
         try {
@@ -102,7 +102,7 @@ class GoogleCalendarService
 
             $tokenData = json_decode((string) $response->getBody(), true) ?: [];
         } catch (GuzzleException $e) {
-            throw new RuntimeException('Unable to exchange authorization code: ' . $e->getMessage());
+            throw new RuntimeException(__('google-calendar::messages.errors.oauth_code_exchange', ['message' => $e->getMessage()]));
         }
 
         if (!empty($tokenData['error'])) {
@@ -188,7 +188,7 @@ class GoogleCalendarService
         $token = $this->getToken($tenantId);
 
         if (!$token) {
-            throw new RuntimeException('Google Calendar is not connected for this tenant.');
+            throw new RuntimeException(__('google-calendar::messages.errors.not_connected'));
         }
 
         if ($token->is_expired) {
@@ -261,7 +261,7 @@ class GoogleCalendarService
             ->first();
 
         if (!$calendar) {
-            throw new RuntimeException('Selected calendar does not exist for this tenant.');
+            throw new RuntimeException(__('google-calendar::messages.errors.calendar_missing'));
         }
 
         GoogleCalendarCalendar::forTenant($tenantId)->update(['is_selected' => false]);
@@ -289,7 +289,7 @@ class GoogleCalendarService
 
         $calendarIds = $this->resolveSyncCalendarIds($tenantId, $calendarId, $includeHolidays);
         if (empty($calendarIds)) {
-            throw new RuntimeException('No calendar selected.');
+            throw new RuntimeException(__('google-calendar::messages.errors.no_calendar_selected'));
         }
 
         $from = $from ?: now()->subDays((int) config('google-calendar.api.sync_days_past', 30));
@@ -342,7 +342,7 @@ class GoogleCalendarService
         $calendarId = $this->resolveCalendarIdWithBootstrap($tenantId, (string) ($data['calendar_id'] ?? ''));
 
         if (!$calendarId) {
-            throw new RuntimeException('Aucun agenda Google disponible. Ouvrez Google Calendar dans le CRM et synchronisez vos agendas.');
+            throw new RuntimeException(__('google-calendar::messages.errors.no_google_calendar_available'));
         }
 
         $payload = $this->buildEventPayload($tenantId, $data);
@@ -375,7 +375,7 @@ class GoogleCalendarService
         $calendarId = $this->resolveCalendarIdWithBootstrap($tenantId, $calendarId);
 
         if (!$calendarId) {
-            throw new RuntimeException('Aucun agenda Google disponible. Ouvrez Google Calendar dans le CRM et synchronisez vos agendas.');
+            throw new RuntimeException(__('google-calendar::messages.errors.no_google_calendar_available'));
         }
 
         $payload = $this->buildEventPayload($tenantId, $data);
@@ -408,7 +408,7 @@ class GoogleCalendarService
         $calendarId = $this->resolveCalendarId($tenantId, $calendarId);
 
         if (!$calendarId) {
-            throw new RuntimeException('No calendar selected.');
+            throw new RuntimeException(__('google-calendar::messages.errors.no_calendar_selected'));
         }
 
         $this->apiRequest(
@@ -575,7 +575,7 @@ class GoogleCalendarService
     {
         if (!$token->refresh_token) {
             $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
-            throw new RuntimeException('Refresh token is missing. Please reconnect Google Calendar.');
+            throw new RuntimeException(__('google-calendar::messages.errors.refresh_token_missing'));
         }
 
         try {
@@ -600,11 +600,11 @@ class GoogleCalendarService
 
             if ($oauthError === 'invalid_grant') {
                 $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
-                throw new RuntimeException('Session Google Calendar expiree ou revoquee. Reconnectez votre compte Google.');
+                throw new RuntimeException(__('google-calendar::messages.errors.session_expired'));
             }
 
             $details = $oauthDescription !== '' ? $oauthDescription : $e->getMessage();
-            throw new RuntimeException('Unable to refresh access token: ' . $details);
+            throw new RuntimeException(__('google-calendar::messages.errors.refresh_access_token', ['details' => $details]));
         }
 
         if (isset($data['error'])) {
@@ -613,7 +613,7 @@ class GoogleCalendarService
 
             if ($oauthError === 'invalid_grant') {
                 $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
-                throw new RuntimeException('Session Google Calendar expiree ou revoquee. Reconnectez votre compte Google.');
+                throw new RuntimeException(__('google-calendar::messages.errors.session_expired'));
             }
 
             throw new RuntimeException($oauthDescription);
@@ -675,7 +675,7 @@ class GoogleCalendarService
                 }
             }
 
-            throw new RuntimeException('Google Calendar API error: ' . $message);
+            throw new RuntimeException(__('google-calendar::messages.errors.api', ['message' => $message]));
         }
     }
 
@@ -688,7 +688,7 @@ class GoogleCalendarService
         $endAt = Carbon::parse((string) $data['end_at'], $timezone);
 
         if ($endAt->lessThanOrEqualTo($startAt)) {
-            throw new RuntimeException('Event end date must be after start date.');
+            throw new RuntimeException(__('google-calendar::messages.validation.end_after_start'));
         }
 
         $attendees = [];
@@ -760,7 +760,7 @@ class GoogleCalendarService
                     ->first();
 
                 if (!$client) {
-                    throw new RuntimeException('Client introuvable pour ce tenant.');
+                    throw new RuntimeException(__('google-calendar::messages.errors.client_not_found'));
                 }
 
                 $clientName = (string) $client->company_name;
@@ -800,7 +800,7 @@ class GoogleCalendarService
     {
         $eventId = (string) ($raw['id'] ?? '');
         if ($eventId === '') {
-            throw new RuntimeException('Google event id is missing.');
+            throw new RuntimeException(__('google-calendar::messages.errors.google_event_id_missing'));
         }
 
         $allDay = isset($raw['start']['date']) && !isset($raw['start']['dateTime']);
@@ -816,7 +816,7 @@ class GoogleCalendarService
 
         $updateData = [
             'ical_uid' => $raw['iCalUID'] ?? null,
-            'summary' => $raw['summary'] ?? '(No title)',
+            'summary' => $raw['summary'] ?? __('google-calendar::messages.common.no_title'),
             'description' => $raw['description'] ?? null,
             'location' => $raw['location'] ?? null,
             'status' => $raw['status'] ?? null,

@@ -1,4 +1,4 @@
-@extends('invoice::layouts.invoice')
+﻿@extends('invoice::layouts.invoice')
 
 @section('title', 'Facture ' . $invoice->number)
 
@@ -109,7 +109,7 @@
     <div class="stat-icon" style="background:var(--c-warning-lt);color:var(--c-warning)"><i class="fas fa-calendar-days"></i></div>
     <div class="stat-body">
       <div class="stat-value" style="font-size:16px;{{ $invoice->is_overdue ? 'color:var(--c-danger)' : '' }}">
-        {{ $invoice->due_date?->format('d/m/Y') ?? '—' }}
+        {{ $invoice->due_date?->format('d/m/Y') ? '—' }}
       </div>
       <div class="stat-label">Échéance</div>
       @if($invoice->is_overdue)
@@ -142,7 +142,7 @@
         <div style="padding:20px;">
           <div style="font-size:11px;font-weight:var(--fw-bold);text-transform:uppercase;letter-spacing:.07em;color:var(--c-ink-40);margin-bottom:10px;">Facturé à</div>
           <div style="display:flex;gap:10px;align-items:flex-start;">
-            @php $initials = strtoupper(substr($invoice->client->company_name ?? 'C', 0, 2)); @endphp
+            @php $initials = strtoupper(substr($invoice->client->company_name ? 'C', 0, 2)); @endphp
             <div class="client-avatar-sm" style="width:38px;height:38px;font-size:14px;">{{ $initials }}</div>
             <div>
               <div style="font-weight:var(--fw-semi);font-size:14px;margin-bottom:3px;">{{ $invoice->client->company_name }}</div>
@@ -164,7 +164,7 @@
         <div style="padding:14px 20px;border-right:1px solid var(--c-ink-05);">
           <div style="font-size:11px;color:var(--c-ink-40);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Échéance</div>
           <div style="font-weight:var(--fw-semi);{{ $invoice->is_overdue ? 'color:var(--c-danger)' : '' }}">
-            {{ $invoice->due_date?->format('d/m/Y') ?? '—' }}
+            {{ $invoice->due_date?->format('d/m/Y') ? '—' }}
           </div>
         </div>
         <div style="padding:14px 20px;border-right:1px solid var(--c-ink-05);">
@@ -173,7 +173,7 @@
         </div>
         <div style="padding:14px 20px;">
           <div style="font-size:11px;color:var(--c-ink-40);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Mode</div>
-          <div style="font-weight:var(--fw-semi);">{{ config("invoice.payment_methods.{$invoice->payment_method}", $invoice->payment_method ?? '—') }}</div>
+          <div style="font-weight:var(--fw-semi);">{{ config("invoice.payment_methods.{$invoice->payment_method}", $invoice->payment_method ?? '-') }}</div>
         </div>
       </div>
     </div>
@@ -379,11 +379,11 @@
       <div class="info-card-body">
         <div class="info-row">
           <span class="info-row-label">Référence</span>
-          <span class="info-row-value">{{ $invoice->reference ?? '—' }}</span>
+          <span class="info-row-value">{{ $invoice->reference ? '—' }}</span>
         </div>
         <div class="info-row">
           <span class="info-row-label">Créée par</span>
-          <span class="info-row-value">{{ $invoice->user->name ?? '—' }}</span>
+          <span class="info-row-value">{{ $invoice->user->name ? '—' }}</span>
         </div>
         <div class="info-row">
           <span class="info-row-label">Rappels</span>
@@ -527,29 +527,44 @@
 
 @push('scripts')
 <script>
+const invoiceShowLang = {
+  successTitle: @json(__('invoice::invoices.js.success_title')),
+  errorTitle: @json(__('invoice::invoices.js.error_title')),
+  validationTitle: @json(__('invoice::invoices.js.validation_title')),
+  invoiceSentTitle: @json(__('invoice::invoices.js.invoice_sent_title')),
+  invoiceDuplicatedTitle: @json(__('invoice::invoices.js.invoice_duplicated_title')),
+  invoiceDeletedTitle: @json(__('invoice::invoices.js.invoice_deleted_title')),
+  paymentDeletedTitle: @json(__('invoice::invoices.js.payment_deleted_title')),
+  paymentSavedTitle: @json(__('invoice::invoices.js.payment_saved_title')),
+  sendConfirm: @json(__('invoice::invoices.messages.invoice_mark_sent_confirm')),
+  irreversibleAction: @json(__('invoice::invoices.alerts.irreversible')),
+  paymentRecalculation: @json(__('invoice::invoices.alerts.payment_recalculated')),
+  deleteLabel: @json(__('invoice::invoices.actions.delete')),
+};
+
 async function sendInvoice(id) {
-  if (!confirm('Marquer cette facture comme envoyée ?')) return;
+  if (!confirm(invoiceShowLang.sendConfirm)) return;
   const { ok, data } = await Http.post(`/invoices/${id}/send`, {});
-  if (ok) { Toast.success('Envoyée', data.message); setTimeout(() => location.reload(), 1000); }
-  else Toast.error('Erreur', data.message);
+  if (ok) { Toast.success(invoiceShowLang.invoiceSentTitle, data.message); setTimeout(() => location.reload(), 1000); }
+  else Toast.error(invoiceShowLang.errorTitle, data.message);
 }
 
 async function duplicateInvoice(id) {
   const { ok, data } = await Http.post(`/invoices/${id}/duplicate`, {});
-  if (ok) { Toast.success('Dupliquée', data.message); setTimeout(() => window.location.href = data.redirect, 1000); }
-  else Toast.error('Erreur', data.message);
+  if (ok) { Toast.success(invoiceShowLang.invoiceDuplicatedTitle, data.message); setTimeout(() => window.location.href = data.redirect, 1000); }
+  else Toast.error(invoiceShowLang.errorTitle, data.message);
 }
 
 async function deleteInvoice(id) {
   Modal.confirm({
     title: 'Supprimer cette facture ?',
-    message: 'Cette action est irréversible.',
-    confirmText: 'Supprimer',
+    message: invoiceShowLang.irreversibleAction,
+    confirmText: invoiceShowLang.deleteLabel,
     type: 'danger',
     onConfirm: async () => {
       const { ok, data } = await Http.delete(`/invoices/${id}`);
-      if (ok) { Toast.success('Supprimée', data.message); setTimeout(() => window.location.href = '{{ route("invoices.index") }}', 1000); }
-      else Toast.error('Erreur', data.message);
+      if (ok) { Toast.success(invoiceShowLang.invoiceDeletedTitle, data.message); setTimeout(() => window.location.href = '{{ route("invoices.index") }}', 1000); }
+      else Toast.error(invoiceShowLang.errorTitle, data.message);
     }
   });
 }
@@ -557,13 +572,13 @@ async function deleteInvoice(id) {
 async function deletePayment(id) {
   Modal.confirm({
     title: 'Supprimer ce paiement ?',
-    message: 'Cette action recalculera le montant dû.',
-    confirmText: 'Supprimer',
+    message: invoiceShowLang.paymentRecalculation,
+    confirmText: invoiceShowLang.deleteLabel,
     type: 'danger',
     onConfirm: async () => {
       const { ok, data } = await Http.delete(`/invoices/payments/${id}`);
-      if (ok) { Toast.success('Supprimé', data.message); setTimeout(() => location.reload(), 1000); }
-      else Toast.error('Erreur', data.message);
+      if (ok) { Toast.success(invoiceShowLang.paymentDeletedTitle, data.message); setTimeout(() => location.reload(), 1000); }
+      else Toast.error(invoiceShowLang.errorTitle, data.message);
     }
   });
 }
@@ -576,15 +591,16 @@ async function submitPayment() {
   const { ok, data, status } = await Http.post(form.action, new FormData(form));
   CrmForm.setLoading(btn, false);
   if (ok) {
-    Toast.success('Paiement enregistré !', data.message);
+    Toast.success(invoiceShowLang.paymentSavedTitle, data.message);
     Modal.close(document.getElementById('paymentModal'));
     setTimeout(() => location.reload(), 1000);
   } else if (status === 422) {
     CrmForm.showErrors(form, data.errors || {});
-    Toast.error('Validation', data.message);
+    Toast.error(invoiceShowLang.validationTitle, data.message);
   } else {
-    Toast.error('Erreur', data.message);
+    Toast.error(invoiceShowLang.errorTitle, data.message);
   }
 }
 </script>
 @endpush
+

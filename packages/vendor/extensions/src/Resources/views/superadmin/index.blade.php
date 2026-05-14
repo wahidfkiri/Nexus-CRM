@@ -1,11 +1,11 @@
 @extends('layouts.global')
 
-@section('title', 'Gestion des Extensions')
+@section('title', __('extensions::extensions.superadmin.index.title'))
 
 @section('breadcrumb')
-  <span>Super Admin</span>
+  <span>{{ __('extensions::extensions.common.super_admin') }}</span>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Extensions & Marketplace</span>
+  <span style="color:var(--c-ink)">{{ __('extensions::extensions.superadmin.index.heading') }}</span>
 @endsection
 
 @section('content')
@@ -13,20 +13,20 @@
 <div class="page-header">
   <div class="page-header-left">
     <div class="page-title-heading">
-      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-puzzle-piece', 'bg' => '#ede9fe', 'color' => '#7c3aed', 'alt' => 'Extensions'])
-      <h1 style="margin:0;">Extensions & Marketplace</h1>
+      @include('layouts.partials.page-title-icon', ['icon' => 'fas fa-puzzle-piece', 'bg' => '#ede9fe', 'color' => '#7c3aed', 'alt' => __('extensions::extensions.common.extensions')])
+      <h1 style="margin:0;">{{ __('extensions::extensions.superadmin.index.heading') }}</h1>
     </div>
-    <p>Gérez le catalogue d'applications disponibles pour vos tenants</p>
+    <p>{{ __('extensions::extensions.superadmin.index.description') }}</p>
   </div>
   <div class="page-header-actions">
     <a href="{{ route('superadmin.extensions.activations.index') }}" class="btn btn-secondary">
-      <i class="fas fa-plug"></i> Activations tenants
+      <i class="fas fa-plug"></i> {{ __('extensions::extensions.common.tenant_activations') }}
     </a>
     <a href="{{ route('superadmin.extensions.export.excel') }}" class="btn btn-secondary">
-      <i class="fas fa-file-excel"></i> Exporter
+      <i class="fas fa-file-excel"></i> {{ __('extensions::extensions.actions.export') }}
     </a>
     <a href="{{ route('superadmin.extensions.create') }}" class="btn btn-primary">
-      <i class="fas fa-plus"></i> Nouvelle extension
+      <i class="fas fa-plus"></i> {{ __('extensions::extensions.actions.new_extension') }}
     </a>
   </div>
 </div>
@@ -37,42 +37,42 @@
     <div class="stat-icon" style="background:#f3e8ff;color:#7c3aed;"><i class="fas fa-puzzle-piece"></i></div>
     <div class="stat-body">
       <div class="stat-value" id="kpiTotal">—</div>
-      <div class="stat-label">Total</div>
+      <div class="stat-label">{{ __('extensions::extensions.superadmin.index.kpi_total') }}</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background:var(--c-success-lt);color:var(--c-success);"><i class="fas fa-circle-check"></i></div>
     <div class="stat-body">
       <div class="stat-value" id="kpiActive">—</div>
-      <div class="stat-label">Actives</div>
+      <div class="stat-label">{{ __('extensions::extensions.superadmin.index.kpi_active') }}</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background:var(--c-warning-lt);color:var(--c-warning);"><i class="fas fa-star"></i></div>
     <div class="stat-body">
       <div class="stat-value" id="kpiFeatured">—</div>
-      <div class="stat-label">Vedette</div>
+      <div class="stat-label">{{ __('extensions::extensions.superadmin.index.kpi_featured') }}</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background:var(--c-accent-lt);color:var(--c-accent);"><i class="fas fa-gift"></i></div>
     <div class="stat-body">
       <div class="stat-value" id="kpiFree">—</div>
-      <div class="stat-label">Gratuites</div>
+      <div class="stat-label">{{ __('extensions::extensions.superadmin.index.kpi_free') }}</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background:#dcfce7;color:#15803d;"><i class="fas fa-download"></i></div>
     <div class="stat-body">
       <div class="stat-value" id="kpiInstalls">—</div>
-      <div class="stat-label">Activations</div>
+      <div class="stat-label">{{ __('extensions::extensions.superadmin.index.kpi_installs') }}</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon" style="background:#dcfce7;color:#15803d;"><i class="fas fa-euro-sign"></i></div>
     <div class="stat-body">
       <div class="stat-value" id="kpiRevenue">—</div>
-      <div class="stat-label">Revenus</div>
+      <div class="stat-label">{{ __('extensions::extensions.superadmin.index.kpi_revenue') }}</div>
     </div>
   </div>
 </div>
@@ -80,31 +80,31 @@
 {{-- Table --}}
 <div class="table-wrapper">
   <div class="table-header">
-    <span class="table-title">Catalogue d'extensions</span>
+    <span class="table-title">{{ __('extensions::extensions.superadmin.index.table_title') }}</span>
     <span class="table-count" id="extCount">—</span>
     <div class="table-spacer"></div>
 
     <div class="table-search">
       <i class="fas fa-search"></i>
-      <input type="text" id="searchInput" placeholder="Nom, description…" autocomplete="off">
+      <input type="text" id="searchInput" placeholder="{{ __('extensions::extensions.superadmin.index.search_placeholder') }}" autocomplete="off">
     </div>
 
     <select class="filter-select" data-filter="category">
-      <option value="">Toutes catégories</option>
+      <option value="">{{ __('extensions::extensions.superadmin.index.all_categories') }}</option>
       @foreach($categories as $key => $cat)
         <option value="{{ $key }}">{{ $cat['label'] }}</option>
       @endforeach
     </select>
 
     <select class="filter-select" data-filter="status">
-      <option value="">Tous statuts</option>
+      <option value="">{{ __('extensions::extensions.superadmin.index.all_statuses') }}</option>
       @foreach($statuses as $key => $label)
         <option value="{{ $key }}">{{ $label }}</option>
       @endforeach
     </select>
 
     <select class="filter-select" data-filter="pricing_type">
-      <option value="">Tous prix</option>
+      <option value="">{{ __('extensions::extensions.superadmin.index.all_prices') }}</option>
       @foreach($pricingTypes as $key => $label)
         <option value="{{ $key }}">{{ $label }}</option>
       @endforeach
@@ -119,13 +119,13 @@
     <thead>
       <tr>
         <th style="width:48px"></th>
-        <th data-sort="name" class="sortable">Extension <i class="fas fa-sort" style="font-size:10px;opacity:.4"></i></th>
-        <th>Catégorie</th>
-        <th>Tarification</th>
-        <th style="text-align:center" data-sort="installs_count" class="sortable">Installs</th>
-        <th style="text-align:center">Vedette</th>
-        <th>Statut</th>
-        <th style="text-align:right;padding-right:20px">Actions</th>
+        <th data-sort="name" class="sortable">{{ __('extensions::extensions.superadmin.index.column_extension') }} <i class="fas fa-sort" style="font-size:10px;opacity:.4"></i></th>
+        <th>{{ __('extensions::extensions.superadmin.index.category_label') }}</th>
+        <th>{{ __('extensions::extensions.superadmin.index.column_pricing') }}</th>
+        <th style="text-align:center" data-sort="installs_count" class="sortable">{{ __('extensions::extensions.superadmin.index.column_installs') }}</th>
+        <th style="text-align:center">{{ __('extensions::extensions.superadmin.index.column_featured') }}</th>
+        <th>{{ __('extensions::extensions.superadmin.index.column_status') }}</th>
+        <th style="text-align:right;padding-right:20px">{{ __('extensions::extensions.superadmin.index.column_actions') }}</th>
       </tr>
     </thead>
     <tbody id="extTableBody"></tbody>
@@ -142,16 +142,38 @@
 
 @push('scripts')
 <script>
+@php
+  $superadminIndexI18n = [
+      'statusActive' => __('extensions::extensions.status.active'),
+      'statusInactive' => __('extensions::extensions.status.inactive'),
+      'statusDeprecated' => __('extensions::extensions.status.deprecated'),
+      'statusBeta' => __('extensions::extensions.status.beta'),
+      'statusComingSoon' => __('extensions::extensions.status.coming_soon'),
+      'error' => __('extensions::extensions.common.error'),
+      'loadingError' => __('extensions::extensions.common.loading_error'),
+      'activeInstalls' => __('extensions::extensions.superadmin.index.active_installs', ['count' => ':count']),
+      'featureOn' => __('extensions::extensions.actions.feature_on'),
+      'featureOff' => __('extensions::extensions.actions.feature_off'),
+      'fromToTotal' => __('extensions::extensions.superadmin.index.from_to_total', ['from' => ':from', 'to' => ':to', 'total' => ':total']),
+      'updated' => __('extensions::extensions.superadmin.index.updated'),
+      'statusUpdated' => __('extensions::extensions.superadmin.index.status_updated'),
+      'deleteTitle' => __('extensions::extensions.superadmin.index.delete_title', ['name' => ':name']),
+      'deleteMessage' => __('extensions::extensions.superadmin.index.delete_message'),
+      'deleteConfirm' => __('extensions::extensions.common.delete'),
+      'deleted' => __('extensions::extensions.superadmin.index.deleted'),
+  ];
+@endphp
 window.EXT_ROUTES = {
   data:  '{{ route("superadmin.extensions.data") }}',
   stats: '{{ route("superadmin.extensions.stats") }}',
 };
+const EXT_I18N = @json($superadminIndexI18n);
 const STATUS_STYLES = {
-  active:      { cls:'actif',    label:'Active' },
-  inactive:    { cls:'inactif',  label:'Inactive' },
-  deprecated:  { cls:'inactif',  label:'Dépréciée' },
-  beta:        { cls:'info',     label:'Bêta' },
-  coming_soon: { cls:'warning',  label:'Bientôt' },
+  active:      { cls:'actif',    label:EXT_I18N.statusActive },
+  inactive:    { cls:'inactif',  label:EXT_I18N.statusInactive },
+  deprecated:  { cls:'inactif',  label:EXT_I18N.statusDeprecated },
+  beta:        { cls:'info',     label:EXT_I18N.statusBeta },
+  coming_soon: { cls:'warning',  label:EXT_I18N.statusComingSoon },
 };
 
 class ExtTable {
@@ -202,7 +224,7 @@ class ExtTable {
     const params = { page:this.state.page, per_page:20, search:this.state.search, sort:this.state.sort, dir:this.state.dir, ...this.state.filters };
     const { ok, data } = await Http.get(window.EXT_ROUTES.data, params);
     this.state.loading = false;
-    if (!ok) { Toast.error('Erreur', 'Chargement impossible.'); return; }
+    if (!ok) { Toast.error(EXT_I18N.error, EXT_I18N.loadingError); return; }
     this._render(data.data || []);
     this._renderPagination(data);
     const cnt = document.getElementById('extCount');
@@ -228,9 +250,9 @@ class ExtTable {
     if (!rows.length) {
       tbody.innerHTML = `<tr><td colspan="8"><div class="table-empty">
         <div class="table-empty-icon"><i class="fas fa-puzzle-piece"></i></div>
-        <h3>Aucune extension</h3>
-        <p>Créez votre première extension pour le marketplace.</p>
-        <a href="{{ route('superadmin.extensions.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Créer une extension</a>
+        <h3>{{ __('extensions::extensions.superadmin.index.empty_title') }}</h3>
+        <p>{{ __('extensions::extensions.superadmin.index.empty_description') }}</p>
+        <a href="{{ route('superadmin.extensions.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> {{ __('extensions::extensions.actions.create_extension') }}</a>
       </div></td></tr>`;
       return;
     }
@@ -246,7 +268,7 @@ class ExtTable {
       : `<i class="${iconClass}" style="color:${color};font-size:18px;"></i>`;
     const st        = STATUS_STYLES[e.status] || { cls:'secondary', label: e.status };
     const priceHtml = e.is_free
-      ? `<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;">Gratuit</span>`
+      ? `<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;">{{ __('extensions::extensions.common.free') }}</span>`
       : `<span style="background:var(--c-accent-lt);color:var(--c-accent);padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;">${this._esc(e.pricing_label)}</span>`;
 
     return `
@@ -257,8 +279,8 @@ class ExtTable {
       <td>
         <div style="font-weight:var(--fw-semi);color:var(--c-ink);display:flex;align-items:center;gap:7px;">
           ${this._esc(e.name)}
-          ${e.is_official ? `<span style="background:#f3e8ff;color:#7c3aed;padding:2px 6px;border-radius:99px;font-size:9px;font-weight:700;"><i class="fas fa-certificate" style="font-size:8px;"></i> Officiel</span>` : ''}
-          ${e.is_new ? `<span style="background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:99px;font-size:9px;font-weight:700;">New</span>` : ''}
+          ${e.is_official ? `<span style="background:#f3e8ff;color:#7c3aed;padding:2px 6px;border-radius:99px;font-size:9px;font-weight:700;"><i class="fas fa-certificate" style="font-size:8px;"></i> {{ __('extensions::extensions.superadmin.index.official_badge') }}</span>` : ''}
+          ${e.is_new ? `<span style="background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:99px;font-size:9px;font-weight:700;">{{ __('extensions::extensions.superadmin.index.new_badge') }}</span>` : ''}
         </div>
         <div style="font-size:11.5px;color:var(--c-ink-40);">v${this._esc(e.version || '1.0.0')} · ${this._esc(e.slug)}</div>
       </td>
@@ -270,10 +292,10 @@ class ExtTable {
       <td>${priceHtml}</td>
       <td style="text-align:center;">
         <span style="font-weight:var(--fw-semi);color:var(--c-ink);font-size:14px;">${e.installs || 0}</span>
-        <div style="font-size:11px;color:var(--c-ink-40);">${e.active_installs || 0} actifs</div>
+        <div style="font-size:11px;color:var(--c-ink-40);">${(e.active_installs || 0) + ' ' + EXT_I18N.activeInstalls.replace(':count', e.active_installs || 0).replace(/^\d+\s/, '')}</div>
       </td>
       <td style="text-align:center;">
-        <button onclick="ExtTable.toggleFeatured(${e.id})" title="${e.is_featured ? 'Retirer vedette' : 'Mettre en vedette'}"
+        <button onclick="ExtTable.toggleFeatured(${e.id})" title="${e.is_featured ? EXT_I18N.featureOff : EXT_I18N.featureOn}"
                 style="background:none;border:none;cursor:pointer;font-size:18px;color:${e.is_featured ? '#f59e0b' : 'var(--c-ink-10)'};transition:color .2s;"
                 id="featBtn-${e.id}">
           <i class="fas fa-star"></i>
@@ -284,12 +306,12 @@ class ExtTable {
       </td>
       <td>
         <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
-          <a href="/superadmin/extensions/${e.id}" class="btn-icon" title="Voir"><i class="fas fa-eye"></i></a>
-          <a href="/superadmin/extensions/${e.id}/edit" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>
-          <button class="btn-icon" onclick="ExtTable.toggleStatus(${e.id},'${e.status}')" title="Changer statut">
+          <a href="/superadmin/extensions/${e.id}" class="btn-icon" title="{{ __('extensions::extensions.actions.show') }}"><i class="fas fa-eye"></i></a>
+          <a href="/superadmin/extensions/${e.id}/edit" class="btn-icon" title="{{ __('extensions::extensions.common.edit') }}"><i class="fas fa-pen"></i></a>
+          <button class="btn-icon" onclick="ExtTable.toggleStatus(${e.id},'${e.status}')" title="{{ __('extensions::extensions.actions.toggle_status') }}">
             <i class="fas fa-${e.status === 'active' ? 'pause' : 'play'}"></i>
           </button>
-          <button class="btn-icon danger" onclick="ExtTable.deleteExt(${e.id},'${this._esc(e.name)}')" title="Supprimer">
+          <button class="btn-icon danger" onclick="ExtTable.deleteExt(${e.id},'${this._esc(e.name)}')" title="{{ __('extensions::extensions.common.delete') }}">
             <i class="fas fa-trash"></i>
           </button>
         </div>
@@ -302,7 +324,7 @@ class ExtTable {
     const info = document.getElementById('paginationInfo');
     if (!wrap) return;
     const { current_page, last_page, from, to, total } = data;
-    if (info) info.textContent = `${from||0}–${to||0} sur ${total||0}`;
+    if (info) info.textContent = EXT_I18N.fromToTotal.replace(':from', from || 0).replace(':to', to || 0).replace(':total', total || 0);
     const pages = [];
     for (let i = Math.max(1,current_page-2); i <= Math.min(last_page||1,current_page+2); i++) pages.push(i);
     wrap.innerHTML = `
@@ -344,28 +366,28 @@ class ExtTable {
   static async toggleFeatured(id) {
     const { ok, data } = await Http.post(`/superadmin/extensions/${id}/featured`, {});
     if (ok) {
-      Toast.success('Mise à jour', data.message);
+      Toast.success(EXT_I18N.updated, data.message);
       const btn = document.getElementById(`featBtn-${id}`);
       if (btn) btn.style.color = data.value ? '#f59e0b' : 'var(--c-ink-10)';
-    } else Toast.error('Erreur', data.message);
+    } else Toast.error(EXT_I18N.error, data.message);
   }
 
   static async toggleStatus(id, current) {
     const { ok, data } = await Http.post(`/superadmin/extensions/${id}/status`, {});
-    if (ok) { Toast.success('Statut mis à jour', data.message); window._extTable?.load(); }
-    else Toast.error('Erreur', data.message);
+    if (ok) { Toast.success(EXT_I18N.statusUpdated, data.message); window._extTable?.load(); }
+    else Toast.error(EXT_I18N.error, data.message);
   }
 
   static async deleteExt(id, name) {
     Modal.confirm({
-      title: `Supprimer « ${name} » ?`,
-      message: 'L\'extension sera retirée du marketplace. Les activations actives empêchent la suppression.',
-      confirmText: 'Supprimer',
+      title: EXT_I18N.deleteTitle.replace(':name', name),
+      message: EXT_I18N.deleteMessage,
+      confirmText: EXT_I18N.deleteConfirm,
       type: 'danger',
       onConfirm: async () => {
         const { ok, data } = await Http.delete(`/superadmin/extensions/${id}`);
-        if (ok) { Toast.success('Supprimée', data.message); window._extTable?.load(); window._extTable?.loadStats(); }
-        else Toast.error('Erreur', data.message);
+        if (ok) { Toast.success(EXT_I18N.deleted, data.message); window._extTable?.load(); window._extTable?.loadStats(); }
+        else Toast.error(EXT_I18N.error, data.message);
       }
     });
   }

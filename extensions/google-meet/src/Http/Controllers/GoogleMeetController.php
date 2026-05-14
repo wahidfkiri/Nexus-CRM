@@ -86,7 +86,7 @@ class GoogleMeetController extends Controller
             $userId = (int) $state['user_id'];
 
             if ((int) Auth::id() !== $userId || (int) Auth::user()->tenant_id !== $tenantId) {
-                throw new RuntimeException('OAuth state does not match current session.');
+                throw new RuntimeException('L etat OAuth ne correspond pas a la session en cours.');
             }
 
             $this->ensureExtensionActivated($tenantId);

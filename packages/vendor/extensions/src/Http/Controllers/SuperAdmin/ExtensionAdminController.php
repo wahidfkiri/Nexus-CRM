@@ -67,7 +67,7 @@ class ExtensionAdminController extends Controller
 
             return response()->json([
                 'success'  => true,
-                'message'  => "Extension « {$extension->name} » créée avec succès.",
+                'message'  => __('extensions::extensions.messages.extension_created', ['name' => $extension->name]),
                 'data'     => $extension,
                 'redirect' => route('superadmin.extensions.show', $extension),
             ], 201);
@@ -129,7 +129,7 @@ class ExtensionAdminController extends Controller
 
             return response()->json([
                 'success'  => true,
-                'message'  => 'Extension mise à jour.',
+                'message'  => __('extensions::extensions.messages.extension_updated'),
                 'data'     => $extension,
                 'redirect' => route('superadmin.extensions.show', $extension),
             ]);
@@ -144,7 +144,7 @@ class ExtensionAdminController extends Controller
     {
         try {
             $this->service->deleteExtension($extension);
-            return response()->json(['success' => true, 'message' => 'Extension supprimée.']);
+            return response()->json(['success' => true, 'message' => __('extensions::extensions.messages.extension_deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -185,7 +185,7 @@ class ExtensionAdminController extends Controller
             $extension = $this->service->toggleFeatured($extension);
             return response()->json([
                 'success' => true,
-                'message' => $extension->is_featured ? 'Mis en avant.' : 'Retiré de la mise en avant.',
+                'message' => $extension->is_featured ? __('extensions::extensions.messages.featured_enabled') : __('extensions::extensions.messages.featured_disabled'),
                 'value'   => $extension->is_featured,
             ]);
         } catch (Throwable $e) {
@@ -199,7 +199,7 @@ class ExtensionAdminController extends Controller
             $extension = $this->service->toggleStatus($extension);
             return response()->json([
                 'success' => true,
-                'message' => "Statut changé : {$extension->status_label}",
+                'message' => __('extensions::extensions.messages.status_changed', ['status' => $extension->status_label]),
                 'status'  => $extension->status,
             ]);
         } catch (Throwable $e) {
@@ -234,7 +234,7 @@ class ExtensionAdminController extends Controller
         $request->validate(['reason' => 'required|string|max:255']);
         try {
             $this->service->suspend($activation, $request->reason, auth()->user()->name ?? 'Super Admin');
-            return response()->json(['success' => true, 'message' => 'Activation suspendue.']);
+            return response()->json(['success' => true, 'message' => __('extensions::extensions.messages.suspended')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -244,7 +244,7 @@ class ExtensionAdminController extends Controller
     {
         try {
             $activation->update(['status' => 'active', 'suspended_at' => null, 'suspension_reason' => null]);
-            return response()->json(['success' => true, 'message' => 'Activation restaurée.']);
+            return response()->json(['success' => true, 'message' => __('extensions::extensions.messages.restored')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }

@@ -91,8 +91,8 @@
     <div class="info-card" style="margin-bottom:16px;">
       <div class="info-card-header"><i class="fas fa-circle-info"></i><h3>Détails</h3></div>
       <div class="info-card-body">
-        <div class="info-row"><span class="info-row-label">Référence</span><span class="info-row-value">{{ $quote->reference ?? '—' }}</span></div>
-        <div class="info-row"><span class="info-row-label">Validité</span><span class="info-row-value">{{ optional($quote->valid_until)->format('d/m/Y') ?? '—' }}</span></div>
+        <div class="info-row"><span class="info-row-label">Référence</span><span class="info-row-value">{{ $quote->reference ? '—' }}</span></div>
+        <div class="info-row"><span class="info-row-label">Validité</span><span class="info-row-value">{{ optional($quote->valid_until)->format('d/m/Y') ? '—' }}</span></div>
         <div class="info-row"><span class="info-row-label">Devise</span><span class="info-row-value">{{ $quote->currency }}</span></div>
         @if($quote->invoice)
           <div class="info-row"><span class="info-row-label">Facture liée</span><span class="info-row-value"><a href="{{ route('invoices.show', $quote->invoice) }}">{{ $quote->invoice->number }}</a></span></div>
@@ -112,19 +112,28 @@
 
 @push('scripts')
 <script>
+const quoteShowLang = {
+  successTitle: @json(__('invoice::invoices.js.quote_converted_title')),
+  errorTitle: @json(__('invoice::invoices.js.error_title')),
+  convertMessage: @json(__('invoice::invoices.js.quote_convert_message_short')),
+  convertFallbackSuccess: @json(__('invoice::invoices.messages.quote_converted')),
+  convertFallbackError: @json(__('invoice::invoices.alerts.conversion_impossible')),
+  convertConfirm: @json(__('invoice::invoices.actions.convert')),
+};
+
 async function convertQuote(id, number) {
   Modal.confirm({
     title: `Convertir le devis ${number} ?`,
-    message: 'Une facture sera créée automatiquement à partir de ce devis.',
-    confirmText: 'Convertir',
+    message: quoteShowLang.convertMessage,
+    confirmText: quoteShowLang.convertConfirm,
     type: 'success',
     onConfirm: async () => {
       const { ok, data } = await Http.post(`/invoices/quotes/${id}/convert`, {});
       if (ok) {
-        Toast.success('Converti', data.message || 'Devis converti en facture.');
+        Toast.success(quoteShowLang.successTitle, data.message || quoteShowLang.convertFallbackSuccess);
         if (data.redirect) setTimeout(() => window.location.href = data.redirect, 800);
       } else {
-        Toast.error('Erreur', data.message || 'Conversion impossible.');
+        Toast.error(quoteShowLang.errorTitle, data.message || quoteShowLang.convertFallbackError);
       }
     }
   });

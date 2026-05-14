@@ -1112,6 +1112,13 @@ const GoogleGmailModule = (() => {
         if (data?.message) {
           message = data.message;
         }
+        const reconnectTarget = window.CrmAuth?.resolveReconnectRedirect?.(data?.message, data);
+        if (reconnectTarget) {
+          window.CrmAuth.redirectToReconnect(
+            data?.message || t('download_error', 'Impossible de telecharger la piece jointe.'),
+            reconnectTarget
+          );
+        }
       } catch (_err) {
         // no-op
       }

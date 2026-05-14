@@ -22,16 +22,16 @@ class CreateProjectDriveFolderAction extends AbstractAutomationAction
     {
         return $this->withReconnectHandling('google-drive', function () use ($automationEvent, $suggestion) {
             $tenantId = $this->tenantId($automationEvent);
-            $this->assertExtensionActive($tenantId, 'google-drive', 'Google Drive doit etre installe pour creer un dossier projet.');
+            $this->assertExtensionActive($tenantId, 'google-drive', 'Google Drive doit être installé pour créer un dossier projet.');
 
             if (!$this->driveService->getToken($tenantId)) {
-                throw new RuntimeException('Google Drive n est pas connecte pour ce tenant.');
+                throw new RuntimeException("Google Drive n'est pas connecté pour ce tenant.");
             }
 
             $payload = $this->payload($automationEvent);
             $projectId = $this->modelId($payload, $suggestion, 'project_id', Project::class);
             if (!$projectId) {
-                throw new RuntimeException('Projet introuvable pour la creation du dossier Drive.');
+                throw new RuntimeException('Projet introuvable pour la création du dossier Drive.');
             }
 
             $project = $this->loadProject($tenantId, $projectId);
@@ -42,7 +42,7 @@ class CreateProjectDriveFolderAction extends AbstractAutomationAction
 
                     return [
                         'result' => 'drive_folder_exists',
-                        'message' => 'Le dossier Google Drive du projet existe deja.',
+                        'message' => 'Le dossier Google Drive du projet existe déjà.',
                         'project_id' => (int) $project->id,
                         'folder_id' => $existingFolderId,
                         'target_url' => $existingFolder['web_view_link'] ?? $this->routeUrl('google-drive.index'),
@@ -71,7 +71,7 @@ class CreateProjectDriveFolderAction extends AbstractAutomationAction
             }
 
             if ($projectsFolderId === '') {
-                throw new RuntimeException('Impossible de creer le dossier racine Projets dans Google Drive.');
+                throw new RuntimeException('Impossible de créer le dossier racine Projets dans Google Drive.');
             }
 
             $projectFolderName = 'Projet-' . (int) $project->id;
@@ -91,7 +91,7 @@ class CreateProjectDriveFolderAction extends AbstractAutomationAction
             }
 
             if ($projectFolderId === '') {
-                throw new RuntimeException('Impossible de creer le dossier Google Drive du projet.');
+                throw new RuntimeException('Impossible de créer le dossier Google Drive du projet.');
             }
 
             $this->updateProjectMetadata($project, 'drive_folder_id', $projectFolderId);
@@ -107,14 +107,14 @@ class CreateProjectDriveFolderAction extends AbstractAutomationAction
                 $project,
                 null,
                 'project_drive_folder_created',
-                'Dossier Google Drive cree pour le projet',
+                'Dossier Google Drive créé pour le projet',
                 ['folder_id' => $projectFolderId],
                 $this->actorId($automationEvent)
             );
 
             return [
                 'result' => 'drive_folder_created',
-                'message' => 'Dossier Google Drive cree pour le projet.',
+                'message' => 'Dossier Google Drive créé pour le projet.',
                 'project_id' => (int) $project->id,
                 'folder_id' => $projectFolderId,
                 'target_url' => $folderData['web_view_link'] ?? $this->routeUrl('google-drive.index'),

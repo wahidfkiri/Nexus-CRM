@@ -30,9 +30,7 @@ class InvoiceController extends Controller
 {
     public function __construct(protected InvoiceService $service) {}
 
-    /* ================================================================
-       INVOICES — CRUD
-    ================================================================ */
+    /* Invoices CRUD */
 
     public function index()
     {
@@ -47,13 +45,13 @@ class InvoiceController extends Controller
                     $tenantId,
                     'clients',
                     'Clients',
-                    'Installez Clients pour lier vos factures aux fiches clients et faciliter le suivi commercial.'
+                    __('invoice::invoices.marketplace.clients_description')
                 ),
                 $this->makeMarketplaceSuggestion(
                     $tenantId,
                     'stock',
                     'Stock',
-                    'Installez Stock pour relier vos articles et automatiser vos flux facturation et stock.'
+                    __('invoice::invoices.marketplace.stock_description')
                 ),
             ])),
         ]);
@@ -82,7 +80,7 @@ class InvoiceController extends Controller
 
             return response()->json([
                 'success'  => true,
-                'message'  => 'Facture créée avec succès.',
+                'message'  => __('invoice::invoices.messages.invoice_created'),
                 'data'     => $invoice,
                 'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
                     'invoice_created',
@@ -106,7 +104,7 @@ class InvoiceController extends Controller
 
     public function edit(Invoice $invoice)
     {
-        abort_if($invoice->status === 'paid', 403, 'Impossible de modifier une facture payée.');
+        abort_if($invoice->status === 'paid', 403, __('invoice::invoices.messages.invoice_cannot_edit_paid'));
         $invoice->load(['client','items.article']);
         return view('invoice::invoices.edit', [
             'invoice'           => $invoice,
@@ -126,7 +124,7 @@ class InvoiceController extends Controller
             app(DraftService::class)->forgetFromRequest($request);
             return response()->json([
                 'success'  => true,
-                'message'  => 'Facture mise à jour.',
+                'message'  => __('invoice::invoices.messages.invoice_updated'),
                 'data'     => $invoice,
                 'redirect' => route('invoices.show', $invoice),
             ]);
@@ -139,15 +137,13 @@ class InvoiceController extends Controller
     {
         try {
             $this->service->deleteInvoice($invoice);
-            return response()->json(['success' => true, 'message' => 'Facture supprimée.']);
+            return response()->json(['success' => true, 'message' => __('invoice::invoices.messages.invoice_deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }
 
-    /* ================================================================
-       AJAX DATA / STATS
-    ================================================================ */
+    /* Ajax data / stats */
 
     public function getData(Request $request): JsonResponse
     {
@@ -195,7 +191,7 @@ class InvoiceController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "{$count} facture(s) supprimée(s).",
+            'message' => __('invoice::invoices.messages.bulk_invoices_deleted', ['count' => $count]),
         ]);
     }
 
@@ -217,20 +213,18 @@ class InvoiceController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "{$count} facture(s) marquée(s) envoyée(s).",
+            'message' => __('invoice::invoices.messages.bulk_invoices_sent', ['count' => $count]),
         ]);
     }
 
-    /* ================================================================
-       ACTIONS METIER
-    ================================================================ */
+    /* Actions metier */
 
     public function send(Invoice $invoice): JsonResponse
     {
         try {
             $invoice->markAsSent();
             // TODO: dispatch SendInvoiceEmail job
-            return response()->json(['success' => true, 'message' => 'Facture marquée comme envoyée.']);
+            return response()->json(['success' => true, 'message' => __('invoice::invoices.messages.invoice_sent')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -252,7 +246,7 @@ class InvoiceController extends Controller
             $newInvoice = $this->service->createInvoice($data);
             return response()->json([
                 'success'  => true,
-                'message'  => 'Facture dupliquée.',
+                'message'  => __('invoice::invoices.messages.invoice_duplicated'),
                 'redirect' => route('invoices.edit', $newInvoice),
             ]);
         } catch (Throwable $e) {
@@ -273,7 +267,7 @@ class InvoiceController extends Controller
             }
 
             $payment = $this->service->addPayment($invoice, $data);
-            return response()->json(['success' => true, 'message' => 'Paiement enregistré.', 'data' => $payment], 201);
+            return response()->json(['success' => true, 'message' => __('invoice::invoices.messages.payment_created'), 'data' => $payment], 201);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -286,15 +280,13 @@ class InvoiceController extends Controller
                 Storage::disk('public')->delete($payment->attachment);
             }
             $this->service->deletePayment($payment);
-            return response()->json(['success' => true, 'message' => 'Paiement supprimé.']);
+            return response()->json(['success' => true, 'message' => __('invoice::invoices.messages.payment_deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
-    /* ================================================================
-       EXPORTS / IMPORT
-    ================================================================ */
+    /* Exports / import */
 
     public function exportCsv()
     {
@@ -343,15 +335,16 @@ class InvoiceController extends Controller
         $request->validate(['file' => 'required|mimes:xlsx,xls,csv|max:10240']);
         try {
             Excel::import(new InvoicesImport, $request->file('file'));
-            return response()->json(['success' => true, 'message' => 'Factures importées avec succès.']);
+            return response()->json(['success' => true, 'message' => __('invoice::invoices.messages.invoice_imported')]);
         } catch (Throwable $e) {
-            return response()->json(['success' => false, 'message' => "Erreur d'importation : " . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => __('invoice::invoices.messages.import_error', ['message' => $e->getMessage()]),
+            ], 500);
         }
     }
 
-    /* ================================================================
-       QUOTES — CRUD
-    ================================================================ */
+    /* Quotes CRUD */
 
     public function quotesIndex()
     {
@@ -380,7 +373,7 @@ class InvoiceController extends Controller
             app(DraftService::class)->forgetFromRequest($request);
             return response()->json([
                 'success'  => true,
-                'message'  => 'Devis créé avec succès.',
+                'message'  => __('invoice::invoices.messages.quote_created'),
                 'data'     => $quote,
                 'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
                     'quote_created',
@@ -403,7 +396,7 @@ class InvoiceController extends Controller
 
     public function quotesEdit(Quote $quote)
     {
-        abort_if(in_array($quote->status, ['accepted','declined']), 403, 'Ce devis ne peut plus être modifié.');
+        abort_if(in_array($quote->status, ['accepted','declined']), 403, __('invoice::invoices.messages.quote_cannot_edit'));
         $quote->load(['client','items.article']);
         return view('invoice::quotes.edit', [
             'quote'             => $quote,
@@ -421,7 +414,7 @@ class InvoiceController extends Controller
             app(DraftService::class)->forgetFromRequest($request);
             return response()->json([
                 'success'  => true,
-                'message'  => 'Devis mis à jour.',
+                'message'  => __('invoice::invoices.messages.quote_updated'),
                 'data'     => $quote,
                 'redirect' => route('invoices.quotes.show', $quote),
             ]);
@@ -434,7 +427,7 @@ class InvoiceController extends Controller
     {
         try {
             $this->service->deleteQuote($quote);
-            return response()->json(['success' => true, 'message' => 'Devis supprimé.']);
+            return response()->json(['success' => true, 'message' => __('invoice::invoices.messages.quote_deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -446,7 +439,7 @@ class InvoiceController extends Controller
             $invoice = $this->service->convertQuoteToInvoice($quote);
             return response()->json([
                 'success'  => true,
-                'message'  => 'Devis converti en facture avec succès.',
+                'message'  => __('invoice::invoices.messages.quote_converted'),
                 'redirect' => route('invoices.show', $invoice),
             ]);
         } catch (Throwable $e) {
@@ -684,7 +677,7 @@ class InvoiceController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Paramètres mis à jour.',
+            'message' => __('invoice::invoices.messages.settings_updated'),
         ]);
     }
 
@@ -774,9 +767,7 @@ class InvoiceController extends Controller
         return null;
     }
 
-    /* ================================================================
-       DEVISE — AJAX
-    ================================================================ */
+    /* Devise Ajax */
 
     public function getExchangeRate(Request $request): JsonResponse
     {
@@ -787,7 +778,7 @@ class InvoiceController extends Controller
         $toDef   = config("invoice.currencies.{$to}");
 
         if (!$fromDef || !$toDef) {
-            return response()->json(['success' => false, 'message' => 'Devise inconnue.'], 422);
+            return response()->json(['success' => false, 'message' => __('invoice::invoices.messages.unknown_currency')], 422);
         }
 
         return response()->json([
@@ -795,7 +786,7 @@ class InvoiceController extends Controller
             'data'    => [
                 'from'   => $from,
                 'to'     => $to,
-                'rate'   => 1.0, // Intégrer une API de taux (OpenExchangeRates, Fixer.io...)
+                'rate'   => 1.0, // Integrer une API de taux (OpenExchangeRates, Fixer.io...)
                 'symbol' => $toDef['symbol'],
             ],
         ]);
@@ -831,6 +822,8 @@ class InvoiceController extends Controller
         ];
     }
 }
+
+
 
 
 

@@ -42,13 +42,13 @@ class StockController extends Controller
                     $tenantId,
                     'clients',
                     'Clients',
-                    'Installez Clients pour rattacher vos articles et commandes a vos clients CRM.'
+                    trans('stock::stock.marketplace.clients_description')
                 ),
                 $this->makeMarketplaceSuggestion(
                     $tenantId,
                     'invoice',
                     'Facturation',
-                    'Installez Facturation pour transformer vos articles en devis et factures en quelques clics.'
+                    trans('stock::stock.marketplace.invoice_description')
                 ),
             ])),
         ]);
@@ -95,7 +95,7 @@ class StockController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Article cree avec succes.',
+                'message' => trans('stock::stock.messages.article_created'),
                 'redirect' => route('stock.articles.show', $article),
                 'automation' => $automation,
             ], 201);
@@ -126,7 +126,7 @@ class StockController extends Controller
     {
         try {
             $this->service->updateArticle($article, $request->validated());
-            return response()->json(['success' => true, 'message' => 'Article mis a jour.', 'redirect' => route('stock.articles.show', $article)]);
+            return response()->json(['success' => true, 'message' => trans('stock::stock.messages.article_updated'), 'redirect' => route('stock.articles.show', $article)]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -135,7 +135,7 @@ class StockController extends Controller
     public function articlesDestroy(Article $article): JsonResponse
     {
         $article->delete();
-        return response()->json(['success' => true, 'message' => 'Article supprime.']);
+        return response()->json(['success' => true, 'message' => trans('stock::stock.messages.article_deleted')]);
     }
 
     public function articlesData(Request $request): JsonResponse
@@ -178,7 +178,7 @@ class StockController extends Controller
     {
         $request->validate(['file' => 'required|mimes:xlsx,xls,csv|max:10240']);
         Excel::import(new ArticlesImport(), $request->file('file'));
-        return response()->json(['success' => true, 'message' => 'Import articles termine.']);
+        return response()->json(['success' => true, 'message' => trans('stock::stock.messages.article_imported')]);
     }
 
     public function suppliersIndex()
@@ -196,7 +196,7 @@ class StockController extends Controller
         $supplier = $this->service->createSupplier($request->validated());
         return response()->json([
             'success' => true,
-            'message' => 'Fournisseur cree.',
+            'message' => trans('stock::stock.messages.supplier_created'),
             'redirect' => route('stock.suppliers.show', $supplier),
             'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
                 'supplier_created',
@@ -220,13 +220,13 @@ class StockController extends Controller
     public function suppliersUpdate(SupplierRequest $request, Supplier $supplier): JsonResponse
     {
         $this->service->updateSupplier($supplier, $request->validated());
-        return response()->json(['success' => true, 'message' => 'Fournisseur mis a jour.', 'redirect' => route('stock.suppliers.show', $supplier)]);
+        return response()->json(['success' => true, 'message' => trans('stock::stock.messages.supplier_updated'), 'redirect' => route('stock.suppliers.show', $supplier)]);
     }
 
     public function suppliersDestroy(Supplier $supplier): JsonResponse
     {
         $supplier->delete();
-        return response()->json(['success' => true, 'message' => 'Fournisseur supprime.']);
+        return response()->json(['success' => true, 'message' => trans('stock::stock.messages.supplier_deleted')]);
     }
 
     public function suppliersData(Request $request): JsonResponse
@@ -272,7 +272,7 @@ class StockController extends Controller
         $order = $this->service->createOrder($request->validated());
         return response()->json([
             'success' => true,
-            'message' => 'Commande creee.',
+            'message' => trans('stock::stock.messages.order_created'),
             'redirect' => route('stock.orders.show', $order),
             'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
                 'stock_order_created',
@@ -303,13 +303,13 @@ class StockController extends Controller
     public function ordersUpdate(OrderRequest $request, Order $order): JsonResponse
     {
         $this->service->updateOrder($order, $request->validated());
-        return response()->json(['success' => true, 'message' => 'Commande mise a jour.', 'redirect' => route('stock.orders.show', $order)]);
+        return response()->json(['success' => true, 'message' => trans('stock::stock.messages.order_updated'), 'redirect' => route('stock.orders.show', $order)]);
     }
 
     public function ordersDestroy(Order $order): JsonResponse
     {
         $order->delete();
-        return response()->json(['success' => true, 'message' => 'Commande supprimee.']);
+        return response()->json(['success' => true, 'message' => trans('stock::stock.messages.order_deleted')]);
     }
 
     public function ordersData(Request $request): JsonResponse
@@ -352,7 +352,7 @@ class StockController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Commande receptionnee via un bon de livraison valide.',
+            'message' => trans('stock::stock.messages.order_received'),
             'redirect' => route('stock.delivery-notes.show', $note),
             'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
                 'delivery_note_validated',

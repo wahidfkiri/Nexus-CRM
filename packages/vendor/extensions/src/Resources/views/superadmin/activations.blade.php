@@ -1,38 +1,38 @@
 @extends('layouts.global')
 
-@section('title', 'Activations Extensions')
+@section('title', __('extensions::extensions.superadmin.activations.title'))
 
 @section('breadcrumb')
-  <a href="{{ route('superadmin.extensions.index') }}">Extensions</a>
+  <a href="{{ route('superadmin.extensions.index') }}">{{ __('extensions::extensions.common.extensions') }}</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Activations tenants</span>
+  <span style="color:var(--c-ink)">{{ __('extensions::extensions.common.tenant_activations') }}</span>
 @endsection
 
 @section('content')
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Activations des extensions</h1>
-    <p>Suivi global des installations par tenant</p>
+    <h1>{{ __('extensions::extensions.superadmin.activations.heading') }}</h1>
+    <p>{{ __('extensions::extensions.superadmin.activations.description') }}</p>
   </div>
   <div class="page-header-actions">
     <a href="{{ route('superadmin.extensions.index') }}" class="btn btn-secondary">
-      <i class="fas fa-arrow-left"></i> Retour catalogue
+      <i class="fas fa-arrow-left"></i> {{ __('extensions::extensions.actions.return_catalog') }}
     </a>
   </div>
 </div>
 
 <div class="table-wrapper">
   <div class="table-header">
-    <span class="table-title">Liste des activations</span>
+    <span class="table-title">{{ __('extensions::extensions.superadmin.activations.table_title') }}</span>
     <span class="table-count" id="activationCount">0</span>
     <div class="table-spacer"></div>
     <select class="filter-select" id="statusFilter">
-      <option value="">Tous statuts</option>
+      <option value="">{{ __('extensions::extensions.superadmin.activations.all_statuses') }}</option>
       @foreach($activationStatuses as $key => $label)
         <option value="{{ $key }}">{{ $label }}</option>
       @endforeach
     </select>
-    <button class="btn btn-ghost btn-sm" id="resetFilters" title="Réinitialiser">
+    <button class="btn btn-ghost btn-sm" id="resetFilters" title="{{ __('extensions::extensions.common.reset') }}">
       <i class="fas fa-rotate-left"></i>
     </button>
   </div>
@@ -40,13 +40,13 @@
   <table class="crm-table">
     <thead>
       <tr>
-        <th>Extension</th>
-        <th>Tenant</th>
-        <th>Statut</th>
-        <th>Activée le</th>
-        <th>Prix</th>
-        <th>Activée par</th>
-        <th style="text-align:right;padding-right:20px;">Actions</th>
+        <th>{{ __('extensions::extensions.superadmin.activations.column_extension') }}</th>
+        <th>{{ __('extensions::extensions.superadmin.activations.column_tenant') }}</th>
+        <th>{{ __('extensions::extensions.superadmin.activations.column_status') }}</th>
+        <th>{{ __('extensions::extensions.superadmin.activations.column_activated_at') }}</th>
+        <th>{{ __('extensions::extensions.superadmin.activations.column_price') }}</th>
+        <th>{{ __('extensions::extensions.superadmin.activations.column_activated_by') }}</th>
+        <th style="text-align:right;padding-right:20px;">{{ __('extensions::extensions.superadmin.activations.column_actions') }}</th>
       </tr>
     </thead>
     <tbody id="activationTableBody"></tbody>
@@ -62,18 +62,18 @@
 <div class="modal-overlay" id="suspendModal">
   <div class="modal modal-sm">
     <div class="modal-header">
-      <div class="modal-title">Suspendre l'activation</div>
+      <div class="modal-title">{{ __('extensions::extensions.superadmin.activations.suspend_title') }}</div>
       <button class="modal-close" data-modal-close>&times;</button>
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label class="form-label">Raison <span class="required">*</span></label>
-        <textarea id="suspendReason" class="form-control" rows="3" placeholder="Indiquez la raison de suspension..."></textarea>
+        <label class="form-label">{{ __('extensions::extensions.common.reason') }} <span class="required">*</span></label>
+        <textarea id="suspendReason" class="form-control" rows="3" placeholder="{{ __('extensions::extensions.superadmin.activations.suspend_reason_placeholder') }}"></textarea>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" data-modal-close>Annuler</button>
-      <button class="btn btn-danger" id="confirmSuspend" data-loading-text="Suspension...">Suspendre</button>
+      <button class="btn btn-secondary" data-modal-close>{{ __('extensions::extensions.common.cancel') }}</button>
+      <button class="btn btn-danger" id="confirmSuspend" data-loading-text="{{ __('extensions::extensions.superadmin.activations.suspend_loading') }}">{{ __('extensions::extensions.actions.suspend') }}</button>
     </div>
   </div>
 </div>
@@ -135,7 +135,7 @@ class ExtensionActivationsPage {
     });
 
     if (!ok) {
-      Toast.error('Erreur', data?.message || 'Impossible de charger les activations.');
+      Toast.error(@json(__('extensions::extensions.common.error')), data?.message || @json(__('extensions::extensions.superadmin.activations.load_error')));
       return;
     }
 
@@ -156,8 +156,8 @@ class ExtensionActivationsPage {
     if (!rows.length) {
       tbody.innerHTML = `<tr><td colspan="7"><div class="table-empty">
         <div class="table-empty-icon"><i class="fas fa-plug-circle-xmark"></i></div>
-        <h3>Aucune activation</h3>
-        <p>Aucune donnée trouvée pour ce filtre.</p>
+        <h3>{{ __('extensions::extensions.superadmin.activations.empty_title') }}</h3>
+        <p>{{ __('extensions::extensions.superadmin.activations.empty_description') }}</p>
       </div></td></tr>`;
       return;
     }
@@ -170,11 +170,11 @@ class ExtensionActivationsPage {
       const activatedAt = row.activated_at ? this.formatDate(row.activated_at) : '-';
       const price = Number(row.price_paid || 0) > 0
         ? `${Number(row.price_paid).toFixed(2)} ${this.esc(row.currency || 'EUR')}`
-        : '<span style="color:var(--c-ink-40);">Gratuit</span>';
+        : '<span style="color:var(--c-ink-40);">{{ __('extensions::extensions.common.free') }}</span>';
 
       const actions = row.status === 'suspended'
-        ? `<button class="btn-icon" title="Restaurer" data-action="restore" data-id="${Number(row.id)}"><i class="fas fa-check-circle"></i></button>`
-        : `<button class="btn-icon danger" title="Suspendre" data-action="suspend" data-id="${Number(row.id)}"><i class="fas fa-ban"></i></button>`;
+        ? `<button class="btn-icon" title="{{ __('extensions::extensions.actions.restore') }}" data-action="restore" data-id="${Number(row.id)}"><i class="fas fa-check-circle"></i></button>`
+        : `<button class="btn-icon danger" title="{{ __('extensions::extensions.actions.suspend') }}" data-action="suspend" data-id="${Number(row.id)}"><i class="fas fa-ban"></i></button>`;
 
       return `<tr>
         <td style="font-weight:var(--fw-semi);">${extensionName}</td>
@@ -207,7 +207,7 @@ class ExtensionActivationsPage {
     const from = total === 0 ? 0 : ((current - 1) * perPage) + 1;
     const to = Math.min(current * perPage, total);
 
-    info.textContent = total ? `Affichage ${from}-${to} sur ${total}` : 'Aucun résultat';
+    info.textContent = total ? @json(__('extensions::extensions.superadmin.activations.displaying', ['from' => ':from', 'to' => ':to', 'total' => ':total'])).replace(':from', from).replace(':to', to).replace(':total', total) : @json(__('extensions::extensions.superadmin.activations.no_results'));
 
     pages.innerHTML = '';
     if (last <= 1) return;
@@ -249,7 +249,7 @@ class ExtensionActivationsPage {
     const reasonInput = document.getElementById('suspendReason');
     const reason = String(reasonInput?.value || '').trim();
     if (!reason) {
-      Toast.warning('Requis', 'Veuillez saisir une raison.');
+      Toast.warning(@json(__('extensions::extensions.common.required')), @json(__('extensions::extensions.superadmin.activations.reason_required')));
       return;
     }
 
@@ -258,12 +258,12 @@ class ExtensionActivationsPage {
     if (button) CrmForm.setLoading(button, false);
 
     if (!ok) {
-      Toast.error('Erreur', data?.message || 'Suspension impossible.');
+      Toast.error(@json(__('extensions::extensions.common.error')), data?.message || @json(__('extensions::extensions.superadmin.activations.suspend_error')));
       return;
     }
 
     Modal.close(document.getElementById('suspendModal'));
-    Toast.success('Succès', data.message || 'Activation suspendue.');
+    Toast.success(@json(__('extensions::extensions.common.success')), data.message || @json(__('extensions::extensions.superadmin.activations.suspended')));
     this.load();
   }
 
@@ -271,20 +271,20 @@ class ExtensionActivationsPage {
     if (!id) return;
     const { ok, data } = await Http.post(`${window.EXT_ACTIVATIONS_ROUTES.suspendBase}/${id}/restore`, {});
     if (!ok) {
-      Toast.error('Erreur', data?.message || 'Restauration impossible.');
+      Toast.error(@json(__('extensions::extensions.common.error')), data?.message || @json(__('extensions::extensions.superadmin.activations.restore_error')));
       return;
     }
-    Toast.success('Succès', data.message || 'Activation restaurée.');
+    Toast.success(@json(__('extensions::extensions.common.success')), data.message || @json(__('extensions::extensions.superadmin.activations.restored')));
     this.load();
   }
 
   statusBadge(status) {
     const s = String(status || '').toLowerCase();
-    if (s === 'active') return '<span class="badge badge-actif">Active</span>';
-    if (s === 'trial') return '<span class="badge badge-info">Essai</span>';
-    if (s === 'suspended') return '<span class="badge badge-inactif">Suspendue</span>';
-    if (s === 'inactive') return '<span class="badge badge-inactif">Inactive</span>';
-    if (s === 'pending') return '<span class="badge badge-warning">En attente</span>';
+    if (s === 'active') return `<span class="badge badge-actif">${@json(__('extensions::extensions.status.active'))}</span>`;
+    if (s === 'trial') return `<span class="badge badge-info">${@json(__('extensions::extensions.status.trial'))}</span>`;
+    if (s === 'suspended') return `<span class="badge badge-inactif">${@json(__('extensions::extensions.status.suspended'))}</span>`;
+    if (s === 'inactive') return `<span class="badge badge-inactif">${@json(__('extensions::extensions.status.inactive'))}</span>`;
+    if (s === 'pending') return `<span class="badge badge-warning">${@json(__('extensions::extensions.status.pending'))}</span>`;
     return `<span class="badge badge-secondary">${this.esc(status || '-')}</span>`;
   }
 

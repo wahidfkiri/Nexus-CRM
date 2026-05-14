@@ -50,7 +50,7 @@ class DeliveryNoteService
     public function update(DeliveryNote $note, array $data): DeliveryNote
     {
         if ($note->status !== 'draft') {
-            throw new RuntimeException('Seuls les bons de livraison en brouillon peuvent etre modifies.');
+            throw new RuntimeException(trans('stock::stock.errors.delivery_note_locked'));
         }
 
         return DB::transaction(function () use ($note, $data) {
@@ -74,7 +74,7 @@ class DeliveryNoteService
     public function delete(DeliveryNote $note): void
     {
         if ($note->status !== 'draft') {
-            throw new RuntimeException('Un bon de livraison valide ou annule ne peut pas etre supprime.');
+            throw new RuntimeException(trans('stock::stock.errors.delivery_note_delete_locked'));
         }
 
         $note->delete();
@@ -83,13 +83,13 @@ class DeliveryNoteService
     public function validate(DeliveryNote $note): DeliveryNote
     {
         if ($note->status !== 'draft') {
-            throw new RuntimeException('Ce bon de livraison ne peut plus etre valide.');
+            throw new RuntimeException(trans('stock::stock.errors.delivery_note_cannot_validate'));
         }
 
         $note->loadMissing('items.article');
 
         if ($note->items->isEmpty()) {
-            throw new RuntimeException('Ajoutez au moins une ligne avant de valider le bon de livraison.');
+            throw new RuntimeException(trans('stock::stock.errors.delivery_note_requires_items'));
         }
 
         return DB::transaction(function () use ($note) {
@@ -194,7 +194,7 @@ class DeliveryNoteService
         $order->loadMissing('supplier', 'items.article');
 
         if ($order->status === 'cancelled') {
-            throw new RuntimeException('Une commande annulee ne peut pas etre receptionnee.');
+            throw new RuntimeException(trans('stock::stock.errors.order_cancelled_cannot_receive'));
         }
 
         $existing = DeliveryNote::query()
@@ -213,7 +213,7 @@ class DeliveryNoteService
             'stock_order_id' => $order->id,
             'reference' => $order->number,
             'issue_date' => now()->toDateString(),
-            'notes' => 'Reception generee automatiquement depuis la commande fournisseur.',
+            'notes' => trans('stock::stock.errors.receipt_generated_from_order'),
             'items' => $order->items->map(fn ($item) => [
                 'article_id' => $item->article_id,
                 'stock_order_item_id' => $item->id,
@@ -242,7 +242,7 @@ class DeliveryNoteService
                 'name' => $item['name'],
                 'description' => $item['description'] ?? null,
                 'quantity' => (float) $item['quantity'],
-                'unit' => $item['unit'] ?? 'piece',
+                'unit' => $item['unit'] ?? 'pièce',
             ]);
         }
     }

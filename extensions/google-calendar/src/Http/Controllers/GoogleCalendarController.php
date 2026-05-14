@@ -91,7 +91,7 @@ class GoogleCalendarController extends Controller
     public function callback(Request $request)
     {
         if ($request->filled('error')) {
-            return redirect()->route('google-calendar.index')->with('error', (string) $request->get('error_description', $request->get('error')));
+            return redirect()->route('google-calendar.index')->with('error', __('google-calendar::messages.connection.oauth_cancelled'));
         }
 
         $request->validate([
@@ -106,7 +106,7 @@ class GoogleCalendarController extends Controller
             $userId = (int) $state['user_id'];
 
             if ((int) Auth::id() !== $userId || (int) Auth::user()->tenant_id !== $tenantId) {
-                throw new RuntimeException('OAuth state does not match current session.');
+                throw new RuntimeException(__('google-calendar::messages.errors.oauth_state_mismatch'));
             }
 
             $this->ensureExtensionActivated($tenantId);
@@ -114,7 +114,7 @@ class GoogleCalendarController extends Controller
             app(AutomationReconnectNotificationService::class)
                 ->notifyForProvider($tenantId, $userId, 'google-calendar', route('google-calendar.index'));
 
-            return redirect()->route('google-calendar.index')->with('success', 'Google Calendar connecte avec succes.');
+            return redirect()->route('google-calendar.index')->with('success', __('google-calendar::messages.success.connected'));
         } catch (Throwable $e) {
             return redirect()->route('google-calendar.index')->with('error', $e->getMessage());
         }
@@ -129,7 +129,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Google Calendar deconnecte.',
+                'message' => __('google-calendar::messages.success.disconnected'),
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -178,7 +178,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Calendrier selectionne avec succes.',
+                'message' => __('google-calendar::messages.success.selected_calendar'),
                 'data' => $calendar,
             ]);
         } catch (Throwable $e) {
@@ -281,7 +281,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $count . ' evenement(s) synchronise(s).',
+                'message' => __('google-calendar::messages.success.synced_count', ['count' => $count]),
                 'count' => $count,
             ]);
         } catch (Throwable $e) {
@@ -307,7 +307,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Evenement cree avec succes.',
+                'message' => __('google-calendar::messages.success.event_created'),
                 'data' => $event,
             ], 201);
         } catch (Throwable $e) {
@@ -334,7 +334,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Evenement mis a jour avec succes.',
+                'message' => __('google-calendar::messages.success.event_updated'),
                 'data' => $event,
             ]);
         } catch (Throwable $e) {
@@ -355,7 +355,7 @@ class GoogleCalendarController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Evenement supprime.',
+                'message' => __('google-calendar::messages.success.event_deleted'),
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -406,7 +406,7 @@ class GoogleCalendarController extends Controller
         $this->assertStorageReady();
 
         if (!$this->isExtensionActive($tenantId)) {
-                throw new RuntimeException('Google Calendar n est pas active pour ce tenant. Activez-la depuis le Marketplace.');
+            throw new RuntimeException(__('google-calendar::messages.errors.extension_inactive'));
         }
     }
 
@@ -437,7 +437,7 @@ class GoogleCalendarController extends Controller
     private function assertStorageReady(): void
     {
         if (!$this->isStorageReady()) {
-            throw new RuntimeException('Les tables Google Calendar sont absentes. Executez: php artisan migrate');
+            throw new RuntimeException(__('google-calendar::messages.errors.storage_missing'));
         }
     }
 
@@ -481,6 +481,7 @@ class GoogleCalendarController extends Controller
             'validation_end' => __('google-calendar::messages.validation.end_required'),
             'validation_end_after_start' => __('google-calendar::messages.validation.end_after_start'),
             'validation_attendees' => __('google-calendar::messages.validation.attendees'),
+            'validation_source' => __('google-calendar::messages.validation.source_type'),
             'holiday_badge' => __('google-calendar::messages.badges.holiday'),
             'open_google' => __('google-calendar::messages.actions.open_google'),
             'edit' => __('google-calendar::messages.actions.edit'),
@@ -504,6 +505,13 @@ class GoogleCalendarController extends Controller
             'week' => __('google-calendar::messages.views.week'),
             'day' => __('google-calendar::messages.views.day'),
             'year' => __('google-calendar::messages.views.year'),
+            'visibility_default' => __('google-calendar::messages.visibility.default'),
+            'visibility_public' => __('google-calendar::messages.visibility.public'),
+            'visibility_private' => __('google-calendar::messages.visibility.private'),
+            'visibility_confidential' => __('google-calendar::messages.visibility.confidential'),
+            'detail_empty' => __('google-calendar::messages.detail.empty'),
+            'detail_no_attendees' => __('google-calendar::messages.detail.no_attendees'),
+            'detail_no_description' => __('google-calendar::messages.detail.no_description'),
         ];
     }
 }

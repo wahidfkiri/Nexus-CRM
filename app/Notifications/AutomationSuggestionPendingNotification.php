@@ -37,19 +37,17 @@ class AutomationSuggestionPendingNotification extends Notification
             'provider_label' => $providerLabel,
             'resume_state' => $this->resumeState,
             'title' => $this->resumeState === 'pending_reconnect'
-                ? 'Suggestion en attente de reconnexion'
-                : 'Suggestion en attente a reprendre',
+                ? __('automation::automation.notifications.pending_title')
+                : __('automation::automation.notifications.reconnected_title'),
             'message' => $this->resumeState === 'pending_reconnect'
-                ? sprintf(
-                    '%s doit etre reconnecte pour reprendre: %s.',
-                    $providerLabel,
-                    (string) $this->suggestion->label
-                )
-                : sprintf(
-                    '%s est reconnecte. Vous pouvez maintenant reprendre: %s.',
-                    $providerLabel,
-                    (string) $this->suggestion->label
-                ),
+                ? __('automation::automation.notifications.pending_message', [
+                    'provider' => $providerLabel,
+                    'label' => (string) $this->suggestion->label,
+                ])
+                : __('automation::automation.notifications.reconnected_message', [
+                    'provider' => $providerLabel,
+                    'label' => (string) $this->suggestion->label,
+                ]),
             'action_url' => $this->actionUrl,
             'updated_at' => optional($this->suggestion->updated_at)?->toIso8601String(),
         ];

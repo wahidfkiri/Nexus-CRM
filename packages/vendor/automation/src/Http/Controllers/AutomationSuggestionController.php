@@ -86,8 +86,8 @@ class AutomationSuggestionController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => (string) $freshEvent->status === AutomationEvent::STATUS_COMPLETED
-                    ? 'Suggestion acceptee et traitee.'
-                    : 'Suggestion acceptee. Automation en cours.',
+                    ? __('automation::automation.controller.accept_completed')
+                    : __('automation::automation.controller.accept_processing'),
                 'data' => [
                     'suggestions' => $this->presenter->presentCollection(collect([$freshSuggestion])),
                     'event' => $eventPayload,
@@ -112,7 +112,7 @@ class AutomationSuggestionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Suggestion ignoree.',
+                'message' => __('automation::automation.controller.reject_success'),
                 'data' => [
                     'suggestions' => $this->presenter->presentCollection(collect([$result->fresh()])),
                 ],
@@ -166,7 +166,7 @@ class AutomationSuggestionController extends Controller
         if ($acceptedCount === 0) {
             return response()->json([
                 'success' => false,
-                'message' => $errors[0]['message'] ?? "Aucune suggestion n'a pu etre acceptee.",
+                'message' => $errors[0]['message'] ?? __('automation::automation.controller.bulk_accept_none'),
                 'data' => [
                     'suggestions' => $this->presenter->presentCollection(collect($processed)),
                     'errors' => $errors,
@@ -176,7 +176,7 @@ class AutomationSuggestionController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $acceptedCount . ' suggestion(s) acceptee(s).',
+            'message' => __('automation::automation.controller.bulk_accept_count', ['count' => $acceptedCount]),
             'data' => [
                 'suggestions' => $this->presenter->presentCollection(collect($processed)),
                 'errors' => $errors,
@@ -203,14 +203,14 @@ class AutomationSuggestionController extends Controller
         if (empty($processed)) {
             return response()->json([
                 'success' => false,
-                'message' => $errors[0]['message'] ?? "Aucune suggestion n'a pu etre ignoree.",
+                'message' => $errors[0]['message'] ?? __('automation::automation.controller.bulk_reject_none'),
                 'data' => ['errors' => $errors],
             ], 422);
         }
 
         return response()->json([
             'success' => true,
-            'message' => count($processed) . ' suggestion(s) ignoree(s).',
+            'message' => __('automation::automation.controller.bulk_reject_count', ['count' => count($processed)]),
             'data' => [
                 'suggestions' => $this->presenter->presentCollection(collect($processed)),
                 'errors' => $errors,
@@ -285,7 +285,7 @@ class AutomationSuggestionController extends Controller
             'reconnect_provider' => $provider['slug'] ?? null,
             'reconnect_url' => $provider['url'] ?? null,
             'reconnect_label' => $requiresReconnect
-                ? 'Reconnecter ' . ($provider['label'] ?? 'le service')
+                ? __('automation::automation.controller.reconnect_label', ['provider' => $provider['label'] ?? 'le service'])
                 : null,
         ];
     }
@@ -311,7 +311,7 @@ class AutomationSuggestionController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => "Une erreur inattendue est survenue pendant le traitement de l'automation.",
+            'message' => __('automation::automation.controller.unexpected_error'),
         ], 500);
     }
 
@@ -320,7 +320,7 @@ class AutomationSuggestionController extends Controller
         if (!$e instanceof RuntimeException) {
             report($e);
 
-            return "Une erreur inattendue est survenue pendant le traitement de l'automation.";
+            return __('automation::automation.controller.unexpected_error');
         }
 
         return $this->sanitizeMessage($e->getMessage());
@@ -328,11 +328,12 @@ class AutomationSuggestionController extends Controller
 
     protected function safeStoredErrorMessage(?string $message): string
     {
-        return $this->sanitizeMessage($message, 'Cette automation a echoue.');
+        return $this->sanitizeMessage($message, __('automation::automation.controller.failed_default'));
     }
 
-    protected function sanitizeMessage(?string $message, string $fallback = "Une erreur inattendue est survenue pendant le traitement de l'automation."): string
+    protected function sanitizeMessage(?string $message, string $fallback = ''): string
     {
+        $fallback = $fallback !== '' ? $fallback : __('automation::automation.controller.unexpected_error');
         $message = trim((string) $message);
         if ($message === '') {
             return $fallback;

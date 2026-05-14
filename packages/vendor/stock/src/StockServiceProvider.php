@@ -20,6 +20,7 @@ class StockServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
         $this->loadViewsFrom(__DIR__ . '/Resources/views', 'stock');
+        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'stock');
 
         $this->publishes([
             __DIR__ . '/../config/stock.php' => config_path('stock.php'),
@@ -32,5 +33,9 @@ class StockServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Resources/views' => resource_path('views/vendor/stock'),
         ], 'stock-views');
+
+        $this->publishes([
+            __DIR__ . '/Resources/lang' => resource_path('lang/vendor/stock'),
+        ], 'stock-lang');
     }
 }

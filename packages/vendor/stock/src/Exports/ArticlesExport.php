@@ -30,6 +30,6 @@ class ArticlesExport implements FromCollection, WithHeadings
 
     public function headings(): array
     {
-        return ['ID', 'SKU', 'Nom', 'Unite', 'Prix achat', 'Prix vente', 'Stock', 'Stock minimum', 'Statut'];
+        return trans('stock::stock.exports.articles');
     }
 }

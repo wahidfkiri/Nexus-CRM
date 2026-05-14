@@ -31,7 +31,7 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $calendarInstalled ? 'create_followup_meeting' : 'install_extension',
             $calendarInstalled
-                ? "Planifier un rendez-vous interne de decouverte pour {$clientName}"
+                ? "Planifier un rendez-vous interne de découverte pour {$clientName}"
                 : 'Installer Google Calendar pour planifier un rendez-vous',
             0.89,
             $calendarInstalled
@@ -48,7 +48,7 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $gmailInstalled ? 'send_followup_meeting_email' : 'install_extension',
             $gmailInstalled
-                ? "Envoyer un email a {$clientName} pour proposer un rendez-vous"
+                ? "Envoyer un email à {$clientName} pour proposer un rendez-vous"
                 : 'Installer Google Gmail pour proposer un rendez-vous par email',
             0.86,
             $gmailInstalled
@@ -69,8 +69,8 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $invoiceInstalled ? 'create_quote' : 'install_extension',
             $invoiceInstalled
-                ? "Creer un devis pour {$clientName}"
-                : 'Installer la facturation pour creer un devis',
+                ? "Créer un devis pour {$clientName}"
+                : 'Installer la facturation pour créer un devis',
             0.84,
             $invoiceInstalled
                 ? ['client_id' => $clientId]
@@ -87,7 +87,7 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
             $sheetsInstalled ? 'append_client_sheet_row' : 'install_extension',
             $sheetsInstalled
                 ? 'Ajouter ce client dans le registre Google Sheets'
-                : 'Installer Google Sheets pour enregistrer ce client dans un tableau partage',
+                : 'Installer Google Sheets pour enregistrer ce client dans un tableau partagé',
             0.83,
             $sheetsInstalled
                 ? ['client_id' => $clientId]
@@ -103,8 +103,8 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $docsInstalled ? 'create_client_google_doc' : 'install_extension',
             $docsInstalled
-                ? "Creer une fiche client Google Docs pour {$clientName}"
-                : 'Installer Google Docs pour generer une fiche client editable',
+                ? "Créer une fiche client Google Docs pour {$clientName}"
+                : 'Installer Google Docs pour générer une fiche client éditable',
             0.78,
             $docsInstalled
                 ? ['client_id' => $clientId]
@@ -120,7 +120,7 @@ class ClientCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $notionInstalled ? 'create_notion_page' : 'install_extension',
             $notionInstalled
-                ? "Creer une page Notion de notes pour {$clientName}"
+                ? "Créer une page Notion de notes pour {$clientName}"
                 : 'Installer Notion Workspace pour centraliser les notes client',
             0.82,
             $notionInstalled

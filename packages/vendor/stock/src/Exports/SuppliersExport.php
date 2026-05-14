@@ -17,6 +17,6 @@ class SuppliersExport implements FromCollection, WithHeadings
 
     public function headings(): array
     {
-        return ['ID', 'Nom', 'Contact', 'Email', 'Telephone', 'Ville', 'Pays'];
+        return trans('stock::stock.exports.suppliers');
     }
 }

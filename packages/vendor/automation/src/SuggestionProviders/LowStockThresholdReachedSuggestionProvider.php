@@ -65,7 +65,7 @@ class LowStockThresholdReachedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $notionInstalled ? 'create_notion_page' : 'install_extension',
             $notionInstalled
-                ? 'Creer une page Notion de suivi stock bas'
+                ? 'Créer une page Notion de suivi stock bas'
                 : 'Installer Notion Workspace pour documenter cette alerte stock',
             0.84,
             $notionInstalled

@@ -18,7 +18,7 @@ class StockMovementController extends Controller
     {
         return view('stock::movements.index', [
             'articles' => Article::orderBy('name')->get(['id', 'name', 'sku']),
-            'directions' => ['in' => 'Entree', 'out' => 'Sortie'],
+            'directions' => ['in' => 'Entrée', 'out' => 'Sortie'],
             'movementTypes' => config('stock.movement_types', []),
             'selectedArticleId' => $request->integer('article_id') ?: null,
         ]);

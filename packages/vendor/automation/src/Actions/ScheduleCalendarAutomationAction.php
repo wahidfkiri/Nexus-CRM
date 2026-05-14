@@ -78,7 +78,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'calendar_event_created',
-            'message' => 'Rendez-vous interne planifie avec succes.',
+            'message' => 'Rendez-vous interne planifié avec succes.',
             'calendar_id' => (string) ($event['calendar_id'] ?? ''),
             'event_id' => (string) ($event['event_id'] ?? ''),
             'client_id' => (int) $client->id,
@@ -129,7 +129,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'calendar_event_created',
-            'message' => 'Rappel de paiement planifie.',
+            'message' => 'Rappel de paiement planifié.',
             'calendar_id' => (string) ($event['calendar_id'] ?? ''),
             'event_id' => (string) ($event['event_id'] ?? ''),
             'invoice_id' => (int) $invoice->id,
@@ -180,7 +180,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'calendar_event_created',
-            'message' => 'Relance devis planifiee.',
+            'message' => 'Relance devis planifiée.',
             'calendar_id' => (string) ($event['calendar_id'] ?? ''),
             'event_id' => (string) ($event['event_id'] ?? ''),
             'quote_id' => (int) $quote->id,
@@ -251,7 +251,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
             $project,
             null,
             'project_scheduled_calendar',
-            'Projet planifie dans Google Calendar',
+            'Projet planifié dans Google Calendar',
             [
                 'calendar_id' => $event['calendar_id'] ?? null,
                 'event_id' => $event['event_id'] ?? null,
@@ -261,7 +261,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'calendar_event_created',
-            'message' => 'Kickoff projet planifie.',
+            'message' => 'Kickoff projet planifié.',
             'project_id' => (int) $project->id,
             'calendar_id' => (string) ($event['calendar_id'] ?? ''),
             'event_id' => (string) ($event['event_id'] ?? ''),
@@ -278,13 +278,13 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
         $payload = $this->payload($automationEvent);
         $taskId = $this->modelId($payload, $suggestion, 'task_id', ProjectTask::class);
         if (!$taskId) {
-            throw new RuntimeException('Tache introuvable pour la planification.');
+            throw new RuntimeException('Tâche introuvable pour la planification.');
         }
 
         $task = $this->loadProjectTask($tenantId, $taskId);
         $project = $task->project;
         if (!$project) {
-            throw new RuntimeException('Projet lie a cette tache introuvable.');
+            throw new RuntimeException('Projet lie a cette tâche introuvable.');
         }
 
         [$startAt, $endAt] = $this->resolveTaskRange($task);
@@ -295,7 +295,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
 
         $eventPayload = [
             'calendar_id' => $existingCalendarId !== '' ? $existingCalendarId : null,
-            'summary' => '[Tache] ' . $task->title,
+            'summary' => '[Tâche] ' . $task->title,
             'description' => implode("\n", array_filter([
                 'Projet: ' . $project->name,
                 $task->description ? $this->sanitizeText((string) $task->description) : null,
@@ -342,7 +342,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
             $project,
             $task,
             'task_scheduled_calendar',
-            'Tache planifiee dans Google Calendar',
+            'Tâche planifiée dans Google Calendar',
             [
                 'calendar_id' => $event['calendar_id'] ?? null,
                 'event_id' => $event['event_id'] ?? null,
@@ -352,7 +352,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'calendar_event_created',
-            'message' => 'Tache planifiee dans Google Calendar.',
+            'message' => 'Tâche planifiée dans Google Calendar.',
             'project_id' => (int) $project->id,
             'task_id' => (int) $task->id,
             'calendar_id' => (string) ($event['calendar_id'] ?? ''),
@@ -376,7 +376,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
         $invitation = $this->loadInvitation($tenantId, $invitationId);
         $invitation->markExpiredIfNeeded();
         if (!$invitation->isUsable()) {
-            throw new RuntimeException('Cette invitation n est plus active.');
+            throw new RuntimeException("Cette invitation n'est plus active.");
         }
 
         $tenantName = trim((string) ($invitation->tenant?->name ?? 'equipe CRM'));
@@ -405,7 +405,7 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'calendar_event_created',
-            'message' => 'Rendez-vous d onboarding planifie.',
+            'message' => "Rendez-vous d'onboarding planifié.",
             'invitation_id' => (int) $invitation->id,
             'calendar_id' => (string) ($event['calendar_id'] ?? ''),
             'event_id' => (string) ($event['event_id'] ?? ''),
@@ -416,10 +416,10 @@ class ScheduleCalendarAutomationAction extends AbstractAutomationAction
 
     protected function ensureCalendarAvailability(int $tenantId): void
     {
-        $this->assertExtensionActive($tenantId, 'google-calendar', 'Google Calendar doit etre installe pour cette automation.');
+        $this->assertExtensionActive($tenantId, 'google-calendar', 'Google Calendar doit être installé pour cette automation.');
 
         if (!$this->calendarService->getToken($tenantId)) {
-            throw new RuntimeException('Google Calendar n est pas connecte pour ce tenant.');
+            throw new RuntimeException("Google Calendar n'est pas connecté pour ce tenant.");
         }
     }
 

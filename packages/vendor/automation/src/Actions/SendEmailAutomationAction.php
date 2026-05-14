@@ -36,12 +36,12 @@ class SendEmailAutomationAction extends AbstractAutomationAction
     protected function sendWelcomeEmail(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-gmail', 'Google Gmail doit etre installe pour envoyer un email de bienvenue.');
+        $this->assertExtensionActive($tenantId, 'google-gmail', 'Google Gmail doit être installé pour envoyer un email de bienvenue.');
 
         $payload = $this->payload($automationEvent);
         $clientId = $this->modelId($payload, $suggestion, 'client_id', Client::class);
         if (!$clientId) {
-            throw new RuntimeException('Client introuvable pour l email de bienvenue.');
+            throw new RuntimeException("Client introuvable pour l'email de bienvenue.");
         }
 
         $client = $this->loadClient($tenantId, $clientId);
@@ -61,7 +61,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
             'Merci pour votre confiance. Nous sommes ravis de vous compter parmi nos clients.',
             'Notre equipe reste disponible pour vous accompagner sur vos prochains besoins.',
             $clientUrl ? 'Votre fiche client dans le CRM: ' . $clientUrl : null,
-            'A bientot,',
+            "À bientôt,",
             $appName,
         ]));
 
@@ -71,7 +71,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
             . ($clientUrl
                 ? '<p><a href="' . e($clientUrl) . '" target="_blank" rel="noopener">Ouvrir votre fiche client</a></p>'
                 : '')
-            . '<p>A bientot,<br>' . e($appName) . '</p>';
+            . "<p>À bientôt,<br>" . e($appName) . '</p>';
 
         $result = $this->sendThroughGmail($tenantId, [
             'to' => $recipientEmail,
@@ -84,7 +84,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'email_sent',
-            'message' => 'Email de bienvenue envoye avec succes.',
+            'message' => 'Email de bienvenue envoyé avec succès.',
             'client_id' => (int) $client->id,
             'client_name' => $displayName,
             'recipient_email' => $recipientEmail,
@@ -97,7 +97,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
     protected function sendInvoiceEmail(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-gmail', 'Google Gmail doit etre installe pour envoyer une facture.');
+        $this->assertExtensionActive($tenantId, 'google-gmail', 'Google Gmail doit être installé pour envoyer une facture.');
 
         $payload = $this->payload($automationEvent);
         $invoiceId = $this->modelId($payload, $suggestion, 'invoice_id', Invoice::class);
@@ -108,7 +108,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
         $invoice = $this->loadInvoice($tenantId, $invoiceId);
         $client = $invoice->client;
         if (!$client || (int) ($invoice->client_id ?? 0) <= 0) {
-            throw new RuntimeException('Cette facture n est liee a aucun client CRM.');
+            throw new RuntimeException("Cette facture n'est liée à aucun client CRM.");
         }
 
         $recipientEmail = trim((string) ($client->email ?? ''));
@@ -151,7 +151,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'email_sent',
-            'message' => 'Facture envoyee par email.',
+            'message' => 'Facture envoyée par email.',
             'invoice_id' => (int) $invoice->id,
             'invoice_number' => (string) $invoice->number,
             'recipient_email' => $recipientEmail,
@@ -164,7 +164,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
     protected function sendFollowupMeetingEmail(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-gmail', 'Google Gmail doit etre installe pour envoyer un email de proposition de rendez-vous.');
+        $this->assertExtensionActive($tenantId, 'google-gmail', 'Google Gmail doit être installé pour envoyer un email de proposition de rendez-vous.');
 
         $payload = $this->payload($automationEvent);
         $clientId = $this->modelId($payload, $suggestion, 'client_id', Client::class);
@@ -187,7 +187,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
             'Nous aimerions organiser un rendez-vous de découverte pour mieux comprendre vos besoins et préparer les prochaines étapes.',
             'Dites-nous simplement vos disponibilités et nous vous proposerons un créneau adapté.',
             $clientUrl ? 'Votre fiche client dans le CRM: ' . $clientUrl : null,
-            'À bientôt,',
+            "À bientôt,",
             $appName,
         ]));
 
@@ -210,7 +210,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'email_sent',
-            'message' => 'Email de proposition de rendez-vous envoye avec succes.',
+            'message' => 'Email de proposition de rendez-vous envoyé avec succès.',
             'client_id' => (int) $client->id,
             'client_name' => $displayName,
             'recipient_email' => $recipientEmail,
@@ -223,7 +223,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
     protected function sendQuoteEmail(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-gmail', 'Google Gmail doit etre installe pour envoyer un devis.');
+        $this->assertExtensionActive($tenantId, 'google-gmail', 'Google Gmail doit être installé pour envoyer un devis.');
 
         $payload = $this->payload($automationEvent);
         $quoteId = $this->modelId($payload, $suggestion, 'quote_id', Quote::class);
@@ -234,7 +234,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
         $quote = $this->loadQuote($tenantId, $quoteId);
         $client = $quote->client;
         if (!$client || (int) ($quote->client_id ?? 0) <= 0) {
-            throw new RuntimeException('Ce devis n est lie a aucun client CRM.');
+            throw new RuntimeException("Ce devis n'est lié à aucun client CRM.");
         }
 
         $recipientEmail = trim((string) ($client->email ?? ''));
@@ -280,7 +280,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'email_sent',
-            'message' => 'Devis envoye par email.',
+            'message' => 'Devis envoyé par email.',
             'quote_id' => (int) $quote->id,
             'quote_number' => (string) $quote->number,
             'recipient_email' => $recipientEmail,
@@ -293,7 +293,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
     protected function sendInvitationFollowupEmail(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-gmail', 'Google Gmail doit etre installe pour relancer une invitation.');
+        $this->assertExtensionActive($tenantId, 'google-gmail', 'Google Gmail doit être installé pour relancer une invitation.');
 
         $payload = $this->payload($automationEvent);
         $invitationId = $this->modelId($payload, $suggestion, 'invitation_id', UserInvitation::class);
@@ -304,7 +304,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
         $invitation = $this->loadInvitation($tenantId, $invitationId);
         $invitation->markExpiredIfNeeded();
         if (!$invitation->isUsable()) {
-            throw new RuntimeException('Cette invitation n est plus active.');
+            throw new RuntimeException("Cette invitation n'est plus active.");
         }
 
         $recipientEmail = trim((string) $invitation->email);
@@ -322,11 +322,11 @@ class SendEmailAutomationAction extends AbstractAutomationAction
         $subject = 'Invitation a rejoindre ' . $tenantName;
         $bodyText = implode("\n\n", array_filter([
             'Bonjour,',
-            $senderName . ' vous invite a rejoindre ' . $tenantName . ' sur ' . $appName . '.',
+            $senderName . ' vous invite à rejoindre ' . $tenantName . ' sur ' . $appName . '.',
             'Role propose: ' . $roleLabel . '.',
-            $acceptUrl ? 'Accepter l invitation: ' . $acceptUrl : null,
-            $expiresAt ? 'Invitation valable jusqu au ' . $expiresAt . '.' : null,
-            'A bientot,',
+            $acceptUrl ? "Accepter l'invitation : " . $acceptUrl : null,
+            $expiresAt ? "Invitation valable jusqu'au " . $expiresAt . '.' : null,
+            "À bientôt,",
             $appName,
         ]));
 
@@ -334,10 +334,10 @@ class SendEmailAutomationAction extends AbstractAutomationAction
             . '<p><strong>' . e($senderName) . '</strong> vous invite a rejoindre <strong>' . e($tenantName) . '</strong> sur ' . e($appName) . '.</p>'
             . '<p>Role propose: <strong>' . e($roleLabel) . '</strong>.</p>'
             . ($acceptUrl
-                ? '<p><a href="' . e($acceptUrl) . '" target="_blank" rel="noopener">Accepter l invitation</a></p>'
+                ? "<p><a href=\"" . e($acceptUrl) . "\" target=\"_blank\" rel=\"noopener\">Accepter l'invitation</a></p>"
                 : '')
             . ($expiresAt ? '<p>Invitation valable jusqu au <strong>' . e($expiresAt) . '</strong>.</p>' : '')
-            . '<p>A bientot,<br>' . e($appName) . '</p>';
+            . "<p>À bientôt,<br>" . e($appName) . '</p>';
 
         $result = $this->sendThroughGmail($tenantId, [
             'to' => $recipientEmail,
@@ -348,7 +348,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'email_sent',
-            'message' => 'Email de relance pour l invitation envoye.',
+            'message' => "Email de relance pour l'invitation envoyé.",
             'invitation_id' => (int) $invitation->id,
             'recipient_email' => $recipientEmail,
             'gmail_message_id' => (string) ($result['message_id'] ?? ''),
@@ -377,7 +377,7 @@ class SendEmailAutomationAction extends AbstractAutomationAction
                 || str_contains($message, 'session google gmail expir')
                 || str_contains($message, 'reconnectez votre compte google')
                 || str_contains($message, 'reconnectez google gmail')) {
-                throw new RuntimeException('Google Gmail n est plus connecte pour ce tenant. Reconnectez Google Gmail puis relancez cette automation.');
+                throw new RuntimeException("Google Gmail n'est plus connecté pour ce tenant. Reconnectez Google Gmail puis relancez cette automation.");
             }
 
             throw $e;

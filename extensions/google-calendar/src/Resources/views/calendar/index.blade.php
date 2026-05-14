@@ -259,18 +259,18 @@
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Client (optionnel)</label>
+              <label class="form-label">{{ __('google-calendar::messages.detail.client_optional') }}</label>
               @if($clientsInstalled)
                 <select class="form-control" id="gcClientId" name="client_id">
-                  <option value="">Aucun</option>
+                  <option value="">{{ __('google-calendar::messages.common.none') }}</option>
                   @foreach($clients as $client)
                     <option value="{{ $client->id }}">{{ $client->company_name }}</option>
                   @endforeach
                 </select>
               @else
                 <div class="gc-inline-note">
-                  Le module Clients n'est pas installe.
-                  <a href="{{ $clientsTargetUrl }}">Installer le module Clients</a>
+                  {{ __('google-calendar::messages.detail.client_module_missing') }}
+                  <a href="{{ $clientsTargetUrl }}">{{ __('google-calendar::messages.detail.install_client_module') }}</a>
                 </div>
               @endif
             </div>
@@ -323,8 +323,8 @@
         <i class="fas fa-calendar-day"></i>
       </div>
       <div>
-        <div class="modal-title" id="gcDetailTitle">Details de l evenement</div>
-        <div class="modal-subtitle" id="gcDetailSubtitle">Consultez les informations avant modification ou suppression.</div>
+        <div class="modal-title" id="gcDetailTitle">{{ __('google-calendar::messages.modal.detail_title') }}</div>
+        <div class="modal-subtitle" id="gcDetailSubtitle">{{ __('google-calendar::messages.modal.detail_subtitle') }}</div>
       </div>
       <button class="modal-close" data-modal-close>&times;</button>
     </div>
@@ -333,60 +333,60 @@
         <div class="gc-detail-title-wrap">
           <div class="gc-detail-calendar-pill" id="gcDetailCalendarPill">
             <span class="gc-detail-calendar-dot" id="gcDetailCalendarDot"></span>
-            <span id="gcDetailCalendarName">Calendrier</span>
+            <span id="gcDetailCalendarName">{{ __('google-calendar::messages.columns.calendar') }}</span>
           </div>
-          <h2 class="gc-detail-event-title" id="gcDetailEventTitle">(Sans titre)</h2>
+          <h2 class="gc-detail-event-title" id="gcDetailEventTitle">{{ __('google-calendar::messages.common.no_title') }}</h2>
         </div>
         <div class="gc-detail-status" id="gcDetailStatus"></div>
       </div>
 
       <div class="gc-detail-grid">
         <div class="gc-detail-item">
-          <div class="gc-detail-label">Quand</div>
+          <div class="gc-detail-label">{{ __('google-calendar::messages.detail.when') }}</div>
           <div class="gc-detail-value" id="gcDetailWhen">-</div>
         </div>
         <div class="gc-detail-item">
-          <div class="gc-detail-label">Lieu</div>
+          <div class="gc-detail-label">{{ __('google-calendar::messages.detail.location') }}</div>
           <div class="gc-detail-value" id="gcDetailLocation">-</div>
         </div>
         <div class="gc-detail-item">
-          <div class="gc-detail-label">Client</div>
+          <div class="gc-detail-label">{{ __('google-calendar::messages.detail.client') }}</div>
           <div class="gc-detail-value" id="gcDetailClient">-</div>
         </div>
         <div class="gc-detail-item">
-          <div class="gc-detail-label">Source</div>
+          <div class="gc-detail-label">{{ __('google-calendar::messages.detail.source') }}</div>
           <div class="gc-detail-value" id="gcDetailSource">-</div>
         </div>
         <div class="gc-detail-item">
-          <div class="gc-detail-label">Visibilite</div>
+          <div class="gc-detail-label">{{ __('google-calendar::messages.detail.visibility') }}</div>
           <div class="gc-detail-value" id="gcDetailVisibility">-</div>
         </div>
         <div class="gc-detail-item">
-          <div class="gc-detail-label">Mise a jour</div>
+          <div class="gc-detail-label">{{ __('google-calendar::messages.detail.updated_at') }}</div>
           <div class="gc-detail-value" id="gcDetailUpdatedAt">-</div>
         </div>
       </div>
 
       <div class="gc-detail-section">
-        <div class="gc-detail-label">Participants</div>
-        <div class="gc-detail-attendees" id="gcDetailAttendees">Aucun participant</div>
+        <div class="gc-detail-label">{{ __('google-calendar::messages.detail.attendees') }}</div>
+        <div class="gc-detail-attendees" id="gcDetailAttendees">{{ __('google-calendar::messages.detail.no_attendees') }}</div>
       </div>
 
       <div class="gc-detail-section">
-        <div class="gc-detail-label">Description</div>
-        <div class="gc-detail-description" id="gcDetailDescription">Aucune description.</div>
+        <div class="gc-detail-label">{{ __('google-calendar::messages.detail.description') }}</div>
+        <div class="gc-detail-description" id="gcDetailDescription">{{ __('google-calendar::messages.detail.no_description') }}</div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" data-modal-close>Fermer</button>
+      <button class="btn btn-secondary" data-modal-close>{{ __('google-calendar::messages.actions.close') }}</button>
       <button class="btn btn-secondary" id="gcDetailOpenGoogleBtn" hidden>
-        <i class="fas fa-arrow-up-right-from-square"></i> Ouvrir dans Google
+        <i class="fas fa-arrow-up-right-from-square"></i> {{ __('google-calendar::messages.actions.open_google') }}
       </button>
       <button class="btn btn-secondary" id="gcDetailEditBtn">
-        <i class="fas fa-pen"></i> Modifier
+        <i class="fas fa-pen"></i> {{ __('google-calendar::messages.actions.edit') }}
       </button>
       <button class="btn btn-danger" id="gcDetailDeleteBtn">
-        <i class="fas fa-trash"></i> Supprimer
+        <i class="fas fa-trash"></i> {{ __('google-calendar::messages.actions.delete') }}
       </button>
     </div>
   </div>

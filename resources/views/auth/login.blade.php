@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Connexion | NexusCRM</title>
+    <title>{{ __('auth-ui.login.page_title') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
@@ -40,15 +40,15 @@
                 <div class="login-brand-row">
                     <div class="login-brand-badge">
                         <span class="login-brand-icon"><i class="fas fa-chart-line"></i></span>
-                        <span class="login-brand-name">NexusCRM</span>
+                        <span class="login-brand-name">{{ __('auth-ui.brand') }}</span>
                     </div>
                 </div>
 
                 <div class="login-copy">
-                    <p class="login-eyebrow">Acces securise</p>
-                    <h1 id="loginTitle">Connexion</h1>
+                    <p class="login-eyebrow">{{ __('auth-ui.login.eyebrow') }}</p>
+                    <h1 id="loginTitle">{{ __('auth-ui.login.title') }}</h1>
                     <p class="login-description">
-                        Retrouvez votre espace CRM, vos extensions et vos automatisations depuis une interface simple et rapide.
+                        {{ __('auth-ui.login.description') }}
                     </p>
                 </div>
 
@@ -77,7 +77,7 @@
                     @csrf
 
                     <div class="login-field">
-                        <label for="email" class="login-label">Email professionnel</label>
+                        <label for="email" class="login-label">{{ __('auth-ui.login.email_label') }}</label>
                         <div class="login-input-wrap">
                             <span class="login-input-icon"><i class="fas fa-envelope"></i></span>
                             <input
@@ -86,7 +86,7 @@
                                 id="email"
                                 name="email"
                                 value="{{ old('email') }}"
-                                placeholder="nom@entreprise.com"
+                                placeholder="{{ __('auth-ui.login.email_placeholder') }}"
                                 required
                                 autocomplete="email"
                                 autofocus
@@ -97,8 +97,8 @@
 
                     <div class="login-field">
                         <div class="login-label-row">
-                            <label for="password" class="login-label">Mot de passe</label>
-                            <a href="{{ route('password.request') }}" class="login-inline-link">Mot de passe oublie ?</a>
+                            <label for="password" class="login-label">{{ __('auth-ui.login.password_label') }}</label>
+                            <a href="{{ route('password.request') }}" class="login-inline-link">{{ __('auth-ui.login.forgot_password') }}</a>
                         </div>
                         <div class="login-input-wrap">
                             <span class="login-input-icon"><i class="fas fa-lock"></i></span>
@@ -107,11 +107,11 @@
                                 class="form-control-modern @error('password') is-invalid @enderror"
                                 id="password"
                                 name="password"
-                                placeholder="Entrez votre mot de passe"
+                                placeholder="{{ __('auth-ui.login.password_placeholder') }}"
                                 required
                                 autocomplete="current-password"
                             >
-                            <button type="button" class="toggle-password" id="togglePassword" aria-label="Afficher ou masquer le mot de passe">
+                            <button type="button" class="toggle-password" id="togglePassword" aria-label="{{ __('auth-ui.login.toggle_password') }}">
                                 <i class="far fa-eye"></i>
                             </button>
                         </div>
@@ -121,25 +121,25 @@
                     <label class="login-checkbox">
                         <input type="checkbox" id="rememberMe" name="remember">
                         <span class="login-checkbox-mark"></span>
-                        <span>Se souvenir de moi</span>
+                        <span>{{ __('auth-ui.login.remember_me') }}</span>
                     </label>
 
                     <button type="submit" class="btn-login" id="loginBtn">
-                        <span class="btn-login-label">Se connecter</span>
+                        <span class="btn-login-label">{{ __('auth-ui.login.submit') }}</span>
                         <span class="btn-login-spinner" aria-hidden="true"></span>
                     </button>
                 </form>
 
-                <div class="login-divider"><span>ou</span></div>
+                <div class="login-divider"><span>{{ __('auth-ui.login.divider') }}</span></div>
 
                 <a href="{{ route('auth.google.redirect') }}" class="login-google-btn">
                     <i class="fab fa-google"></i>
-                    <span>Continuer avec Google</span>
+                    <span>{{ __('auth-ui.login.google') }}</span>
                 </a>
 
                 <div class="login-footer">
-                    <span>Pas encore de compte ?</span>
-                    <a href="{{ route('register') }}">Creer un compte</a>
+                    <span>{{ __('auth-ui.login.no_account') }}</span>
+                    <a href="{{ route('register') }}">{{ __('auth-ui.login.create_account') }}</a>
                 </div>
             </section>
         </main>
@@ -148,7 +148,7 @@
     <script>
         window.LoginPage = {
             defaultRedirect: @json(url('/dashboard')),
-            loginErrorMessage: 'Connexion impossible pour le moment. Reessayez dans un instant.'
+            loginErrorMessage: @json(__('auth-ui.login.error'))
         };
     </script>
     @include('layouts.partials.tauri-bridge')

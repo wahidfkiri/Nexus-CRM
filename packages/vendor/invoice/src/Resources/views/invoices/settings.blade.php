@@ -26,7 +26,7 @@
     ['id'=>'signature',   'icon'=>'fa-signature',            'label'=>'Signature électronique'],
     ['id'=>'accounting',  'icon'=>'fa-book',                 'label'=>'Comptabilité'],
     ['id'=>'reminders',   'icon'=>'fa-bell',                 'label'=>'Rappels'],
-    ['id'=>'templates',   'icon'=>'fa-palette',              'label'=>'Templates PDF'],
+    ['id'=>'templates',   'icon'=>'fa-palette',              'label'=>__('invoice::invoices.settings_tabs.templates')],
   ] as $tab)
   <button class="tab-btn {{ $loop->first ? 'active' : '' }}" onclick="switchTab('{{ $tab['id'] }}')" id="tab-btn-{{ $tab['id'] }}"
     style="padding:8px 14px;border:none;background:{{ $loop->first ? 'var(--c-accent)' : 'transparent' }};color:{{ $loop->first ? '#fff' : 'var(--c-ink-60)' }};border-radius:var(--r-sm);font-size:13px;font-weight:var(--fw-medium);cursor:pointer;display:flex;align-items:center;gap:7px;transition:all var(--dur-fast);white-space:nowrap;">
@@ -604,7 +604,7 @@
         <p>Affiche un filigrane sur les factures en mode brouillon</p>
       </div>
       <label class="toggle-switch">
-        <input type="checkbox" name="pdf_watermark_draft" {{ ($settings['pdf_watermark_draft'] ?? true) ? 'checked' : '' }}>
+      <input type="checkbox" name="pdf_watermark_draft" {{ ($settings['pdf_watermark_draft'] ?? true) ? 'checked' : '' }}>
         <span class="toggle-slider"></span>
       </label>
     </div>
@@ -821,6 +821,17 @@
 
 @push('scripts')
 <script>
+const invoiceSettingsLang = {
+  signatureSavedTitle: @json(__('invoice::invoices.js.signature_saved_title')),
+  signatureSavedHelp: @json(__('invoice::invoices.js.signature_saved_help')),
+  settingsSavedTitle: @json(__('invoice::invoices.js.settings_saved_title')),
+  settingsSavedHelp: @json(__('invoice::invoices.js.settings_saved_help')),
+  validationTitle: @json(__('invoice::invoices.js.validation_title')),
+  validationHelp: @json(__('invoice::invoices.validation.fix_errors')),
+  errorTitle: @json(__('invoice::invoices.js.error_title')),
+  saveError: @json(__('invoice::invoices.alerts.unable_to_save_settings')),
+};
+
 // Tabs
 function switchTab(id) {
   document.querySelectorAll('.tab-panel').forEach(el => el.style.display = 'none');
@@ -894,7 +905,7 @@ function clearSignature() {
 function saveSignature() {
   if (!canvas) return;
   document.getElementById('signature_data').value = canvas.toDataURL('image/png');
-  Toast.success('Signature sauvegardée', 'Elle sera utilisée sur vos documents.');
+  Toast.success(invoiceSettingsLang.signatureSavedTitle, invoiceSettingsLang.signatureSavedHelp);
 }
 
 // Toggle signature config when enabled/disabled
@@ -998,18 +1009,17 @@ document.getElementById('settingsForm')?.addEventListener('submit', async (e) =>
   if (btn) CrmForm.setLoading(btn, false);
 
   if (ok && data.success) {
-    Toast.success('Paramètres sauvegardés', data.message || 'Vos préférences ont été enregistrées.');
+    Toast.success(invoiceSettingsLang.settingsSavedTitle, data.message || invoiceSettingsLang.settingsSavedHelp);
     return;
   }
 
   if (data?.errors) {
     CrmForm.showErrors(form, data.errors);
-    Toast.error('Validation', 'Merci de corriger les champs en erreur.');
+    Toast.error(invoiceSettingsLang.validationTitle, invoiceSettingsLang.validationHelp);
     return;
   }
 
-  Toast.error('Erreur', data?.message || 'Impossible de sauvegarder les parametres.');
+  Toast.error(invoiceSettingsLang.errorTitle, data?.message || invoiceSettingsLang.saveError);
 });
 </script>
 @endpush
-

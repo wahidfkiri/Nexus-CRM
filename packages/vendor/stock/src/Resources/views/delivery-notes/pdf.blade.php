@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Bon de livraison {{ $deliveryNote->number }}</title>
+    <title>{{ __('stock::stock.pages.delivery_notes.pdf.title', ['number' => $deliveryNote->number]) }}</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 10pt; color: #0f172a; margin: 0; }
@@ -25,28 +25,28 @@
 <div class="wrap">
     <div class="header-band">
         <div class="title">{{ $deliveryNote->number }}</div>
-        <div class="subtle">{{ $deliveryNote->type_label }} - statut {{ $deliveryNote->status_label }}</div>
+        <div class="subtle">{{ $deliveryNote->type_label }} - {{ __('stock::stock.pages.delivery_notes.pdf.status_prefix') }} {{ $deliveryNote->status_label }}</div>
     </div>
 
     <table class="grid">
         <tr>
             <td>
-                <div class="label">Partenaire</div>
-                <strong>{{ $deliveryNote->type === 'in' ? ($deliveryNote->supplier?->name ?: '—') : ($deliveryNote->client?->company_name ?: '—') }}</strong>
+                <div class="label">{{ __('stock::stock.common.partner') }}</div>
+                <strong>{{ $deliveryNote->type === 'in' ? ($deliveryNote->supplier?->name ?: __('stock::stock.common.none_short')) : ($deliveryNote->client?->company_name ?: __('stock::stock.common.none_short')) }}</strong>
             </td>
             <td>
-                <div class="label">Date du BL</div>
-                <strong>{{ optional($deliveryNote->issue_date)->format('d/m/Y') ?: '—' }}</strong>
+                <div class="label">{{ __('stock::stock.common.date_of_delivery_note') }}</div>
+                <strong>{{ optional($deliveryNote->issue_date)->format('d/m/Y') ?: __('stock::stock.common.none_short') }}</strong>
             </td>
         </tr>
         <tr>
             <td>
-                <div class="label">Reference</div>
-                <strong>{{ $deliveryNote->reference ?: '—' }}</strong>
+                <div class="label">{{ __('stock::stock.common.reference') }}</div>
+                <strong>{{ $deliveryNote->reference ?: __('stock::stock.common.none_short') }}</strong>
             </td>
             <td>
-                <div class="label">Commande liee</div>
-                <strong>{{ $deliveryNote->order?->number ?: '—' }}</strong>
+                <div class="label">{{ __('stock::stock.common.linked_order') }}</div>
+                <strong>{{ $deliveryNote->order?->number ?: __('stock::stock.common.none_short') }}</strong>
             </td>
         </tr>
     </table>
@@ -55,10 +55,10 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Article</th>
-                <th>SKU</th>
-                <th class="right">Quantite</th>
-                <th>Unite</th>
+                <th>{{ __('stock::stock.common.article') }}</th>
+                <th>{{ __('stock::stock.common.sku') }}</th>
+                <th class="right">{{ __('stock::stock.common.quantity') }}</th>
+                <th>{{ __('stock::stock.common.unit') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -66,7 +66,7 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $item->name }}</td>
-                    <td>{{ $item->sku ?: ($item->article?->sku ?: '—') }}</td>
+                    <td>{{ $item->sku ?: ($item->article?->sku ?: __('stock::stock.common.none_short')) }}</td>
                     <td class="right">{{ number_format((float) $item->quantity, 4, ',', ' ') }}</td>
                     <td>{{ $item->unit }}</td>
                 </tr>
@@ -76,12 +76,12 @@
 
     @if(!empty($deliveryNote->notes))
         <div class="note">
-            <strong>Notes</strong><br>
+            <strong>{{ __('stock::stock.common.notes') }}</strong><br>
             {{ $deliveryNote->notes }}
         </div>
     @endif
 
-    <div class="footer">Genere le {{ now()->format('d/m/Y H:i') }}</div>
+    <div class="footer">{{ __('stock::stock.common.generated_at', ['date' => now()->format('d/m/Y H:i')]) }}</div>
 </div>
 </body>
 </html>

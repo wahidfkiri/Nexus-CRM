@@ -85,12 +85,12 @@ class UserRequest extends FormRequest
                     ->first();
 
                 if (!$role) {
-                    $validator->errors()->add('role_id', 'Le rôle sélectionné est introuvable.');
+                    $validator->errors()->add('role_id', __('user::users.validation.role_not_found'));
                     return;
                 }
 
                 if (!array_key_exists($role->name, config('user.tenant_roles', [])) || $role->name === 'owner') {
-                    $validator->errors()->add('role_id', 'Ce rôle ne peut pas être attribué.');
+                    $validator->errors()->add('role_id', __('user::users.validation.role_not_assignable'));
                     return;
                 }
 
@@ -107,12 +107,12 @@ class UserRequest extends FormRequest
                     ->first();
 
                 if (!$role) {
-                    $validator->errors()->add('role_in_tenant', 'Le rôle sélectionné n’existe pas.');
+                    $validator->errors()->add('role_in_tenant', __('user::users.validation.role_not_found'));
                     return;
                 }
 
                 if ($role->name === 'owner') {
-                    $validator->errors()->add('role_in_tenant', 'Le rôle propriétaire ne peut pas être attribué depuis cet écran.');
+                    $validator->errors()->add('role_in_tenant', __('user::users.hints.owner_not_changeable'));
                     return;
                 }
 
@@ -124,13 +124,13 @@ class UserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Le nom est requis.',
-            'email.required' => 'L’email est requis.',
-            'email.email' => 'Format email invalide.',
-            'email.unique' => 'Cet email est déjà utilisé.',
-            'role_in_tenant.required_without' => 'Le rôle est requis.',
-            'role_in_tenant.in' => 'Rôle invalide.',
-            'status.required' => 'Le statut est requis.',
+            'name.required' => __('user::users.validation.name_required'),
+            'email.required' => __('user::users.validation.email_required'),
+            'email.email' => __('user::users.validation.email_invalid'),
+            'email.unique' => __('user::users.validation.email_unique'),
+            'role_in_tenant.required_without' => __('user::users.validation.role_required'),
+            'role_in_tenant.in' => __('user::users.validation.role_invalid'),
+            'status.required' => __('user::users.validation.status_required'),
         ];
     }
 
@@ -139,7 +139,7 @@ class UserRequest extends FormRequest
         throw new HttpResponseException(
             response()->json([
                 'success' => false,
-                'message' => 'Erreurs de validation.',
+                'message' => __('user::users.validation.validation_errors'),
                 'errors' => $validator->errors(),
             ], 422)
         );

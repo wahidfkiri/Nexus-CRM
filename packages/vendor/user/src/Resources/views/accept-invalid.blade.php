@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invitation invalide — {{ config('app.name') }}</title>
+  <title>{{ __('user::users.titles.invalid_invitation') }} - {{ config('app.name') }}</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="{{ asset('vendor/client/css/crm.css') }}">
   <style>
@@ -19,26 +19,25 @@
   <div class="invalid-card">
     <div class="invalid-header">
       <div class="invalid-icon"><i class="fas fa-link-slash"></i></div>
-      <div style="font-family:var(--ff-display);font-size:20px;font-weight:700;color:#fff;">Lien d'invitation invalide</div>
-      <div style="font-size:13px;color:rgba(255,255,255,.55);margin-top:6px;">Le lien n'est plus utilisable.</div>
+      <div style="font-family:var(--ff-display);font-size:20px;font-weight:700;color:#fff;">{{ __('user::users.titles.invalid_invitation') }}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.55);margin-top:6px;">{{ __('user::users.subtitles.invitation_link_unusable') }}</div>
     </div>
     <div class="invalid-body">
       <p style="margin:0;color:var(--c-ink-70);font-size:14px;line-height:1.65;">
-        Cette invitation peut être expirée, révoquée, déjà acceptée, ou incorrecte.
+        {{ __('user::users.subtitles.invalid_invitation_reason') }}
       </p>
       @if(!empty($reason))
         <div class="invalid-reason">{{ $reason }}</div>
       @endif
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
         <a href="{{ route('login') }}" class="btn btn-primary">
-          <i class="fas fa-right-to-bracket"></i> Se connecter
+          <i class="fas fa-right-to-bracket"></i> {{ __('user::users.actions.login') }}
         </a>
         <a href="{{ url('/') }}" class="btn btn-secondary">
-          <i class="fas fa-house"></i> Accueil
+          <i class="fas fa-house"></i> {{ __('user::users.actions.home') }}
         </a>
       </div>
     </div>
   </div>
 </body>
 </html>
-

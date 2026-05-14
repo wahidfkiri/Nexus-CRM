@@ -74,15 +74,15 @@ class DeliveryNote extends Model
 
     public function getTypeLabelAttribute(): string
     {
-        return $this->type === 'in' ? 'BL entree' : 'BL sortie';
+        return $this->type === 'in' ? 'BL entrée' : 'BL sortie';
     }
 
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
             'draft' => 'Brouillon',
-            'validated' => 'Valide',
-            'cancelled' => 'Annule',
+            'validated' => 'Validé',
+            'cancelled' => 'Annulé',
             default => ucfirst((string) $this->status),
         };
     }

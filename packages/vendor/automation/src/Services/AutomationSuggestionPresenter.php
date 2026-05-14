@@ -74,7 +74,7 @@ class AutomationSuggestionPresenter
                 'source_type' => $sourceType,
                 'source_id' => $sourceId !== null ? (string) $sourceId : null,
                 'title' => $this->titleForSourceEvent($sourceEvent),
-                'subtitle' => 'Les suggestions intelligentes sont desactivees dans les parametres globaux.',
+                'subtitle' => __('automation::automation.presenter.suggestions_disabled'),
                 'count' => 0,
                 'pending_count' => 0,
                 'settings_url' => $this->preferences->settingsUrl(),
@@ -101,8 +101,8 @@ class AutomationSuggestionPresenter
             'source_id' => $sourceId !== null ? (string) $sourceId : null,
             'title' => $this->titleForSourceEvent($sourceEvent),
             'subtitle' => $count > 0
-                ? $count . ' suggestion(s) intelligentes disponibles pour cette action.'
-                : 'Aucune suggestion disponible pour cette action.',
+                ? __('automation::automation.presenter.suggestions_available', ['count' => $count])
+                : __('automation::automation.presenter.suggestions_empty'),
             'count' => $count,
             'pending_count' => $count,
             'settings_url' => $this->preferences->settingsUrl(),
@@ -126,8 +126,10 @@ class AutomationSuggestionPresenter
         $isInstall = $suggestion->type === 'install_extension' || !$installed;
         $theme = $this->themeFor($suggestion);
         $confidencePercent = (int) round(((float) $suggestion->confidence) * 100);
-        $primaryLabel = (string) ($meta['primary_label'] ?? ($isInstall ? 'Installer' : 'Accepter'));
-        $secondaryLabel = (string) ($meta['secondary_label'] ?? 'Ignorer');
+        $primaryLabel = (string) ($meta['primary_label'] ?? ($isInstall
+            ? __('automation::automation.presenter.primary_label_install')
+            : __('automation::automation.presenter.primary_label_accept')));
+        $secondaryLabel = (string) ($meta['secondary_label'] ?? __('automation::automation.presenter.secondary_label_ignore'));
         $integrationSlug = (string) ($meta['integration'] ?? ($payload['extension_slug'] ?? 'automation'));
 
         return [
@@ -164,63 +166,40 @@ class AutomationSuggestionPresenter
 
     protected function titleForSourceEvent(string $sourceEvent): string
     {
-        return match ($sourceEvent) {
-            'article_created' => 'Automatisations suggerees pour cet article',
-            'client_created' => 'Automatisations suggerees pour ce client',
-            'supplier_created' => 'Automatisations suggerees pour ce fournisseur',
-            'invoice_created' => 'Automatisations suggerees pour cette facture',
-            'quote_created' => 'Automatisations suggerees pour ce devis',
-            'stock_order_created' => 'Automatisations suggerees pour cette commande fournisseur',
-            'delivery_note_created' => 'Automatisations suggerees pour ce bon de livraison',
-            'delivery_note_validated' => 'Automatisations suggerees pour ce bon de livraison',
-            'stock_low_threshold_reached' => 'Automatisations suggerees pour ce stock bas',
-            'project_created' => 'Automatisations suggerees pour ce projet',
-            'project_task_created' => 'Automatisations suggerees pour cette tache',
-            'user_invited' => 'Automatisations suggerees pour cette invitation',
-            'extension_activated' => 'Suggestions apres activation de cette application',
-            default => 'Automatisations suggerees',
-        };
+        $key = 'automation::automation.presenter.source_titles.' . $sourceEvent;
+
+        return __($key) !== $key
+            ? __($key)
+            : __('automation::automation.presenter.source_titles.default');
     }
 
     protected function confidenceLabel(float $confidence): string
     {
         return match (true) {
-            $confidence >= 0.9 => 'Tres pertinent',
-            $confidence >= 0.8 => 'Pertinent',
-            $confidence >= 0.65 => 'Utile',
-            default => 'Optionnel',
+            $confidence >= 0.9 => __('automation::automation.presenter.confidence.very_relevant'),
+            $confidence >= 0.8 => __('automation::automation.presenter.confidence.relevant'),
+            $confidence >= 0.65 => __('automation::automation.presenter.confidence.useful'),
+            default => __('automation::automation.presenter.confidence.optional'),
         };
     }
 
     protected function statusLabel(string $status): string
     {
         return match ($status) {
-            AutomationSuggestion::STATUS_ACCEPTED => 'Acceptee',
-            AutomationSuggestion::STATUS_REJECTED => 'Ignoree',
-            AutomationSuggestion::STATUS_EXPIRED => 'Expiree',
-            default => 'En attente',
+            AutomationSuggestion::STATUS_ACCEPTED => __('automation::automation.presenter.statuses.accepted'),
+            AutomationSuggestion::STATUS_REJECTED => __('automation::automation.presenter.statuses.rejected'),
+            AutomationSuggestion::STATUS_EXPIRED => __('automation::automation.presenter.statuses.expired'),
+            default => __('automation::automation.presenter.statuses.pending'),
         };
     }
 
     protected function integrationLabel(string $slug): string
     {
-        return match ($slug) {
-            'google-gmail' => 'Google Gmail',
-            'google-calendar' => 'Google Calendar',
-            'google-drive' => 'Google Drive',
-            'dropbox' => 'Dropbox',
-            'google-meet' => 'Google Meet',
-            'google-sheets' => 'Google Sheets',
-            'google-docx' => 'Google Docs',
-            'notion-workspace' => 'Notion Workspace',
-            'invoice' => 'Facturation',
-            'projects' => 'Projets',
-            'chatbot' => 'Chatbot',
-            'slack' => 'Slack',
-            'users' => 'Utilisateurs',
-            'marketplace' => 'Applications',
-            default => ucfirst(str_replace('-', ' ', $slug ?: 'automation')),
-        };
+        $key = 'automation::automation.presenter.integrations.' . $slug;
+
+        return __($key) !== $key
+            ? __($key)
+            : ucfirst(str_replace('-', ' ', $slug ?: 'automation'));
     }
 
     protected function themeFor(AutomationSuggestion $suggestion): array

@@ -144,7 +144,11 @@ class AutomationReconnectResolver
 
     public static function providerLabel(string $slug): string
     {
-        return (string) (self::PROVIDERS[$slug]['label'] ?? ucfirst(str_replace('-', ' ', $slug)));
+        $key = 'automation::automation.presenter.integrations.' . $slug;
+
+        return __($key) !== $key
+            ? __($key)
+            : (string) (self::PROVIDERS[$slug]['label'] ?? ucfirst(str_replace('-', ' ', $slug)));
     }
 
     public static function providerRoute(string $slug): ?string
@@ -159,7 +163,7 @@ class AutomationReconnectResolver
 
         return [
             'slug' => $slug,
-            'label' => (string) $provider['label'],
+            'label' => self::providerLabel($slug),
             'route' => $routeName !== '' ? $routeName : null,
             'url' => $url,
         ];

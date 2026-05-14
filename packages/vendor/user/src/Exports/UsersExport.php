@@ -41,9 +41,16 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
     public function headings(): array
     {
         return [
-            'ID', 'Nom', 'Email', 'Telephone',
-            'Role', 'Statut', 'Titre', 'Departement',
-            'Derniere connexion', 'Cree le',
+            __('user::users.exports.id'),
+            __('user::users.exports.name'),
+            __('user::users.exports.email'),
+            __('user::users.exports.phone'),
+            __('user::users.exports.role'),
+            __('user::users.exports.status'),
+            __('user::users.exports.job_title'),
+            __('user::users.exports.department'),
+            __('user::users.exports.last_login'),
+            __('user::users.exports.created_at'),
         ];
     }
 
@@ -61,7 +68,7 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
             $statusLabels[$user->status] ?? $user->status,
             $user->job_title ?? '-',
             $user->department ?? '-',
-            $user->last_login_at?->format('d/m/Y H:i') ?? 'Jamais',
+            $user->last_login_at?->format('d/m/Y H:i') ?? __('user::users.exports.never'),
             $user->created_at->format('d/m/Y'),
         ];
     }

@@ -32,6 +32,6 @@ class DeliveryNotesExport implements FromCollection, WithHeadings
 
     public function headings(): array
     {
-        return ['Numero', 'Type', 'Statut', 'Date', 'Fournisseur', 'Client', 'Reference', 'Nb lignes', 'Quantite totale', 'Notes'];
+        return trans('stock::stock.exports.delivery_notes');
     }
 }

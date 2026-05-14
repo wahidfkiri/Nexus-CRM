@@ -92,7 +92,7 @@ class RbacRepository
     public function deleteRole(Role $role): bool
     {
         if ((bool) $role->is_system || (int) $role->tenant_id <= 0) {
-            throw new \RuntimeException('Impossible de supprimer un rôle système.');
+            throw new \RuntimeException(__('rbac::rbac.errors.system_role_delete_forbidden'));
         }
 
         if (
@@ -101,7 +101,7 @@ class RbacRepository
                 ->where('status', 'active')
                 ->exists()
         ) {
-            throw new \RuntimeException('Ce rôle est assigné à des utilisateurs. Réassignez-les avant suppression.');
+            throw new \RuntimeException(__('rbac::rbac.errors.role_assigned_users'));
         }
 
         return (bool) $role->delete();

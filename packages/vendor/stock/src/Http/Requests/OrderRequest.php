@@ -27,4 +27,14 @@ class OrderRequest extends FormRequest
             'items.*.unit_price' => 'required|numeric|min:0',
         ];
     }
+
+    public function messages(): array
+    {
+        return trans('stock::stock.validation');
+    }
+
+    public function attributes(): array
+    {
+        return trans('stock::stock.attributes');
+    }
 }

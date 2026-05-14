@@ -30,7 +30,7 @@ class CreateProjectChannelAction extends AbstractAutomationAction
         $payload = $this->payload($automationEvent);
         $projectId = $this->modelId($payload, $suggestion, 'project_id', Project::class);
         if (!$projectId) {
-            throw new RuntimeException('Projet introuvable pour la creation du canal equipe.');
+            throw new RuntimeException('Projet introuvable pour la création du canal équipe.');
         }
 
         $project = $this->loadProject($tenantId, $projectId);
@@ -63,7 +63,7 @@ class CreateProjectChannelAction extends AbstractAutomationAction
     protected function createChatbotRoom(AutomationEvent $automationEvent, Project $project): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'chatbot', 'Chatbot doit etre installe pour creer un canal equipe.');
+        $this->assertExtensionActive($tenantId, 'chatbot', 'Chatbot doit être installé pour créer un canal équipe.');
 
         $existingMeta = $this->projectMetadata($project, 'chatbot_room', []);
         $existingRoomId = (int) ($existingMeta['id'] ?? 0);
@@ -76,7 +76,7 @@ class CreateProjectChannelAction extends AbstractAutomationAction
             if ($room) {
                 return [
                     'result' => 'channel_exists',
-                    'message' => 'Le salon Chatbot du projet existe deja.',
+                    'message' => 'Le salon Chatbot du projet existe déjà.',
                     'provider' => 'chatbot',
                     'project_id' => (int) $project->id,
                     'room_id' => (int) $room->id,
@@ -124,14 +124,14 @@ class CreateProjectChannelAction extends AbstractAutomationAction
             $project,
             null,
             'project_channel_created',
-            'Salon Chatbot cree pour le projet',
+            'Salon Chatbot créé pour le projet',
             ['provider' => 'chatbot', 'room_id' => (int) $room->id],
             $this->actorId($automationEvent)
         );
 
         return [
             'result' => 'channel_created',
-            'message' => 'Salon Chatbot cree pour le projet.',
+            'message' => 'Salon Chatbot créé pour le projet.',
             'provider' => 'chatbot',
             'project_id' => (int) $project->id,
             'room_id' => (int) $room->id,
@@ -142,7 +142,7 @@ class CreateProjectChannelAction extends AbstractAutomationAction
     protected function createSlackChannel(AutomationEvent $automationEvent, Project $project): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'slack', 'Slack doit etre installe pour creer un canal equipe.');
+        $this->assertExtensionActive($tenantId, 'slack', 'Slack doit être installé pour créer un canal équipe.');
 
         $existingMeta = $this->projectMetadata($project, 'slack_channel', []);
         $existingChannelId = trim((string) ($existingMeta['channel_id'] ?? ''));
@@ -155,7 +155,7 @@ class CreateProjectChannelAction extends AbstractAutomationAction
             if ($channel) {
                 return [
                     'result' => 'channel_exists',
-                    'message' => 'Le canal Slack du projet existe deja.',
+                    'message' => 'Le canal Slack du projet existe déjà.',
                     'provider' => 'slack',
                     'project_id' => (int) $project->id,
                     'channel_id' => (string) $channel->channel_id,
@@ -170,7 +170,7 @@ class CreateProjectChannelAction extends AbstractAutomationAction
             ->first();
 
         if (!$token || trim((string) $token->bot_token) === '') {
-            throw new RuntimeException('Slack n est pas connecte pour ce tenant.');
+            throw new RuntimeException("Slack n'est pas connecté pour ce tenant.");
         }
 
         $channelName = $this->slackChannelName($project);
@@ -185,13 +185,13 @@ class CreateProjectChannelAction extends AbstractAutomationAction
             ]);
 
         if (!$response->ok()) {
-            throw new RuntimeException('Slack API conversations.create a echoue: HTTP ' . $response->status());
+            throw new RuntimeException('Erreur API Slack conversations.create : HTTP ' . $response->status());
         }
 
         $data = $response->json();
         if (!is_array($data) || !($data['ok'] ?? false)) {
             $error = trim((string) ($data['error'] ?? ''));
-            throw new RuntimeException($error !== '' ? 'Slack API error: ' . $error : 'La creation du canal Slack a echoue.');
+            throw new RuntimeException($error !== '' ? 'Erreur API Slack : ' . $error : 'La création du canal Slack a échoué.');
         }
 
         $channelData = (array) ($data['channel'] ?? []);
@@ -246,14 +246,14 @@ class CreateProjectChannelAction extends AbstractAutomationAction
             $project,
             null,
             'project_channel_created',
-            'Canal Slack cree pour le projet',
+            'Canal Slack créé pour le projet',
             ['provider' => 'slack', 'channel_id' => $channelId],
             $this->actorId($automationEvent)
         );
 
         return [
             'result' => 'channel_created',
-            'message' => 'Canal Slack cree pour le projet.',
+            'message' => 'Canal Slack créé pour le projet.',
             'provider' => 'slack',
             'project_id' => (int) $project->id,
             'channel_id' => $channelId,

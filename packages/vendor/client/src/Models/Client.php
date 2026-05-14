@@ -231,35 +231,26 @@ class Client extends Model
 
     public function getTypeLabelAttribute(): string
     {
-        $types = [
-            'entreprise' => 'Entreprise',
-            'particulier' => 'Particulier',
-            'startup' => 'Startup',
-            'association' => 'Association',
-            'public' => 'Public',
-        ];
-        
         if (blank($this->type)) {
             return '';
         }
 
-        return $types[$this->type] ?? Str::headline((string) $this->type);
+        $key = 'client::clients.types.' . $this->type;
+        $label = trans($key);
+
+        return $label !== $key ? $label : Str::headline((string) $this->type);
     }
 
     public function getStatusLabelAttribute(): string
     {
-        $statuses = [
-            'actif' => 'Actif',
-            'inactif' => 'Inactif',
-            'en_attente' => 'En attente',
-            'suspendu' => 'Suspendu',
-        ];
-        
         if (blank($this->status)) {
             return '';
         }
 
-        return $statuses[$this->status] ?? Str::headline((string) $this->status);
+        $key = 'client::clients.statuses.' . $this->status;
+        $label = trans($key);
+
+        return $label !== $key ? $label : Str::headline((string) $this->status);
     }
 
     public function getStatusColorAttribute(): string
@@ -276,19 +267,14 @@ class Client extends Model
 
     public function getSourceLabelAttribute(): string
     {
-        $sources = [
-            'direct' => 'Direct',
-            'site_web' => 'Site Web',
-            'reference' => 'Recommandation',
-            'reseau_social' => 'Réseau social',
-            'autre' => 'Autre',
-        ];
-        
         if (blank($this->source)) {
             return '';
         }
 
-        return $sources[$this->source] ?? Str::headline((string) $this->source);
+        $key = 'client::clients.sources.' . $this->source;
+        $label = trans($key);
+
+        return $label !== $key ? $label : Str::headline((string) $this->source);
     }
 
     public function getInitialsAttribute(): string
@@ -327,3 +313,4 @@ class Client extends Model
         return method_exists($this, 'isForceDeleting') && $this->isForceDeleting();
     }
 }
+

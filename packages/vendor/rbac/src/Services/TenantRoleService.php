@@ -80,7 +80,7 @@ class TenantRoleService
     {
         if ($role instanceof Role) {
             if ((int) $role->tenant_id !== $tenantId || !$role->is_active) {
-                throw new \RuntimeException('Le rôle ne correspond pas au tenant actif.');
+                throw new \RuntimeException(__('rbac::rbac.errors.role_not_active_tenant'));
             }
 
             return $role;
@@ -91,7 +91,7 @@ class TenantRoleService
             : $this->findTenantRoleByName($tenantId, (string) $role);
 
         if (!$resolved) {
-            throw new \RuntimeException('Le rôle sélectionné est introuvable pour ce tenant.');
+            throw new \RuntimeException(__('rbac::rbac.errors.role_not_found_tenant'));
         }
 
         return $resolved;

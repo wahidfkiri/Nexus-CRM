@@ -56,7 +56,7 @@ class StockMovementService
             'quantity' => $quantity,
             'unit' => $article->unit,
             'reference' => 'OPENING-STOCK',
-            'reason' => $reason ?: 'Opening stock declared at article creation',
+            'reason' => $reason ?: trans('stock::stock.reasons.opening_stock_declared'),
             'happened_at' => $happenedAt ?: now(),
         ]);
     }
@@ -76,12 +76,11 @@ class StockMovementService
             $currentStock = $this->currentStockForArticleId((int) $articleId);
             if ($currentStock < $requiredQty) {
                 $article = Article::query()->find($articleId);
-                throw new RuntimeException(sprintf(
-                    'Stock insuffisant pour %s. Disponible: %s, requis: %s.',
-                    $article?->name ?: ('Article #' . $articleId),
-                    number_format($currentStock, 4, '.', ''),
-                    number_format($requiredQty, 4, '.', '')
-                ));
+                throw new RuntimeException(trans('stock::stock.errors.stock_insufficient', [
+                    'article' => $article?->name ?: ('Article #' . $articleId),
+                    'available' => number_format($currentStock, 4, '.', ''),
+                    'required' => number_format($requiredQty, 4, '.', ''),
+                ]));
             }
         }
     }
@@ -110,7 +109,9 @@ class StockMovementService
                 'quantity' => $item->quantity,
                 'unit' => $item->unit,
                 'reference' => $note->number,
-                'reason' => sprintf('Posted from %s', $note->type_label),
+                'reason' => trans('stock::stock.reasons.posted_from_note', [
+                    'type' => $note->type_label,
+                ]),
                 'happened_at' => $happenedAt,
                 'notes' => $note->notes,
                 'meta' => [
@@ -152,7 +153,9 @@ class StockMovementService
                 'quantity' => $item->quantity,
                 'unit' => $item->unit,
                 'reference' => $note->number,
-                'reason' => sprintf('Reversal after cancellation of %s', $note->type_label),
+                'reason' => trans('stock::stock.reasons.reversal_after_cancellation', [
+                    'type' => $note->type_label,
+                ]),
                 'happened_at' => $happenedAt,
                 'notes' => $note->notes,
                 'meta' => [

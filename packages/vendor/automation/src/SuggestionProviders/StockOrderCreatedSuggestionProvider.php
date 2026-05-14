@@ -48,7 +48,7 @@ class StockOrderCreatedSuggestionProvider implements SuggestionProvider
             $docsInstalled ? 'create_stock_order_google_doc' : 'install_extension',
             $docsInstalled
                 ? "Generer un document Google Docs pour {$orderNumber}"
-                : 'Installer Google Docs pour generer un document de commande fournisseur',
+                : 'Installer Google Docs pour générer un document de commande fournisseur',
             0.86,
             $docsInstalled
                 ? ['stock_order_id' => $orderId]
@@ -64,7 +64,7 @@ class StockOrderCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $notionInstalled ? 'create_notion_page' : 'install_extension',
             $notionInstalled
-                ? 'Creer une note Notion de suivi fournisseur'
+                ? 'Créer une note Notion de suivi fournisseur'
                 : 'Installer Notion Workspace pour documenter les commandes fournisseurs',
             0.82,
             $notionInstalled

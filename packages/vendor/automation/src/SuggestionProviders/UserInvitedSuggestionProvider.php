@@ -33,8 +33,8 @@ class UserInvitedSuggestionProvider implements SuggestionProvider
             SuggestionDefinition::make(
                 $gmailInstalled ? 'send_team_invitation_followup_email' : 'install_extension',
                 $gmailInstalled
-                    ? 'Envoyer un email d accueil a ' . $email
-                    : 'Installer Google Gmail pour envoyer un email d accueil a ce membre',
+                    ? "Envoyer un email d'accueil à " . $email
+                    : "Installer Google Gmail pour envoyer un email d'accueil à ce membre",
                 0.9,
                 $gmailInstalled
                     ? ['invitation_id' => $invitationId]
@@ -48,8 +48,8 @@ class UserInvitedSuggestionProvider implements SuggestionProvider
             SuggestionDefinition::make(
                 $calendarInstalled ? 'schedule_user_onboarding_meeting' : 'install_extension',
                 $calendarInstalled
-                    ? 'Planifier un rendez-vous d onboarding pour ' . $email
-                    : 'Installer Google Calendar pour preparer l onboarding de ce membre',
+                    ? "Planifier un rendez-vous d'onboarding pour " . $email
+                    : "Installer Google Calendar pour préparer l'onboarding de ce membre",
                 0.84,
                 $calendarInstalled
                     ? ['invitation_id' => $invitationId]
@@ -63,8 +63,8 @@ class UserInvitedSuggestionProvider implements SuggestionProvider
             SuggestionDefinition::make(
                 $projectsInstalled ? 'create_user_onboarding_task' : 'install_extension',
                 $projectsInstalled
-                    ? 'Creer une tache d integration pour ' . $email
-                    : 'Installer Projets pour suivre l integration de ce membre',
+                    ? "Créer une tâche d'intégration pour " . $email
+                    : "Installer Projets pour suivre l'intégration de ce membre",
                 0.8,
                 $projectsInstalled
                     ? ['invitation_id' => $invitationId]

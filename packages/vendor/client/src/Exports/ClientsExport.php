@@ -2,13 +2,13 @@
 
 namespace Vendor\Client\Exports;
 
-use Vendor\Client\Models\Client;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Vendor\Client\Models\Client;
 
 class ClientsExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
@@ -26,23 +26,7 @@ class ClientsExport implements FromCollection, WithHeadings, WithMapping, Should
 
     public function headings(): array
     {
-        return [
-            'ID',
-            'Entreprise',
-            'Contact',
-            'Email',
-            'Téléphone',
-            'Type',
-            'Statut',
-            'Source',
-            'Ville',
-            'Code Postal',
-            'Pays',
-            'SIRET',
-            'TVA',
-            'Chiffre d\'affaires',
-            'Date de création',
-        ];
+        return trans('client::clients.export.headings');
     }
 
     public function map($client): array

@@ -18,19 +18,19 @@ class CreateProjectTaskAutomationAction extends AbstractAutomationAction
             'create_payment_followup_task' => $this->createPaymentFollowupTask($automationEvent, $suggestion),
             'create_quote_followup_task' => $this->createQuoteFollowupTask($automationEvent, $suggestion),
             'create_user_onboarding_task' => $this->createUserOnboardingTask($automationEvent, $suggestion),
-            default => throw new RuntimeException('Type de tache projet non pris en charge.'),
+            default => throw new RuntimeException('Type de tâche projet non pris en charge.'),
         };
     }
 
     protected function createPaymentFollowupTask(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'projects', 'L extension Projets doit etre active pour creer une tache de suivi.');
+        $this->assertExtensionActive($tenantId, 'projects', "L'extension Projets doit être active pour créer une tâche de suivi.");
 
         $payload = $this->payload($automationEvent);
         $invoiceId = $this->modelId($payload, $suggestion, 'invoice_id', Invoice::class);
         if (!$invoiceId) {
-            throw new RuntimeException('Facture introuvable pour la creation de la tache.');
+            throw new RuntimeException('Facture introuvable pour la création de la tâche.');
         }
 
         $invoice = $this->loadInvoice($tenantId, $invoiceId);
@@ -41,7 +41,7 @@ class CreateProjectTaskAutomationAction extends AbstractAutomationAction
             $actor,
             'Suivi paiements',
             'billing-followups',
-            'Projet systeme pour centraliser les relances de paiements.'
+            'Projet système pour centraliser les relances de paiements.'
         );
 
         $task = ProjectTask::query()->create([
@@ -52,7 +52,7 @@ class CreateProjectTaskAutomationAction extends AbstractAutomationAction
             'assigned_to' => (int) $actor->id,
             'title' => 'Relancer paiement ' . $invoice->number,
             'description' => implode("\n", array_filter([
-                'Relance automatique suite a la creation de la facture ' . $invoice->number . '.',
+                'Relance automatique suite a la création de la facture ' . $invoice->number . '.',
                 $invoice->client ? 'Client: ' . $this->clientDisplayName($invoice->client) : null,
                 'Montant a suivre: ' . $this->formatMoney((float) $invoice->amount_due, (string) $invoice->currency),
                 $invoice->due_date ? 'Echeance: ' . $invoice->due_date->format('d/m/Y') : null,
@@ -82,14 +82,14 @@ class CreateProjectTaskAutomationAction extends AbstractAutomationAction
             $project,
             $task,
             'automation_task_created',
-            'Tache de suivi paiement creee automatiquement',
+            'Tâche de suivi paiement créée automatiquement',
             ['invoice_id' => (int) $invoice->id],
             (int) $actor->id
         );
 
         return [
             'result' => 'task_created',
-            'message' => 'Tache de suivi paiement creee dans Projets.',
+            'message' => 'Tâche de suivi paiement créée dans Projets.',
             'project_id' => (int) $project->id,
             'task_id' => (int) $task->id,
             'invoice_id' => (int) $invoice->id,
@@ -100,12 +100,12 @@ class CreateProjectTaskAutomationAction extends AbstractAutomationAction
     protected function createQuoteFollowupTask(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'projects', 'L extension Projets doit etre active pour creer une tache de suivi.');
+        $this->assertExtensionActive($tenantId, 'projects', "L'extension Projets doit être active pour créer une tâche de suivi.");
 
         $payload = $this->payload($automationEvent);
         $quoteId = $this->modelId($payload, $suggestion, 'quote_id', Quote::class);
         if (!$quoteId) {
-            throw new RuntimeException('Devis introuvable pour la creation de la tache.');
+            throw new RuntimeException('Devis introuvable pour la création de la tâche.');
         }
 
         $quote = $this->loadQuote($tenantId, $quoteId);
@@ -116,7 +116,7 @@ class CreateProjectTaskAutomationAction extends AbstractAutomationAction
             $actor,
             'Suivi devis commerciaux',
             'quote-followups',
-            'Projet systeme pour centraliser les suivis de devis.'
+            'Projet système pour centraliser les suivis de devis.'
         );
 
         $task = ProjectTask::query()->create([
@@ -127,7 +127,7 @@ class CreateProjectTaskAutomationAction extends AbstractAutomationAction
             'assigned_to' => (int) $actor->id,
             'title' => 'Relancer devis ' . $quote->number,
             'description' => implode("\n", array_filter([
-                'Relance automatique suite a la creation du devis ' . $quote->number . '.',
+                'Relance automatique suite a la création du devis ' . $quote->number . '.',
                 $quote->client ? 'Client: ' . $this->clientDisplayName($quote->client) : null,
                 'Montant: ' . $this->formatMoney((float) $quote->total, (string) $quote->currency),
                 $quote->valid_until ? 'Valable jusqu au: ' . $quote->valid_until->format('d/m/Y') : null,
@@ -157,14 +157,14 @@ class CreateProjectTaskAutomationAction extends AbstractAutomationAction
             $project,
             $task,
             'automation_task_created',
-            'Tache de suivi devis creee automatiquement',
+            'Tâche de suivi devis créée automatiquement',
             ['quote_id' => (int) $quote->id],
             (int) $actor->id
         );
 
         return [
             'result' => 'task_created',
-            'message' => 'Tache de suivi devis creee dans Projets.',
+            'message' => 'Tâche de suivi devis créée dans Projets.',
             'project_id' => (int) $project->id,
             'task_id' => (int) $task->id,
             'quote_id' => (int) $quote->id,
@@ -175,27 +175,27 @@ class CreateProjectTaskAutomationAction extends AbstractAutomationAction
     protected function createUserOnboardingTask(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'projects', 'L extension Projets doit etre active pour creer une tache d onboarding.');
+        $this->assertExtensionActive($tenantId, 'projects', "L'extension Projets doit être active pour créer une tâche d'onboarding.");
 
         $payload = $this->payload($automationEvent);
         $invitationId = $this->modelId($payload, $suggestion, 'invitation_id', UserInvitation::class);
         if (!$invitationId) {
-            throw new RuntimeException('Invitation introuvable pour la creation de la tache.');
+            throw new RuntimeException('Invitation introuvable pour la création de la tâche.');
         }
 
         $invitation = $this->loadInvitation($tenantId, $invitationId);
         $invitation->markExpiredIfNeeded();
         if (!$invitation->isUsable()) {
-            throw new RuntimeException('Cette invitation n est plus active.');
+            throw new RuntimeException("Cette invitation n'est plus active.");
         }
 
         $actor = $this->resolveActorUser($automationEvent);
         $project = $this->findOrCreateAutomationProject(
             $tenantId,
             $actor,
-            'Onboarding equipe',
+            'Onboarding équipe',
             'team-onboarding',
-            'Projet systeme pour suivre l integration des nouveaux membres.'
+            "Projet système pour suivre l'intégration des nouveaux membres."
         );
 
         $acceptUrl = $this->routeUrl('users.accept', (string) $invitation->token);
@@ -205,7 +205,7 @@ class CreateProjectTaskAutomationAction extends AbstractAutomationAction
             'client_id' => null,
             'created_by' => (int) $actor->id,
             'assigned_to' => (int) $actor->id,
-            'title' => 'Finaliser l onboarding de ' . $invitation->email,
+            'title' => "Finaliser l'onboarding de " . $invitation->email,
             'description' => implode("\n", array_filter([
                 'Invitation en attente pour ' . $invitation->email . '.',
                 $invitation->role_in_tenant ? 'Role prevu: ' . $invitation->role_in_tenant : null,
@@ -236,14 +236,14 @@ class CreateProjectTaskAutomationAction extends AbstractAutomationAction
             $project,
             $task,
             'automation_task_created',
-            'Tache d onboarding creee automatiquement',
+            "Tâche d'onboarding créée automatiquement",
             ['invitation_id' => (int) $invitation->id],
             (int) $actor->id
         );
 
         return [
             'result' => 'task_created',
-            'message' => 'Tache d onboarding creee dans Projets.',
+            'message' => "Tâche d'onboarding créée dans Projets.",
             'project_id' => (int) $project->id,
             'task_id' => (int) $task->id,
             'invitation_id' => (int) $invitation->id,

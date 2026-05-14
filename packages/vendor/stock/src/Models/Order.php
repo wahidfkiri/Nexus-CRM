@@ -12,6 +12,8 @@ class Order extends Model
 
     protected $table = 'stock_orders';
 
+    protected $appends = ['status_label'];
+
     protected $fillable = [
         'tenant_id', 'user_id', 'supplier_id', 'number', 'reference', 'status',
         'order_date', 'expected_date', 'received_date',
@@ -41,6 +43,11 @@ class Order extends Model
     public function deliveryNotes()
     {
         return $this->hasMany(DeliveryNote::class, 'stock_order_id')->orderByDesc('created_at');
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return (string) (config('stock.order_statuses.' . $this->status) ?? ucfirst((string) $this->status));
     }
 
     public function scopeSearch($query, ?string $term)

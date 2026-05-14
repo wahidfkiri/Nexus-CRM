@@ -612,6 +612,13 @@ const GoogleSheetsModule = (() => {
       body: ['GET', 'HEAD'].includes(method) ? undefined : JSON.stringify(payload || {}),
     });
     const data = await response.json().catch(() => ({}));
+    const reconnectTarget = window.CrmAuth?.resolveReconnectRedirect?.(data?.message, data);
+    if (reconnectTarget) {
+      window.CrmAuth.redirectToReconnect(
+        data?.message || 'La session Google Sheets a expire. Redirection vers la reconnexion.',
+        reconnectTarget
+      );
+    }
     return { ok: response.ok, status: response.status, data };
   }
 

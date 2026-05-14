@@ -683,7 +683,7 @@ const GoogleCalendarModule = (() => {
         <div class="gc-event-main">
           <div class="gc-event-title-row">
             <span class="gc-event-time">${esc(timeLabel)}</span>
-            <span class="gc-event-title">${esc(event.summary || '(No title)')}</span>
+            <span class="gc-event-title">${esc(event.summary || t('no_title', '(Sans titre)'))}</span>
           </div>
           ${clientBadge}
           ${event.location && !compact ? `<div class="gc-event-location"><i class="fas fa-location-dot"></i> ${esc(event.location)}</div>` : ''}
@@ -1114,7 +1114,7 @@ const GoogleCalendarModule = (() => {
     }
 
     if (payload.source_type && !payload.source_id) {
-      errors.source_id = ['Source invalide.'];
+      errors.source_id = [t('validation_source', 'Le type de source est invalide.')];
     }
 
     return errors;
@@ -1220,9 +1220,9 @@ const GoogleCalendarModule = (() => {
     setText('gcDetailCalendarName', calendarLabel(event.calendar_id));
     setText('gcDetailEventTitle', event.summary || t('no_title', '(Sans titre)'));
     setText('gcDetailWhen', eventDetailWhenLabel(event));
-    setText('gcDetailLocation', location || t('detail_empty', 'Non renseigne'));
-    setText('gcDetailClient', clientName || t('detail_empty', 'Non renseigne'));
-    setText('gcDetailSource', sourceLabel || t('detail_empty', 'Non renseigne'));
+    setText('gcDetailLocation', location || t('detail_empty', 'Non renseigné'));
+    setText('gcDetailClient', clientName || t('detail_empty', 'Non renseigné'));
+    setText('gcDetailSource', sourceLabel || t('detail_empty', 'Non renseigné'));
     setText('gcDetailVisibility', visibilityLabel(event.visibility || 'default'));
     setText('gcDetailUpdatedAt', formatDetailDateTime(event.google_updated_at || event.updated_at));
 
@@ -1380,7 +1380,7 @@ const GoogleCalendarModule = (() => {
         return `${event.start_display} - ${event.end_display}`;
       }
 
-      return event.start_display || t('all_day', 'Toute la journee');
+      return event.start_display || t('all_day', 'Toute la journée');
     }
 
     if (event.start_display && event.end_display) {
@@ -1392,9 +1392,9 @@ const GoogleCalendarModule = (() => {
 
   function visibilityLabel(value) {
     const map = {
-      default: t('visibility_default', 'Par defaut'),
+      default: t('visibility_default', 'Par défaut'),
       public: t('visibility_public', 'Public'),
-      private: t('visibility_private', 'Prive'),
+      private: t('visibility_private', 'Privé'),
       confidential: t('visibility_confidential', 'Confidentiel'),
     };
 
@@ -1402,10 +1402,10 @@ const GoogleCalendarModule = (() => {
   }
 
   function formatDetailDateTime(value) {
-    if (!value) return t('detail_empty', 'Non renseigne');
+    if (!value) return t('detail_empty', 'Non renseigné');
 
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return t('detail_empty', 'Non renseigne');
+    if (Number.isNaN(date.getTime())) return t('detail_empty', 'Non renseigné');
 
     return new Intl.DateTimeFormat(state.locale, {
       day: '2-digit',

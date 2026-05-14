@@ -237,7 +237,7 @@
     .sidebar-nav-subsection{
       padding:8px 20px 4px;
       font-size:11px;
-      color:rgba(255,255,255,.45);
+      color:rgba(15,23,42,.46);
       font-weight:700;
       letter-spacing:.03em;
       display:flex;
@@ -248,29 +248,29 @@
       content:'';
       width:14px;
       height:1px;
-      background:rgba(255,255,255,.22);
+      background:rgba(15,23,42,.12);
     }
     .sidebar-app-link{position:relative}
     .sidebar-app-link .app-icon-badge{
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      width:38px;
-      height:38px;
-      border-radius:8px;
-      margin-right:1px;
-      background:var(--app-bg, #334155);
-      color:#fff;
-      box-shadow:0 2px 10px rgba(2,6,23,.26);
-      flex:0 0 38px;
+      width:22px;
+      height:22px;
+      border-radius:0;
+      margin-right:0;
+      background:transparent;
+      color:var(--c-ink);
+      box-shadow:none;
+      flex:0 0 22px;
     }
     .sidebar-app-link .app-icon-badge i{
       width:auto;
-      font-size:13px;
+      font-size:16px;
     }
     .sidebar-app-link .app-icon-badge img{
-      width:16px;
-      height:16px;
+      width:18px;
+      height:18px;
       object-fit:contain;
       display:block;
     }
@@ -303,17 +303,17 @@
       display:block;
     }
     .sidebar-market-link .nav-badge{
-      background:rgba(37,99,235,.32);
-      color:#dbeafe;
+      background:rgba(15,23,42,.06);
+      color:var(--c-ink-60);
     }
     .sidebar-brand-logo{
       width:42px;
       height:42px;
       border-radius:10px;
       object-fit:contain;
-      background:#fff;
-      padding:4px;
-      box-shadow:0 6px 18px rgba(2,6,23,.28);
+      background:transparent;
+      padding:0;
+      box-shadow:none;
       flex:0 0 auto;
     }
     .sidebar-brand-fallback{
@@ -323,8 +323,8 @@
       display:none;
       align-items:center;
       justify-content:center;
-      background:rgba(255,255,255,.1);
-      color:#fff;
+      background:rgba(15,23,42,.06);
+      color:var(--c-ink);
       flex:0 0 auto;
     }
     .sidebar-brand-copy{
@@ -385,13 +385,13 @@
       position:absolute;
       top:20px;
       right:8px;
-      color:rgba(255,255,255,.35);
+      color:var(--c-accent);
       font-size:11px;
       transition:transform .18s ease,color .18s ease;
     }
     #userDropdown.open .sidebar-user .user-chevron{
       transform:rotate(90deg);
-      color:rgba(255,255,255,.75);
+      color:var(--c-accent-dk);
     }
     #userDropdown .dropdown-menu{
       left:calc(100% - 20px);

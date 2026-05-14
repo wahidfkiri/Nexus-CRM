@@ -1,280 +1,200 @@
-@extends('client::layouts.crm')
+﻿@extends('client::layouts.crm')
 
-@section('title', 'Nouveau client')
+@section('title', __('client::clients.pages.create.title'))
 
 @section('breadcrumb')
-  <a href="{{ route('clients.index') }}">Clients</a>
+  <a href="{{ route('clients.index') }}">{{ __('client::clients.pages.index.title') }}</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Nouveau client</span>
+  <span style="color:var(--c-ink)">{{ __('client::clients.pages.create.title') }}</span>
 @endsection
 
 @section('content')
+@php($paymentTerms = trans('client::clients.payment_terms'))
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Nouveau client</h1>
-    <p>Ajoutez un nouveau client à votre portefeuille</p>
+    <h1>{{ __('client::clients.pages.create.title') }}</h1>
+    <p>{{ __('client::clients.pages.create.subtitle') }}</p>
   </div>
   <a href="{{ route('clients.index') }}" class="btn btn-secondary">
-    <i class="fas fa-arrow-left"></i> Retour
+    <i class="fas fa-arrow-left"></i> {{ __('client::clients.actions.back') }}
   </a>
 </div>
 
 <form id="clientForm" action="{{ route('clients.store') }}" method="POST">
   @csrf
   <div class="row" style="align-items:flex-start;">
-
-    {{-- Main column --}}
     <div class="col-8" style="padding:0 12px 0 0;">
-
-      {{-- Section : Informations générales --}}
       <div class="form-section">
         <h3 class="form-section-title">
-          <i class="fas fa-building"></i> Informations générales
-          <span class="form-section-badge">Étape 1/4</span>
+          <i class="fas fa-building"></i> {{ __('client::clients.sections.general') }}
+          <span class="form-section-badge">{{ __('client::clients.steps.general') }}</span>
         </h3>
         <div class="row">
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Nom de l'entreprise <span class="required">*</span></label>
+              <label class="form-label">{{ __('client::clients.fields.company_name') }} <span class="required">*</span></label>
               <div class="input-group">
                 <i class="fas fa-building input-icon"></i>
-                <input type="text" name="company_name" class="form-control" placeholder="Acme Corporation" autofocus>
+                <input type="text" name="company_name" class="form-control" placeholder="{{ __('client::clients.placeholders.company_name') }}" autofocus>
               </div>
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Email <span class="required">*</span></label>
+              <label class="form-label">{{ __('client::clients.fields.email') }} <span class="required">*</span></label>
               <div class="input-group">
                 <i class="fas fa-envelope input-icon"></i>
-                <input type="email" name="email" class="form-control" placeholder="contact@acme.com">
+                <input type="email" name="email" class="form-control" placeholder="{{ __('client::clients.placeholders.email') }}">
               </div>
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Personne de contact <span class="required">*</span></label>
+              <label class="form-label">{{ __('client::clients.fields.contact_name') }} <span class="required">*</span></label>
               <div class="input-group">
                 <i class="fas fa-user input-icon"></i>
-                <input type="text" name="contact_name" class="form-control" placeholder="Jean Dupont" required>
+                <input type="text" name="contact_name" class="form-control" placeholder="{{ __('client::clients.placeholders.contact_name') }}" required>
               </div>
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Téléphone</label>
+              <label class="form-label">{{ __('client::clients.fields.phone') }}</label>
               <div class="input-group">
                 <i class="fas fa-phone input-icon"></i>
-                <input type="tel" name="phone" class="form-control" placeholder="+33 6 12 34 56 78">
+                <input type="tel" name="phone" class="form-control" placeholder="{{ __('client::clients.placeholders.phone') }}">
               </div>
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Mobile</label>
+              <label class="form-label">{{ __('client::clients.fields.mobile') }}</label>
               <div class="input-group">
                 <i class="fas fa-mobile input-icon"></i>
-                <input type="tel" name="mobile" class="form-control" placeholder="+33 7 98 76 54 32">
+                <input type="tel" name="mobile" class="form-control" placeholder="{{ __('client::clients.placeholders.mobile') }}">
               </div>
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Site web</label>
+              <label class="form-label">{{ __('client::clients.fields.website') }}</label>
               <div class="input-group">
                 <i class="fas fa-globe input-icon"></i>
-                <input type="url" name="website" class="form-control" placeholder="https://acme.com">
+                <input type="url" name="website" class="form-control" placeholder="{{ __('client::clients.placeholders.website') }}">
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {{-- Section : Adresse --}}
       <div class="form-section">
         <h3 class="form-section-title">
-          <i class="fas fa-location-dot"></i> Adresse
-          <span class="form-section-badge">Étape 2/4</span>
+          <i class="fas fa-location-dot"></i> {{ __('client::clients.sections.address') }}
+          <span class="form-section-badge">{{ __('client::clients.steps.address') }}</span>
         </h3>
         <div class="row">
           <div class="col-12">
             <div class="form-group">
-              <label class="form-label">Adresse</label>
-              <input type="text" name="address" class="form-control" placeholder="123 rue de la Paix">
+              <label class="form-label">{{ __('client::clients.fields.address') }}</label>
+              <input type="text" name="address" class="form-control" placeholder="{{ __('client::clients.placeholders.address') }}">
             </div>
           </div>
-          <div class="col-4">
-            <div class="form-group">
-              <label class="form-label">Ville</label>
-              <input type="text" name="city" class="form-control" placeholder="Paris">
-            </div>
-          </div>
-          <div class="col-4">
-            <div class="form-group">
-              <label class="form-label">Code postal</label>
-              <input type="text" name="postal_code" class="form-control" placeholder="75001">
-            </div>
-          </div>
-          <div class="col-4">
-            <div class="form-group">
-              <label class="form-label">Pays</label>
-              <input type="text" name="country" class="form-control" placeholder="France">
-            </div>
-          </div>
+          <div class="col-4"><div class="form-group"><label class="form-label">{{ __('client::clients.fields.city') }}</label><input type="text" name="city" class="form-control" placeholder="{{ __('client::clients.placeholders.city') }}"></div></div>
+          <div class="col-4"><div class="form-group"><label class="form-label">{{ __('client::clients.fields.postal_code') }}</label><input type="text" name="postal_code" class="form-control" placeholder="{{ __('client::clients.placeholders.postal_code') }}"></div></div>
+          <div class="col-4"><div class="form-group"><label class="form-label">{{ __('client::clients.fields.country') }}</label><input type="text" name="country" class="form-control" placeholder="{{ __('client::clients.placeholders.country') }}"></div></div>
         </div>
       </div>
 
-      {{-- Section : Informations fiscales --}}
       <div class="form-section">
-        <h3 class="form-section-title">
-          <i class="fas fa-receipt"></i> Informations fiscales
-        </h3>
+        <h3 class="form-section-title"><i class="fas fa-receipt"></i> {{ __('client::clients.sections.tax') }}</h3>
         <div class="row">
-          <div class="col-6">
-            <div class="form-group">
-              <label class="form-label">N° TVA intracommunautaire</label>
-              <input type="text" name="vat_number" class="form-control" placeholder="FR 12 345678901">
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="form-group">
-              <label class="form-label">SIRET</label>
-              <input type="text" name="siret" class="form-control" placeholder="12345678901234">
-            </div>
-          </div>
+          <div class="col-6"><div class="form-group"><label class="form-label">{{ __('client::clients.fields.vat_number') }}</label><input type="text" name="vat_number" class="form-control" placeholder="{{ __('client::clients.placeholders.vat_number') }}"></div></div>
+          <div class="col-6"><div class="form-group"><label class="form-label">{{ __('client::clients.fields.siret') }}</label><input type="text" name="siret" class="form-control" placeholder="{{ __('client::clients.placeholders.siret') }}"></div></div>
         </div>
       </div>
 
-      {{-- Section : Notes --}}
       <div class="form-section">
-        <h3 class="form-section-title">
-          <i class="fas fa-note-sticky"></i> Notes internes
-        </h3>
+        <h3 class="form-section-title"><i class="fas fa-note-sticky"></i> {{ __('client::clients.sections.notes') }}</h3>
         <div class="form-group">
-          <textarea name="notes" class="form-control" rows="4" placeholder="Informations complémentaires sur ce client…"></textarea>
-          <span class="form-hint">Ces notes sont visibles uniquement par votre équipe.</span>
+          <textarea name="notes" class="form-control" rows="4" placeholder="{{ __('client::clients.placeholders.notes') }}"></textarea>
+          <span class="form-hint">{{ __('client::clients.hints.notes_private') }}</span>
         </div>
       </div>
-
     </div>
 
-    {{-- Sidebar column --}}
     <div class="col-4" style="padding:0 0 0 12px;">
-
-      {{-- Catégorisation --}}
       <div class="form-section" style="margin-bottom:16px;">
         <h3 class="form-section-title">
-          <i class="fas fa-tag"></i> Catégorisation
-          <span class="form-section-badge">Étape 3/4</span>
+          <i class="fas fa-tag"></i> {{ __('client::clients.sections.categorization') }}
+          <span class="form-section-badge">{{ __('client::clients.steps.categorization') }}</span>
         </h3>
         <div class="form-group">
-          <label class="form-label">Type de client <span class="required">*</span></label>
-          <select name="type" class="form-control">
-            @foreach($types as $key => $label)
-              <option value="{{ $key }}">{{ $label }}</option>
-            @endforeach
-          </select>
+          <label class="form-label">{{ __('client::clients.fields.type') }} <span class="required">*</span></label>
+          <select name="type" class="form-control">@foreach($types as $key => $label)<option value="{{ $key }}">{{ $label }}</option>@endforeach</select>
         </div>
         <div class="form-group">
-          <label class="form-label">Statut <span class="required">*</span></label>
-          <select name="status" class="form-control">
-            @foreach($statuses as $key => $label)
-              <option value="{{ $key }}" {{ $key === 'actif' ? 'selected' : '' }}>{{ $label }}</option>
-            @endforeach
-          </select>
+          <label class="form-label">{{ __('client::clients.fields.status') }} <span class="required">*</span></label>
+          <select name="status" class="form-control">@foreach($statuses as $key => $label)<option value="{{ $key }}" {{ $key === 'actif' ? 'selected' : '' }}>{{ $label }}</option>@endforeach</select>
         </div>
         <div class="form-group">
-          <label class="form-label">Source d'acquisition</label>
-          <select name="source" class="form-control">
-            <option value="">Sélectionner…</option>
-            @foreach($sources as $key => $label)
-              <option value="{{ $key }}">{{ $label }}</option>
-            @endforeach
-          </select>
+          <label class="form-label">{{ __('client::clients.fields.source') }}</label>
+          <select name="source" class="form-control"><option value="">{{ __('client::clients.placeholders.source') }}</option>@foreach($sources as $key => $label)<option value="{{ $key }}">{{ $label }}</option>@endforeach</select>
         </div>
+        <div class="form-group"><label class="form-label">{{ __('client::clients.fields.industry') }}</label><input type="text" name="industry" class="form-control" placeholder="{{ __('client::clients.placeholders.industry') }}"></div>
         <div class="form-group">
-          <label class="form-label">Secteur d'activité</label>
-          <input type="text" name="industry" class="form-control" placeholder="Technologie, Finance…">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Tags</label>
+          <label class="form-label">{{ __('client::clients.fields.tags') }}</label>
           <div class="tags-input-wrap" id="tags_wrap" data-tags-input="tags">
-            <input type="text" class="tags-input" placeholder="Ajouter un tag, Entrée pour valider…">
+            <input type="text" class="tags-input" placeholder="{{ __('client::clients.placeholders.tags') }}">
           </div>
-          <span class="form-hint">Appuyez sur Entrée ou virgule pour ajouter.</span>
+          <span class="form-hint">{{ __('client::clients.hints.tags') }}</span>
         </div>
       </div>
 
-      {{-- Finances --}}
       <div class="form-section" style="margin-bottom:16px;">
         <h3 class="form-section-title">
-          <i class="fas fa-chart-line"></i> Finances
-          <span class="form-section-badge">Étape 4/4</span>
+          <i class="fas fa-chart-line"></i> {{ __('client::clients.sections.finance') }}
+          <span class="form-section-badge">{{ __('client::clients.steps.finance') }}</span>
         </h3>
         <div class="form-group">
-          <label class="form-label">Chiffre d'affaires annuel (€)</label>
-          <div class="input-group input-right">
-            <input type="number" name="revenue" class="form-control" placeholder="0" min="0" step="100">
-            <i class="fas fa-euro-sign input-icon"></i>
-          </div>
+          <label class="form-label">{{ __('client::clients.fields.revenue') }} (€)</label>
+          <div class="input-group input-right"><input type="number" name="revenue" class="form-control" placeholder="{{ __('client::clients.placeholders.revenue') }}" min="0" step="100"><i class="fas fa-euro-sign input-icon"></i></div>
         </div>
         <div class="form-group">
-          <label class="form-label">Valeur potentielle (€)</label>
-          <div class="input-group input-right">
-            <input type="number" name="potential_value" class="form-control" placeholder="0" min="0" step="100">
-            <i class="fas fa-euro-sign input-icon"></i>
-          </div>
+          <label class="form-label">{{ __('client::clients.fields.potential_value') }} (€)</label>
+          <div class="input-group input-right"><input type="number" name="potential_value" class="form-control" placeholder="{{ __('client::clients.placeholders.potential_value') }}" min="0" step="100"><i class="fas fa-euro-sign input-icon"></i></div>
         </div>
         <div class="form-group">
-          <label class="form-label">Délai de paiement</label>
-          <select name="payment_term" class="form-control">
-            <option value="">Sélectionner…</option>
-            <option value="immediate">Immédiat</option>
-            <option value="15j">15 jours</option>
-            <option value="30j" selected>30 jours</option>
-            <option value="45j">45 jours</option>
-            <option value="60j">60 jours</option>
-          </select>
+          <label class="form-label">{{ __('client::clients.fields.payment_term') }}</label>
+          <select name="payment_term" class="form-control"><option value="">{{ __('client::clients.placeholders.payment_term') }}</option>@foreach($paymentTerms as $value => $label)<option value="{{ $value }}" {{ $value === '30j' ? 'selected' : '' }}>{{ $label }}</option>@endforeach</select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Nombre d'employés</label>
-          <input type="number" name="employee_count" class="form-control" placeholder="Ex: 50" min="0">
-        </div>
+        <div class="form-group"><label class="form-label">{{ __('client::clients.fields.employee_count') }}</label><input type="number" name="employee_count" class="form-control" placeholder="{{ __('client::clients.placeholders.employee_count') }}" min="0"></div>
       </div>
 
-      {{-- Suivi --}}
       <div class="form-section">
-        <h3 class="form-section-title">
-          <i class="fas fa-calendar-check"></i> Suivi commercial
-        </h3>
-        <div class="form-group">
-          <label class="form-label">Prochain suivi le</label>
-          <input type="date" name="next_follow_up_at" class="form-control" min="{{ date('Y-m-d') }}">
-        </div>
+        <h3 class="form-section-title"><i class="fas fa-calendar-check"></i> {{ __('client::clients.sections.follow_up') }}</h3>
+        <div class="form-group"><label class="form-label">{{ __('client::clients.fields.next_follow_up_at') }}</label><input type="date" name="next_follow_up_at" class="form-control" min="{{ date('Y-m-d') }}"></div>
       </div>
-
     </div>
   </div>
 
-  {{-- Form Actions --}}
   <div class="form-section" style="margin-top:0;">
     <div class="form-actions" style="padding-top:0">
-      <a href="{{ route('clients.index') }}" class="btn btn-secondary">
-        <i class="fas fa-times"></i> Annuler
-      </a>
-      <button type="submit" class="btn btn-primary" id="submitBtn">
-        <i class="fas fa-check"></i> Créer le client
-      </button>
+      <a href="{{ route('clients.index') }}" class="btn btn-secondary"><i class="fas fa-times"></i> {{ __('client::clients.actions.cancel') }}</a>
+      <button type="submit" class="btn btn-primary" id="submitBtn"><i class="fas fa-check"></i> {{ __('client::clients.actions.create') }}</button>
     </div>
   </div>
-
 </form>
-
 @endsection
 
 @push('scripts')
 <script>
+window.CLIENT_LANG = Object.assign(window.CLIENT_LANG || {}, {
+  successTitle: @json('Succès'),
+  createdTitle: @json('Client créé !'),
+  createdMessage: @json('Le client a été ajouté à votre portefeuille.'),
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   window.CrmDrafts?.attach('clientForm', {
     type: 'client',
@@ -291,8 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   ajaxForm('clientForm', {
-    onSuccess: (data) => {
-      Toast.success('Client cr???? !', 'Le client a ??t?? ajout?? ?? votre portefeuille.', 3000);
+    onSuccess: () => {
+      Toast.success(window.CLIENT_LANG.createdTitle, window.CLIENT_LANG.createdMessage, 3000);
     }
   });
 });

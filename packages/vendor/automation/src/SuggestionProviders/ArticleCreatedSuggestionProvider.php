@@ -48,7 +48,7 @@ class ArticleCreatedSuggestionProvider implements SuggestionProvider
             $docsInstalled ? 'create_article_google_doc' : 'install_extension',
             $docsInstalled
                 ? "Generer une fiche Google Docs pour {$articleName}"
-                : 'Installer Google Docs pour generer une fiche article',
+                : 'Installer Google Docs pour générer une fiche article',
             0.83,
             $docsInstalled
                 ? ['article_id' => $articleId]
@@ -64,7 +64,7 @@ class ArticleCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $notionInstalled ? 'create_notion_page' : 'install_extension',
             $notionInstalled
-                ? 'Creer une note Notion pour cet article'
+                ? 'Créer une note Notion pour cet article'
                 : 'Installer Notion Workspace pour documenter cet article',
             0.8,
             $notionInstalled

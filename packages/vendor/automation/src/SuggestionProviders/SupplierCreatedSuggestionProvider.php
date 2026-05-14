@@ -47,8 +47,8 @@ class SupplierCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $docsInstalled ? 'create_supplier_google_doc' : 'install_extension',
             $docsInstalled
-                ? "Creer une fiche Google Docs pour {$supplierName}"
-                : 'Installer Google Docs pour generer une fiche fournisseur editable',
+                ? "Créer une fiche Google Docs pour {$supplierName}"
+                : 'Installer Google Docs pour générer une fiche fournisseur éditable',
             0.84,
             $docsInstalled
                 ? ['supplier_id' => $supplierId]
@@ -64,7 +64,7 @@ class SupplierCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $notionInstalled ? 'create_notion_page' : 'install_extension',
             $notionInstalled
-                ? 'Creer une page Notion de suivi fournisseur'
+                ? 'Créer une page Notion de suivi fournisseur'
                 : 'Installer Notion Workspace pour documenter ce fournisseur',
             0.81,
             $notionInstalled

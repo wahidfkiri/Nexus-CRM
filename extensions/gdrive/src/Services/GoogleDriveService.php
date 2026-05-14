@@ -40,7 +40,7 @@ class GoogleDriveService
     {
         $clientId = (string) config('google-drive.oauth.client_id');
         if ($clientId === '') {
-            throw new RuntimeException('GOOGLE_DRIVE_CLIENT_ID is missing.');
+            throw new RuntimeException('GOOGLE_DRIVE_CLIENT_ID est manquant.');
         }
 
         $client = $this->makeClient();
@@ -60,7 +60,7 @@ class GoogleDriveService
     {
         $state = decrypt($encryptedState);
         if (!is_array($state) || !isset($state['tenant_id'], $state['user_id'])) {
-            throw new RuntimeException('Invalid OAuth state.');
+            throw new RuntimeException('Etat OAuth invalide.');
         }
 
         return $state;
@@ -228,7 +228,7 @@ class GoogleDriveService
                 'root_folder' => $rootFolder,
             ];
         } catch (GoogleServiceException $e) {
-            throw new RuntimeException('Unable to list files: ' . $e->getMessage());
+            throw new RuntimeException('Impossible de lister les fichiers : ' . $e->getMessage());
         }
     }
 
@@ -260,12 +260,12 @@ class GoogleDriveService
 
         $allowed = (array) config('google-drive.allowed_mime_types', []);
         if (!empty($allowed) && !in_array($mimeType, $allowed, true)) {
-            throw new RuntimeException("File type not allowed: {$mimeType}");
+            throw new RuntimeException("Type de fichier non autorise : {$mimeType}");
         }
 
         $maxBytes = (int) config('google-drive.api.max_file_size_mb', 100) * 1024 * 1024;
         if ((int) $file->getSize() > $maxBytes) {
-            throw new RuntimeException('File too large.');
+            throw new RuntimeException('Fichier trop volumineux.');
         }
 
         $uploadedFile = $drive->files->create(
@@ -322,7 +322,7 @@ class GoogleDriveService
         $drive = $this->getDriveService($tenantId);
         $token = $this->getValidToken($tenantId);
         $parent = $targetFolderId ?: ($token->drive_root_folder_id ?: 'root');
-        $name = $newName !== '' ? $newName : ('Copy of ' . $this->getFileName($tenantId, $fileId));
+        $name = $newName !== '' ? $newName : ('Copie de ' . $this->getFileName($tenantId, $fileId));
 
         $copiedFile = $drive->files->copy($fileId, new DriveFile([
             'name' => $name,
@@ -485,7 +485,7 @@ class GoogleDriveService
     {
         $token = $this->getToken($tenantId);
         if (!$token) {
-            throw new RuntimeException('Google Drive is not connected for this tenant.');
+            throw new RuntimeException('Google Drive n est pas connecte pour ce tenant.');
         }
 
         return $token;

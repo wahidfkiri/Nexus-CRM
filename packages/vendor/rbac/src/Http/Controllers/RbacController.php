@@ -3,6 +3,7 @@
 namespace Vendor\Rbac\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\TenantUserMembership;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -39,7 +40,7 @@ class RbacController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Rôle « {$role->label} » créé avec succès.",
+                'message' => __('rbac::rbac.messages.role_created', ['label' => $role->label]),
                 'data' => $this->formatRole($role),
                 'redirect' => route('rbac.roles.show', $role),
             ], 201);
@@ -87,7 +88,7 @@ class RbacController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Rôle mis à jour.',
+                'message' => __('rbac::rbac.messages.role_updated'),
                 'data' => $this->formatRole($role),
                 'redirect' => route('rbac.roles.show', $role),
             ]);
@@ -103,7 +104,7 @@ class RbacController extends Controller
         try {
             $this->rbacService->deleteRole($role);
 
-            return response()->json(['success' => true, 'message' => 'Rôle supprimé.']);
+            return response()->json(['success' => true, 'message' => __('rbac::rbac.messages.role_deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -123,7 +124,7 @@ class RbacController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Permissions synchronisées.',
+                'message' => __('rbac::rbac.messages.permissions_synced'),
                 'count' => $role->permissions->count(),
             ]);
         } catch (Throwable $e) {
@@ -141,6 +142,8 @@ class RbacController extends Controller
             'last_page' => $roles->lastPage(),
             'per_page' => $roles->perPage(),
             'total' => $roles->total(),
+            'from' => $roles->firstItem(),
+            'to' => $roles->lastItem(),
         ]);
     }
 
@@ -171,7 +174,7 @@ class RbacController extends Controller
         try {
             $role = $this->tenantRoleService->resolveTenantRole($tenantId, $request->input('role'));
             if ($role->name === 'owner' && !auth()->user()->hasTenantRole('owner', $tenantId)) {
-                throw new \RuntimeException('Seul le propriétaire du tenant peut attribuer le rôle propriétaire.');
+                throw new \RuntimeException(__('rbac::rbac.errors.assign_owner_forbidden'));
             }
 
             $this->tenantRoleService->syncUserRole($user, $tenantId, $role, [
@@ -181,7 +184,10 @@ class RbacController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Rôle « " . ($role->label ?? $role->name) . " » assigné à {$user->name}.",
+                'message' => __('rbac::rbac.messages.role_assigned', [
+                    'label' => $role->label ?? $role->name,
+                    'user' => $user->name,
+                ]),
             ]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
@@ -190,7 +196,7 @@ class RbacController extends Controller
 
     private function formatRole(Role $role): array
     {
-        $usersCount = \App\Models\TenantUserMembership::query()
+        $usersCount = TenantUserMembership::query()
             ->where('tenant_id', auth()->user()->tenant_id)
             ->where('role_id', (int) $role->id)
             ->where('status', 'active')
@@ -216,7 +222,7 @@ class RbacController extends Controller
     private function authorizeTenantRole(Role $role): void
     {
         if ((int) $role->tenant_id !== (int) auth()->user()->tenant_id) {
-            abort(403, 'Accès non autorisé à ce rôle.');
+            abort(403, __('rbac::rbac.errors.unauthorized_role_access'));
         }
     }
 }

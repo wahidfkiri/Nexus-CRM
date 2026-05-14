@@ -1,22 +1,27 @@
 @extends('layouts.global')
 
-@section('title', 'Inviter un membre')
+@section('title', __('user::users.titles.invite_member'))
 
 @section('breadcrumb')
-  <a href="{{ route('users.index') }}">Équipe</a>
+  <a href="{{ route('users.index') }}">{{ __('user::users.breadcrumbs.team') }}</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">Inviter un membre</span>
+  <span style="color:var(--c-ink)">{{ __('user::users.breadcrumbs.invite') }}</span>
 @endsection
 
 @section('content')
+@php
+  $inviteI18n = [
+      'success' => __('user::users.messages.invitation_sent_toast'),
+  ];
+@endphp
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>Inviter un membre</h1>
-    <p>Un email d'invitation sera envoyé avec un lien d'activation</p>
+    <h1>{{ __('user::users.titles.invite_member') }}</h1>
+    <p>{{ __('user::users.subtitles.invite_member') }}</p>
   </div>
   <a href="{{ route('users.index') }}" class="btn btn-secondary">
-    <i class="fas fa-arrow-left"></i> Retour
+    <i class="fas fa-arrow-left"></i> {{ __('user::users.actions.back') }}
   </a>
 </div>
 
@@ -27,21 +32,21 @@
 
       <div class="form-section">
         <h3 class="form-section-title">
-          <i class="fas fa-envelope"></i> Informations de l'invitation
-          <span class="form-section-badge">Étape 1/2</span>
+          <i class="fas fa-envelope"></i> {{ __('user::users.headings.invitation_information') }}
+          <span class="form-section-badge">{{ __('user::users.badges.step_1_of_2') }}</span>
         </h3>
 
         <div class="form-group">
-          <label class="form-label">Adresse email <span class="required">*</span></label>
+          <label class="form-label">{{ __('user::users.fields.email_address') }} <span class="required">*</span></label>
           <div class="input-group">
             <i class="fas fa-envelope input-icon"></i>
-            <input type="email" name="email" class="form-control" placeholder="collaborateur@entreprise.com" autofocus required>
+            <input type="email" name="email" class="form-control" placeholder="{{ __('user::users.placeholders.collaborator_email') }}" autofocus required>
           </div>
-          <span class="form-hint">Un email d'invitation sera envoyé à cette adresse.</span>
+          <span class="form-hint">{{ __('user::users.subtitles.invitation_email_hint') }}</span>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Rôle <span class="required">*</span></label>
+          <label class="form-label">{{ __('user::users.fields.role') }} <span class="required">*</span></label>
           <div class="row" style="margin-top:8px;">
             @foreach($roles as $key => $label)
             <div class="col-6" style="margin-bottom:10px;">
@@ -52,13 +57,7 @@
                 <div>
                   <div style="font-weight:var(--fw-medium);color:var(--c-ink);margin-bottom:3px;">{{ $label }}</div>
                   <div style="font-size:12px;color:var(--c-ink-40);">
-                    @switch($key)
-                      @case('admin')    Accès complet sauf facturation critique @break
-                      @case('manager')  Clients, factures et stock @break
-                      @case('user')     Consultation et opérations courantes @break
-                      @case('viewer')   Lecture seule @break
-                      @default          Accès personnalisé @break
-                    @endswitch
+                    {{ __('user::users.role_descriptions.' . $key, [], app()->getLocale()) !== 'user::users.role_descriptions.' . $key ? __('user::users.role_descriptions.' . $key) : __('user::users.role_descriptions.default') }}
                   </div>
                 </div>
               </label>
@@ -70,36 +69,35 @@
 
       <div class="form-section">
         <h3 class="form-section-title">
-          <i class="fas fa-message"></i> Message personnalisé
-          <span class="form-section-badge">Étape 2/2 · Optionnel</span>
+          <i class="fas fa-message"></i> {{ __('user::users.headings.custom_message') }}
+          <span class="form-section-badge">{{ __('user::users.badges.step_2_of_2_optional') }}</span>
         </h3>
         <div class="form-group">
-          <label class="form-label">Message d'accompagnement <span class="hint">(optionnel)</span></label>
+          <label class="form-label">{{ __('user::users.fields.message') }} <span class="hint">({{ __('user::users.fields.optional') }})</span></label>
           <textarea name="message" class="form-control" rows="3"
-            placeholder="Bonjour, je vous invite à rejoindre notre espace de travail…"></textarea>
-          <span class="form-hint">Ce message sera inclus dans l'email d'invitation.</span>
+            placeholder="{{ __('user::users.placeholders.invitation_message') }}"></textarea>
+          <span class="form-hint">{{ __('user::users.subtitles.message_hint') }}</span>
         </div>
 
-        {{-- Aperçu --}}
         <div style="background:var(--c-accent-xl);border:1px solid var(--c-accent-lt);border-radius:var(--r-md);padding:16px 20px;font-size:13px;color:var(--c-ink-60);">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:var(--fw-semi);color:var(--c-ink);">
             <i class="fas fa-circle-info" style="color:var(--c-accent);"></i>
-            Ce que recevra votre invité
+            {{ __('user::users.headings.what_guest_receives') }}
           </div>
           <ul style="margin:0;padding-left:18px;line-height:1.9;">
-            <li>Un email avec un lien d'invitation valable <strong>{{ config('user.invitation.expire_days', 7) }} jours</strong></li>
-            <li>Un formulaire pour créer son mot de passe</li>
-            <li>L'accès immédiat avec le rôle sélectionné</li>
+            <li>{{ __('user::users.hints.email_expiry', ['days' => config('user.invitation.expire_days', 7)]) }}</li>
+            <li>{{ __('user::users.hints.password_form') }}</li>
+            <li>{{ __('user::users.hints.immediate_access') }}</li>
           </ul>
         </div>
       </div>
 
       <div class="form-actions" style="padding-top:8px;">
         <a href="{{ route('users.index') }}" class="btn btn-secondary">
-          <i class="fas fa-times"></i> Annuler
+          <i class="fas fa-times"></i> {{ __('user::users.actions.cancel') }}
         </a>
         <button type="submit" class="btn btn-primary" id="submitBtn">
-          <i class="fas fa-paper-plane"></i> Envoyer l'invitation
+          <i class="fas fa-paper-plane"></i> {{ __('user::users.actions.send_invitation') }}
         </button>
       </div>
     </form>
@@ -110,23 +108,23 @@
 
 @push('scripts')
 <script>
-// Highlighting de la carte rôle sélectionné
+window.INVITE_I18N = @json($inviteI18n);
 document.querySelectorAll('.role-card').forEach(card => {
   const radio = card.querySelector('input[type=radio]');
   function highlight() {
     document.querySelectorAll('.role-card').forEach(c => {
-      c.style.borderColor  = 'var(--c-ink-10)';
-      c.style.background   = '';
+      c.style.borderColor = 'var(--c-ink-10)';
+      c.style.background = '';
     });
     if (radio.checked) {
       card.style.borderColor = 'var(--c-accent)';
-      card.style.background  = 'var(--c-accent-xl)';
+      card.style.background = 'var(--c-accent-xl)';
     }
   }
   radio.addEventListener('change', () => {
-    document.querySelectorAll('input[name=role_in_tenant]').forEach(r =>
-      r.closest('.role-card').style.borderColor = 'var(--c-ink-10)'
-    );
+    document.querySelectorAll('input[name=role_in_tenant]').forEach(r => {
+      r.closest('.role-card').style.borderColor = 'var(--c-ink-10)';
+    });
     highlight();
   });
   if (radio.checked) highlight();
@@ -134,7 +132,7 @@ document.querySelectorAll('.role-card').forEach(card => {
 
 ajaxForm('inviteForm', {
   onSuccess: (data) => {
-    Toast.success('Invitation envoyée !', data.message, 4000);
+    Toast.success(window.INVITE_I18N.success, data.message, 4000);
   }
 });
 </script>

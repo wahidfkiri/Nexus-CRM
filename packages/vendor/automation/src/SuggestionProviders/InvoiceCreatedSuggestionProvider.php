@@ -74,7 +74,7 @@ class InvoiceCreatedSuggestionProvider implements SuggestionProvider
             $sheetsInstalled ? 'append_invoice_sheet_row' : 'install_extension',
             $sheetsInstalled
                 ? 'Ajouter cette facture dans le suivi Google Sheets'
-                : 'Installer Google Sheets pour suivre les factures dans un tableau partage',
+                : 'Installer Google Sheets pour suivre les factures dans un tableau partagé',
             0.87,
             $sheetsInstalled
                 ? ['invoice_id' => $invoiceId]
@@ -91,7 +91,7 @@ class InvoiceCreatedSuggestionProvider implements SuggestionProvider
             $docsInstalled ? 'create_invoice_google_doc' : 'install_extension',
             $docsInstalled
                 ? 'Generer une version Word de cette facture dans Google Docs'
-                : 'Installer Google Docs pour generer une version editable de la facture',
+                : 'Installer Google Docs pour générer une version éditable de la facture',
             0.83,
             $docsInstalled
                 ? ['invoice_id' => $invoiceId]
@@ -107,8 +107,8 @@ class InvoiceCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $projectsInstalled ? 'create_payment_followup_task' : 'install_extension',
             $projectsInstalled
-                ? 'Creer une tache de suivi de paiement'
-                : 'Installer Projets pour suivre le paiement dans une tache',
+                ? 'Créer une tâche de suivi de paiement'
+                : 'Installer Projets pour suivre le paiement dans une tâche',
             0.79,
             $projectsInstalled
                 ? ['invoice_id' => $invoiceId]
@@ -124,7 +124,7 @@ class InvoiceCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $notionInstalled ? 'create_notion_page' : 'install_extension',
             $notionInstalled
-                ? 'Creer une page Notion de suivi de facture'
+                ? 'Créer une page Notion de suivi de facture'
                 : 'Installer Notion Workspace pour documenter le suivi de paiement',
             0.8,
             $notionInstalled

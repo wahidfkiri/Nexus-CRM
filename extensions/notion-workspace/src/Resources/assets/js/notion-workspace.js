@@ -570,6 +570,13 @@ const NotionWorkspaceModule = (() => {
     });
 
     const payload = await response.json().catch(() => ({}));
+    const reconnectTarget = window.CrmAuth?.resolveReconnectRedirect?.(payload?.message, payload);
+    if (reconnectTarget) {
+      window.CrmAuth.redirectToReconnect(
+        payload?.message || 'La session Notion a expire. Redirection vers la reconnexion.',
+        reconnectTarget
+      );
+    }
     if (!response.ok || payload.success === false) {
       throw new Error(payload.message || `Erreur HTTP ${response.status}`);
     }

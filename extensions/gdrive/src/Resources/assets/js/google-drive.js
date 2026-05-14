@@ -74,8 +74,8 @@ const GoogleDriveModule = (() => {
 
     const { ok, data } = await Http.get(window.GDRIVE_ROUTES.filesData, params);
     if (!ok || !data.success) {
-      if (tbody) tbody.innerHTML = emptyRow('Unable to load files.');
-      Toast.error('Error', data.message || 'Unable to load files.');
+      if (tbody) tbody.innerHTML = emptyRow('Impossible de charger les fichiers.');
+      Toast.error('Erreur', data.message || 'Impossible de charger les fichiers.');
       return;
     }
 
@@ -88,7 +88,7 @@ const GoogleDriveModule = (() => {
     }
 
     renderFiles();
-    setText('gdCount', `${state.files.length} result(s)`);
+    setText('gdCount', `${state.files.length} element(s)`);
     updateFolderName();
   }
 
@@ -97,14 +97,14 @@ const GoogleDriveModule = (() => {
     if (!tbody) return;
 
     if (!state.files.length) {
-      tbody.innerHTML = emptyRow('No files found in this folder.');
+      tbody.innerHTML = emptyRow('Aucun element dans ce dossier.');
       return;
     }
 
     tbody.innerHTML = state.files.map((file, index) => {
       const icon = file.is_folder ? 'fa-folder' : (file.icon || 'fa-file');
       const modified = file.modified_at ? new Date(file.modified_at).toLocaleString() : '-';
-      const typeLabel = file.is_folder ? 'Folder' : (file.mime_type || '-');
+      const typeLabel = file.is_folder ? 'Dossier' : (file.mime_type || '-');
       const size = file.is_folder ? '-' : (file.size_formatted || '-');
 
       return `
@@ -122,13 +122,13 @@ const GoogleDriveModule = (() => {
           <td>${esc(modified)}</td>
           <td>
             <div class="row-actions" style="justify-content:flex-end;padding-right:4px;opacity:1;">
-              ${file.web_view_link ? `<a href="${esc(file.web_view_link)}" target="_blank" rel="noopener" class="btn-icon" title="Open"><i class="fas fa-arrow-up-right-from-square"></i></a>` : ''}
-              ${file.is_folder ? '' : `<button class="btn-icon" data-action="download" data-index="${index}" title="Download"><i class="fas fa-download"></i></button>`}
-              <button class="btn-icon" data-action="rename" data-index="${index}" title="Rename"><i class="fas fa-pen"></i></button>
-              <button class="btn-icon" data-action="copy" data-index="${index}" title="Copy"><i class="fas fa-copy"></i></button>
-              <button class="btn-icon" data-action="move" data-index="${index}" title="Move"><i class="fas fa-right-left"></i></button>
-              <button class="btn-icon" data-action="share" data-index="${index}" title="Share"><i class="fas fa-share-nodes"></i></button>
-              <button class="btn-icon danger" data-action="delete" data-index="${index}" title="Delete"><i class="fas fa-trash"></i></button>
+              ${file.web_view_link ? `<a href="${esc(file.web_view_link)}" target="_blank" rel="noopener" class="btn-icon" title="Ouvrir"><i class="fas fa-arrow-up-right-from-square"></i></a>` : ''}
+              ${file.is_folder ? '' : `<button class="btn-icon" data-action="download" data-index="${index}" title="Telecharger"><i class="fas fa-download"></i></button>`}
+              <button class="btn-icon" data-action="rename" data-index="${index}" title="Renommer"><i class="fas fa-pen"></i></button>
+              <button class="btn-icon" data-action="copy" data-index="${index}" title="Copier"><i class="fas fa-copy"></i></button>
+              <button class="btn-icon" data-action="move" data-index="${index}" title="Deplacer"><i class="fas fa-right-left"></i></button>
+              <button class="btn-icon" data-action="share" data-index="${index}" title="Partager"><i class="fas fa-share-nodes"></i></button>
+              <button class="btn-icon danger" data-action="delete" data-index="${index}" title="Supprimer"><i class="fas fa-trash"></i></button>
             </div>
           </td>
         </tr>`;
@@ -143,11 +143,11 @@ const GoogleDriveModule = (() => {
     }
 
     if (state.currentFolderId === state.rootFolderId || !state.currentFolderId) {
-      setText('gdCurrentFolderName', 'Root');
+      setText('gdCurrentFolderName', 'Racine');
       return;
     }
 
-    setText('gdCurrentFolderName', 'Folder');
+    setText('gdCurrentFolderName', 'Dossier');
   }
 
   function handleFileActions(e) {
@@ -226,7 +226,7 @@ const GoogleDriveModule = (() => {
 
   function navigateBack() {
     if (!state.folderStack.length) {
-      Toast.info('Info', 'Already at root level.');
+      Toast.info('Information', 'Vous etes deja au niveau racine.');
       return;
     }
     state.currentFolderId = state.folderStack.pop() || state.rootFolderId;
@@ -237,7 +237,7 @@ const GoogleDriveModule = (() => {
     const nameInput = document.getElementById('gdFolderName');
     const name = (nameInput?.value || '').trim();
     if (!name) {
-      Toast.error('Validation', 'Folder name is required.');
+      Toast.error('Validation', 'Le nom du dossier est obligatoire.');
       return;
     }
 
@@ -247,13 +247,13 @@ const GoogleDriveModule = (() => {
     });
 
     if (!ok || !data.success) {
-      Toast.error('Error', data.message || 'Unable to create folder.');
+      Toast.error('Erreur', data.message || 'Impossible de creer le dossier.');
       return;
     }
 
     if (nameInput) nameInput.value = '';
     Modal.close(document.getElementById('gdFolderModal'));
-    Toast.success('Success', data.message || 'Folder created.');
+    Toast.success('Succes', data.message || 'Dossier cree.');
     loadFiles();
   }
 
@@ -263,7 +263,7 @@ const GoogleDriveModule = (() => {
     if (!file) return;
 
     if (file.size > 100 * 1024 * 1024) {
-      Toast.error('Validation', 'File too large (max 100 MB).');
+      Toast.error('Validation', 'Fichier trop volumineux (max 100 MB).');
       input.value = '';
       return;
     }
@@ -278,53 +278,53 @@ const GoogleDriveModule = (() => {
     input.value = '';
 
     if (!ok || !data.success) {
-      Toast.error('Error', data.message || 'Unable to upload file.');
+      Toast.error('Erreur', data.message || 'Impossible d importer le fichier.');
       return;
     }
 
-    Toast.success('Success', data.message || 'File uploaded.');
+    Toast.success('Succes', data.message || 'Fichier importe.');
     loadFiles();
     loadStats();
   }
 
   async function renameFile(file) {
-    const name = window.prompt('New name', file.name || '');
+    const name = window.prompt('Nouveau nom', file.name || '');
     if (!name || !name.trim()) return;
 
     const response = await fetchWithMethod(`${window.GDRIVE_ROUTES.fileBase}/${encodeURIComponent(file.id)}/rename`, 'PATCH', { name: name.trim() });
 
     if (!response.ok || !response.data.success) {
-      Toast.error('Error', response.data.message || 'Unable to rename file.');
+      Toast.error('Erreur', response.data.message || 'Impossible de renommer ce fichier.');
       return;
     }
 
-    Toast.success('Success', response.data.message || 'File renamed.');
+    Toast.success('Succes', response.data.message || 'Fichier renomme.');
     loadFiles();
   }
 
   async function copyFile(file) {
-    const name = window.prompt('Copy name', `Copy of ${file.name || ''}`) || '';
+    const name = window.prompt('Nom de la copie', `Copie de ${file.name || ''}`) || '';
     const response = await fetchWithMethod(`${window.GDRIVE_ROUTES.fileBase}/${encodeURIComponent(file.id)}/copy`, 'POST', {
       name: name.trim(),
       target_folder_id: state.currentFolderId || null,
     });
 
     if (!response.ok || !response.data.success) {
-      Toast.error('Error', response.data.message || 'Unable to copy file.');
+      Toast.error('Erreur', response.data.message || 'Impossible de copier ce fichier.');
       return;
     }
 
-    Toast.success('Success', response.data.message || 'File copied.');
+    Toast.success('Succes', response.data.message || 'Fichier copie.');
     loadFiles();
   }
 
   async function moveFile(file) {
-    const target = window.prompt('Target folder ID', state.currentFolderId || '');
+    const target = window.prompt('Identifiant du dossier cible', state.currentFolderId || '');
     if (!target || !target.trim()) return;
 
     const currentParent = (file.parents && file.parents.length ? file.parents[0] : state.currentFolderId) || '';
     if (!currentParent) {
-      Toast.error('Validation', 'Current folder ID is missing.');
+      Toast.error('Validation', 'Le dossier source est introuvable.');
       return;
     }
 
@@ -334,27 +334,27 @@ const GoogleDriveModule = (() => {
     });
 
     if (!response.ok || !response.data.success) {
-      Toast.error('Error', response.data.message || 'Unable to move file.');
+      Toast.error('Erreur', response.data.message || 'Impossible de deplacer ce fichier.');
       return;
     }
 
-    Toast.success('Success', response.data.message || 'File moved.');
+    Toast.success('Succes', response.data.message || 'Fichier deplace.');
     loadFiles();
   }
 
   async function shareFile(file) {
-    const email = window.prompt('Email to share with (empty for public link)', '');
+    const email = window.prompt('Email du destinataire (laisser vide pour lien public)', '');
     const payload = email && email.trim()
       ? { type: 'user', role: 'reader', email: email.trim() }
       : { type: 'anyone', role: 'reader' };
 
     const response = await fetchWithMethod(`${window.GDRIVE_ROUTES.fileBase}/${encodeURIComponent(file.id)}/share`, 'POST', payload);
     if (!response.ok || !response.data.success) {
-      Toast.error('Error', response.data.message || 'Unable to share file.');
+      Toast.error('Erreur', response.data.message || 'Impossible de partager ce fichier.');
       return;
     }
 
-    Toast.success('Success', response.data.message || 'File shared.');
+    Toast.success('Succes', response.data.message || 'Fichier partage.');
     if (response.data.data?.web_view_link) {
       window.open(response.data.data.web_view_link, '_blank');
     }
@@ -362,17 +362,17 @@ const GoogleDriveModule = (() => {
 
   async function deleteFile(file) {
     Modal.confirm({
-      title: `Delete "${file.name}"?`,
-      message: 'The file will be moved to trash.',
-      confirmText: 'Delete',
+      title: `Supprimer "${file.name}" ?`,
+      message: 'Le fichier sera deplace dans la corbeille.',
+      confirmText: 'Supprimer',
       type: 'danger',
       onConfirm: async () => {
         const response = await fetchWithMethod(`${window.GDRIVE_ROUTES.fileBase}/${encodeURIComponent(file.id)}`, 'DELETE', { permanent: false });
         if (!response.ok || !response.data.success) {
-          Toast.error('Error', response.data.message || 'Unable to delete file.');
+          Toast.error('Erreur', response.data.message || 'Impossible de supprimer ce fichier.');
           return;
         }
-        Toast.success('Deleted', response.data.message || 'File deleted.');
+        Toast.success('Succes', response.data.message || 'Fichier supprime.');
         loadFiles();
       },
     });
@@ -384,14 +384,14 @@ const GoogleDriveModule = (() => {
 
     const { ok, data } = await Http.get(window.GDRIVE_ROUTES.trashData);
     if (!ok || !data.success) {
-      if (tbody) tbody.innerHTML = emptyRow('Unable to load trash.', 4);
-      Toast.error('Error', data.message || 'Unable to load trash.');
+      if (tbody) tbody.innerHTML = emptyRow('Impossible de charger la corbeille.', 4);
+      Toast.error('Erreur', data.message || 'Impossible de charger la corbeille.');
       return;
     }
 
     const rows = data.data || [];
     if (!rows.length) {
-      if (tbody) tbody.innerHTML = emptyRow('Trash is empty.', 4);
+      if (tbody) tbody.innerHTML = emptyRow('La corbeille est vide.', 4);
     } else if (tbody) {
       tbody.innerHTML = rows.map((file) => {
         const modified = file.modified_at ? new Date(file.modified_at).toLocaleString() : '-';
@@ -402,8 +402,8 @@ const GoogleDriveModule = (() => {
             <td>${esc(modified)}</td>
             <td>
               <div class="row-actions" style="justify-content:flex-end;padding-right:4px;opacity:1;">
-                <button class="btn-icon" data-trash-action="restore" data-id="${esc(file.id)}" title="Restore"><i class="fas fa-rotate-left"></i></button>
-                <button class="btn-icon danger" data-trash-action="delete" data-id="${esc(file.id)}" title="Delete permanently"><i class="fas fa-trash-can"></i></button>
+                <button class="btn-icon" data-trash-action="restore" data-id="${esc(file.id)}" title="Restaurer"><i class="fas fa-rotate-left"></i></button>
+                <button class="btn-icon danger" data-trash-action="delete" data-id="${esc(file.id)}" title="Supprimer definitivement"><i class="fas fa-trash-can"></i></button>
               </div>
             </td>
           </tr>`;
@@ -416,10 +416,10 @@ const GoogleDriveModule = (() => {
   async function restoreFile(fileId) {
     const response = await fetchWithMethod(`${window.GDRIVE_ROUTES.fileBase}/${encodeURIComponent(fileId)}/restore`, 'POST', {});
     if (!response.ok || !response.data.success) {
-      Toast.error('Error', response.data.message || 'Unable to restore file.');
+      Toast.error('Erreur', response.data.message || 'Impossible de restaurer ce fichier.');
       return;
     }
-    Toast.success('Success', response.data.message || 'File restored.');
+    Toast.success('Succes', response.data.message || 'Fichier restaure.');
     openTrash();
     loadFiles();
   }
@@ -427,27 +427,27 @@ const GoogleDriveModule = (() => {
   async function deleteFilePermanently(fileId) {
     const response = await fetchWithMethod(`${window.GDRIVE_ROUTES.fileBase}/${encodeURIComponent(fileId)}`, 'DELETE', { permanent: true });
     if (!response.ok || !response.data.success) {
-      Toast.error('Error', response.data.message || 'Unable to permanently delete file.');
+      Toast.error('Erreur', response.data.message || 'Impossible de supprimer definitivement ce fichier.');
       return;
     }
-    Toast.success('Success', response.data.message || 'File permanently deleted.');
+    Toast.success('Succes', response.data.message || 'Fichier supprime definitivement.');
     openTrash();
     loadFiles();
   }
 
   async function emptyTrash() {
     Modal.confirm({
-      title: 'Empty trash?',
-      message: 'This action permanently deletes all trashed files.',
-      confirmText: 'Empty',
+      title: 'Vider la corbeille ?',
+      message: 'Cette action supprime definitivement tous les fichiers de la corbeille.',
+      confirmText: 'Vider',
       type: 'danger',
       onConfirm: async () => {
         const response = await fetchWithMethod(window.GDRIVE_ROUTES.emptyTrash, 'DELETE', {});
         if (!response.ok || !response.data.success) {
-          Toast.error('Error', response.data.message || 'Unable to empty trash.');
+          Toast.error('Erreur', response.data.message || 'Impossible de vider la corbeille.');
           return;
         }
-        Toast.success('Success', response.data.message || 'Trash emptied.');
+        Toast.success('Succes', response.data.message || 'Corbeille videe.');
         openTrash();
       },
     });
@@ -455,17 +455,17 @@ const GoogleDriveModule = (() => {
 
   async function disconnect() {
     Modal.confirm({
-      title: 'Disconnect Google Drive?',
-      message: 'OAuth tokens will be removed for this tenant.',
-      confirmText: 'Disconnect',
+      title: 'Deconnecter Google Drive ?',
+      message: 'Les tokens OAuth de ce tenant seront retires.',
+      confirmText: 'Deconnecter',
       type: 'danger',
       onConfirm: async () => {
         const { ok, data } = await Http.post(window.GDRIVE_ROUTES.disconnect, {});
         if (!ok || !data.success) {
-          Toast.error('Error', data.message || 'Unable to disconnect.');
+          Toast.error('Erreur', data.message || 'Impossible de deconnecter Google Drive.');
           return;
         }
-        Toast.success('Disconnected', data.message || 'Google Drive disconnected.');
+        Toast.success('Succes', data.message || 'Google Drive deconnecte.');
         setTimeout(() => window.location.reload(), 700);
       },
     });
@@ -485,6 +485,13 @@ const GoogleDriveModule = (() => {
     });
 
     const data = await response.json().catch(() => ({}));
+    const reconnectTarget = window.CrmAuth?.resolveReconnectRedirect?.(data?.message, data);
+    if (reconnectTarget) {
+      window.CrmAuth.redirectToReconnect(
+        data?.message || 'La session Google Drive a expire. Redirection vers la reconnexion.',
+        reconnectTarget
+      );
+    }
     return { ok: response.ok, status: response.status, data };
   }
 
@@ -493,7 +500,7 @@ const GoogleDriveModule = (() => {
   }
 
   function emptyRow(message, colSpan = 5) {
-    return `<tr><td colspan="${colSpan}"><div class="table-empty"><div class="table-empty-icon"><i class="fas fa-folder-open"></i></div><h3>No data</h3><p>${esc(message)}</p></div></td></tr>`;
+    return `<tr><td colspan="${colSpan}"><div class="table-empty"><div class="table-empty-icon"><i class="fas fa-folder-open"></i></div><h3>Aucune donnee</h3><p>${esc(message)}</p></div></td></tr>`;
   }
 
   function setText(id, value) {

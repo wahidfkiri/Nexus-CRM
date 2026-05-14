@@ -23,12 +23,12 @@ class CreateQuoteAutomationAction extends AbstractAutomationAction
     public function execute(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion = null): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'invoice', 'Le module Facturation doit etre installe pour creer un devis.');
+        $this->assertExtensionActive($tenantId, 'invoice', 'Le module Facturation doit être installé pour créer un devis.');
 
         $payload = $this->payload($automationEvent);
         $clientId = $this->modelId($payload, $suggestion, 'client_id', Client::class);
         if (!$clientId) {
-            throw new RuntimeException('Client introuvable pour la creation du devis.');
+            throw new RuntimeException('Client introuvable pour la création du devis.');
         }
 
         $client = $this->loadClient($tenantId, $clientId);
@@ -60,7 +60,7 @@ class CreateQuoteAutomationAction extends AbstractAutomationAction
                     'withholding_tax_rate' => 0,
                     'withholding_tax_amount' => 0,
                     'total' => 0,
-                    'notes' => 'Devis cree automatiquement depuis la suggestion CRM pour ' . $this->clientDisplayName($client) . '.',
+                    'notes' => 'Devis créé automatiquement depuis la suggestion CRM pour ' . $this->clientDisplayName($client) . '.',
                     'internal_notes' => 'Automation event #' . (int) $automationEvent->id,
                 ]);
                 break;
@@ -72,7 +72,7 @@ class CreateQuoteAutomationAction extends AbstractAutomationAction
         }
 
         if (!$quote) {
-            throw new RuntimeException('Impossible de creer le devis brouillon automatique.');
+            throw new RuntimeException('Impossible de créer le devis brouillon automatique.');
         }
 
         $quote = $quote->fresh(['client']);
@@ -84,7 +84,7 @@ class CreateQuoteAutomationAction extends AbstractAutomationAction
 
         return [
             'result' => 'quote_created',
-            'message' => 'Devis brouillon cree avec succes.',
+            'message' => 'Devis brouillon créé avec succès.',
             'quote_id' => (int) $quote->id,
             'quote_number' => (string) $quote->number,
             'client_id' => (int) $client->id,

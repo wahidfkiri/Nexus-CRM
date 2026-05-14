@@ -24,7 +24,7 @@ class DeliveryNoteController extends Controller
     public function index()
     {
         return view('stock::delivery-notes.index', [
-            'types' => ['in' => 'BL entree', 'out' => 'BL sortie'],
+            'types' => ['in' => 'BL entrée', 'out' => 'BL sortie'],
             'statuses' => config('stock.delivery_note_statuses', []),
         ]);
     }
@@ -36,7 +36,7 @@ class DeliveryNoteController extends Controller
             'clients' => Client::orderBy('company_name')->get(['id', 'company_name']),
             'orders' => Order::with('supplier')->orderByDesc('created_at')->limit(100)->get(['id', 'supplier_id', 'number', 'status', 'reference']),
             'articles' => Article::query()->withCurrentStock()->where('status', 'active')->orderBy('name')->get(['stock_articles.id', 'name', 'sku', 'unit']),
-            'types' => ['in' => 'BL entree', 'out' => 'BL sortie'],
+            'types' => ['in' => 'BL entrée', 'out' => 'BL sortie'],
         ]);
     }
 
@@ -53,7 +53,7 @@ class DeliveryNoteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Bon de livraison cree avec succes.',
+                'message' => trans('stock::stock.messages.delivery_note_created'),
                 'redirect' => route('stock.delivery-notes.show', $note),
                 'automation' => $automation,
             ], 201);
@@ -78,7 +78,7 @@ class DeliveryNoteController extends Controller
             'clients' => Client::orderBy('company_name')->get(['id', 'company_name']),
             'orders' => Order::with('supplier')->orderByDesc('created_at')->limit(100)->get(['id', 'supplier_id', 'number', 'status', 'reference']),
             'articles' => Article::query()->withCurrentStock()->where('status', 'active')->orderBy('name')->get(['stock_articles.id', 'name', 'sku', 'unit']),
-            'types' => ['in' => 'BL entree', 'out' => 'BL sortie'],
+            'types' => ['in' => 'BL entrée', 'out' => 'BL sortie'],
         ]);
     }
 
@@ -89,7 +89,7 @@ class DeliveryNoteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Bon de livraison mis a jour.',
+                'message' => trans('stock::stock.messages.delivery_note_updated'),
                 'redirect' => route('stock.delivery-notes.show', $deliveryNote),
             ]);
         } catch (Throwable $e) {
@@ -101,7 +101,7 @@ class DeliveryNoteController extends Controller
     {
         try {
             $this->service->delete($deliveryNote);
-            return response()->json(['success' => true, 'message' => 'Bon de livraison supprime.']);
+            return response()->json(['success' => true, 'message' => trans('stock::stock.messages.delivery_note_deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -163,13 +163,13 @@ class DeliveryNoteController extends Controller
                     $automation['count'] = count($automation['suggestions']);
                     $automation['pending_count'] = $automation['count'];
                     $automation['should_prompt'] = $automation['count'] > 0;
-                    $automation['subtitle'] = 'Suggestions disponibles pour ce bon de livraison et pour le stock bas detecte.';
+                    $automation['subtitle'] = 'Suggestions disponibles pour ce bon de livraison et pour le stock bas détecté.';
                 }
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Bon de livraison valide et mouvements de stock postes.',
+                'message' => trans('stock::stock.messages.delivery_note_validated'),
                 'redirect' => route('stock.delivery-notes.show', $deliveryNote),
                 'automation' => $automation,
             ]);
@@ -184,7 +184,7 @@ class DeliveryNoteController extends Controller
             $deliveryNote = $this->service->cancel($deliveryNote);
             return response()->json([
                 'success' => true,
-                'message' => 'Bon de livraison annule. Le stock a ete recontre-passe si necessaire.',
+                'message' => trans('stock::stock.messages.delivery_note_cancelled'),
                 'redirect' => route('stock.delivery-notes.show', $deliveryNote),
             ]);
         } catch (Throwable $e) {

@@ -12,20 +12,20 @@ return [
 
     'order_statuses' => [
         'draft' => 'Brouillon',
-        'ordered' => 'Commandee',
-        'received' => 'Recue',
-        'cancelled' => 'Annulee',
+        'ordered' => 'Commandée',
+        'received' => 'Reçue',
+        'cancelled' => 'Annulée',
     ],
 
     'delivery_note_statuses' => [
         'draft' => 'Brouillon',
-        'validated' => 'Valide',
-        'cancelled' => 'Annule',
+        'validated' => 'Validé',
+        'cancelled' => 'Annulé',
     ],
 
     'movement_types' => [
         'opening_balance' => 'Stock initial',
-        'delivery_note_in' => 'BL entree',
+        'delivery_note_in' => 'BL entrée',
         'delivery_note_out' => 'BL sortie',
         'delivery_note_reversal' => 'Contre-passation BL',
         'adjustment' => 'Ajustement',

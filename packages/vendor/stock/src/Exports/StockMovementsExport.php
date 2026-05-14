@@ -34,6 +34,6 @@ class StockMovementsExport implements FromCollection, WithHeadings
 
     public function headings(): array
     {
-        return ['Date', 'Article', 'SKU', 'Type de mouvement', 'Sens', 'Quantite', 'Quantite signee', 'Reference', 'BL', 'Raison', 'Notes'];
+        return trans('stock::stock.exports.movements');
     }
 }

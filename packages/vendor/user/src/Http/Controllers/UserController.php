@@ -46,7 +46,7 @@ class UserController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Invitation envoyée à {$invitation->email}.",
+                'message' => __('user::users.messages.invited_to', ['email' => $invitation->email]),
                 'data' => $invitation,
             ], 201);
         } catch (Throwable $e) {
@@ -89,7 +89,7 @@ class UserController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Utilisateur mis à jour avec succès.',
+                'message' => __('user::users.messages.updated'),
                 'data' => $user,
                 'redirect' => route('users.show', $user),
             ]);
@@ -106,13 +106,13 @@ class UserController extends Controller
         $this->authorizeTenantUser($user);
 
         if ($user->id === auth()->id()) {
-            return response()->json(['success' => false, 'message' => 'Vous ne pouvez pas vous supprimer vous-même.'], 422);
+            return response()->json(['success' => false, 'message' => __('user::users.errors.cannot_delete_self')], 422);
         }
 
         try {
             $this->userService->deleteUser($user);
 
-            return response()->json(['success' => true, 'message' => 'Utilisateur supprimé.']);
+            return response()->json(['success' => true, 'message' => __('user::users.messages.deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -151,7 +151,10 @@ class UserController extends Controller
         try {
             $count = $this->userService->bulkDelete($request->ids);
 
-            return response()->json(['success' => true, 'message' => "{$count} utilisateur(s) supprimé(s)."]);
+            return response()->json([
+                'success' => true,
+                'message' => __('user::users.messages.bulk_deleted', ['count' => $count]),
+            ]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -168,7 +171,10 @@ class UserController extends Controller
         try {
             $count = $this->userService->bulkStatusUpdate($request->ids, $request->status);
 
-            return response()->json(['success' => true, 'message' => "{$count} utilisateur(s) mis à jour."]);
+            return response()->json([
+                'success' => true,
+                'message' => __('user::users.messages.bulk_updated', ['count' => $count]),
+            ]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -181,7 +187,7 @@ class UserController extends Controller
         try {
             $this->userService->suspendUser($user);
 
-            return response()->json(['success' => true, 'message' => 'Utilisateur suspendu.']);
+            return response()->json(['success' => true, 'message' => __('user::users.messages.suspended')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -194,7 +200,7 @@ class UserController extends Controller
         try {
             $this->userService->activateUser($user);
 
-            return response()->json(['success' => true, 'message' => 'Utilisateur activé.']);
+            return response()->json(['success' => true, 'message' => __('user::users.messages.activated')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -210,7 +216,7 @@ class UserController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Avatar mis à jour.',
+                'message' => __('user::users.messages.avatar_updated'),
                 'avatar_url' => asset('storage/' . $user->avatar),
             ]);
         } catch (Throwable $e) {
@@ -247,7 +253,7 @@ class UserController extends Controller
         try {
             $this->userService->resendInvitation($invitation);
 
-            return response()->json(['success' => true, 'message' => 'Invitation renvoyée.']);
+            return response()->json(['success' => true, 'message' => __('user::users.messages.invitation_resent')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -260,7 +266,7 @@ class UserController extends Controller
         try {
             $this->userService->revokeInvitation($invitation);
 
-            return response()->json(['success' => true, 'message' => 'Invitation révoquée.']);
+            return response()->json(['success' => true, 'message' => __('user::users.messages.invitation_revoked')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
@@ -268,12 +274,12 @@ class UserController extends Controller
 
     public function exportCsv()
     {
-        return Excel::download(new UsersExport, 'utilisateurs_' . date('Y-m-d') . '.csv');
+        return Excel::download(new UsersExport(), 'utilisateurs_' . date('Y-m-d') . '.csv');
     }
 
     public function exportExcel()
     {
-        return Excel::download(new UsersExport, 'utilisateurs_' . date('Y-m-d') . '.xlsx');
+        return Excel::download(new UsersExport(), 'utilisateurs_' . date('Y-m-d') . '.xlsx');
     }
 
     public function acceptForm(string $token)
@@ -282,13 +288,13 @@ class UserController extends Controller
 
         if (!$invitation) {
             return response()->view('user::accept-invalid', [
-                'reason' => 'Cette invitation est introuvable. Vérifiez le lien reçu par email.',
+                'reason' => __('user::users.messages.invitation_invalid_reason_missing'),
             ], 410);
         }
 
         if (!$invitation->isUsable()) {
             return response()->view('user::accept-invalid', [
-                'reason' => 'Cette invitation est expirée, déjà acceptée, ou révoquée.',
+                'reason' => __('user::users.messages.invitation_invalid_reason_expired'),
             ], 410);
         }
 
@@ -298,7 +304,7 @@ class UserController extends Controller
             $currentUser = auth()->user();
             if (mb_strtolower((string) $currentUser->email) !== mb_strtolower((string) $invitation->email)) {
                 return response()->view('user::accept-invalid', [
-                    'reason' => 'Cette invitation est liée à un autre compte. Connectez-vous avec la bonne adresse email.',
+                    'reason' => __('user::users.messages.invitation_invalid_reason_other_account'),
                 ], 403);
             }
         } elseif ($existingUser) {
@@ -309,7 +315,7 @@ class UserController extends Controller
 
             return redirect()
                 ->route('login')
-                ->with('info', 'Connectez-vous avec votre compte existant pour rejoindre cette équipe.');
+                ->with('info', __('user::users.subtitles.login_existing_account'));
         } else {
             session([
                 'pending_invitation_token' => $invitation->token,
@@ -318,7 +324,7 @@ class UserController extends Controller
 
             return redirect()
                 ->route('register')
-                ->with('info', 'Créez votre compte pour finaliser cette invitation.')
+                ->with('info', __('user::users.subtitles.register_new_account'))
                 ->with('invitation_email', (string) $invitation->email);
         }
 
@@ -334,7 +340,7 @@ class UserController extends Controller
         $invitation = app(UserRepository::class)->findInvitationByToken($token);
 
         if (!$invitation || !$invitation->isUsable()) {
-            return response()->json(['success' => false, 'message' => 'Invitation invalide ou expirée.'], 422);
+            return response()->json(['success' => false, 'message' => __('user::users.messages.invalid_invitation')], 422);
         }
 
         if (!auth()->check()) {
@@ -345,7 +351,7 @@ class UserController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Connectez-vous ou créez votre compte pour accepter cette invitation.',
+                'message' => __('user::users.messages.login_or_register'),
                 'redirect' => User::query()->whereRaw('LOWER(email) = ?', [mb_strtolower((string) $invitation->email)])->exists()
                     ? route('login')
                     : route('register'),
@@ -355,7 +361,7 @@ class UserController extends Controller
         if (mb_strtolower((string) auth()->user()->email) !== mb_strtolower((string) $invitation->email)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cette invitation est liée à une autre adresse email.',
+                'message' => __('user::users.messages.wrong_invitation_email'),
             ], 403);
         }
 
@@ -366,7 +372,7 @@ class UserController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Invitation acceptée. Votre accès à cette équipe est maintenant actif.',
+                'message' => __('user::users.messages.invitation_accepted'),
                 'redirect' => url('/dashboard'),
             ]);
         } catch (Throwable $e) {
@@ -389,14 +395,14 @@ class UserController extends Controller
         }
 
         if (!$membership && (int) $user->getOriginal('tenant_id') !== $tenantId) {
-            abort(403, 'Accès non autorisé.');
+            abort(403, __('user::users.errors.access_denied'));
         }
     }
 
     private function authorizeTenantInvitation(UserInvitation $invitation): void
     {
         if ((int) $invitation->tenant_id !== (int) auth()->user()->tenant_id) {
-            abort(403, 'Accès non autorisé.');
+            abort(403, __('user::users.errors.access_denied'));
         }
     }
 

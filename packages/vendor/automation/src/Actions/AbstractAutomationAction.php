@@ -49,7 +49,7 @@ abstract class AbstractAutomationAction implements AutomationAction
     {
         $tenantId = (int) $automationEvent->tenant_id;
         if ($tenantId <= 0) {
-            throw new RuntimeException('Tenant automation introuvable.');
+            throw new RuntimeException(__('automation::automation.actions.tenant_missing'));
         }
 
         return $tenantId;
@@ -121,7 +121,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$user) {
-            throw new RuntimeException('Aucun utilisateur CRM disponible pour executer cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.no_actor'));
         }
 
         return $user;
@@ -133,7 +133,9 @@ abstract class AbstractAutomationAction implements AutomationAction
             return;
         }
 
-        throw new RuntimeException($message ?: "L'application {$slug} n'est pas active pour ce tenant.");
+        throw new RuntimeException($message ?: __('automation::automation.actions.extension_not_active', [
+            'extension' => AutomationReconnectResolver::providerLabel($slug),
+        ]));
     }
 
     protected function withReconnectHandling(string $providerSlug, callable $callback): mixed
@@ -145,7 +147,9 @@ abstract class AbstractAutomationAction implements AutomationAction
 
             if ($this->requiresReconnectForProvider($providerSlug, $normalized)) {
                 $label = AutomationReconnectResolver::providerLabel($providerSlug);
-                throw new RuntimeException($label . " n'est plus connecte pour ce tenant. Reconnectez " . $label . ' puis relancez cette automation.');
+                throw new RuntimeException(__('automation::automation.actions.provider_reconnect', [
+                    'provider' => $label,
+                ]));
             }
 
             throw $e;
@@ -198,7 +202,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$client) {
-            throw new RuntimeException('Client introuvable pour cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.client_missing'));
         }
 
         return $client;
@@ -213,7 +217,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$invoice) {
-            throw new RuntimeException('Facture introuvable pour cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.invoice_missing'));
         }
 
         return $invoice;
@@ -228,7 +232,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$quote) {
-            throw new RuntimeException('Devis introuvable pour cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.quote_missing'));
         }
 
         return $quote;
@@ -243,7 +247,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$order) {
-            throw new RuntimeException('Commande fournisseur introuvable pour cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.stock_order_missing'));
         }
 
         return $order;
@@ -259,7 +263,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$article) {
-            throw new RuntimeException('Article introuvable pour cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.article_missing'));
         }
 
         return $article;
@@ -274,7 +278,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$supplier) {
-            throw new RuntimeException('Fournisseur introuvable pour cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.supplier_missing'));
         }
 
         return $supplier;
@@ -289,7 +293,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$deliveryNote) {
-            throw new RuntimeException('Bon de livraison introuvable pour cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.delivery_note_missing'));
         }
 
         return $deliveryNote;
@@ -304,7 +308,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$project) {
-            throw new RuntimeException('Projet introuvable pour cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.project_missing'));
         }
 
         return $project;
@@ -319,7 +323,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$task) {
-            throw new RuntimeException('Tache introuvable pour cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.task_missing'));
         }
 
         return $task;
@@ -334,7 +338,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$invitation) {
-            throw new RuntimeException('Invitation introuvable pour cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.invitation_missing'));
         }
 
         return $invitation;
@@ -349,7 +353,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             ->first();
 
         if (!$activation) {
-            throw new RuntimeException('Activation d application introuvable pour cette automation.');
+            throw new RuntimeException(__('automation::automation.actions.activation_missing'));
         }
 
         return $activation;
@@ -505,7 +509,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             'owner_id' => (int) $actor->id,
             'name' => $name,
             'slug' => $this->uniqueProjectSlug($tenantId, $bucket),
-            'description' => $description ?: 'Projet genere automatiquement par le moteur d automation.',
+            'description' => $description ?: 'Projet généré automatiquement par le moteur d’automation.',
             'status' => 'active',
             'priority' => 'medium',
             'start_date' => now()->toDateString(),
@@ -532,7 +536,7 @@ abstract class AbstractAutomationAction implements AutomationAction
             $project,
             null,
             'automation_project_created',
-            'Projet automation cree',
+            __('automation::automation.actions.project_automation_created'),
             ['bucket' => $bucket],
             (int) $actor->id
         );

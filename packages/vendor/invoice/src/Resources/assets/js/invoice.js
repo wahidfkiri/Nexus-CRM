@@ -4,6 +4,40 @@
  */
 'use strict';
 
+const InvoiceLang = Object.assign({
+  successTitle: 'Succès',
+  errorTitle: 'Erreur',
+  warningTitle: 'Attention',
+  validationTitle: 'Validation',
+  loadError: 'Impossible de charger les données.',
+  emptyDefaultLabel: 'élément',
+  emptyHelp: 'Modifiez vos filtres ou créez votre premier document.',
+  paidLockTitle: 'Action désactivée : facture déjà payée.',
+  referencePrefix: 'Réf. :',
+  settledLabel: '✓ Soldée',
+  convertedBadge: '✓ Converti',
+  viewInvoiceTitle: 'Voir la facture',
+  paginationInfo: 'Affichage de :from à :to sur :total résultat(s)',
+  countLabel: ':total résultat(s)',
+  irreversibleAction: 'Cette action est irréversible.',
+  paymentRecalculation: 'La facture associée sera recalculée.',
+  lineDescriptionPlaceholder: 'Description du produit ou du service…',
+  optionalReferencePlaceholder: 'Référence (optionnel)',
+  unitPlaceholder: 'unité',
+  minOneLine: 'Au moins une ligne est requise.',
+  deleteConfirmText: 'Supprimer',
+  invoiceDeleteTitle: 'Supprimer la facture :number ?',
+  paymentDeleteTitle: 'Supprimer ce paiement ?',
+}, window.InvoiceLang || {});
+
+function invoiceLang(key, replacements = {}) {
+  let value = InvoiceLang[key] ?? '';
+  Object.entries(replacements).forEach(([placeholder, replacement]) => {
+    value = value.replaceAll(`:${placeholder}`, String(replacement));
+  });
+  return value;
+}
+
 /* ============================================================
    InvTable — Table manager (identique CrmTable mais pour factures/devis)
    ============================================================ */
@@ -107,7 +141,7 @@ class InvTable {
     const { ok, data } = await Http.get(this.options.dataUrl, params);
     this.state.loading = false;
 
-    if (!ok) { Toast.error('Erreur', 'Impossible de charger les données.'); return; }
+    if (!ok) { Toast.error(InvoiceLang.errorTitle, InvoiceLang.loadError); return; }
 
     this._renderRows(data.data || []);
     this._renderPagination(data);
@@ -144,7 +178,7 @@ class InvTable {
 
   _setStat(id, val) {
     const el = document.getElementById(id);
-    if (el) el.textContent = val ?? '—';
+    if (el) el.textContent = val ?? '\u2014';
   }
 
   _fmtCur(n) {
@@ -170,8 +204,8 @@ class InvTable {
         <tr><td colspan="${this.options.mode === 'payment' ? 8 : 10}">
           <div class="table-empty">
             <div class="table-empty-icon"><i class="fas fa-file-invoice"></i></div>
-            <h3>Aucun ${labels[this.options.mode] || 'élément'} trouvé</h3>
-            <p>Modifiez vos filtres ou créez votre premier document.</p>
+            <h3>Aucun ${labels[this.options.mode] || InvoiceLang.emptyDefaultLabel} trouvé</h3>
+            <p>${InvoiceLang.emptyHelp}</p>
           </div>
         </td></tr>`;
       return;
@@ -194,7 +228,7 @@ class InvTable {
     const dot = `<span style="width:6px;height:6px;border-radius:50%;background:${statusColors[inv.status]||'var(--c-ink-20)'};display:inline-block;margin-right:5px;"></span>`;
     const isOverdue = inv.is_overdue;
     const isPaid = String(inv.status || '').toLowerCase() === 'paid';
-    const paidLockTitle = 'Action desactivee : facture deja payee.';
+    const paidLockTitle = InvoiceLang.paidLockTitle;
     const editAction = isPaid
       ? `<button type="button" class="btn-icon is-disabled" aria-disabled="true" title="${paidLockTitle}"><i class="fas fa-pen"></i></button>`
       : `<a href="/invoices/${inv.id}/edit" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>`;
@@ -206,7 +240,7 @@ class InvTable {
         <td style="width:40px"><input type="checkbox" class="row-check" data-id="${inv.id}" ${this.selectedIds.has(inv.id)?'checked':''}></td>
         <td>
           <div><a href="/invoices/${inv.id}" style="color:var(--c-accent);font-weight:var(--fw-semi);text-decoration:none;font-family:var(--ff-display);">${this._esc(inv.number)}</a></div>
-          ${inv.reference ? `<div style="font-size:11.5px;color:var(--c-ink-40);">Réf : ${this._esc(inv.reference)}</div>` : ''}
+          ${inv.reference ? `<div style="font-size:11.5px;color:var(--c-ink-40);">${InvoiceLang.referencePrefix} ${this._esc(inv.reference)}</div>` : ''}
         </td>
         <td>
           <div style="font-weight:var(--fw-medium);">${this._esc(inv.client?.company_name||'—')}</div>
@@ -216,7 +250,7 @@ class InvTable {
         <td style="${isOverdue?'color:var(--c-danger);font-weight:var(--fw-medium);':''}">${inv.due_date ? this._fmtDate(inv.due_date) : '—'}</td>
         <td><span style="background:var(--c-ink-02);border:1px solid var(--c-ink-05);border-radius:4px;padding:2px 8px;font-size:11px;font-weight:var(--fw-semi);">${cur}</span></td>
         <td style="text-align:right;font-weight:var(--fw-semi);font-family:var(--ff-display);">${fmtCur(inv.total)}</td>
-        <td style="text-align:right;font-weight:var(--fw-semi);font-family:var(--ff-display);${+inv.amount_due>0?'color:var(--c-danger);':'color:var(--c-success);'}">${+inv.amount_due>0?fmtCur(inv.amount_due):'✓ Soldée'}</td>
+        <td style="text-align:right;font-weight:var(--fw-semi);font-family:var(--ff-display);${+inv.amount_due>0?'color:var(--c-danger);':'color:var(--c-success);'}">${+inv.amount_due>0?fmtCur(inv.amount_due):InvoiceLang.settledLabel}</td>
         <td><span class="badge badge-${inv.status}">${dot}${this._esc(inv.status_label||inv.status)}</span></td>
         <td>
           <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
@@ -238,7 +272,7 @@ class InvTable {
         <td style="width:40px"><input type="checkbox" class="row-check" data-id="${q.id}" ${this.selectedIds.has(q.id)?'checked':''}></td>
         <td>
           <div><a href="/invoices/quotes/${q.id}" style="color:var(--c-purple);font-weight:var(--fw-semi);text-decoration:none;font-family:var(--ff-display);">${this._esc(q.number)}</a></div>
-          ${q.reference ? `<div style="font-size:11.5px;color:var(--c-ink-40);">Réf : ${this._esc(q.reference)}</div>` : ''}
+          ${q.reference ? `<div style="font-size:11.5px;color:var(--c-ink-40);">${InvoiceLang.referencePrefix} ${this._esc(q.reference)}</div>` : ''}
         </td>
         <td>
           <div style="font-weight:var(--fw-medium);">${this._esc(q.client?.company_name||'—')}</div>
@@ -248,7 +282,7 @@ class InvTable {
         <td style="${expired?'color:var(--c-danger);font-weight:var(--fw-medium);':''}">${q.valid_until ? this._fmtDate(q.valid_until) : '—'}</td>
         <td><span style="background:var(--c-ink-02);border:1px solid var(--c-ink-05);border-radius:4px;padding:2px 8px;font-size:11px;font-weight:var(--fw-semi);">${cur}</span></td>
         <td style="text-align:right;font-weight:var(--fw-semi);font-family:var(--ff-display);">${InvCurrencyFmt.format(q.total, cur)}</td>
-        <td><span class="badge badge-${q.status}">${dot}${this._esc(q.status_label||q.status)}</span>${q.is_converted?'<span class="badge badge-paid" style="margin-left:6px;">✓ Converti</span>':''}</td>
+        <td><span class="badge badge-${q.status}">${dot}${this._esc(q.status_label||q.status)}</span>${q.is_converted?`<span class="badge badge-paid" style="margin-left:6px;">${InvoiceLang.convertedBadge}</span>`:''}</td>
         <td>
           <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
             <a href="/invoices/quotes/${q.id}" class="btn-icon" title="Voir"><i class="fas fa-eye"></i></a>
@@ -280,7 +314,7 @@ class InvTable {
         <td style="text-align:right;font-weight:var(--fw-bold);font-family:var(--ff-display);color:var(--c-success);">${InvCurrencyFmt.format(p.amount, cur)}</td>
         <td>
           <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
-            <a href="/invoices/${p.invoice_id}" class="btn-icon" title="Voir la facture"><i class="fas fa-file-invoice"></i></a>
+            <a href="/invoices/${p.invoice_id}" class="btn-icon" title="${InvoiceLang.viewInvoiceTitle}"><i class="fas fa-file-invoice"></i></a>
             <button class="btn-icon danger" onclick="InvTable._deletePayment(${p.id})" title="Supprimer"><i class="fas fa-trash"></i></button>
           </div>
         </td>
@@ -293,7 +327,7 @@ class InvTable {
     if (!wrap) return;
 
     const { current_page, last_page, from, to, total } = data;
-    if (info) info.textContent = `Affichage de ${from || 0} à ${to || 0} sur ${total || 0} résultat(s)`;
+    if (info) info.textContent = invoiceLang('paginationInfo', { from: from || 0, to: to || 0, total: total || 0 });
 
     const pages = [];
     for (let i = Math.max(1, current_page - 2); i <= Math.min(last_page || 1, current_page + 2); i++) pages.push(i);
@@ -312,7 +346,7 @@ class InvTable {
 
   _updateCount(total) {
     const el = document.getElementById(this.options.countEl);
-    if (el) el.textContent = `${total || 0} résultat(s)`;
+    if (el) el.textContent = invoiceLang('countLabel', { total: total || 0 });
   }
 
   _updateBulkBar() {
@@ -336,28 +370,28 @@ class InvTable {
 
   static _deleteInvoice(id, number) {
     Modal.confirm({
-      title: `Supprimer la facture ${number} ?`,
-      message: 'Cette action est irréversible.',
-      confirmText: 'Supprimer',
+      title: invoiceLang('invoiceDeleteTitle', { number }),
+      message: InvoiceLang.irreversibleAction,
+      confirmText: InvoiceLang.deleteConfirmText,
       type: 'danger',
       onConfirm: async () => {
         const { ok, data } = await Http.delete(`/invoices/${id}`);
-        if (ok) { Toast.success('Supprimée', data.message); window._invTable?.load(); }
-        else Toast.error('Erreur', data.message);
+        if (ok) { Toast.success(InvoiceLang.successTitle, data.message); window._invTable?.load(); }
+        else Toast.error(InvoiceLang.errorTitle, data.message);
       }
     });
   }
 
   static _deletePayment(id) {
     Modal.confirm({
-      title: 'Supprimer ce paiement ?',
-      message: 'La facture associée sera recalculée.',
-      confirmText: 'Supprimer',
+      title: InvoiceLang.paymentDeleteTitle,
+      message: InvoiceLang.paymentRecalculation,
+      confirmText: InvoiceLang.deleteConfirmText,
       type: 'danger',
       onConfirm: async () => {
         const { ok, data } = await Http.delete(`/invoices/payments/${id}`);
-        if (ok) { Toast.success('Supprimé', data.message); window._payTable?.load(); }
-        else Toast.error('Erreur', data.message);
+        if (ok) { Toast.success(InvoiceLang.successTitle, data.message); window._payTable?.load(); }
+        else Toast.error(InvoiceLang.errorTitle, data.message);
       }
     });
   }
@@ -430,9 +464,9 @@ const InvLineItems = (() => {
       <td><span class="drag-handle"><i class="fas fa-grip-vertical"></i></span></td>
       <td>
         <input type="text" name="items[${id}][description]" value="${_esc(data.description||'')}"
-          class="form-control" style="font-size:13px;" placeholder="Description du produit/service…" required>
+          class="form-control" style="font-size:13px;" placeholder="${InvoiceLang.lineDescriptionPlaceholder}" required>
         <input type="text" name="items[${id}][reference]" value="${_esc(data.reference||'')}"
-          class="form-control" style="font-size:11.5px;margin-top:4px;padding:6px 10px;" placeholder="Référence (optionnel)">
+          class="form-control" style="font-size:11.5px;margin-top:4px;padding:6px 10px;" placeholder="${InvoiceLang.optionalReferencePlaceholder}">
       </td>
       <td>
         <input type="number" name="items[${id}][quantity]" value="${data.quantity||1}"
@@ -440,7 +474,7 @@ const InvLineItems = (() => {
       </td>
       <td>
         <input type="text" name="items[${id}][unit]" value="${_esc(data.unit||'')}"
-          class="form-control" style="font-size:13px;" placeholder="unité">
+          class="form-control" style="font-size:13px;" placeholder="${InvoiceLang.unitPlaceholder}">
       </td>
       <td>
         <input type="number" name="items[${id}][unit_price]" value="${data.unit_price||0}"
@@ -456,7 +490,7 @@ const InvLineItems = (() => {
           class="form-control li-disc-val" style="font-size:12.5px;" min="0" step="any">
       </td>
       <td>
-        <input type="number" name="items[${id}][tax_rate]" value="${data.tax_rate??taxRate}"
+        <input type="number" name="items[${id}][tax_rate]" value="${data.tax_rate ?? taxRate}"
           class="form-control li-tax" style="font-size:13px;" min="0" max="100" step="any">
       </td>
       <td class="cell-total">
@@ -479,7 +513,7 @@ const InvLineItems = (() => {
   }
 
   function removeLine(id) {
-    if (items.length <= 1) { Toast.warning('Attention', 'Au moins une ligne est requise.'); return; }
+    if (items.length <= 1) { Toast.warning(InvoiceLang.warningTitle, InvoiceLang.minOneLine); return; }
     items = items.filter(i => i.id !== id);
     document.getElementById(`li-${id}`)?.remove();
     recalc();

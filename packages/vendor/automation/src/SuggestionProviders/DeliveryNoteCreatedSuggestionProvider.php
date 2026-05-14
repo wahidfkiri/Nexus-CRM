@@ -48,7 +48,7 @@ class DeliveryNoteCreatedSuggestionProvider implements SuggestionProvider
             $docsInstalled ? 'create_delivery_note_google_doc' : 'install_extension',
             $docsInstalled
                 ? 'Generer un document Google Docs pour ce BL'
-                : 'Installer Google Docs pour generer une version editable du BL',
+                : 'Installer Google Docs pour générer une version éditable du BL',
             0.84,
             $docsInstalled
                 ? ['delivery_note_id' => $deliveryNoteId]
@@ -64,7 +64,7 @@ class DeliveryNoteCreatedSuggestionProvider implements SuggestionProvider
         $suggestions[] = SuggestionDefinition::make(
             $notionInstalled ? 'create_notion_page' : 'install_extension',
             $notionInstalled
-                ? 'Creer une note Notion de preparation logistique'
+                ? 'Créer une note Notion de préparation logistique'
                 : 'Installer Notion Workspace pour documenter ce BL',
             0.8,
             $notionInstalled
@@ -73,7 +73,7 @@ class DeliveryNoteCreatedSuggestionProvider implements SuggestionProvider
                     'client_id' => $deliveryNote['client_id'] ?? null,
                     'extension_slug' => 'notion-workspace',
                     'template' => 'delivery_note_note',
-                    'context_label' => 'Preparation BL',
+                    'context_label' => 'Préparation BL',
                 ]
                 : [
                     'extension_slug' => 'notion-workspace',

@@ -41,7 +41,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
     protected function appendArticleRow(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit etre installe pour enregistrer cet article.');
+        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit être installé pour enregistrer cet article.');
 
         return $this->withReconnectHandling('google-sheets', function () use ($automationEvent, $suggestion, $tenantId) {
             $payload = $this->payload($automationEvent);
@@ -81,7 +81,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'sheet_row_appended',
-                'message' => 'Article ajoute au catalogue Google Sheets.',
+                'message' => 'Article ajouté au catalogue Google Sheets.',
                 'spreadsheet_id' => $sheet['spreadsheet_id'],
                 'target_url' => $sheet['spreadsheet_url'] ?? $this->routeUrl('google-sheets.index'),
                 'target_blank' => true,
@@ -92,7 +92,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
     protected function appendClientRow(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit etre installe pour enregistrer ce client.');
+        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit être installé pour enregistrer ce client.');
 
         return $this->withReconnectHandling('google-sheets', function () use ($automationEvent, $suggestion, $tenantId) {
             $payload = $this->payload($automationEvent);
@@ -129,7 +129,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'sheet_row_appended',
-                'message' => 'Client ajoute au registre Google Sheets.',
+                'message' => 'Client ajouté au registre Google Sheets.',
                 'spreadsheet_id' => $sheet['spreadsheet_id'],
                 'target_url' => $sheet['spreadsheet_url'] ?? $this->routeUrl('google-sheets.index'),
                 'target_blank' => true,
@@ -140,7 +140,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
     protected function appendInvoiceRow(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit etre installe pour enregistrer cette facture.');
+        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit être installé pour enregistrer cette facture.');
 
         return $this->withReconnectHandling('google-sheets', function () use ($automationEvent, $suggestion, $tenantId) {
             $payload = $this->payload($automationEvent);
@@ -178,7 +178,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'sheet_row_appended',
-                'message' => 'Facture ajoutee au suivi Google Sheets.',
+                'message' => 'Facture ajoutée au suivi Google Sheets.',
                 'spreadsheet_id' => $sheet['spreadsheet_id'],
                 'target_url' => $sheet['spreadsheet_url'] ?? $this->routeUrl('google-sheets.index'),
                 'target_blank' => true,
@@ -189,7 +189,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
     protected function appendSupplierRow(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit etre installe pour enregistrer ce fournisseur.');
+        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit être installé pour enregistrer ce fournisseur.');
 
         return $this->withReconnectHandling('google-sheets', function () use ($automationEvent, $suggestion, $tenantId) {
             $payload = $this->payload($automationEvent);
@@ -226,7 +226,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'sheet_row_appended',
-                'message' => 'Fournisseur ajoute au registre Google Sheets.',
+                'message' => 'Fournisseur ajouté au registre Google Sheets.',
                 'spreadsheet_id' => $sheet['spreadsheet_id'],
                 'target_url' => $sheet['spreadsheet_url'] ?? $this->routeUrl('google-sheets.index'),
                 'target_blank' => true,
@@ -237,7 +237,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
     protected function appendStockOrderRow(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit etre installe pour enregistrer cette commande fournisseur.');
+        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit être installé pour enregistrer cette commande fournisseur.');
 
         return $this->withReconnectHandling('google-sheets', function () use ($automationEvent, $suggestion, $tenantId) {
             $payload = $this->payload($automationEvent);
@@ -275,7 +275,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'sheet_row_appended',
-                'message' => 'Commande fournisseur ajoutee au registre Google Sheets.',
+                'message' => 'Commande fournisseur ajoutée au registre Google Sheets.',
                 'spreadsheet_id' => $sheet['spreadsheet_id'],
                 'target_url' => $sheet['spreadsheet_url'] ?? $this->routeUrl('google-sheets.index'),
                 'target_blank' => true,
@@ -286,7 +286,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
     protected function appendDeliveryNoteRow(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit etre installe pour enregistrer ce bon de livraison.');
+        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit être installé pour enregistrer ce bon de livraison.');
 
         return $this->withReconnectHandling('google-sheets', function () use ($automationEvent, $suggestion, $tenantId) {
             $payload = $this->payload($automationEvent);
@@ -301,7 +301,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
                 'delivery_note_register',
                 'CRM - Registre bons de livraison',
                 'Livraisons',
-                ['Date', 'BL ID', 'Numero', 'Type', 'Statut', 'Tiers', 'Commande liee', 'Facture liee', 'Lignes', 'Source CRM']
+                ['Date', 'BL ID', 'Numero', 'Type', 'Statut', 'Tiers', 'Commande liée', 'Facture liée', 'Lignes', 'Source CRM']
             );
 
             $party = $deliveryNote->type === 'in'
@@ -328,7 +328,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'sheet_row_appended',
-                'message' => 'Bon de livraison ajoute au registre Google Sheets.',
+                'message' => 'Bon de livraison ajouté au registre Google Sheets.',
                 'spreadsheet_id' => $sheet['spreadsheet_id'],
                 'target_url' => $sheet['spreadsheet_url'] ?? $this->routeUrl('google-sheets.index'),
                 'target_blank' => true,
@@ -339,7 +339,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
     protected function appendLowStockRow(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit etre installe pour enregistrer cette alerte stock.');
+        $this->assertExtensionActive($tenantId, 'google-sheets', 'Google Sheets doit être installé pour enregistrer cette alerte stock.');
 
         return $this->withReconnectHandling('google-sheets', function () use ($automationEvent, $suggestion, $tenantId) {
             $payload = $this->payload($automationEvent);
@@ -376,7 +376,7 @@ class AppendGoogleSheetRowAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'sheet_row_appended',
-                'message' => 'Alerte stock ajoutee au registre Google Sheets.',
+                'message' => 'Alerte stock ajoutée au registre Google Sheets.',
                 'spreadsheet_id' => $sheet['spreadsheet_id'],
                 'target_url' => $sheet['spreadsheet_url'] ?? $this->routeUrl('google-sheets.index'),
                 'target_blank' => true,

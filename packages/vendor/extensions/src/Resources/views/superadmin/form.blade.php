@@ -1,11 +1,11 @@
 @extends('layouts.global')
 
-@section('title', isset($extension) ? 'Modifier — '.$extension->name : 'Nouvelle extension')
+@section('title', isset($extension) ? __('extensions::extensions.superadmin.form.edit_title', ['name' => $extension->name]) : __('extensions::extensions.superadmin.form.create_title'))
 
 @section('breadcrumb')
-  <a href="{{ route('superadmin.extensions.index') }}">Extensions</a>
+  <a href="{{ route('superadmin.extensions.index') }}">{{ __('extensions::extensions.common.extensions') }}</a>
   <i class="fas fa-chevron-right" style="font-size:10px;color:var(--c-ink-20)"></i>
-  <span style="color:var(--c-ink)">{{ isset($extension) ? 'Modifier' : 'Nouvelle extension' }}</span>
+  <span style="color:var(--c-ink)">{{ isset($extension) ? __('extensions::extensions.common.edit') : __('extensions::extensions.actions.new_extension') }}</span>
 @endsection
 
 @section('content')
@@ -24,11 +24,11 @@
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>{{ $isEdit ? 'Modifier l\'extension' : 'Nouvelle extension' }}</h1>
-    <p>{{ $isEdit ? $extension->name : 'Ajoutez une application au marketplace' }}</p>
+    <h1>{{ $isEdit ? __('extensions::extensions.superadmin.form.edit_heading') : __('extensions::extensions.superadmin.form.create_heading') }}</h1>
+    <p>{{ $isEdit ? $extension->name : __('extensions::extensions.superadmin.form.create_description') }}</p>
   </div>
   <a href="{{ $isEdit ? route('superadmin.extensions.show', $extension) : route('superadmin.extensions.index') }}" class="btn btn-secondary">
-    <i class="fas fa-arrow-left"></i> Retour
+    <i class="fas fa-arrow-left"></i> {{ __('extensions::extensions.common.back') }}
   </a>
 </div>
 
@@ -43,36 +43,36 @@
 
       {{-- Infos de base --}}
       <div class="form-section">
-        <h3 class="form-section-title"><i class="fas fa-puzzle-piece"></i> Informations de l'extension</h3>
+        <h3 class="form-section-title"><i class="fas fa-puzzle-piece"></i> {{ __('extensions::extensions.superadmin.form.basic_info') }}</h3>
         <div class="row">
           <div class="col-8">
             <div class="form-group">
-              <label class="form-label">Nom <span class="required">*</span></label>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.name') }} <span class="required">*</span></label>
               <input type="text" name="name" class="form-control" value="{{ old('name', $isEdit ? $extension->name : '') }}" placeholder="Ex: Google Drive" required>
             </div>
           </div>
           <div class="col-4">
             <div class="form-group">
-              <label class="form-label">Version</label>
+              <label class="form-label">{{ __('extensions::extensions.common.version') }}</label>
               <input type="text" name="version" class="form-control" value="{{ old('version', $isEdit ? $extension->version : '1.0.0') }}" placeholder="1.0.0">
             </div>
           </div>
           <div class="col-12">
             <div class="form-group">
-              <label class="form-label">Slogan court</label>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.tagline') }}</label>
               <input type="text" name="tagline" class="form-control" value="{{ old('tagline', $isEdit ? $extension->tagline : '') }}" placeholder="Stockez et partagez vos fichiers sans effort" maxlength="255">
             </div>
           </div>
           <div class="col-12">
             <div class="form-group">
-              <label class="form-label">Description courte</label>
-              <textarea name="description" class="form-control" rows="2" maxlength="500" placeholder="Description affichée dans les cartes du marketplace…">{{ old('description', $isEdit ? $extension->description : '') }}</textarea>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.description') }}</label>
+              <textarea name="description" class="form-control" rows="2" maxlength="500" placeholder="{{ __('extensions::extensions.superadmin.form.description_placeholder') }}">{{ old('description', $isEdit ? $extension->description : '') }}</textarea>
             </div>
           </div>
           <div class="col-12">
             <div class="form-group">
-              <label class="form-label">Description longue <span class="hint">(Markdown supporté)</span></label>
-              <textarea name="long_description" class="form-control" rows="6" placeholder="Description détaillée, fonctionnalités, cas d'usage…">{{ old('long_description', $isEdit ? $extension->long_description : '') }}</textarea>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.long_description') }} <span class="hint">({{ __('extensions::extensions.superadmin.form.markdown_hint') }})</span></label>
+              <textarea name="long_description" class="form-control" rows="6" placeholder="{{ __('extensions::extensions.superadmin.form.long_description_placeholder') }}">{{ old('long_description', $isEdit ? $extension->long_description : '') }}</textarea>
             </div>
           </div>
         </div>
@@ -80,22 +80,22 @@
 
       {{-- Icône & Visuels --}}
       <div class="form-section">
-        <h3 class="form-section-title"><i class="fas fa-image"></i> Icône & Visuels</h3>
+        <h3 class="form-section-title"><i class="fas fa-image"></i> {{ __('extensions::extensions.superadmin.form.visuals') }}</h3>
         <div class="row">
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Icône FontAwesome <span class="hint">(optionnel, ou upload)</span></label>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.fa_icon') }} <span class="hint">({{ __('extensions::extensions.superadmin.form.fa_icon_hint') }})</span></label>
               <div class="input-group">
                 <i class="fas fa-icons input-icon"></i>
                 <input type="text" name="icon" class="form-control" value="{{ $currentIconValue ?? '' }}" placeholder="fa-puzzle-piece (optionnel)"
                        oninput="updateIconPreview(this.value)">
               </div>
-              <span class="form-hint">Ex: <code>fa-google-drive</code>, <code>fa-slack</code>. Laissez vide pour conserver la valeur actuelle.</span>
+              <span class="form-hint">{{ __('extensions::extensions.superadmin.form.fa_icon_help') }}</span>
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Couleur de fond icône</label>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.icon_bg') }}</label>
               <div style="display:flex;gap:8px;align-items:center;">
                 <input type="color" name="icon_bg_color" id="iconBgColor"
                        value="{{ old('icon_bg_color', $isEdit ? $extension->icon_bg_color : '#3b82f6') }}"
@@ -110,7 +110,7 @@
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Upload icône <span class="hint">(optionnel, PNG/SVG, 256×256)</span></label>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.icon_upload') }} <span class="hint">({{ __('extensions::extensions.superadmin.form.icon_upload_hint') }})</span></label>
               <input type="file" name="icon_file" class="form-control" accept="image/*">
               @if($isEdit && $extension->icon_url)
                 <div style="margin-top:8px;"><img src="{{ $extension->icon_url }}" style="width:40px;height:40px;border-radius:10px;border:1px solid var(--c-ink-05);"></div>
@@ -119,7 +119,7 @@
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Upload banner <span class="hint">(optionnel, 1200×400)</span></label>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.banner_upload') }} <span class="hint">({{ __('extensions::extensions.superadmin.form.banner_upload_hint') }})</span></label>
               <input type="file" name="banner_file" class="form-control" accept="image/*">
               @if($isEdit && $extension->banner_url)
                 <div style="margin-top:8px;"><img src="{{ $extension->banner_url }}" style="width:100%;border-radius:var(--r-sm);border:1px solid var(--c-ink-05);"></div>
@@ -131,35 +131,35 @@
 
       {{-- Éditeur --}}
       <div class="form-section">
-        <h3 class="form-section-title"><i class="fas fa-code"></i> Éditeur & Liens</h3>
+        <h3 class="form-section-title"><i class="fas fa-code"></i> {{ __('extensions::extensions.superadmin.form.publisher_links') }}</h3>
         <div class="row">
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Nom de l'éditeur</label>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.developer_name') }}</label>
               <input type="text" name="developer_name" class="form-control" value="{{ old('developer_name', $isEdit ? $extension->developer_name : '') }}">
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Site web éditeur</label>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.developer_url') }}</label>
               <input type="url" name="developer_url" class="form-control" value="{{ old('developer_url', $isEdit ? $extension->developer_url : '') }}" placeholder="https://…">
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Documentation</label>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.documentation') }}</label>
               <input type="url" name="documentation_url" class="form-control" value="{{ old('documentation_url', $isEdit ? $extension->documentation_url : '') }}" placeholder="https://docs.…">
             </div>
           </div>
           <div class="col-6">
             <div class="form-group">
-              <label class="form-label">Support</label>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.support') }}</label>
               <input type="url" name="support_url" class="form-control" value="{{ old('support_url', $isEdit ? $extension->support_url : '') }}" placeholder="https://…">
             </div>
           </div>
           <div class="col-12">
             <div class="form-group">
-              <label class="form-label">URL Webhook <span class="hint">(events d'activation)</span></label>
+              <label class="form-label">{{ __('extensions::extensions.superadmin.form.webhook_url') }} <span class="hint">({{ __('extensions::extensions.superadmin.form.webhook_hint') }})</span></label>
               <input type="url" name="webhook_url" class="form-control" value="{{ old('webhook_url', $isEdit ? $extension->webhook_url : '') }}" placeholder="https://…/webhook">
             </div>
           </div>
@@ -173,9 +173,9 @@
 
       {{-- Catégorie & Statut --}}
       <div class="form-section" style="margin-bottom:16px;">
-        <h3 class="form-section-title"><i class="fas fa-tag"></i> Classification</h3>
+        <h3 class="form-section-title"><i class="fas fa-tag"></i> {{ __('extensions::extensions.superadmin.form.classification') }}</h3>
         <div class="form-group">
-          <label class="form-label">Catégorie <span class="required">*</span></label>
+          <label class="form-label">{{ __('extensions::extensions.common.category') }} <span class="required">*</span></label>
           <select name="category" class="form-control" required>
             @foreach($categories as $key => $cat)
               <option value="{{ $key }}" {{ old('category', $isEdit ? $extension->category : 'other') === $key ? 'selected' : '' }}>
@@ -185,7 +185,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Statut <span class="required">*</span></label>
+          <label class="form-label">{{ __('extensions::extensions.common.status') }} <span class="required">*</span></label>
           <select name="status" class="form-control" required>
             @foreach($statuses as $key => $label)
               <option value="{{ $key }}" {{ old('status', $isEdit ? $extension->status : 'active') === $key ? 'selected' : '' }}>
@@ -195,16 +195,16 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Ordre d'affichage</label>
+          <label class="form-label">{{ __('extensions::extensions.superadmin.form.sort_order') }}</label>
           <input type="number" name="sort_order" class="form-control" value="{{ old('sort_order', $isEdit ? $extension->sort_order : 0) }}" min="0">
         </div>
       </div>
 
       {{-- Tarification --}}
       <div class="form-section" style="margin-bottom:16px;">
-        <h3 class="form-section-title"><i class="fas fa-euro-sign"></i> Tarification</h3>
+        <h3 class="form-section-title"><i class="fas fa-euro-sign"></i> {{ __('extensions::extensions.superadmin.form.pricing') }}</h3>
         <div class="form-group">
-          <label class="form-label">Type de prix <span class="required">*</span></label>
+          <label class="form-label">{{ __('extensions::extensions.superadmin.form.pricing_type') }} <span class="required">*</span></label>
           <select name="pricing_type" class="form-control" id="pricingType" onchange="togglePricing()" required>
             @foreach($pricingTypes as $key => $label)
               <option value="{{ $key }}" {{ old('pricing_type', $isEdit ? $extension->pricing_type : 'free') === $key ? 'selected' : '' }}>
@@ -215,23 +215,23 @@
         </div>
         <div id="priceFields" style="{{ old('pricing_type', $isEdit ? $extension->pricing_type : 'free') === 'free' ? 'display:none;' : '' }}">
           <div class="form-group">
-            <label class="form-label">Prix mensuel (€)</label>
+            <label class="form-label">{{ __('extensions::extensions.superadmin.form.monthly_price') }}</label>
             <div class="input-group input-right">
               <input type="number" name="price" class="form-control" value="{{ old('price', $isEdit ? $extension->price : 0) }}" min="0" step="0.01">
               <i class="fas fa-euro-sign input-icon"></i>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Prix annuel (€) <span class="hint">(optionnel)</span></label>
+            <label class="form-label">{{ __('extensions::extensions.superadmin.form.annual_price') }} <span class="hint">({{ __('extensions::extensions.superadmin.form.annual_price_hint') }})</span></label>
             <div class="input-group input-right">
               <input type="number" name="yearly_price" class="form-control" value="{{ old('yearly_price', $isEdit ? $extension->yearly_price : '') }}" min="0" step="0.01">
               <i class="fas fa-euro-sign input-icon"></i>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Cycle de facturation</label>
+            <label class="form-label">{{ __('extensions::extensions.common.billing_cycle') }}</label>
             <select name="billing_cycle" class="form-control">
-              <option value="">Sélectionner…</option>
+              <option value="">{{ __('extensions::extensions.common.select') }}</option>
               @foreach($billingCycles as $key => $label)
                 <option value="{{ $key }}" {{ old('billing_cycle', $isEdit ? $extension->billing_cycle : '') === $key ? 'selected' : '' }}>
                   {{ $label }}
@@ -242,8 +242,8 @@
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--c-ink-05);margin-top:4px;">
           <div>
-            <div style="font-size:13.5px;font-weight:var(--fw-medium);">Essai gratuit</div>
-            <div style="font-size:12px;color:var(--c-ink-40);">Activer une période d'essai</div>
+            <div style="font-size:13.5px;font-weight:var(--fw-medium);">{{ __('extensions::extensions.superadmin.form.trial_enabled') }}</div>
+            <div style="font-size:12px;color:var(--c-ink-40);">{{ __('extensions::extensions.superadmin.form.trial_enabled_desc') }}</div>
           </div>
           <label style="position:relative;width:44px;height:24px;cursor:pointer;">
             <input type="checkbox" name="has_trial" id="hasTrial" value="1"
@@ -257,7 +257,7 @@
         </div>
         <div id="trialDaysField" style="{{ old('has_trial', $isEdit ? $extension->has_trial : false) ? '' : 'display:none;' }}">
           <div class="form-group" style="margin-top:10px;">
-            <label class="form-label">Durée d'essai (jours)</label>
+            <label class="form-label">{{ __('extensions::extensions.superadmin.form.trial_days') }}</label>
             <input type="number" name="trial_days" class="form-control" value="{{ old('trial_days', $isEdit ? $extension->trial_days : 14) }}" min="1" max="365">
           </div>
         </div>
@@ -265,12 +265,12 @@
 
       {{-- Badges & Options --}}
       <div class="form-section" style="margin-bottom:16px;">
-        <h3 class="form-section-title"><i class="fas fa-certificate"></i> Badges & Options</h3>
+        <h3 class="form-section-title"><i class="fas fa-certificate"></i> {{ __('extensions::extensions.superadmin.form.badges_options') }}</h3>
         @foreach([
-          ['name'=>'is_featured', 'label'=>'Mise en avant', 'desc'=>'Affiché en tête du marketplace'],
-          ['name'=>'is_new',      'label'=>'Nouveau',        'desc'=>'Badge "Nouveau" affiché'],
-          ['name'=>'is_verified', 'label'=>'Vérifié',        'desc'=>'Vérifié par l\'équipe'],
-          ['name'=>'is_official', 'label'=>'Officiel',       'desc'=>'Extension officielle NexusCRM'],
+          ['name'=>'is_featured', 'label'=>__('extensions::extensions.superadmin.form.featured'), 'desc'=>__('extensions::extensions.superadmin.form.featured_desc')],
+          ['name'=>'is_new',      'label'=>__('extensions::extensions.superadmin.form.new_label'), 'desc'=>__('extensions::extensions.superadmin.form.new_desc')],
+          ['name'=>'is_verified', 'label'=>__('extensions::extensions.superadmin.form.verified'), 'desc'=>__('extensions::extensions.superadmin.form.verified_desc')],
+          ['name'=>'is_official', 'label'=>__('extensions::extensions.superadmin.form.official'),       'desc'=>__('extensions::extensions.superadmin.form.official_desc')],
         ] as $opt)
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--c-ink-05);">
           <div>
@@ -294,10 +294,10 @@
       <div class="form-section">
         <div style="display:flex;flex-direction:column;gap:10px;">
           <button type="submit" class="btn btn-primary" id="submitBtn" style="justify-content:center;">
-            <i class="fas fa-check"></i> {{ $isEdit ? 'Enregistrer' : 'Créer l\'extension' }}
+            <i class="fas fa-check"></i> {{ $isEdit ? __('extensions::extensions.common.save') : __('extensions::extensions.actions.create_extension') }}
           </button>
           <a href="{{ $isEdit ? route('superadmin.extensions.show', $extension) : route('superadmin.extensions.index') }}" class="btn btn-secondary" style="justify-content:center;">
-            <i class="fas fa-times"></i> Annuler
+            <i class="fas fa-times"></i> {{ __('extensions::extensions.common.cancel') }}
           </a>
         </div>
       </div>
@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   ajaxForm('extForm', {
     onSuccess: (data) => {
-      Toast.success('{{ $isEdit ? "Extension mise à jour !" : "Extension créée !" }}', data.message);
+      Toast.success(@json($isEdit ? __('extensions::extensions.superadmin.form.updated_success') : __('extensions::extensions.superadmin.form.created_success')), data.message);
     }
   });
 });

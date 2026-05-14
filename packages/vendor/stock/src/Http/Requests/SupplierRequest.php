@@ -21,4 +21,14 @@ class SupplierRequest extends FormRequest
             'notes' => 'nullable|string|max:2000',
         ];
     }
+
+    public function messages(): array
+    {
+        return trans('stock::stock.validation');
+    }
+
+    public function attributes(): array
+    {
+        return trans('stock::stock.attributes');
+    }
 }

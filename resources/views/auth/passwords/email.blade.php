@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Mot de passe oublie | NexusCRM</title>
+    <title>{{ __('auth-ui.password.request.page_title') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
@@ -40,15 +40,15 @@
                 <div class="recovery-brand-row">
                     <div class="recovery-brand-badge">
                         <span class="recovery-brand-icon"><i class="fas fa-shield-heart"></i></span>
-                        <span class="recovery-brand-name">Recuperation securisee</span>
+                        <span class="recovery-brand-name">{{ __('auth-ui.password.request.brand') }}</span>
                     </div>
                 </div>
 
                 <div class="recovery-copy">
-                    <p class="recovery-eyebrow">Acces au compte</p>
-                    <h1 id="recoveryTitle">Mot de passe oublie</h1>
+                    <p class="recovery-eyebrow">{{ __('auth-ui.password.request.eyebrow') }}</p>
+                    <h1 id="recoveryTitle">{{ __('auth-ui.password.request.title') }}</h1>
                     <p class="recovery-description">
-                        Entrez votre adresse email professionnelle. Nous vous enverrons un lien securise pour definir un nouveau mot de passe.
+                        {{ __('auth-ui.password.request.description') }}
                     </p>
                 </div>
 
@@ -77,7 +77,7 @@
                     @csrf
 
                     <div class="recovery-field">
-                        <label for="email" class="recovery-label">Email professionnel</label>
+                        <label for="email" class="recovery-label">{{ __('auth-ui.password.request.email_label') }}</label>
                         <div class="recovery-input-wrap">
                             <span class="recovery-input-icon"><i class="fas fa-envelope"></i></span>
                             <input
@@ -86,7 +86,7 @@
                                 id="email"
                                 name="email"
                                 value="{{ old('email') }}"
-                                placeholder="nom@entreprise.com"
+                                placeholder="{{ __('auth-ui.password.request.email_placeholder') }}"
                                 required
                                 autocomplete="email"
                                 autofocus
@@ -96,7 +96,7 @@
                     </div>
 
                     <button type="submit" class="btn-recovery" id="forgotPasswordBtn">
-                        <span class="btn-recovery-label">Envoyer le lien de reinitialisation</span>
+                        <span class="btn-recovery-label">{{ __('auth-ui.password.request.submit') }}</span>
                         <span class="btn-recovery-spinner" aria-hidden="true"></span>
                     </button>
                 </form>
@@ -104,14 +104,14 @@
                 <div class="recovery-helper-box">
                     <span class="recovery-helper-icon"><i class="fas fa-clock-rotate-left"></i></span>
                     <div>
-                        <strong>Lien temporaire</strong>
-                        <p>Le lien de reinitialisation expire automatiquement pour proteger votre compte.</p>
+                        <strong>{{ __('auth-ui.password.request.helper_title') }}</strong>
+                        <p>{{ __('auth-ui.password.request.helper_description') }}</p>
                     </div>
                 </div>
 
                 <div class="recovery-footer">
-                    <span>Vous vous souvenez de votre mot de passe ?</span>
-                    <a href="{{ route('login') }}">Retour a la connexion</a>
+                    <span>{{ __('auth-ui.password.request.footer_text') }}</span>
+                    <a href="{{ route('login') }}">{{ __('auth-ui.password.request.footer_link') }}</a>
                 </div>
             </section>
         </main>
@@ -121,7 +121,7 @@
         window.PasswordRecoveryPage = {
             mode: 'request',
             defaultRedirect: @json(route('login')),
-            genericErrorMessage: 'Operation impossible pour le moment. Reessayez dans un instant.'
+            genericErrorMessage: @json(__('auth-ui.password.request.error'))
         };
     </script>
     @include('layouts.partials.tauri-bridge')

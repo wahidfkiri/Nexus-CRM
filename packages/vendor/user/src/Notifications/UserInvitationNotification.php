@@ -29,12 +29,16 @@ class UserInvitationNotification extends Notification
         $expiresDays = (int) config('user.invitation.expire_days', 7);
 
         return (new MailMessage)
-            ->subject("Invitation à rejoindre {$tenantName}")
-            ->greeting('Bonjour,')
-            ->line("{$invitedBy} vous invite à rejoindre **{$tenantName}** en tant que **{$role}**.")
-            ->action('Accepter l\'invitation', $acceptUrl)
-            ->line("Cette invitation expire dans {$expiresDays} jours.")
-            ->line("Si vous n'avez pas demandé cette invitation, vous pouvez ignorer cet email.");
+            ->subject(__('user::users.mail.subject', ['tenant' => $tenantName]))
+            ->greeting(__('user::users.mail.greeting'))
+            ->line(__('user::users.mail.line_1', [
+                'invitedBy' => $invitedBy,
+                'tenant' => $tenantName,
+                'role' => $role,
+            ]))
+            ->action(__('user::users.mail.action'), $acceptUrl)
+            ->line(__('user::users.mail.line_2', ['days' => $expiresDays]))
+            ->line(__('user::users.mail.line_3'));
     }
 
     public function toArray($notifiable): array

@@ -71,7 +71,7 @@ class StockMovement extends Model
     public function getDisplayReferenceAttribute(): string
     {
         return match ((string) $this->reference) {
-            'LEGACY-STOCK' => 'Reprise ancien stock',
+            'LEGACY-STOCK' => 'Reprise de l’ancien stock',
             'OPENING-STOCK' => 'Stock initial',
             default => (string) ($this->reference ?: '—'),
         };
@@ -82,11 +82,23 @@ class StockMovement extends Model
         $reason = (string) ($this->reason ?? '');
 
         if ($this->movement_type === 'opening_balance' && $this->reference === 'LEGACY-STOCK') {
-            return 'Stock initial repris depuis l’ancien champ de stock des articles.';
+            return trans('stock::stock.reasons.opening_stock_legacy');
+        }
+
+        if (str_starts_with($reason, 'Posted from ')) {
+            return trans('stock::stock.reasons.posted_from_note', [
+                'type' => mb_substr($reason, strlen('Posted from ')),
+            ]);
+        }
+
+        if (str_starts_with($reason, 'Reversal after cancellation of ')) {
+            return trans('stock::stock.reasons.reversal_after_cancellation', [
+                'type' => mb_substr($reason, strlen('Reversal after cancellation of ')),
+            ]);
         }
 
         return match ($reason) {
-            'Opening stock declared at article creation' => 'Stock initial déclaré à la création de l’article.',
+            'Opening stock declared at article creation' => trans('stock::stock.reasons.opening_stock_declared'),
             default => $reason !== '' ? $reason : '—',
         };
     }

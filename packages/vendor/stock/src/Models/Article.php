@@ -24,7 +24,7 @@ class Article extends Model
         'current_stock' => 'decimal:4',
     ];
 
-    protected $appends = ['current_stock', 'is_low_stock'];
+    protected $appends = ['current_stock', 'is_low_stock', 'status_label'];
 
     public function supplier()
     {
@@ -72,6 +72,11 @@ class Article extends Model
     public function getIsLowStockAttribute(): bool
     {
         return (float) $this->current_stock <= (float) $this->min_stock;
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return (string) (config('stock.article_statuses.' . $this->status) ?? ucfirst((string) $this->status));
     }
 
     public function scopeSearch($query, ?string $term)

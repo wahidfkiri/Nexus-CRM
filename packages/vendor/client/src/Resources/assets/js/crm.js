@@ -1,8 +1,8 @@
-if (!window.__CRM_CORE_LOADED__) {
+﻿if (!window.__CRM_CORE_LOADED__) {
   window.__CRM_CORE_LOADED__ = true;
 
 /**
- * CRM SaaS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Core JavaScript
+ * CRM SaaS - Core JavaScript
  * Toast notifications, Modals, Table manager, Form helpers, AJAX utils
  */
 
@@ -36,8 +36,8 @@ const Toast = (() => {
   }
 
   const icons = {
-    success: 'ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“',
-    error:   'ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¢',
+    success: '<i class="fas fa-check"></i>',
+    error:   '<i class="fas fa-xmark"></i>',
     info:    'i',
     warning: '!',
   };
@@ -51,7 +51,7 @@ const Toast = (() => {
         <p class="toast-title">${title}</p>
         ${message ? `<p class="toast-message">${message}</p>` : ''}
       </div>
-      <button class="toast-close" aria-label="Fermer">ÃƒÆ’Ã¢â‚¬â€</button>
+      <button class="toast-close" aria-label="Fermer">×</button>
     `;
 
     getContainer().appendChild(toast);
@@ -462,6 +462,95 @@ const Http = (() => {
     }, 180);
   }
 
+  function isReconnectPayload(payload) {
+    return !!payload && !!payload.reconnect_required && !!(payload.redirect || payload.redirect_url || payload.reconnect_url);
+  }
+
+  function reconnectUrl(payload = {}) {
+    return payload.redirect || payload.redirect_url || payload.reconnect_url || '';
+  }
+
+  function normalizeReconnectText(message) {
+    return String(message || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  function resolveReconnectRedirect(message, payload = null) {
+    if (isReconnectPayload(payload)) {
+      return reconnectUrl(payload);
+    }
+
+    const text = normalizeReconnectText(message);
+    if (!text) {
+      return '';
+    }
+
+    const providerRoutes = [
+      {
+        url: '/extensions/google-gmail',
+        patterns: ['google gmail', 'gmail n est pas connecte', 'google gmail is not connected', 'session google gmail expiree', 'reconnectez google gmail', 'reconnect your gmail'],
+      },
+      {
+        url: '/extensions/google-calendar',
+        patterns: ['google calendar', 'calendar n est pas connecte', 'google calendar is not connected', 'session google calendar expiree', 'reconnectez google calendar', 'reconnect google calendar'],
+      },
+      {
+        url: '/extensions/google-drive',
+        patterns: ['google drive', 'drive n est pas connecte', 'google drive is not connected', 'session google drive expiree', 'reconnectez google drive', 'reconnect google drive'],
+      },
+      {
+        url: '/extensions/dropbox',
+        patterns: ['dropbox n est pas connecte', 'dropbox demande une reconnexion', 'reconnectez dropbox', 'reconnect dropbox', 'refresh token manquant', 'invalid_access_token', 'expired_access_token', 'invalid_grant'],
+      },
+      {
+        url: '/extensions/slack',
+        patterns: ['slack n est pas connecte', 'slack is not connected', 'slack bot token is missing', 'reconnect your slack workspace', 'reconnectez slack', 'invalid_auth', 'token_revoked', 'account_inactive'],
+      },
+      {
+        url: '/extensions/google-meet',
+        patterns: ['google meet', 'google meet is not connected', 'session google meet expiree', 'reconnectez google meet', 'reconnect google meet'],
+      },
+      {
+        url: '/extensions/google-sheets',
+        patterns: ['google sheets', 'google sheets is not connected', 'session google sheets expiree', 'reconnectez votre compte google', 'reconnectez google sheets', 'reconnect google sheets'],
+      },
+      {
+        url: '/extensions/google-docx',
+        patterns: ['google docs', 'google docs is not connected', 'session google docs expiree', 'reconnectez google docs', 'reconnect google docs'],
+      },
+      {
+        url: '/extensions/notion-workspace',
+        patterns: ['notion workspace', 'notion n est pas connecte', 'session notion expiree', 'session notion workspace expiree', 'reconnectez notion', 'reconnect notion', 'reconnectez votre workspace notion', 'reconnect your notion workspace'],
+      },
+    ];
+
+    for (const provider of providerRoutes) {
+      if ((provider.patterns || []).some((pattern) => text.includes(pattern))) {
+        return new URL(provider.url, window.location.origin).toString();
+      }
+    }
+
+    return '';
+  }
+
+  function redirectToReconnect(message = 'La session de cette extension a expire. Redirection vers la reconnexion.', targetUrl = '') {
+    const redirectUrl = String(targetUrl || '').trim();
+    if (!redirectUrl) {
+      return;
+    }
+
+    if (window.Toast) {
+      window.Toast.warning('Reconnexion requise', message, 1800);
+    }
+
+    window.setTimeout(() => {
+      window.location.href = redirectUrl;
+    }, 220);
+  }
+
   function isLoginRedirectResponse(response) {
     if (!response || !response.redirected || !response.url) {
       return false;
@@ -518,6 +607,14 @@ const Http = (() => {
       redirectToLogin(data?.message || 'Votre session a expire. Redirection vers la connexion.');
     }
 
+    const reconnectTarget = resolveReconnectRedirect(data?.message, data);
+    if (reconnectTarget) {
+      redirectToReconnect(
+        data?.message || 'La session de cette extension a expire. Redirection vers la reconnexion.',
+        reconnectTarget
+      );
+    }
+
     return { ok: response.ok, status: response.status, data };
   }
 
@@ -532,6 +629,10 @@ const Http = (() => {
   window.CrmAuth = Object.assign(window.CrmAuth || {}, {
     loginUrl,
     redirectToLogin,
+    isReconnectPayload,
+    reconnectUrl,
+    resolveReconnectRedirect,
+    redirectToReconnect,
     isLoginRedirectResponse,
   });
 
@@ -647,7 +748,7 @@ class CrmTable {
     const { ok, data } = await Http.get(this.options.dataUrl, params);
     this.state.loading = false;
 
-    if (!ok) { Toast.error('Erreur', 'Impossible de charger les donnÃƒÆ’Ã‚Â©es.'); return; }
+    if (!ok) { Toast.error('Erreur', 'Impossible de charger les données.'); return; }
 
     this.state.total = data.total || 0;
     this._renderRows(data.data || []);
@@ -696,8 +797,8 @@ class CrmTable {
         <tr><td colspan="8">
           <div class="table-empty">
             <div class="table-empty-icon"><i class="fas fa-users"></i></div>
-            <h3>Aucun client trouvÃƒÆ’Ã‚Â©</h3>
-            <p>Modifiez vos filtres ou crÃƒÆ’Ã‚Â©ez votre premier client.</p>
+            <h3>Aucun client trouvé</h3>
+            <p>Modifiez vos filtres ou créez votre premier client.</p>
             <a href="${window.CRM_ROUTES?.create || '#'}" class="btn btn-primary">
               <i class="fas fa-plus"></i> Nouveau client
             </a>
@@ -741,7 +842,7 @@ class CrmTable {
         </td>
         <td>${typeBadge}</td>
         <td style="color:var(--c-ink-60)">${this._esc(c.email)}</td>
-        <td style="color:var(--c-ink-40)">${c.phone || 'ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â'}</td>
+        <td style="color:var(--c-ink-40)">${c.phone || '—'}</td>
         <td>${statusBadge}</td>
         <td style="font-weight:500">${revenue}</td>
         <td>
@@ -767,7 +868,7 @@ class CrmTable {
     if (!wrap) return;
 
     const { current_page, last_page, from, to, total } = data;
-    if (info) info.textContent = `Affichage de ${from || 0} ÃƒÆ’Ã‚Â  ${to || 0} sur ${total || 0} clients`;
+    if (info) info.textContent = `Affichage de ${from || 0} à ${to || 0} sur ${total || 0} clients`;
 
     const pages = [];
     for (let i = Math.max(1, current_page - 2); i <= Math.min(last_page, current_page + 2); i++) pages.push(i);
@@ -810,13 +911,13 @@ class CrmTable {
   static deleteClient(id, name) {
     Modal.confirm({
       title:       'Supprimer ce client ?',
-      message:     `Vous allez supprimer "${name}". Cette action est irrÃƒÆ’Ã‚Â©versible.`,
+      message:     `Vous allez supprimer "${name}". Cette action est irréversible.`, 
       confirmText: 'Supprimer',
       type:        'danger',
       onConfirm:   async () => {
         const { ok, data } = await Http.delete(`/clients/${id}`);
         if (ok) {
-          Toast.success('SupprimÃƒÆ’Ã‚Â© !', data.message || 'Client supprimÃƒÆ’Ã‚Â© avec succÃƒÆ’Ã‚Â¨s.');
+          Toast.success('Client supprimé', data.message || 'Client supprimé avec succès.');
           window._crmTable?.load();
           window._crmTable?.loadStats();
         } else {
@@ -837,13 +938,13 @@ async function bulkDelete() {
   if (!ids?.length) return;
   Modal.confirm({
     title:       `Supprimer ${ids.length} client(s) ?`,
-    message:     'Cette action est irrÃƒÆ’Ã‚Â©versible.',
+    message:     'Cette action est irréversible.',
     confirmText: 'Supprimer',
     type:        'danger',
     onConfirm:   async () => {
       const { ok, data } = await Http.post(window.CRM_ROUTES?.bulkDelete, { ids });
       if (ok) {
-        Toast.success('SuccÃƒÆ’Ã‚Â¨s', data.message);
+        Toast.success('Succès', data.message);
         window._crmTable?.load();
         window._crmTable?.loadStats();
         window._crmTable?.selectedIds.clear();
@@ -860,7 +961,7 @@ async function bulkStatus(status) {
   if (!ids?.length) return;
   const { ok, data } = await Http.post(window.CRM_ROUTES?.bulkStatus, { ids, status });
   if (ok) {
-    Toast.success('SuccÃƒÆ’Ã‚Â¨s', data.message);
+    Toast.success('Succès', data.message);
     window._crmTable?.load();
     window._crmTable?.selectedIds.clear();
     window._crmTable?._updateBulkBar();
@@ -909,7 +1010,7 @@ function ajaxForm(formId, options = {}) {
         form.__crmDraftManager.complete(res.data);
       }
 
-      Toast.success('SuccÃƒÆ’Ã‚Â¨s !', res.data.message || 'OpÃƒÆ’Ã‚Â©ration rÃƒÆ’Ã‚Â©ussie.');
+      Toast.success('Succès !', res.data.message || 'Opération réussie.');
       const automationFlow = !options.skipAutomation
         && window.AutomationSuggestions
         && res.data?.automation?.should_prompt
@@ -1111,7 +1212,7 @@ const CrmDrafts = (() => {
       state.prompted = false;
       draftInput.value = state.draft.id || '';
       refreshUi();
-      setStatus('SauvegardÃƒÆ’Ã‚Â©e ' + formatRelativeTime(state.draft.updated_at), 'success');
+      setStatus('Sauvegardée ' + formatRelativeTime(state.draft.updated_at), 'success');
       emitStateChange();
 
       if (typeof settings.onSaved === 'function') {
@@ -1138,9 +1239,9 @@ const CrmDrafts = (() => {
       state.resumed = true;
       state.prompted = false;
       refreshUi();
-      setStatus('Brouillon restaurÃƒÆ’Ã‚Â©', 'success');
+      setStatus('Brouillon restauré', 'success');
       emitStateChange();
-      Toast.success('Brouillon', 'Le formulaire a ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© restaurÃƒÆ’Ã‚Â©.');
+      Toast.success('Brouillon', 'Le formulaire a été restauré.');
     }
 
     async function discard() {
@@ -1151,8 +1252,8 @@ const CrmDrafts = (() => {
 
       state.skipExitPersist = true;
       resetLocal();
-      setStatus('Brouillon supprimÃƒÆ’Ã‚Â©', 'muted');
-      Toast.success('Brouillon', 'Le brouillon a ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© supprimÃƒÆ’Ã‚Â©.');
+      setStatus('Brouillon supprimé', 'muted');
+      Toast.success('Brouillon', 'Le brouillon a été supprimé.');
     }
 
     function resetLocal() {
@@ -1690,9 +1791,9 @@ const AutomationSuggestions = (() => {
       reservedWindow.document.body.innerHTML = `
         <div style="font-family:Inter,Arial,sans-serif;padding:32px;color:#0f172a;background:#f8fafc;">
           <div style="max-width:420px;margin:48px auto;padding:24px;border-radius:18px;background:#ffffff;box-shadow:0 18px 45px rgba(15,23,42,.12);">
-            <div style="width:44px;height:44px;border-radius:14px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;">ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â€</div>
+            <div style="width:44px;height:44px;border-radius:14px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;">↗</div>
             <h1 style="font-size:18px;line-height:1.4;margin:0 0 8px;">Ouverture en cours...</h1>
-            <p style="margin:0;color:#475569;font-size:14px;line-height:1.6;">Nous ouvrons votre suggestion dans une nouvelle fenÃƒÆ’Ã‚Âªtre pour garder le modal disponible.</p>
+            <p style="margin:0;color:#475569;font-size:14px;line-height:1.6;">Nous ouvrons votre suggestion dans une nouvelle fenêtre pour garder le modal disponible.</p>
           </div>
         </div>
       `;
@@ -1730,7 +1831,7 @@ const AutomationSuggestions = (() => {
     if (targetBlank) {
       const opened = window.open(targetUrl, '_blank', 'noopener');
       if (opened) return;
-      Toast.warning('Automation', "La nouvelle fenÃƒÆ’Ã‚Âªtre a ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© bloquÃƒÆ’Ã‚Â©e par le navigateur. Autorisez les popups pour ouvrir ce lien sans quitter la page.");
+      Toast.warning('Automation', "La nouvelle fenêtre a été bloquée par le navigateur. Autorisez les popups pour ouvrir ce lien sans quitter la page.");
       return;
     }
 
@@ -1764,8 +1865,8 @@ const AutomationSuggestions = (() => {
 
   function showSuccessState(title, message) {
     state.mode = 'success';
-    state.successTitle = title || 'SuccÃƒÆ’Ã‚Â¨s';
-    state.successMessage = message || 'Toutes les suggestions ont ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© traitÃƒÆ’Ã‚Â©es avec succÃƒÆ’Ã‚Â¨s.';
+    state.successTitle = title || 'Succès';
+    state.successMessage = message || 'Toutes les suggestions ont été traitées avec succès.';
     render();
   }
 
@@ -1860,7 +1961,7 @@ const AutomationSuggestions = (() => {
     if (counter) {
       counter.textContent = pendingCount > 0
         ? `${pendingCount} suggestion(s) en attente`
-        : 'Toutes les suggestions ont ete traitees';
+        : 'Toutes les suggestions ont été traitées';
     }
 
     if (summary) summary.style.display = successMode ? 'none' : 'flex';
@@ -1879,10 +1980,10 @@ const AutomationSuggestions = (() => {
       success.style.display = successMode ? 'flex' : 'none';
     }
     if (successTitle) {
-      successTitle.textContent = state.successTitle || 'SuccÃƒÆ’Ã‚Â¨s';
+      successTitle.textContent = state.successTitle || 'Succès';
     }
     if (successText) {
-      successText.textContent = state.successMessage || 'Toutes les suggestions ont ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© traitÃƒÆ’Ã‚Â©es avec succÃƒÆ’Ã‚Â¨s.';
+      successText.textContent = state.successMessage || 'Toutes les suggestions ont été traitées avec succès.';
     }
 
     if (successMode) {
@@ -1979,14 +2080,14 @@ const AutomationSuggestions = (() => {
     if (eventData?.status === 'failed') {
       closeReservedWindow(reservedWindow);
       render();
-      handleAutomationFailure(eventData, response.data?.message || 'Cette automation a ÃƒÆ’Ã‚Â©chouÃƒÆ’Ã‚Â©.');
+      handleAutomationFailure(eventData, response.data?.message || 'Cette automation a échoué.');
       return;
     }
 
     if (!response.ok) {
       closeReservedWindow(reservedWindow);
       render();
-      Toast.error('Automation', response.data?.message || 'OpÃƒÆ’Ã‚Â©ration automation impossible.');
+      Toast.error('Automation', response.data?.message || 'Opération automation impossible.');
       return;
     }
 
@@ -2029,10 +2130,10 @@ const AutomationSuggestions = (() => {
       const errors = Array.isArray(response.data?.data?.errors) ? response.data.data.errors : [];
       const reconnectError = errors.find((item) => item?.event?.requires_reconnect && item?.event?.reconnect_url);
       if (reconnectError) {
-        handleAutomationFailure(reconnectError.event, reconnectError.message || response.data?.message || 'Certaines automations ont ÃƒÆ’Ã‚Â©chouÃƒÆ’Ã‚Â©.');
+        handleAutomationFailure(reconnectError.event, reconnectError.message || response.data?.message || 'Certaines automations ont échoué.');
         return;
       }
-      Toast.error('Automation', response.data?.message || 'Traitement groupÃƒÆ’Ã‚Â© impossible.');
+      Toast.error('Automation', response.data?.message || 'Traitement groupé impossible.');
       return;
     }
 
@@ -2051,23 +2152,23 @@ const AutomationSuggestions = (() => {
       const allAccepted = errorCount === 0 && processedIds.length === ids.length;
       await dismissItems(processedIds, allAccepted ? {
         successState: {
-          title: 'SuccÃƒÆ’Ã‚Â¨s',
-          message: response.data?.message || 'Toutes les suggestions ont ÃƒÆ’Ã‚Â©tÃƒÆ’Ã‚Â© traitÃƒÆ’Ã‚Â©es avec succÃƒÆ’Ã‚Â¨s.',
+          title: 'Succès',
+          message: response.data?.message || 'Toutes les suggestions ont été traitées avec succès.',
         },
       } : {});
     }
 
     if (errorCount > 0) {
-      Toast.warning('Automation', `${errorCount} suggestion(s) n'ont pas pu ÃƒÆ’Ã‚Âªtre traitÃƒÆ’Ã‚Â©es.`);
+      Toast.warning('Automation', `${errorCount} suggestion(s) n'ont pas pu être traitées.`);
       const reconnectError = response.data.data.errors.find((item) => item?.event?.requires_reconnect && item?.event?.reconnect_url);
       if (reconnectError) {
-        handleAutomationFailure(reconnectError.event, reconnectError.message || 'Un service externe doit ÃƒÆ’Ã‚Âªtre reconnectÃƒÆ’Ã‚Â© avant de rejouer ces automations.');
+        handleAutomationFailure(reconnectError.event, reconnectError.message || 'Un service externe doit être reconnecté avant de rejouer ces automations.');
       }
     }
   }
 
   function handleAutomationFailure(eventData, fallbackMessage) {
-    const message = eventData?.last_error || fallbackMessage || 'Cette automation a ÃƒÆ’Ã‚Â©chouÃƒÆ’Ã‚Â©.';
+    const message = eventData?.last_error || fallbackMessage || 'Cette automation a échoué.';
     const reconnectUrl = eventData?.reconnect_url || null;
     const reconnectLabel = eventData?.reconnect_label || 'Reconnecter';
     const reconnectTitle = reconnectLabel;
@@ -2356,11 +2457,11 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebarCompactToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
 
     const label = enabled
-      ? 'RÃƒÆ’Ã‚Â©afficher les libellÃƒÆ’Ã‚Â©s du menu'
-      : 'Afficher le menu en mode icÃƒÆ’Ã‚Â´nes';
+      ? 'Réafficher les libellés du menu'
+      : 'Afficher le menu en mode icônes';
 
     sidebarCompactToggle.setAttribute('aria-label', label);
-    sidebarCompactToggle.setAttribute('data-tooltip', enabled ? 'RÃƒÆ’Ã‚Â©afficher le menu complet' : 'Mode compact du menu');
+    sidebarCompactToggle.setAttribute('data-tooltip', enabled ? 'Réafficher le menu complet' : 'Mode compact du menu');
   };
 
   applySidebarCompactState();

@@ -21,12 +21,12 @@ class OpenExtensionWorkspaceAction extends AbstractAutomationAction
         }
 
         if ($targetUrl === '') {
-            throw new RuntimeException('Aucune destination n est disponible pour cette suggestion.');
+            throw new RuntimeException(__('automation::automation.actions.workspace_target_missing'));
         }
 
         return [
             'result' => 'workspace_ready',
-            'message' => trim((string) ($payload['message'] ?? 'Raccourci d application enregistré.')),
+            'message' => trim((string) ($payload['message'] ?? __('automation::automation.actions.workspace_shortcut_saved'))),
             'extension_slug' => $extensionSlug !== '' ? $extensionSlug : null,
             'target_url' => $targetUrl,
             'target_blank' => $this->shouldOpenInNewTab($extensionSlug, $payload, $meta),

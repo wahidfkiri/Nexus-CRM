@@ -4,41 +4,37 @@ namespace Vendor\Client\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Services\DraftService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Vendor\Client\Models\Client;
-use Vendor\Client\Http\Requests\ClientRequest;
-use Vendor\Client\Services\ClientService;
-use Vendor\Client\Exports\ClientsExport;
-use Vendor\Client\Imports\ClientsImport;
-use Vendor\Automation\Services\AutomationSuggestionPresenter;
-use Vendor\Extensions\Models\Extension;
-use Vendor\Extensions\Models\TenantExtension;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
+use Vendor\Automation\Services\AutomationSuggestionPresenter;
+use Vendor\Client\Exports\ClientsExport;
+use Vendor\Client\Http\Requests\ClientRequest;
+use Vendor\Client\Imports\ClientsImport;
+use Vendor\Client\Models\Client;
+use Vendor\Client\Services\ClientService;
+use Vendor\Extensions\Models\Extension;
+use Vendor\Extensions\Models\TenantExtension;
 
 class ClientController extends Controller
 {
     public function __construct(protected ClientService $clientService) {}
-
-    /* ------------------------------------------------------------------ */
-    /*  INDEX                                                               */
-    /* ------------------------------------------------------------------ */
 
     public function index()
     {
         $tenantId = (int) (auth()->user()->tenant_id ?? 0);
 
         return view('client::index', [
-            'types'    => config('client.client_types', []),
-            'statuses' => config('client.client_statuses', []),
-            'sources'  => config('client.client_sources', []),
+            'types' => trans('client::clients.types'),
+            'statuses' => trans('client::clients.statuses'),
+            'sources' => trans('client::clients.sources'),
             'marketplaceSuggestions' => array_values(array_filter([
                 $this->makeMarketplaceSuggestion(
                     $tenantId,
                     'invoice',
                     'Facturation',
-                    'Installez Facturation pour creer devis, factures et suivre vos paiements depuis votre CRM.'
+                    'Installez Facturation pour créer des devis, des factures et suivre vos paiements depuis votre CRM.'
                 ),
                 $this->makeMarketplaceSuggestion(
                     $tenantId,
@@ -50,37 +46,29 @@ class ClientController extends Controller
         ]);
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  CREATE                                                             */
-    /* ------------------------------------------------------------------ */
-
     public function create()
     {
         return view('client::create', [
-            'types'    => config('client.client_types', []),
-            'statuses' => config('client.client_statuses', []),
-            'sources'  => config('client.client_sources', []),
+            'types' => trans('client::clients.types'),
+            'statuses' => trans('client::clients.statuses'),
+            'sources' => trans('client::clients.sources'),
         ]);
     }
-
-    /* ------------------------------------------------------------------ */
-    /*  STORE                                                              */
-    /* ------------------------------------------------------------------ */
 
     public function store(ClientRequest $request): JsonResponse
     {
         try {
-            $data               = $request->validated();
-            $data['user_id']    = auth()->id();
-            $data['tenant_id']  = auth()->user()->tenant_id ?? null;
+            $data = $request->validated();
+            $data['user_id'] = auth()->id();
+            $data['tenant_id'] = auth()->user()->tenant_id ?? null;
 
             $client = $this->clientService->create($data);
             app(DraftService::class)->forgetFromRequest($request);
 
             return response()->json([
-                'success'  => true,
-                'message'  => 'Client créé avec succès.',
-                'data'     => $client,
+                'success' => true,
+                'message' => __('client::clients.messages.created'),
+                'data' => $client,
                 'automation' => app(AutomationSuggestionPresenter::class)->buildPromptForSource(
                     'client_created',
                     $client::class,
@@ -89,175 +77,153 @@ class ClientController extends Controller
                 ),
                 'redirect' => route('clients.show', $client),
             ], 201);
-
         } catch (Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la création : ' . $e->getMessage(),
+                'message' => __('client::clients.messages.create_error', ['error' => $e->getMessage()]),
             ], 500);
         }
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  SHOW                                                               */
-    /* ------------------------------------------------------------------ */
-
     public function show(Client $client)
     {
-       // $this->authorize('view', $client);
         $stats = $this->clientService->getStats();
+
         return view('client::show', compact('client', 'stats'));
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  EDIT                                                               */
-    /* ------------------------------------------------------------------ */
-
     public function edit(Client $client)
     {
-       // $this->authorize('update', $client);
-
         return view('client::edit', [
-            'client'   => $client,
-            'types'    => config('client.client_types', []),
-            'statuses' => config('client.client_statuses', []),
-            'sources'  => config('client.client_sources', []),
+            'client' => $client,
+            'types' => trans('client::clients.types'),
+            'statuses' => trans('client::clients.statuses'),
+            'sources' => trans('client::clients.sources'),
         ]);
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  UPDATE                                                             */
-    /* ------------------------------------------------------------------ */
-
     public function update(ClientRequest $request, Client $client): JsonResponse
     {
-       // $this->authorize('update', $client);
-
         try {
             $client = $this->clientService->update($client, $request->validated());
             app(DraftService::class)->forgetFromRequest($request);
 
             return response()->json([
-                'success'  => true,
-                'message'  => 'Client mis à jour avec succès.',
-                'data'     => $client,
+                'success' => true,
+                'message' => __('client::clients.messages.updated'),
+                'data' => $client,
                 'redirect' => route('clients.show', $client),
             ]);
-
         } catch (Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la mise à jour : ' . $e->getMessage(),
+                'message' => __('client::clients.messages.update_error', ['error' => $e->getMessage()]),
             ], 500);
         }
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  DESTROY                                                            */
-    /* ------------------------------------------------------------------ */
-
     public function destroy(Client $client): JsonResponse
     {
-      //  $this->authorize('delete', $client);
-
         try {
             $this->clientService->delete($client);
-            return response()->json(['success' => true, 'message' => 'Client supprimé avec succès.']);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('client::clients.messages.deleted'),
+            ]);
         } catch (Throwable $e) {
-            return response()->json(['success' => false, 'message' => 'Erreur : ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => __('client::clients.messages.delete_error', ['error' => $e->getMessage()]),
+            ], 500);
         }
     }
-
-    /* ------------------------------------------------------------------ */
-    /*  DATA (AJAX for table)                                              */
-    /* ------------------------------------------------------------------ */
 
     public function getData(Request $request): JsonResponse
     {
         $clients = $this->clientService->getFilteredClients($request->all());
 
         return response()->json([
-            'data'             => $clients->items(),
-            'current_page'     => $clients->currentPage(),
-            'last_page'        => $clients->lastPage(),
-            'per_page'         => $clients->perPage(),
-            'total'            => $clients->total(),
-            'from'             => $clients->firstItem(),
-            'to'               => $clients->lastItem(),
+            'data' => $clients->items(),
+            'current_page' => $clients->currentPage(),
+            'last_page' => $clients->lastPage(),
+            'per_page' => $clients->perPage(),
+            'total' => $clients->total(),
+            'from' => $clients->firstItem(),
+            'to' => $clients->lastItem(),
         ]);
     }
-
-    /* ------------------------------------------------------------------ */
-    /*  STATS                                                              */
-    /* ------------------------------------------------------------------ */
 
     public function getStats(): JsonResponse
     {
         return response()->json([
             'success' => true,
-            'data'    => $this->clientService->getStats(),
+            'data' => $this->clientService->getStats(),
         ]);
     }
-
-    /* ------------------------------------------------------------------ */
-    /*  BULK OPERATIONS                                                    */
-    /* ------------------------------------------------------------------ */
 
     public function bulkDelete(Request $request): JsonResponse
     {
         $request->validate([
-            'ids'   => 'required|array|min:1',
+            'ids' => 'required|array|min:1',
             'ids.*' => 'exists:clients,id',
         ]);
 
         try {
             $count = $this->clientService->bulkDelete($request->ids);
-            return response()->json(['success' => true, 'message' => "{$count} client(s) supprimé(s)."]);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('client::clients.messages.bulk_deleted', ['count' => $count]),
+            ]);
         } catch (Throwable $e) {
-            return response()->json(['success' => false, 'message' => 'Erreur : ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => __('client::clients.messages.bulk_delete_error', ['error' => $e->getMessage()]),
+            ], 500);
         }
     }
 
     public function bulkStatus(Request $request): JsonResponse
     {
         $request->validate([
-            'ids'    => 'required|array|min:1',
-            'ids.*'  => 'exists:clients,id',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:clients,id',
             'status' => 'required|in:actif,inactif,en_attente,suspendu',
         ]);
 
         try {
             $count = $this->clientService->bulkStatusUpdate($request->ids, $request->status);
-            return response()->json(['success' => true, 'message' => "{$count} client(s) mis à jour."]);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('client::clients.messages.bulk_updated', ['count' => $count]),
+            ]);
         } catch (Throwable $e) {
-            return response()->json(['success' => false, 'message' => 'Erreur : ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => __('client::clients.messages.bulk_status_error', ['error' => $e->getMessage()]),
+            ], 500);
         }
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  EXPORTS                                                            */
-    /* ------------------------------------------------------------------ */
-
     public function exportCsv()
     {
-        return Excel::download(new ClientsExport, 'clients_' . date('Y-m-d') . '.csv');
+        return Excel::download(new ClientsExport(), 'clients_' . date('Y-m-d') . '.csv');
     }
 
     public function exportExcel()
     {
-        return Excel::download(new ClientsExport, 'clients_' . date('Y-m-d') . '.xlsx');
+        return Excel::download(new ClientsExport(), 'clients_' . date('Y-m-d') . '.xlsx');
     }
 
     public function exportPdf()
     {
         $clients = $this->clientService->getAllClients();
-        $pdf     = app('dompdf.wrapper')->loadView('client::exports.pdf', compact('clients'));
+        $pdf = app('dompdf.wrapper')->loadView('client::exports.pdf', compact('clients'));
+
         return $pdf->download('clients_' . date('Y-m-d') . '.pdf');
     }
-
-    /* ------------------------------------------------------------------ */
-    /*  IMPORT                                                             */
-    /* ------------------------------------------------------------------ */
 
     public function import(Request $request): JsonResponse
     {
@@ -266,10 +232,17 @@ class ClientController extends Controller
         ]);
 
         try {
-            Excel::import(new ClientsImport, $request->file('file'));
-            return response()->json(['success' => true, 'message' => 'Clients importés avec succès.']);
+            Excel::import(new ClientsImport(), $request->file('file'));
+
+            return response()->json([
+                'success' => true,
+                'message' => __('client::clients.messages.imported'),
+            ]);
         } catch (Throwable $e) {
-            return response()->json(['success' => false, 'message' => 'Erreur d\'importation : ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => __('client::clients.messages.import_error', ['error' => $e->getMessage()]),
+            ], 500);
         }
     }
 
@@ -284,20 +257,20 @@ class ClientController extends Controller
         };
 
         return response()->stream($callback, 200, [
-            'Content-Type'        => 'text/csv',
+            'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="template_clients.csv"',
         ]);
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  SEARCH                                                             */
-    /* ------------------------------------------------------------------ */
-
     public function search(Request $request): JsonResponse
     {
-        $term    = $request->string('q')->trim()->toString();
+        $term = $request->string('q')->trim()->toString();
         $clients = Client::search($term)->limit(10)->get(['id', 'company_name', 'email', 'phone']);
-        return response()->json(['success' => true, 'data' => $clients]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $clients,
+        ]);
     }
 
     private function makeMarketplaceSuggestion(int $tenantId, string $slug, string $fallbackName, string $description): ?array
@@ -330,8 +303,3 @@ class ClientController extends Controller
         ];
     }
 }
-
-
-
-
-

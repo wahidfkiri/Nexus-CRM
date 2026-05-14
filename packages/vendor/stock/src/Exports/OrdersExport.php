@@ -25,6 +25,6 @@ class OrdersExport implements FromCollection, WithHeadings
 
     public function headings(): array
     {
-        return ['ID', 'Numero', 'Fournisseur', 'Statut', 'Date commande', 'Date prevue', 'Total'];
+        return trans('stock::stock.exports.orders');
     }
 }

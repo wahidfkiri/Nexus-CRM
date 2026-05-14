@@ -60,16 +60,18 @@ class ExtensionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required'         => 'Le nom de l\'extension est requis.',
-            'category.required'     => 'La catégorie est requise.',
-            'category.in'           => 'Catégorie invalide.',
-            'pricing_type.required' => 'Le type de tarification est requis.',
-            'status.required'       => 'Le statut est requis.',
-            'icon_bg_color.regex'   => 'Couleur hexadécimale invalide.',
-            'icon_file.image'       => 'Le fichier icône doit être une image valide.',
-            'icon_file.max'         => 'Le fichier icône est trop volumineux.',
-            'banner_file.image'     => 'Le fichier banner doit être une image valide.',
-            'banner_file.max'       => 'Le fichier banner est trop volumineux.',
+            'name.required'         => __('extensions::extensions.validation.name.required'),
+            'category.required'     => __('extensions::extensions.validation.category.required'),
+            'category.in'           => __('extensions::extensions.validation.category.in'),
+            'pricing_type.required' => __('extensions::extensions.validation.pricing_type.required'),
+            'status.required'       => __('extensions::extensions.validation.status.required'),
+            'icon_bg_color.regex'   => __('extensions::extensions.validation.icon_bg_color.regex'),
+            'icon_file.image'       => __('extensions::extensions.validation.icon_file.image'),
+            'icon_file.max'         => __('extensions::extensions.validation.icon_file.max'),
+            'banner_file.image'     => __('extensions::extensions.validation.banner_file.image'),
+            'banner_file.max'       => __('extensions::extensions.validation.banner_file.max'),
+            'reason.required'       => __('extensions::extensions.validation.reason.required'),
+            'reason.max'            => __('extensions::extensions.validation.reason.max'),
         ];
     }
 
@@ -78,7 +80,7 @@ class ExtensionRequest extends FormRequest
         throw new HttpResponseException(
             response()->json([
                 'success' => false,
-                'message' => 'Erreurs de validation.',
+                'message' => __('extensions::extensions.messages.validation_failed'),
                 'errors'  => $validator->errors(),
             ], 422)
         );

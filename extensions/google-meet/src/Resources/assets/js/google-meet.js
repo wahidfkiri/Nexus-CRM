@@ -617,7 +617,7 @@ const GoogleMeetModule = (() => {
         showFormErrors(form, response.data.errors);
       }
 
-      Toast.error('Erreur', response.data?.message || 'Impossible d enregister la reunion.');
+      Toast.error('Erreur', response.data?.message || 'Impossible d enregistrer la reunion.');
       return;
     }
 

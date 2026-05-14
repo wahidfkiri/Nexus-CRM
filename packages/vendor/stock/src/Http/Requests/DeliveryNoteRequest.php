@@ -32,4 +32,14 @@ class DeliveryNoteRequest extends FormRequest
             'items.*.unit' => 'nullable|string|max:30',
         ];
     }
+
+    public function messages(): array
+    {
+        return trans('stock::stock.validation');
+    }
+
+    public function attributes(): array
+    {
+        return trans('stock::stock.attributes');
+    }
 }

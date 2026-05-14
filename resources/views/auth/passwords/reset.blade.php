@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Nouveau mot de passe | NexusCRM</title>
+    <title>{{ __('auth-ui.password.reset.page_title') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
@@ -40,15 +40,15 @@
                 <div class="recovery-brand-row">
                     <div class="recovery-brand-badge">
                         <span class="recovery-brand-icon"><i class="fas fa-key"></i></span>
-                        <span class="recovery-brand-name">Nouveau mot de passe</span>
+                        <span class="recovery-brand-name">{{ __('auth-ui.password.reset.brand') }}</span>
                     </div>
                 </div>
 
                 <div class="recovery-copy">
-                    <p class="recovery-eyebrow">Lien securise</p>
-                    <h1 id="resetTitle">Definir un nouveau mot de passe</h1>
+                    <p class="recovery-eyebrow">{{ __('auth-ui.password.reset.eyebrow') }}</p>
+                    <h1 id="resetTitle">{{ __('auth-ui.password.reset.title') }}</h1>
                     <p class="recovery-description">
-                        Choisissez un mot de passe robuste pour proteger votre acces NexusCRM, puis reconnectez-vous normalement.
+                        {{ __('auth-ui.password.reset.description') }}
                     </p>
                 </div>
 
@@ -78,7 +78,7 @@
                     <input type="hidden" name="token" value="{{ $token }}">
 
                     <div class="recovery-field">
-                        <label for="email" class="recovery-label">Email professionnel</label>
+                        <label for="email" class="recovery-label">{{ __('auth-ui.password.reset.email_label') }}</label>
                         <div class="recovery-input-wrap">
                             <span class="recovery-input-icon"><i class="fas fa-envelope"></i></span>
                             <input
@@ -87,7 +87,7 @@
                                 id="email"
                                 name="email"
                                 value="{{ $email ?? old('email') }}"
-                                placeholder="nom@entreprise.com"
+                                placeholder="{{ __('auth-ui.password.reset.email_placeholder') }}"
                                 required
                                 autocomplete="email"
                             >
@@ -97,7 +97,7 @@
 
                     <div class="recovery-grid-fields recovery-grid-fields-two">
                         <div class="recovery-field">
-                            <label for="password" class="recovery-label">Nouveau mot de passe</label>
+                            <label for="password" class="recovery-label">{{ __('auth-ui.password.reset.password_label') }}</label>
                             <div class="recovery-input-wrap">
                                 <span class="recovery-input-icon"><i class="fas fa-lock"></i></span>
                                 <input
@@ -105,11 +105,11 @@
                                     class="form-control-recovery @error('password') is-invalid @enderror"
                                     id="password"
                                     name="password"
-                                    placeholder="Nouveau mot de passe"
+                                    placeholder="{{ __('auth-ui.password.reset.password_placeholder') }}"
                                     required
                                     autocomplete="new-password"
                                 >
-                                <button type="button" class="toggle-password" data-target="password" aria-label="Afficher ou masquer le mot de passe">
+                                <button type="button" class="toggle-password" data-target="password" aria-label="{{ __('auth-ui.password.reset.toggle_password') }}">
                                     <i class="far fa-eye"></i>
                                 </button>
                             </div>
@@ -117,7 +117,7 @@
                         </div>
 
                         <div class="recovery-field">
-                            <label for="passwordConfirmation" class="recovery-label">Confirmation</label>
+                            <label for="passwordConfirmation" class="recovery-label">{{ __('auth-ui.password.reset.password_confirmation') }}</label>
                             <div class="recovery-input-wrap">
                                 <span class="recovery-input-icon"><i class="fas fa-lock"></i></span>
                                 <input
@@ -125,11 +125,11 @@
                                     class="form-control-recovery"
                                     id="passwordConfirmation"
                                     name="password_confirmation"
-                                    placeholder="Confirmer le mot de passe"
+                                    placeholder="{{ __('auth-ui.password.reset.password_confirmation_placeholder') }}"
                                     required
                                     autocomplete="new-password"
                                 >
-                                <button type="button" class="toggle-password" data-target="passwordConfirmation" aria-label="Afficher ou masquer le mot de passe">
+                                <button type="button" class="toggle-password" data-target="passwordConfirmation" aria-label="{{ __('auth-ui.password.reset.toggle_password') }}">
                                     <i class="far fa-eye"></i>
                                 </button>
                             </div>
@@ -144,7 +144,7 @@
                     </div>
 
                     <button type="submit" class="btn-recovery" id="resetPasswordBtn">
-                        <span class="btn-recovery-label">Mettre a jour mon mot de passe</span>
+                        <span class="btn-recovery-label">{{ __('auth-ui.password.reset.submit') }}</span>
                         <span class="btn-recovery-spinner" aria-hidden="true"></span>
                     </button>
                 </form>
@@ -152,14 +152,14 @@
                 <div class="recovery-helper-box">
                     <span class="recovery-helper-icon"><i class="fas fa-user-shield"></i></span>
                     <div>
-                        <strong>Conseil securite</strong>
-                        <p>Utilisez un mot de passe unique avec majuscule, minuscule, chiffre et caractere special.</p>
+                        <strong>{{ __('auth-ui.password.reset.helper_title') }}</strong>
+                        <p>{{ __('auth-ui.password.reset.helper_description') }}</p>
                     </div>
                 </div>
 
                 <div class="recovery-footer">
-                    <span>Vous preferez revenir ?</span>
-                    <a href="{{ route('login') }}">Retour a la connexion</a>
+                    <span>{{ __('auth-ui.password.reset.footer_text') }}</span>
+                    <a href="{{ route('login') }}">{{ __('auth-ui.password.reset.footer_link') }}</a>
                 </div>
             </section>
         </main>
@@ -169,7 +169,7 @@
         window.PasswordRecoveryPage = {
             mode: 'reset',
             defaultRedirect: @json(route('login')),
-            genericErrorMessage: 'Operation impossible pour le moment. Reessayez dans un instant.'
+            genericErrorMessage: @json(__('auth-ui.password.reset.error'))
         };
     </script>
     @include('layouts.partials.tauri-bridge')

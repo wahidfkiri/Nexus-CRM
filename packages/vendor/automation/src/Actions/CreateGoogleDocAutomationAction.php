@@ -39,12 +39,12 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
     protected function createArticleDocument(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit etre installe pour generer ce document.');
+        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit être installé pour générer ce document.');
 
         return $this->withReconnectHandling('google-docx', function () use ($automationEvent, $suggestion, $tenantId) {
             $articleId = $this->modelId($this->payload($automationEvent), $suggestion, 'article_id', Article::class);
             if (!$articleId) {
-                throw new RuntimeException('Article introuvable pour la creation du document.');
+                throw new RuntimeException('Article introuvable pour la création du document.');
             }
 
             $article = $this->loadArticle($tenantId, $articleId);
@@ -75,7 +75,7 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'document_created',
-                'message' => 'Document Google Docs cree pour cet article.',
+                'message' => 'Document Google Docs créé pour cet article.',
                 'document_id' => $document['document_id'] ?? null,
                 'target_url' => $document['document_url'] ?? $this->routeUrl('google-docx.index'),
                 'target_blank' => true,
@@ -86,12 +86,12 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
     protected function createClientDocument(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit etre installe pour generer ce document.');
+        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit être installé pour générer ce document.');
 
         return $this->withReconnectHandling('google-docx', function () use ($automationEvent, $suggestion, $tenantId) {
             $clientId = $this->modelId($this->payload($automationEvent), $suggestion, 'client_id', Client::class);
             if (!$clientId) {
-                throw new RuntimeException('Client introuvable pour la creation du document.');
+                throw new RuntimeException('Client introuvable pour la création du document.');
             }
 
             $client = $this->loadClient($tenantId, $clientId);
@@ -116,7 +116,7 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'document_created',
-                'message' => 'Document Google Docs cree pour ce client.',
+                'message' => 'Document Google Docs créé pour ce client.',
                 'document_id' => $document['document_id'] ?? null,
                 'target_url' => $document['document_url'] ?? $this->routeUrl('google-docx.index'),
                 'target_blank' => true,
@@ -127,12 +127,12 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
     protected function createInvoiceDocument(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit etre installe pour generer ce document.');
+        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit être installé pour générer ce document.');
 
         return $this->withReconnectHandling('google-docx', function () use ($automationEvent, $suggestion, $tenantId) {
             $invoiceId = $this->modelId($this->payload($automationEvent), $suggestion, 'invoice_id', Invoice::class);
             if (!$invoiceId) {
-                throw new RuntimeException('Facture introuvable pour la creation du document.');
+                throw new RuntimeException('Facture introuvable pour la création du document.');
             }
 
             $invoice = $this->loadInvoice($tenantId, $invoiceId);
@@ -159,7 +159,7 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'document_created',
-                'message' => 'Document Google Docs cree pour cette facture.',
+                'message' => 'Document Google Docs créé pour cette facture.',
                 'document_id' => $document['document_id'] ?? null,
                 'target_url' => $document['document_url'] ?? $this->routeUrl('google-docx.index'),
                 'target_blank' => true,
@@ -170,12 +170,12 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
     protected function createSupplierDocument(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit etre installe pour generer ce document.');
+        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit être installé pour générer ce document.');
 
         return $this->withReconnectHandling('google-docx', function () use ($automationEvent, $suggestion, $tenantId) {
             $supplierId = $this->modelId($this->payload($automationEvent), $suggestion, 'supplier_id', Supplier::class);
             if (!$supplierId) {
-                throw new RuntimeException('Fournisseur introuvable pour la creation du document.');
+                throw new RuntimeException('Fournisseur introuvable pour la création du document.');
             }
 
             $supplier = $this->loadSupplier($tenantId, $supplierId);
@@ -209,7 +209,7 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'document_created',
-                'message' => 'Document Google Docs cree pour ce fournisseur.',
+                'message' => 'Document Google Docs créé pour ce fournisseur.',
                 'document_id' => $document['document_id'] ?? null,
                 'target_url' => $document['document_url'] ?? $this->routeUrl('google-docx.index'),
                 'target_blank' => true,
@@ -220,12 +220,12 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
     protected function createStockOrderDocument(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit etre installe pour generer ce document.');
+        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit être installé pour générer ce document.');
 
         return $this->withReconnectHandling('google-docx', function () use ($automationEvent, $suggestion, $tenantId) {
             $orderId = $this->modelId($this->payload($automationEvent), $suggestion, 'stock_order_id', Order::class);
             if (!$orderId) {
-                throw new RuntimeException('Commande fournisseur introuvable pour la creation du document.');
+                throw new RuntimeException('Commande fournisseur introuvable pour la création du document.');
             }
 
             $order = $this->loadStockOrder($tenantId, $orderId);
@@ -266,7 +266,7 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'document_created',
-                'message' => 'Document Google Docs cree pour cette commande fournisseur.',
+                'message' => 'Document Google Docs créé pour cette commande fournisseur.',
                 'document_id' => $document['document_id'] ?? null,
                 'target_url' => $document['document_url'] ?? $this->routeUrl('google-docx.index'),
                 'target_blank' => true,
@@ -277,12 +277,12 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
     protected function createDeliveryNoteDocument(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit etre installe pour generer ce document.');
+        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit être installé pour générer ce document.');
 
         return $this->withReconnectHandling('google-docx', function () use ($automationEvent, $suggestion, $tenantId) {
             $deliveryNoteId = $this->modelId($this->payload($automationEvent), $suggestion, 'delivery_note_id', DeliveryNote::class);
             if (!$deliveryNoteId) {
-                throw new RuntimeException('Bon de livraison introuvable pour la creation du document.');
+                throw new RuntimeException('Bon de livraison introuvable pour la création du document.');
             }
 
             $deliveryNote = $this->loadDeliveryNote($tenantId, $deliveryNoteId);
@@ -309,8 +309,8 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
                 'Statut: ' . (string) $deliveryNote->status,
                 'Date: ' . (string) ($deliveryNote->issue_date?->format('d/m/Y') ?? ''),
                 'Tiers: ' . $counterparty,
-                'Commande liee: ' . (string) optional($deliveryNote->order)->number,
-                'Facture liee: ' . (string) optional($deliveryNote->invoice)->number,
+                'Commande liée: ' . (string) optional($deliveryNote->order)->number,
+                'Facture liée: ' . (string) optional($deliveryNote->invoice)->number,
                 $this->sourceUrlForModel($deliveryNote) ? 'Lien CRM: ' . $this->sourceUrlForModel($deliveryNote) : null,
                 '',
                 'Lignes',
@@ -326,7 +326,7 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'document_created',
-                'message' => 'Document Google Docs cree pour ce bon de livraison.',
+                'message' => 'Document Google Docs créé pour ce bon de livraison.',
                 'document_id' => $document['document_id'] ?? null,
                 'target_url' => $document['document_url'] ?? $this->routeUrl('google-docx.index'),
                 'target_blank' => true,
@@ -337,12 +337,12 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
     protected function createLowStockDocument(AutomationEvent $automationEvent, ?AutomationSuggestion $suggestion): array
     {
         $tenantId = $this->tenantId($automationEvent);
-        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit etre installe pour generer ce document.');
+        $this->assertExtensionActive($tenantId, 'google-docx', 'Google Docs doit être installé pour générer ce document.');
 
         return $this->withReconnectHandling('google-docx', function () use ($automationEvent, $suggestion, $tenantId) {
             $articleId = $this->modelId($this->payload($automationEvent), $suggestion, 'article_id', Article::class);
             if (!$articleId) {
-                throw new RuntimeException('Article introuvable pour la creation du document.');
+                throw new RuntimeException('Article introuvable pour la création du document.');
             }
 
             $article = $this->loadArticle($tenantId, $articleId);
@@ -370,7 +370,7 @@ class CreateGoogleDocAutomationAction extends AbstractAutomationAction
 
             return [
                 'result' => 'document_created',
-                'message' => 'Document Google Docs cree pour cette alerte stock.',
+                'message' => 'Document Google Docs créé pour cette alerte stock.',
                 'document_id' => $document['document_id'] ?? null,
                 'target_url' => $document['document_url'] ?? $this->routeUrl('google-docx.index'),
                 'target_blank' => true,

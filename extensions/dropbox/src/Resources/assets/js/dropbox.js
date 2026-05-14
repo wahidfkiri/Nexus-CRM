@@ -720,6 +720,13 @@ const DropboxModule = (() => {
     });
 
     const data = await response.json().catch(() => ({}));
+    const reconnectTarget = window.CrmAuth?.resolveReconnectRedirect?.(data?.message, data);
+    if (reconnectTarget) {
+      window.CrmAuth.redirectToReconnect(
+        data?.message || 'La session Dropbox a expire. Redirection vers la reconnexion.',
+        reconnectTarget
+      );
+    }
     return { ok: response.ok, status: response.status, data };
   }
 

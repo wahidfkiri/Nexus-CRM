@@ -38,11 +38,11 @@ class GoogleCalendarEventRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'summary.required' => 'Event title is required.',
-            'start_at.required' => 'Start date is required.',
-            'end_at.required' => 'End date is required.',
-            'end_at.after' => 'End date must be after start date.',
-            'source_type.in' => 'Invalid source type.',
+            'summary.required' => __('google-calendar::messages.validation.title_required'),
+            'start_at.required' => __('google-calendar::messages.validation.start_required'),
+            'end_at.required' => __('google-calendar::messages.validation.end_required'),
+            'end_at.after' => __('google-calendar::messages.validation.end_after_start'),
+            'source_type.in' => __('google-calendar::messages.validation.source_type'),
         ];
     }
 }
