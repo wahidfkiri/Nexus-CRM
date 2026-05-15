@@ -72,7 +72,7 @@ class GoogleSheetsController extends Controller
             $userId   = (int) $state['user_id'];
 
             if ((int) Auth::id() !== $userId || (int) Auth::user()->tenant_id !== $tenantId) {
-                throw new RuntimeException('État OAuth invalide pour la session en cours.');
+                throw new RuntimeException(__('google-sheets::messages.errors.oauth_state_mismatch'));
             }
 
             $this->ensureExtensionActivated($tenantId);
@@ -81,7 +81,7 @@ class GoogleSheetsController extends Controller
                 ->notifyForProvider($tenantId, $userId, 'google-sheets', route('google-sheets.index'));
 
             return redirect()->route('google-sheets.index')
-                ->with('success', 'Google Sheets connecté avec succès.');
+                ->with('success', __('google-sheets::messages.success.connected'));
         } catch (Throwable $e) {
             return redirect()->route('google-sheets.index')->with('error', $e->getMessage());
         }
@@ -94,7 +94,7 @@ class GoogleSheetsController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $this->service->disconnect($tenantId);
 
-            return response()->json(['success' => true, 'message' => 'Google Sheets déconnecté.']);
+            return response()->json(['success' => true, 'message' => __('google-sheets::messages.success.disconnected')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -151,7 +151,7 @@ class GoogleSheetsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Feuille de calcul créée avec succès.',
+                'message' => __('google-sheets::messages.success.spreadsheet_created'),
                 'data'    => $spreadsheet,
             ], 201);
         } catch (Throwable $e) {
@@ -168,7 +168,7 @@ class GoogleSheetsController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $spreadsheet = $this->service->renameSpreadsheet($tenantId, $spreadsheetId, (string) $request->string('title'));
 
-            return response()->json(['success' => true, 'message' => 'Feuille de calcul renommée.', 'data' => $spreadsheet]);
+            return response()->json(['success' => true, 'message' => __('google-sheets::messages.success.spreadsheet_renamed'), 'data' => $spreadsheet]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -181,7 +181,7 @@ class GoogleSheetsController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $this->service->deleteSpreadsheet($tenantId, $spreadsheetId);
 
-            return response()->json(['success' => true, 'message' => 'Feuille de calcul supprimée.']);
+            return response()->json(['success' => true, 'message' => __('google-sheets::messages.success.spreadsheet_deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -200,7 +200,7 @@ class GoogleSheetsController extends Controller
                 (string) $request->string('title', '')
             );
 
-            return response()->json(['success' => true, 'message' => 'Feuille de calcul dupliquée.', 'data' => $spreadsheet]);
+            return response()->json(['success' => true, 'message' => __('google-sheets::messages.success.spreadsheet_duplicated'), 'data' => $spreadsheet]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -217,7 +217,7 @@ class GoogleSheetsController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $sheet    = $this->service->addSheet($tenantId, $spreadsheetId, (string) $request->string('title'));
 
-            return response()->json(['success' => true, 'message' => 'Onglet ajouté.', 'data' => $sheet], 201);
+            return response()->json(['success' => true, 'message' => __('google-sheets::messages.success.sheet_added'), 'data' => $sheet], 201);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -232,7 +232,7 @@ class GoogleSheetsController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $this->service->renameSheet($tenantId, $spreadsheetId, $sheetId, (string) $request->string('title'));
 
-            return response()->json(['success' => true, 'message' => 'Onglet renommé.']);
+            return response()->json(['success' => true, 'message' => __('google-sheets::messages.success.sheet_renamed')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -245,7 +245,7 @@ class GoogleSheetsController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $this->service->deleteSheet($tenantId, $spreadsheetId, $sheetId);
 
-            return response()->json(['success' => true, 'message' => 'Onglet supprimé.']);
+            return response()->json(['success' => true, 'message' => __('google-sheets::messages.success.sheet_deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -280,7 +280,7 @@ class GoogleSheetsController extends Controller
                 (array) $request->input('values')
             );
 
-            return response()->json(['success' => true, 'message' => 'Données écrites.', 'data' => $data]);
+            return response()->json(['success' => true, 'message' => __('google-sheets::messages.success.data_written'), 'data' => $data]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -304,7 +304,7 @@ class GoogleSheetsController extends Controller
                 (array) $request->input('values')
             );
 
-            return response()->json(['success' => true, 'message' => 'Lignes ajoutées.', 'data' => $data]);
+            return response()->json(['success' => true, 'message' => __('google-sheets::messages.success.rows_appended'), 'data' => $data]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -319,7 +319,7 @@ class GoogleSheetsController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $this->service->clearRange($tenantId, $spreadsheetId, (string) $request->string('range'));
 
-            return response()->json(['success' => true, 'message' => 'Plage vidée.']);
+            return response()->json(['success' => true, 'message' => __('google-sheets::messages.success.range_cleared')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -357,7 +357,7 @@ class GoogleSheetsController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $result   = $this->service->batchWrite($tenantId, $spreadsheetId, (array) $request->input('data'));
 
-            return response()->json(['success' => true, 'message' => 'Écriture groupée terminée.', 'data' => $result]);
+            return response()->json(['success' => true, 'message' => __('google-sheets::messages.success.batch_write_done'), 'data' => $result]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -388,7 +388,7 @@ class GoogleSheetsController extends Controller
     {
         $this->assertStorageReady();
         if (!$this->isExtensionActive($tenantId)) {
-            throw new RuntimeException('Google Sheets n’est pas activé pour ce tenant. Activez l’application depuis le Marketplace.');
+            throw new RuntimeException(__('google-sheets::messages.errors.extension_inactive'));
         }
     }
 
@@ -415,7 +415,7 @@ class GoogleSheetsController extends Controller
     private function assertStorageReady(): void
     {
         if (!$this->isStorageReady()) {
-            throw new RuntimeException('Les tables Google Sheets sont absentes. Exécutez: php artisan migrate');
+            throw new RuntimeException(__('google-sheets::messages.errors.storage_missing'));
         }
     }
 }

@@ -70,7 +70,7 @@ class GoogleDriveController extends Controller
             $userId = (int) $state['user_id'];
 
             if ((int) Auth::id() !== $userId || (int) Auth::user()->tenant_id !== $tenantId) {
-                throw new RuntimeException('L etat OAuth ne correspond pas a la session en cours.');
+                throw new RuntimeException(__('google-drive::messages.errors.oauth_state_mismatch'));
             }
 
             $this->ensureExtensionActivated($tenantId);
@@ -78,7 +78,7 @@ class GoogleDriveController extends Controller
             app(AutomationReconnectNotificationService::class)
                 ->notifyForProvider($tenantId, $userId, 'google-drive', route('google-drive.index'));
 
-            return redirect()->route('google-drive.index')->with('success', 'Google Drive connecte avec succes.');
+            return redirect()->route('google-drive.index')->with('success', __('google-drive::messages.success.connected'));
         } catch (Throwable $e) {
             return redirect()->route('google-drive.index')->with('error', $e->getMessage());
         }
@@ -93,7 +93,7 @@ class GoogleDriveController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Google Drive deconnecte.',
+                'message' => __('google-drive::messages.success.disconnected'),
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -160,7 +160,7 @@ class GoogleDriveController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dossier cree avec succes.',
+                'message' => __('google-drive::messages.success.folder_created'),
                 'data' => $folder,
             ], 201);
         } catch (Throwable $e) {
@@ -181,7 +181,7 @@ class GoogleDriveController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Fichier importe avec succes.',
+                'message' => __('google-drive::messages.success.file_uploaded'),
                 'data' => $file,
             ], 201);
         } catch (Throwable $e) {
@@ -200,7 +200,7 @@ class GoogleDriveController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $file = $this->service->rename($tenantId, $fileId, (string) $request->string('name'));
 
-            return response()->json(['success' => true, 'message' => 'Fichier renomme.', 'data' => $file]);
+            return response()->json(['success' => true, 'message' => __('google-drive::messages.success.file_renamed'), 'data' => $file]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -223,7 +223,7 @@ class GoogleDriveController extends Controller
                 (string) $request->string('current_folder_id')
             );
 
-            return response()->json(['success' => true, 'message' => 'Fichier deplace.', 'data' => $file]);
+            return response()->json(['success' => true, 'message' => __('google-drive::messages.success.file_moved'), 'data' => $file]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -246,7 +246,7 @@ class GoogleDriveController extends Controller
                 $request->filled('target_folder_id') ? (string) $request->string('target_folder_id') : null
             );
 
-            return response()->json(['success' => true, 'message' => 'Fichier copie.', 'data' => $file]);
+            return response()->json(['success' => true, 'message' => __('google-drive::messages.success.file_copied'), 'data' => $file]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -263,7 +263,7 @@ class GoogleDriveController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $this->service->delete($tenantId, $fileId, $request->boolean('permanent', false));
 
-            return response()->json(['success' => true, 'message' => 'Fichier supprime.']);
+            return response()->json(['success' => true, 'message' => __('google-drive::messages.success.file_deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -276,7 +276,7 @@ class GoogleDriveController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $file = $this->service->restore($tenantId, $fileId);
 
-            return response()->json(['success' => true, 'message' => 'Fichier restaure.', 'data' => $file]);
+            return response()->json(['success' => true, 'message' => __('google-drive::messages.success.file_restored'), 'data' => $file]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -304,7 +304,7 @@ class GoogleDriveController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $this->service->emptyTrash($tenantId);
 
-            return response()->json(['success' => true, 'message' => 'Corbeille videe.']);
+            return response()->json(['success' => true, 'message' => __('google-drive::messages.success.trash_emptied')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -346,7 +346,7 @@ class GoogleDriveController extends Controller
                 $request->filled('email') ? (string) $request->string('email') : null
             );
 
-            return response()->json(['success' => true, 'message' => 'Fichier partage.', 'data' => $file]);
+            return response()->json(['success' => true, 'message' => __('google-drive::messages.success.file_shared'), 'data' => $file]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -378,7 +378,7 @@ class GoogleDriveController extends Controller
         $this->assertStorageReady();
 
         if (!$this->isExtensionActive($tenantId)) {
-            throw new RuntimeException('L extension Google Drive n est pas active pour ce tenant. Activez-la d abord depuis Marketplace.');
+            throw new RuntimeException(__('google-drive::messages.errors.extension_inactive'));
         }
     }
 
@@ -411,7 +411,7 @@ class GoogleDriveController extends Controller
     private function assertStorageReady(): void
     {
         if (!$this->isStorageReady()) {
-            throw new RuntimeException('Les tables Google Drive sont absentes. Lancez les migrations : php artisan migrate');
+            throw new RuntimeException(__('google-drive::messages.errors.storage_missing'));
         }
     }
 }

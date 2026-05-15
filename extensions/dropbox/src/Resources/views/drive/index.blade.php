@@ -15,7 +15,7 @@
       @include('layouts.partials.page-title-icon', ['icon' => (data_get($currentExtensionMeta, 'icon_url') ?: data_get($currentExtensionMeta, 'icon', 'fab fa-dropbox')), 'bg' => '#dbeafe', 'color' => '#2563eb', 'alt' => data_get($currentExtensionMeta, 'name', 'Dropbox')])
       <h1 style="margin:0;">{{ data_get($currentExtensionMeta, 'name', 'Dropbox') }}</h1>
     </div>
-    <p>Centralisez les fichiers de votre entreprise dans Dropbox avec une experience proche de Google Drive.</p>
+    <p>Centralisez les fichiers de votre entreprise dans Dropbox avec une experience similaire a Google Drive.</p>
   </div>
   <div class="page-header-actions">
     @if(!$storageReady)
@@ -30,7 +30,7 @@
       <button class="btn btn-secondary" id="dbxTrashBtn"><i class="fas fa-trash"></i> Corbeille</button>
       <button class="btn btn-primary" data-modal-open="dbxFolderModal"><i class="fas fa-folder-plus"></i> Nouveau dossier</button>
       <button class="btn btn-primary" data-modal-open="dbxUploadModal"><i class="fas fa-upload"></i> Importer</button>
-      <button class="btn btn-danger" id="dbxDisconnectBtn"><i class="fas fa-link-slash"></i> Deconnecter</button>
+      <button class="btn btn-danger" id="dbxDisconnectBtn"><i class="fas fa-link-slash"></i> Deconnecter Dropbox</button>
     @else
       <a href="{{ route('dropbox.oauth.connect') }}" class="btn btn-primary"><i class="fab fa-dropbox"></i> Connecter Dropbox</a>
     @endif
@@ -60,7 +60,7 @@
 <div class="info-card" style="max-width:920px;">
   <div class="info-card-header"><i class="fab fa-dropbox"></i><h3>Connexion Dropbox</h3></div>
   <div class="info-card-body">
-    <p style="margin-top:0;color:var(--c-ink-60);font-size:14px;line-height:1.7;">Aucun compte Dropbox n'est encore relie a cet espace. Connectez votre compte pour gerer vos dossiers, fichiers et liens de partage.</p>
+    <p style="margin-top:0;color:var(--c-ink-60);font-size:14px;line-height:1.7;">Aucun compte Dropbox n'est encore relie a cet espace. Connectez votre compte pour gerer vos dossiers, vos fichiers et vos liens de partage.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <a href="{{ route('dropbox.oauth.connect') }}" class="btn btn-primary"><i class="fab fa-dropbox"></i> Connecter maintenant</a>
       @if($googleDriveInstalled)
@@ -177,7 +177,7 @@
             </span>
           </label>
           <input type="file" id="dbxUploadModalInput" class="dbx-upload-native-input" hidden multiple>
-          <div class="dbx-upload-selected" id="dbxUploadSelectedName">Aucun fichier selectionne.</div>
+          <div class="dbx-upload-selected" id="dbxUploadSelectedName">Aucun fichier selectionne</div>
           <div class="dbx-upload-errors" id="dbxUploadErrors" style="display:none;"></div>
           <div class="dbx-upload-files" id="dbxUploadFilesList"></div>
         </div>
@@ -227,7 +227,7 @@
         <div class="form-group" id="dbxShareEmailGroup" style="display:none;">
           <label class="form-label" for="dbxShareEmail">Email du destinataire</label>
           <input type="email" class="form-control" id="dbxShareEmail" maxlength="255" placeholder="contact@entreprise.com">
-          <div class="dbx-share-help">L email est obligatoire si vous partagez avec un utilisateur specifique.</div>
+          <div class="dbx-share-help">L'email est obligatoire si vous partagez avec un utilisateur specifique.</div>
         </div>
 
         <div class="dbx-share-help">
@@ -294,11 +294,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   @if(session('success'))
-  Toast.success('Succes', @json(session('success')));
+  Toast.success(@json(__('dropbox::messages.common.success')), @json(session('success')));
   @endif
 
   @if(session('error'))
-  Toast.error('Erreur', @json(session('error')));
+  Toast.error(@json(__('dropbox::messages.common.error')), @json(session('error')));
   @endif
 });
 </script>

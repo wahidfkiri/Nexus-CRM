@@ -52,7 +52,7 @@ class GoogleSheetsService
     {
         $clientId = (string) config('google-sheets.oauth.client_id');
         if ($clientId === '') {
-            throw new RuntimeException('GOOGLE_SHEETS_CLIENT_ID is missing.');
+            throw new RuntimeException(__('google-sheets::messages.errors.client_id_missing'));
         }
 
         $client = $this->makeClient();
@@ -71,7 +71,7 @@ class GoogleSheetsService
     {
         $state = decrypt($encryptedState);
         if (!is_array($state) || !isset($state['tenant_id'], $state['user_id'])) {
-            throw new RuntimeException('Invalid OAuth state.');
+            throw new RuntimeException(__('google-sheets::messages.errors.invalid_oauth_state'));
         }
         return $state;
     }
@@ -160,7 +160,7 @@ class GoogleSheetsService
         if ($token->is_expired) {
             if (!$token->refresh_token) {
                 $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
-                throw new RuntimeException('Session Google Sheets expiree ou revoquee. Reconnectez votre compte Google.');
+                throw new RuntimeException(__('google-sheets::messages.errors.session_expired'));
             }
 
             $newToken = $client->fetchAccessTokenWithRefreshToken($token->refresh_token);
@@ -177,7 +177,7 @@ class GoogleSheetsService
                     (string) ($newToken['error_description'] ?? '')
                 )) {
                     $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
-                    throw new RuntimeException('Session Google Sheets expiree ou revoquee. Reconnectez votre compte Google.');
+                    throw new RuntimeException(__('google-sheets::messages.errors.session_expired'));
                 }
 
                 throw new RuntimeException((string) ($newToken['error_description'] ?? $newToken['error']));
@@ -759,7 +759,7 @@ class GoogleSheetsService
     {
         $token = $this->getToken($tenantId);
         if (!$token) {
-            throw new RuntimeException('Google Sheets is not connected for this tenant.');
+            throw new RuntimeException(__('google-sheets::messages.errors.not_connected'));
         }
         return $token;
     }
@@ -780,13 +780,13 @@ class GoogleSheetsService
     {
         $value = trim(rawurldecode($spreadsheetId));
         if ($value === '') {
-            throw new RuntimeException('Identifiant Google Sheets manquant.');
+            throw new RuntimeException(__('google-sheets::messages.errors.spreadsheet_id_missing'));
         }
 
         // Handle IDs/URLs pasted with wrapping quotes or spaces.
         $value = trim($value, " \t\n\r\0\x0B'\"");
         if ($value === '') {
-            throw new RuntimeException('Identifiant Google Sheets manquant.');
+            throw new RuntimeException(__('google-sheets::messages.errors.spreadsheet_id_missing'));
         }
 
         // Decode again if value still looks URL-encoded.
@@ -824,7 +824,7 @@ class GoogleSheetsService
                 }
             }
 
-            throw new RuntimeException('URL Google Sheets invalide. Utilisez le lien du document ou son identifiant.');
+            throw new RuntimeException(__('google-sheets::messages.errors.spreadsheet_url_invalid'));
         }
 
         if (preg_match('/^[a-zA-Z0-9\-_]{15,}$/', $value) === 1) {
@@ -836,7 +836,7 @@ class GoogleSheetsService
             return $matches[1];
         }
 
-        throw new RuntimeException('Identifiant Google Sheets invalide.');
+        throw new RuntimeException(__('google-sheets::messages.errors.spreadsheet_id_invalid'));
     }
 
     private function translateGoogleApiException(\Throwable $e, ?string $spreadsheetId = null): RuntimeException
@@ -849,7 +849,7 @@ class GoogleSheetsService
             || str_contains($message, 'expired or revoked')
             || str_contains($message, 'token has been expired or revoked')
         ) {
-            return new RuntimeException('Session Google Sheets expiree ou revoquee. Reconnectez Google Sheets.');
+            return new RuntimeException(__('google-sheets::messages.errors.session_expired'));
         }
 
         $isNotFound = str_contains($message, 'requested entity was not found')
@@ -858,9 +858,7 @@ class GoogleSheetsService
 
         if ($isNotFound) {
             $idInfo = $spreadsheetId ? " (ID: {$spreadsheetId})" : '';
-            return new RuntimeException(
-                "Document Google Sheets introuvable{$idInfo}. Vérifiez l'ID et que le compte Google connecté a accès au fichier."
-            );
+            return new RuntimeException(__('google-sheets::messages.errors.spreadsheet_not_found') . $idInfo . '.');
         }
 
         $isPermissionDenied = str_contains($message, 'permission')
@@ -868,12 +866,10 @@ class GoogleSheetsService
             || str_contains($message, 'insufficient');
 
         if ($isPermissionDenied) {
-            return new RuntimeException(
-                "Accès refusé au document Google Sheets. Partagez le fichier avec le compte Google connecté, puis réessayez."
-            );
+            return new RuntimeException(__('google-sheets::messages.errors.permission_denied'));
         }
 
-        return new RuntimeException($raw !== '' ? $raw : 'Erreur Google Sheets inattendue.');
+        return new RuntimeException($raw !== '' ? $raw : __('google-sheets::messages.errors.unexpected'));
     }
 
     private function isRevokedOrExpiredOAuthError(string $error, string $description = ''): bool

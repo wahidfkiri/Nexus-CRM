@@ -16,4 +16,16 @@ class GoogleSheetsWriteRangeRequest extends FormRequest
             'values.*' => ['array'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'range.required' => __('google-sheets::messages.validation.range_required'),
+            'range.string' => __('google-sheets::messages.validation.range_string'),
+            'range.max' => __('google-sheets::messages.validation.range_max'),
+            'values.required' => __('google-sheets::messages.validation.values_required'),
+            'values.array' => __('google-sheets::messages.validation.values_array'),
+            'values.*.array' => __('google-sheets::messages.validation.values_array'),
+        ];
+    }
 }

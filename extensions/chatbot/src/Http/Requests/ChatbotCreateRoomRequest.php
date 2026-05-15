@@ -28,11 +28,11 @@ class ChatbotCreateRoomRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Le nom du salon est obligatoire.',
-            'name.max' => 'Le nom du salon est trop long.',
-            'icon.regex' => 'Le format de l icone est invalide.',
-            'color.regex' => 'La couleur du salon est invalide.',
-            'member_ids.*.exists' => 'Un membre selectionne est invalide.',
+            'name.required' => __('chatbot::messages.validation.room_name_required'),
+            'name.max' => __('chatbot::messages.validation.room_name_max'),
+            'icon.regex' => __('chatbot::messages.validation.icon_regex'),
+            'color.regex' => __('chatbot::messages.validation.color_regex'),
+            'member_ids.*.exists' => __('chatbot::messages.validation.member_exists'),
         ];
     }
 }

@@ -31,12 +31,12 @@ class GoogleMeetMeetingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'summary.required' => 'Le titre de la reunion est obligatoire.',
-            'summary.min' => 'Le titre doit contenir au moins 2 caracteres.',
-            'start_at.required' => 'La date de debut est obligatoire.',
-            'end_at.required' => 'La date de fin est obligatoire.',
-            'end_at.after' => 'La date de fin doit etre apres la date de debut.',
-            'send_updates.in' => 'La valeur de notification est invalide.',
+            'summary.required' => __('google-meet::messages.validation.summary_required'),
+            'summary.min' => __('google-meet::messages.validation.summary_min'),
+            'start_at.required' => __('google-meet::messages.validation.start_required'),
+            'end_at.required' => __('google-meet::messages.validation.end_required'),
+            'end_at.after' => __('google-meet::messages.validation.end_after'),
+            'send_updates.in' => __('google-meet::messages.validation.send_updates_in'),
         ];
     }
 
@@ -71,7 +71,7 @@ class GoogleMeetMeetingRequest extends FormRequest
             if (!empty($invalid)) {
                 $validator->errors()->add(
                     'attendees',
-                    'Un ou plusieurs emails participants sont invalides.'
+                    __('google-meet::messages.validation.attendees_invalid')
                 );
             }
         });

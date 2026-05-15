@@ -86,7 +86,7 @@ class GoogleMeetController extends Controller
             $userId = (int) $state['user_id'];
 
             if ((int) Auth::id() !== $userId || (int) Auth::user()->tenant_id !== $tenantId) {
-                throw new RuntimeException('L etat OAuth ne correspond pas a la session en cours.');
+                throw new RuntimeException(__('google-meet::messages.errors.oauth_state_mismatch'));
             }
 
             $this->ensureExtensionActivated($tenantId);
@@ -94,7 +94,7 @@ class GoogleMeetController extends Controller
             app(AutomationReconnectNotificationService::class)
                 ->notifyForProvider($tenantId, $userId, 'google-meet', route('google-meet.index'));
 
-            return redirect()->route('google-meet.index')->with('success', 'Google Meet connecte avec succes.');
+            return redirect()->route('google-meet.index')->with('success', __('google-meet::messages.success.connected'));
         } catch (Throwable $e) {
             return redirect()->route('google-meet.index')->with('error', $e->getMessage());
         }
@@ -109,7 +109,7 @@ class GoogleMeetController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Google Meet deconnecte.',
+                'message' => __('google-meet::messages.success.disconnected'),
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -158,7 +158,7 @@ class GoogleMeetController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Calendrier selectionne avec succes.',
+                'message' => __('google-meet::messages.success.calendar_selected'),
                 'data' => $calendar,
             ]);
         } catch (Throwable $e) {
@@ -254,7 +254,7 @@ class GoogleMeetController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $count . ' reunion(s) synchronisee(s).',
+                'message' => __('google-meet::messages.success.sync_count', ['count' => $count]),
                 'count' => $count,
             ]);
         } catch (Throwable $e) {
@@ -275,7 +275,7 @@ class GoogleMeetController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Reunion Google Meet creee avec succes.',
+                'message' => __('google-meet::messages.success.meeting_created'),
                 'data' => $meeting,
             ], 201);
         } catch (Throwable $e) {
@@ -299,7 +299,7 @@ class GoogleMeetController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Reunion mise a jour avec succes.',
+                'message' => __('google-meet::messages.success.meeting_updated'),
                 'data' => $meeting,
             ]);
         } catch (Throwable $e) {
@@ -320,7 +320,7 @@ class GoogleMeetController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Reunion supprimee.',
+                'message' => __('google-meet::messages.success.meeting_deleted'),
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -371,7 +371,7 @@ class GoogleMeetController extends Controller
         $this->assertStorageReady();
 
         if (!$this->isExtensionActive($tenantId)) {
-            throw new RuntimeException('Google Meet n est pas active pour ce tenant. Activez-la depuis le Marketplace.');
+            throw new RuntimeException(__('google-meet::messages.errors.extension_inactive'));
         }
     }
 
@@ -402,7 +402,7 @@ class GoogleMeetController extends Controller
     private function assertStorageReady(): void
     {
         if (!$this->isStorageReady()) {
-            throw new RuntimeException('Les tables Google Meet sont absentes. Executez: php artisan migrate');
+            throw new RuntimeException(__('google-meet::messages.errors.storage_missing'));
         }
     }
 }

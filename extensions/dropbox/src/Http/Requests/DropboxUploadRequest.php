@@ -23,12 +23,14 @@ class DropboxUploadRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'files.required' => 'Veuillez selectionner au moins un fichier.',
-            'files.array' => 'Le format des fichiers a importer est invalide.',
-            'files.min' => 'Veuillez selectionner au moins un fichier.',
-            'files.*.required' => 'Un fichier selectionne est invalide.',
-            'files.*.file' => 'Un des elements selectionnes n est pas un fichier valide.',
-            'files.*.max' => 'Un fichier depasse la limite autorisee de 100 MB.',
+            'files.required' => __('dropbox::messages.validation.files_required'),
+            'files.array' => __('dropbox::messages.validation.files_array'),
+            'files.min' => __('dropbox::messages.validation.files_required'),
+            'files.*.required' => __('dropbox::messages.validation.file_required'),
+            'files.*.file' => __('dropbox::messages.validation.file_invalid'),
+            'files.*.max' => __('dropbox::messages.validation.file_max'),
+            'parent_id.string' => __('dropbox::messages.validation.parent_id_string'),
+            'parent_id.max' => __('dropbox::messages.validation.parent_id_max'),
         ];
     }
 }

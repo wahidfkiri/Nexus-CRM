@@ -68,7 +68,7 @@ class DropboxController extends Controller
             $userId = (int) $state['user_id'];
 
             if ((int) Auth::id() !== $userId || (int) Auth::user()->tenant_id !== $tenantId) {
-                throw new RuntimeException('La session OAuth Dropbox ne correspond pas a votre session courante.');
+                throw new RuntimeException(__('dropbox::messages.errors.oauth_session_mismatch'));
             }
 
             $this->ensureExtensionActivated($tenantId);
@@ -76,7 +76,7 @@ class DropboxController extends Controller
             app(AutomationReconnectNotificationService::class)
                 ->notifyForProvider($tenantId, $userId, 'dropbox', route('dropbox.index'));
 
-            return redirect()->route('dropbox.index')->with('success', 'Dropbox est maintenant connecte a votre espace.');
+            return redirect()->route('dropbox.index')->with('success', __('dropbox::messages.success.connected'));
         } catch (Throwable $e) {
             return redirect()->route('dropbox.index')->with('error', $e->getMessage());
         }
@@ -91,7 +91,7 @@ class DropboxController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dropbox a ete deconnecte.',
+                'message' => __('dropbox::messages.success.disconnected'),
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -158,7 +158,7 @@ class DropboxController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dossier Dropbox cree avec succes.',
+                'message' => __('dropbox::messages.success.folder_created'),
                 'data' => $folder,
             ], 201);
         } catch (Throwable $e) {
@@ -185,8 +185,8 @@ class DropboxController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => count($uploaded) > 1
-                    ? 'Fichiers envoyes vers Dropbox avec succes.'
-                    : 'Fichier envoye vers Dropbox avec succes.',
+                    ? __('dropbox::messages.success.files_uploaded')
+                    : __('dropbox::messages.success.file_uploaded'),
                 'data' => $uploaded,
                 'uploaded_count' => count($uploaded),
             ], 201);
@@ -206,7 +206,7 @@ class DropboxController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $file = $this->service->rename($tenantId, $fileId, (string) $request->string('name'));
 
-            return response()->json(['success' => true, 'message' => 'Element renomme.', 'data' => $file]);
+            return response()->json(['success' => true, 'message' => __('dropbox::messages.success.item_renamed'), 'data' => $file]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -229,7 +229,7 @@ class DropboxController extends Controller
                 (string) $request->string('current_folder_id')
             );
 
-            return response()->json(['success' => true, 'message' => 'Element deplace.', 'data' => $file]);
+            return response()->json(['success' => true, 'message' => __('dropbox::messages.success.item_moved'), 'data' => $file]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -252,7 +252,7 @@ class DropboxController extends Controller
                 $request->filled('target_folder_id') ? (string) $request->string('target_folder_id') : null
             );
 
-            return response()->json(['success' => true, 'message' => 'Element copie.', 'data' => $file]);
+            return response()->json(['success' => true, 'message' => __('dropbox::messages.success.item_copied'), 'data' => $file]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -269,7 +269,7 @@ class DropboxController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $this->service->delete($tenantId, $fileId, $request->boolean('permanent', false));
 
-            return response()->json(['success' => true, 'message' => 'Element supprime.']);
+            return response()->json(['success' => true, 'message' => __('dropbox::messages.success.item_deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -282,7 +282,7 @@ class DropboxController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $file = $this->service->restore($tenantId, $fileId);
 
-            return response()->json(['success' => true, 'message' => 'Element restaure.', 'data' => $file]);
+            return response()->json(['success' => true, 'message' => __('dropbox::messages.success.item_restored'), 'data' => $file]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -310,7 +310,7 @@ class DropboxController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $this->service->emptyTrash($tenantId);
 
-            return response()->json(['success' => true, 'message' => 'Corbeille Dropbox videe.']);
+            return response()->json(['success' => true, 'message' => __('dropbox::messages.success.trash_emptied')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -352,7 +352,7 @@ class DropboxController extends Controller
                 $request->filled('email') ? (string) $request->string('email') : null
             );
 
-            return response()->json(['success' => true, 'message' => 'Lien de partage cree.', 'data' => $file]);
+            return response()->json(['success' => true, 'message' => __('dropbox::messages.success.share_link_created'), 'data' => $file]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -399,7 +399,7 @@ class DropboxController extends Controller
         $this->assertStorageReady();
 
         if (!$this->isExtensionActive($tenantId)) {
-            throw new RuntimeException("L'extension Dropbox n'est pas active pour ce tenant. Activez-la depuis Marketplace.");
+            throw new RuntimeException(__('dropbox::messages.errors.extension_inactive'));
         }
     }
 
@@ -432,7 +432,7 @@ class DropboxController extends Controller
     private function assertStorageReady(): void
     {
         if (!$this->isStorageReady()) {
-            throw new RuntimeException('Les tables Dropbox sont manquantes. Lancez: php artisan migrate');
+            throw new RuntimeException(__('dropbox::messages.errors.storage_missing'));
         }
     }
 }

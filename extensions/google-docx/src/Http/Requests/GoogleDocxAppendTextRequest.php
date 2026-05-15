@@ -17,4 +17,13 @@ class GoogleDocxAppendTextRequest extends FormRequest
             'text' => ['required', 'string', 'max:50000'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'text.required' => __('google-docx::messages.validation.text_required'),
+            'text.string' => __('google-docx::messages.validation.text_string'),
+            'text.max' => __('google-docx::messages.validation.text_max'),
+        ];
+    }
 }

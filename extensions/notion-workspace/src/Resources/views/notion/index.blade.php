@@ -18,7 +18,7 @@
 <div class="nw-notion-surface">
   <section class="nw-hero">
     <div class="nw-hero-copy">
-      <div class="nw-kicker">Workspace documentaire</div>
+      <div class="nw-kicker">Espace documentaire</div>
       <div class="nw-hero-title-row">
         @include('layouts.partials.page-title-icon', ['icon' => (data_get($currentExtensionMeta, 'icon_url') ?: data_get($currentExtensionMeta, 'icon', 'fas fa-book-open')), 'bg' => '#f2ede3', 'color' => '#111827', 'alt' => data_get($currentExtensionMeta, 'name', 'Notion Workspace')])
         <div class="nw-hero-title-stack">
@@ -44,7 +44,7 @@
     </div>
 
     <div class="nw-hero-actions-panel">
-      <div class="nw-actions-caption">Actions workspace</div>
+      <div class="nw-actions-caption">Actions de l espace</div>
       <div class="nw-actions-stack">
         @if(!$storageReady)
           <button class="btn btn-warning" disabled>
@@ -104,14 +104,14 @@
         <div class="nw-empty-stage-icon"><i class="fas fa-key"></i></div>
         <div>
           <h2>Configuration OAuth Notion requise</h2>
-          <p>La connexion Notion n'est pas encore configurée pour cette instance. Un administrateur doit finaliser les paramètres OAuth avant que les utilisateurs puissent connecter leur workspace.</p>
+          <p>La connexion Notion n'est pas encore configuree pour cette instance. Un administrateur doit finaliser les parametres OAuth avant que les utilisateurs puissent connecter leur espace Notion.</p>
         </div>
       </section>
     @elseif(!$connected)
       <section class="nw-empty-stage is-welcome">
         <div class="nw-empty-stage-icon"><i class="fas fa-book-open"></i></div>
         <div>
-          <h2>Connecter votre vrai workspace Notion</h2>
+          <h2>Connecter votre vrai espace Notion</h2>
           <p>Cette page est pensée comme une porte d'entrée vers votre documentation réelle : recherche de pages partagées, lecture des blocs et liaisons CRM, sans dupliquer Notion dans le CRM.</p>
           <div class="nw-inline-actions">
             <a class="btn btn-primary" href="{{ route('notion-workspace.connect') }}">
@@ -147,7 +147,7 @@
         <aside class="nw-rail">
           <section class="nw-rail-card nw-identity-card">
             <div class="nw-rail-card-head">
-              <span>Workspace connecté</span>
+              <span>Espace connecte</span>
               <small>Source officielle</small>
             </div>
             <div class="nw-identity-media">
@@ -157,7 +157,7 @@
                 <div class="nw-identity-fallback">{{ $workspaceInitials }}</div>
               @endif
             </div>
-            <div class="nw-identity-name">{{ $token?->notion_workspace_name ?? 'Workspace Notion' }}</div>
+            <div class="nw-identity-name">{{ $token?->notion_workspace_name ?? 'Espace Notion' }}</div>
             <div class="nw-identity-meta">{{ $token?->notion_user_name ?? 'Inconnu' }}</div>
             <div class="nw-identity-meta is-muted">{{ $token?->notion_user_email ?? '-' }}</div>
             @if($workspaceUserAvatarUrl)
@@ -274,7 +274,7 @@
                       </div>
                       <label class="nw-field">
                         <span>Notes internes</span>
-                        <textarea id="notionLinkNotes" class="form-control" rows="3" maxlength="4000" placeholder="Pourquoi cette page est utile dans le CRM, owner interne, point de vigilance..."></textarea>
+                        <textarea id="notionLinkNotes" class="form-control" rows="3" maxlength="4000" placeholder="Pourquoi cette page est utile dans le CRM, responsable interne, point de vigilance..."></textarea>
                       </label>
                       <div class="nw-api-link-actions">
                         <span class="nw-api-status" id="notionLinkStatus">Aucun lien CRM sur cette page pour l'instant.</span>
@@ -315,7 +315,7 @@
       <div class="modal-header-icon" style="background:#f2ede3;color:#111827"><i class="fas fa-plus"></i></div>
       <div>
         <div class="modal-title">Créer une page dans Notion</div>
-        <div class="modal-subtitle">La page est créée dans votre vrai workspace Notion, avec un premier contenu pour lancer la note.</div>
+        <div class="modal-subtitle">La page est creee dans votre vrai espace Notion, avec un premier contenu pour lancer la note.</div>
       </div>
       <button class="modal-close" data-modal-close>&times;</button>
     </div>
@@ -326,7 +326,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">Parent Notion</label>
-        <input type="text" class="form-control" id="notionCreateParentLabel" readonly placeholder="Aucun parent sélectionné, la page sera créée à la racine du workspace">
+        <input type="text" class="form-control" id="notionCreateParentLabel" readonly placeholder="Aucun parent selectionne, la page sera creee a la racine de l espace">
       </div>
       <div class="form-group">
         <label class="form-label">Icône emoji</label>

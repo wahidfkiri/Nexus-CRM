@@ -354,7 +354,7 @@ const DropboxModule = (() => {
 
     if (!ok || !data.success) {
       const firstError = extractUploadError(data);
-      Toast.error('Erreur', firstError || data.message || 'Impossible d envoyer les fichiers.');
+      Toast.error('Erreur', firstError || data.message || 'Impossible d\'envoyer les fichiers.');
       return;
     }
 
@@ -387,7 +387,7 @@ const DropboxModule = (() => {
 
     if (summary) {
       if (!state.uploadFiles.length) {
-        summary.textContent = 'Aucun fichier selectionne.';
+        summary.textContent = 'Aucun fichier selectionne';
       } else if (state.uploadFiles.length === 1) {
         const file = state.uploadFiles[0];
         summary.textContent = `1 fichier selectionne - ${file.name} (${formatBytes(file.size || 0)})`;
@@ -551,7 +551,7 @@ const DropboxModule = (() => {
     const button = document.getElementById('dbxSaveShareBtn');
 
     if (type === 'user' && !email) {
-      Toast.error('Validation', 'L email du destinataire est obligatoire pour ce type de partage.');
+      Toast.error('Validation', 'L\'email du destinataire est obligatoire pour ce type de partage.');
       return;
     }
 
@@ -598,7 +598,7 @@ const DropboxModule = (() => {
   async function deleteFile(file) {
     Modal.confirm({
       title: `Supprimer "${file.name}" ?`,
-      message: 'L element sera deplace dans la corbeille Dropbox.',
+      message: 'L\'element sera deplace dans la corbeille Dropbox.',
       confirmText: 'Supprimer',
       type: 'danger',
       onConfirm: async () => {

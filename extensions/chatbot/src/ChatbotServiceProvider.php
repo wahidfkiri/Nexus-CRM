@@ -22,6 +22,7 @@ class ChatbotServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
         $this->loadViewsFrom(__DIR__ . '/Resources/views', 'chatbot');
+        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'chatbot');
 
         $this->publishes([
             __DIR__ . '/../config/chatbot.php' => config_path('chatbot.php'),
@@ -38,5 +39,9 @@ class ChatbotServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Resources/assets' => public_path('vendor/chatbot'),
         ], 'chatbot-assets');
+
+        $this->publishes([
+            __DIR__ . '/Resources/lang' => lang_path('vendor/chatbot'),
+        ], 'chatbot-lang');
     }
 }

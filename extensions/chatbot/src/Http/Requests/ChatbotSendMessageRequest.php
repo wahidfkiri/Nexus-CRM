@@ -48,7 +48,7 @@ class ChatbotSendMessageRequest extends FormRequest
             $files = $this->file('files', []);
 
             if ($text === '' && empty($files)) {
-                $validator->errors()->add('text', 'Le message est vide. Ajoutez du texte ou un fichier.');
+                $validator->errors()->add('text', __('chatbot::messages.validation.message_empty_with_file_hint'));
             }
         });
     }
@@ -56,14 +56,14 @@ class ChatbotSendMessageRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'room_id.required' => 'Le salon est obligatoire.',
-            'room_id.exists' => 'Le salon selectionne est invalide.',
-            'text.max' => 'Le message est trop long.',
-            'files.*.file' => 'Le fichier envoye est invalide.',
-            'files.max' => 'Vous pouvez envoyer jusqu a 6 fichiers par message.',
-            'files.*.max' => 'Le fichier depasse la taille maximale autorisee.',
-            'files.*.mimetypes' => 'Le type de fichier n est pas autorise.',
-            'files.*.mimes' => 'L extension du fichier n est pas autorisee.',
+            'room_id.required' => __('chatbot::messages.validation.room_required'),
+            'room_id.exists' => __('chatbot::messages.validation.room_exists'),
+            'text.max' => __('chatbot::messages.validation.text_max'),
+            'files.*.file' => __('chatbot::messages.validation.file_invalid'),
+            'files.max' => __('chatbot::messages.validation.files_max'),
+            'files.*.max' => __('chatbot::messages.validation.file_size_max'),
+            'files.*.mimetypes' => __('chatbot::messages.validation.file_mime'),
+            'files.*.mimes' => __('chatbot::messages.validation.file_extension'),
         ];
     }
 }

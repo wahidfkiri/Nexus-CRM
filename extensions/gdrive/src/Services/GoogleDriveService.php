@@ -40,7 +40,7 @@ class GoogleDriveService
     {
         $clientId = (string) config('google-drive.oauth.client_id');
         if ($clientId === '') {
-            throw new RuntimeException('GOOGLE_DRIVE_CLIENT_ID est manquant.');
+            throw new RuntimeException(__('google-drive::messages.errors.client_id_missing'));
         }
 
         $client = $this->makeClient();
@@ -60,7 +60,7 @@ class GoogleDriveService
     {
         $state = decrypt($encryptedState);
         if (!is_array($state) || !isset($state['tenant_id'], $state['user_id'])) {
-            throw new RuntimeException('Etat OAuth invalide.');
+            throw new RuntimeException(__('google-drive::messages.errors.invalid_oauth_state'));
         }
 
         return $state;
@@ -158,7 +158,7 @@ class GoogleDriveService
         if ($token->is_expired) {
             if (!$token->refresh_token) {
                 $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
-                throw new RuntimeException('Session Google Drive expiree ou revoquee. Reconnectez votre compte Google.');
+                throw new RuntimeException(__('google-drive::messages.errors.session_expired'));
             }
 
             $newToken = $client->fetchAccessTokenWithRefreshToken($token->refresh_token);
@@ -175,7 +175,7 @@ class GoogleDriveService
                     (string) ($newToken['error_description'] ?? '')
                 )) {
                     $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
-                    throw new RuntimeException('Session Google Drive expiree ou revoquee. Reconnectez votre compte Google.');
+                    throw new RuntimeException(__('google-drive::messages.errors.session_expired'));
                 }
 
                 throw new RuntimeException((string) ($newToken['error_description'] ?? $newToken['error']));
@@ -228,7 +228,7 @@ class GoogleDriveService
                 'root_folder' => $rootFolder,
             ];
         } catch (GoogleServiceException $e) {
-            throw new RuntimeException('Impossible de lister les fichiers : ' . $e->getMessage());
+            throw new RuntimeException(__('google-drive::messages.errors.list_files', ['message' => $e->getMessage()]));
         }
     }
 
@@ -260,12 +260,12 @@ class GoogleDriveService
 
         $allowed = (array) config('google-drive.allowed_mime_types', []);
         if (!empty($allowed) && !in_array($mimeType, $allowed, true)) {
-            throw new RuntimeException("Type de fichier non autorise : {$mimeType}");
+            throw new RuntimeException(__('google-drive::messages.errors.file_type_not_allowed', ['mime' => $mimeType]));
         }
 
         $maxBytes = (int) config('google-drive.api.max_file_size_mb', 100) * 1024 * 1024;
         if ((int) $file->getSize() > $maxBytes) {
-            throw new RuntimeException('Fichier trop volumineux.');
+            throw new RuntimeException(__('google-drive::messages.errors.file_too_large'));
         }
 
         $uploadedFile = $drive->files->create(
@@ -485,7 +485,7 @@ class GoogleDriveService
     {
         $token = $this->getToken($tenantId);
         if (!$token) {
-            throw new RuntimeException('Google Drive n est pas connecte pour ce tenant.');
+            throw new RuntimeException(__('google-drive::messages.errors.not_connected'));
         }
 
         return $token;

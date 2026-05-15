@@ -21,7 +21,7 @@ class GoogleMeetSelectCalendarRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'calendar_id.required' => 'Veuillez selectionner un calendrier.',
+            'calendar_id.required' => __('google-meet::messages.validation.calendar_required'),
         ];
     }
 }

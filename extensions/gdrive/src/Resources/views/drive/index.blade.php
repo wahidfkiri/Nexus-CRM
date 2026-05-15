@@ -199,11 +199,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   @if(session('success'))
-  Toast.success('Succes', @json(session('success')));
+  Toast.success(@json(__('google-drive::messages.common.success')), @json(session('success')));
   @endif
 
   @if(session('error'))
-  Toast.error('Erreur', @json(session('error')));
+  Toast.error(@json(__('google-drive::messages.common.error')), @json(session('error')));
   @endif
 });
 </script>

@@ -21,7 +21,7 @@ trait InteractsWithNotionWorkspace
             return;
         }
 
-        abort(403, 'Permission insuffisante: ' . $permission);
+        abort(403, __('notion-workspace::messages.errors.permission_insufficient', ['permission' => $permission]));
     }
 
     protected function isTenantAdmin(): bool
@@ -50,7 +50,7 @@ trait InteractsWithNotionWorkspace
     protected function assertStorageReady(): void
     {
         if (!$this->isStorageReady()) {
-            abort(500, 'Les tables Notion Workspace sont absentes. Executez: php artisan migrate');
+            abort(500, __('notion-workspace::messages.errors.storage_missing'));
         }
     }
 
@@ -59,7 +59,7 @@ trait InteractsWithNotionWorkspace
         $this->assertStorageReady();
 
         if (!$this->isExtensionActive($tenantId)) {
-            abort(422, 'Notion Workspace n est pas active pour ce tenant. Activez-la depuis le Marketplace.');
+            abort(422, __('notion-workspace::messages.errors.extension_inactive'));
         }
     }
 
@@ -134,7 +134,7 @@ trait InteractsWithNotionWorkspace
         }
 
         if (!class_exists(\Vendor\Client\Models\Client::class) || !Schema::hasTable('clients')) {
-            abort(422, 'Le module clients n est pas disponible.');
+            abort(422, __('notion-workspace::messages.errors.clients_module_missing'));
         }
 
         $client = \Vendor\Client\Models\Client::query()
@@ -142,7 +142,7 @@ trait InteractsWithNotionWorkspace
             ->where('id', $clientId)
             ->first();
 
-        abort_if(!$client, 422, 'Client invalide pour ce tenant.');
+        abort_if(!$client, 422, __('notion-workspace::messages.errors.client_invalid'));
 
         return $client;
     }
@@ -154,7 +154,7 @@ trait InteractsWithNotionWorkspace
         }
 
         if (!class_exists(\NexusExtensions\Projects\Models\Project::class) || !Schema::hasTable('projects')) {
-            abort(422, 'Le module projets n est pas disponible.');
+            abort(422, __('notion-workspace::messages.errors.projects_module_missing'));
         }
 
         $project = \NexusExtensions\Projects\Models\Project::query()
@@ -162,7 +162,7 @@ trait InteractsWithNotionWorkspace
             ->where('id', $projectId)
             ->first();
 
-        abort_if(!$project, 422, 'Projet invalide pour ce tenant.');
+        abort_if(!$project, 422, __('notion-workspace::messages.errors.project_invalid'));
 
         return $project;
     }

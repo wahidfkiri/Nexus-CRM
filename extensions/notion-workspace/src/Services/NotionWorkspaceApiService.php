@@ -27,7 +27,7 @@ class NotionWorkspaceApiService
         $redirectUri = $this->redirectUri();
 
         if ($clientId === '') {
-            throw new RuntimeException('NOTION_WORKSPACE_CLIENT_ID est manquant.');
+            throw new RuntimeException(__('notion-workspace::messages.errors.client_id_missing'));
         }
 
         $state = encrypt([
@@ -53,7 +53,7 @@ class NotionWorkspaceApiService
         $state = decrypt($encryptedState);
 
         if (!is_array($state) || !isset($state['tenant_id'], $state['user_id'])) {
-            throw new RuntimeException('Etat OAuth Notion invalide.');
+            throw new RuntimeException(__('notion-workspace::messages.errors.oauth_state_invalid'));
         }
 
         return $state;
@@ -116,7 +116,7 @@ class NotionWorkspaceApiService
         $token = $this->getToken($tenantId);
 
         if (!$token) {
-            throw new RuntimeException('Notion Workspace n est pas connecte pour ce tenant.');
+            throw new RuntimeException(__('notion-workspace::messages.errors.not_connected'));
         }
 
         return $token;
@@ -175,7 +175,7 @@ class NotionWorkspaceApiService
     {
         $title = trim((string) ($payload['title'] ?? ''));
         if ($title === '') {
-            throw new RuntimeException('Le titre de la page Notion est requis.');
+            throw new RuntimeException(__('notion-workspace::messages.errors.page_title_required'));
         }
 
         $body = [
@@ -301,16 +301,16 @@ class NotionWorkspaceApiService
         $properties = (array) ($page['properties'] ?? []);
 
         if (isset($properties['title']['title']) && is_array($properties['title']['title'])) {
-            return $this->plainTextFromRichText($properties['title']['title']) ?: 'Sans titre';
+            return $this->plainTextFromRichText($properties['title']['title']) ?: __('notion-workspace::messages.defaults.untitled');
         }
 
         foreach ($properties as $property) {
             if (($property['type'] ?? null) === 'title') {
-                return $this->plainTextFromRichText((array) ($property['title'] ?? [])) ?: 'Sans titre';
+                return $this->plainTextFromRichText((array) ($property['title'] ?? [])) ?: __('notion-workspace::messages.defaults.untitled');
             }
         }
 
-        return 'Sans titre';
+        return __('notion-workspace::messages.defaults.untitled');
     }
 
     private function normalizeIcon(mixed $icon): ?array
@@ -357,7 +357,7 @@ class NotionWorkspaceApiService
             'table_row' => collect((array) ($payload['cells'] ?? []))
                 ->map(fn ($cell) => $this->plainTextFromRichText(is_array($cell) ? $cell : []))
                 ->implode(' | '),
-            'child_page' => (string) ($payload['title'] ?? 'Sous-page'),
+            'child_page' => (string) ($payload['title'] ?? __('notion-workspace::messages.defaults.child_page')),
             default => '',
         };
     }
@@ -457,7 +457,7 @@ class NotionWorkspaceApiService
                 $message = (string) ($payload['message'] ?? $payload['error'] ?? $message);
             }
 
-            throw new RuntimeException('Impossible de finaliser la connexion Notion: ' . $message);
+            throw new RuntimeException(__('notion-workspace::messages.errors.oauth_finalize_failed', ['message' => $message]));
         }
     }
 
@@ -465,7 +465,7 @@ class NotionWorkspaceApiService
     {
         if (!$token->refresh_token) {
             $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
-            throw new RuntimeException('Session Notion expiree ou revoquee. Reconnectez votre workspace Notion.');
+            throw new RuntimeException(__('notion-workspace::messages.errors.session_expired'));
         }
 
         try {
@@ -489,10 +489,10 @@ class NotionWorkspaceApiService
 
             if (in_array($statusCode, [400, 401], true)) {
                 $this->invalidateTokenAfterOAuthFailure($token, 'refresh_failed');
-                throw new RuntimeException('Session Notion expiree ou revoquee. Reconnectez votre workspace Notion.');
+                throw new RuntimeException(__('notion-workspace::messages.errors.session_expired'));
             }
 
-            throw new RuntimeException('Impossible de rafraichir la session Notion: ' . $message);
+            throw new RuntimeException(__('notion-workspace::messages.errors.session_refresh_failed', ['message' => $message]));
         }
 
         return $this->persistTokenPayload((int) $token->tenant_id, (int) ($token->connected_by ?? 0), $data, $token);
@@ -549,11 +549,11 @@ class NotionWorkspaceApiService
 
             if ($statusCode === 401) {
                 $this->invalidateTokenAfterOAuthFailure($token, 'api_unauthorized');
-                throw new RuntimeException('Session Notion expiree ou revoquee. Reconnectez votre workspace Notion.');
+                throw new RuntimeException(__('notion-workspace::messages.errors.session_expired'));
             }
 
             $message = (string) ($payload['message'] ?? $payload['error'] ?? $e->getMessage());
-            throw new RuntimeException('API Notion: ' . $message);
+            throw new RuntimeException(__('notion-workspace::messages.errors.api_error', ['message' => $message]));
         }
     }
 
@@ -572,7 +572,7 @@ class NotionWorkspaceApiService
         $clientSecret = (string) config('notion-workspace.oauth.client_secret');
 
         if ($clientId === '' || $clientSecret === '') {
-            throw new RuntimeException('Les credentials OAuth Notion sont manquants.');
+            throw new RuntimeException(__('notion-workspace::messages.errors.oauth_credentials_missing'));
         }
 
         return base64_encode($clientId . ':' . $clientSecret);

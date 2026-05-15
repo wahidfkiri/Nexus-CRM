@@ -20,6 +20,7 @@ class GoogleDocxServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
         $this->loadViewsFrom(__DIR__ . '/Resources/views', 'google-docx');
+        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'google-docx');
 
         $this->publishes([
             __DIR__ . '/../config/google-docx.php' => config_path('google-docx.php'),
@@ -36,5 +37,9 @@ class GoogleDocxServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Resources/assets' => public_path('vendor/google-docx'),
         ], 'google-docx-assets');
+
+        $this->publishes([
+            __DIR__ . '/Resources/lang' => lang_path('vendor/google-docx'),
+        ], 'google-docx-lang');
     }
 }

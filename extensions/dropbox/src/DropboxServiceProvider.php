@@ -21,6 +21,7 @@ class DropboxServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
         $this->loadViewsFrom(__DIR__ . '/Resources/views', 'dropbox');
+        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'dropbox');
         $this->syncAssetsToPublic();
 
         $this->publishes([
@@ -38,6 +39,10 @@ class DropboxServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Resources/assets' => public_path('vendor/dropbox'),
         ], 'dropbox-assets');
+
+        $this->publishes([
+            __DIR__ . '/Resources/lang' => lang_path('vendor/dropbox'),
+        ], 'dropbox-lang');
     }
 
     private function syncAssetsToPublic(): void

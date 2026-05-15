@@ -70,7 +70,7 @@ class ChatbotController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Salon cree avec succes.',
+                'message' => __('chatbot::messages.success.room_created'),
                 'data' => $this->service->formatRoom($room, Auth::user()),
             ], 201);
         } catch (Throwable $e) {
@@ -91,7 +91,7 @@ class ChatbotController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Salon mis a jour.',
+                'message' => __('chatbot::messages.success.room_updated'),
                 'data' => $this->service->formatRoom($room, Auth::user()),
             ]);
         } catch (Throwable $e) {
@@ -112,7 +112,7 @@ class ChatbotController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Salon archive.',
+                'message' => __('chatbot::messages.success.room_archived'),
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -162,7 +162,7 @@ class ChatbotController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Message envoye.',
+                'message' => __('chatbot::messages.success.message_sent'),
                 'data' => $this->service->formatMessage($message, Auth::user()),
             ], 201);
         } catch (Throwable $e) {
@@ -183,7 +183,7 @@ class ChatbotController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Message supprime.',
+                'message' => __('chatbot::messages.success.message_deleted'),
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -273,7 +273,7 @@ class ChatbotController extends Controller
     private function assertStorageReady(): void
     {
         if (!$this->isStorageReady()) {
-            throw new \RuntimeException('Les tables Chatbot sont absentes. Executez: php artisan migrate');
+            throw new \RuntimeException(__('chatbot::messages.errors.storage_missing'));
         }
     }
 

@@ -25,7 +25,7 @@ class SlackService
     {
         $clientId = trim((string) config('slack.oauth.client_id'));
         if ($clientId === '') {
-            throw new RuntimeException('SLACK_CLIENT_ID is missing.');
+            throw new RuntimeException(__('slack::messages.errors.client_id_missing'));
         }
         $this->assertValidSlackClientId($clientId);
 
@@ -55,12 +55,12 @@ class SlackService
     {
         $state = decrypt($encryptedState);
         if (!is_array($state) || !isset($state['tenant_id'], $state['user_id'])) {
-            throw new RuntimeException('Invalid OAuth state.');
+            throw new RuntimeException(__('slack::messages.errors.oauth_state_invalid'));
         }
 
         $issuedAt = (int) ($state['ts'] ?? 0);
         if ($issuedAt <= 0 || abs(now()->timestamp - $issuedAt) > 900) {
-            throw new RuntimeException('OAuth state has expired. Please retry the Slack connection.');
+            throw new RuntimeException(__('slack::messages.errors.oauth_state_expired'));
         }
 
         return $state;
@@ -72,7 +72,7 @@ class SlackService
         $clientSecret = trim((string) config('slack.oauth.client_secret'));
 
         if ($clientId === '' || $clientSecret === '') {
-            throw new RuntimeException('Slack OAuth credentials are missing.');
+            throw new RuntimeException(__('slack::messages.errors.oauth_credentials_missing'));
         }
         $this->assertValidSlackClientId($clientId);
         $redirectUri = $this->redirectUri();
@@ -90,17 +90,17 @@ class SlackService
             ]);
 
         if (!$response->ok()) {
-            throw new RuntimeException('Slack OAuth request failed: HTTP ' . $response->status());
+            throw new RuntimeException(__('slack::messages.errors.oauth_request_failed', ['status' => $response->status()]));
         }
 
         $data = $response->json();
         if (!is_array($data) || !($data['ok'] ?? false)) {
-            throw new RuntimeException($this->extractSlackError($data, 'Slack OAuth exchange failed.'));
+            throw new RuntimeException($this->extractSlackError($data, __('slack::messages.errors.oauth_exchange_failed')));
         }
 
         $botToken = trim((string) ($data['access_token'] ?? ''));
         if ($botToken === '') {
-            throw new RuntimeException('Slack bot token was not returned by OAuth.');
+            throw new RuntimeException(__('slack::messages.errors.bot_token_missing'));
         }
 
         $authTest = $this->apiRequestWithToken($botToken, 'GET', 'auth.test');
@@ -190,11 +190,11 @@ class SlackService
     {
         $token = $this->getToken($tenantId);
         if (!$token) {
-            throw new RuntimeException('Slack is not connected for this tenant.');
+            throw new RuntimeException(__('slack::messages.errors.not_connected'));
         }
 
         if (trim((string) $token->bot_token) === '') {
-            throw new RuntimeException('Slack bot token is missing. Reconnect your Slack workspace.');
+            throw new RuntimeException(__('slack::messages.errors.bot_token_missing_reconnect'));
         }
 
         return $token;
@@ -277,7 +277,7 @@ class SlackService
     {
         $channel = SlackChannel::forTenant($tenantId)->where('channel_id', $channelId)->first();
         if (!$channel) {
-            throw new RuntimeException('Selected Slack channel does not exist.');
+            throw new RuntimeException(__('slack::messages.errors.channel_not_found'));
         }
 
         SlackChannel::forTenant($tenantId)->update(['is_selected' => false]);
@@ -302,7 +302,7 @@ class SlackService
         $token = $this->getTokenOrFail($tenantId);
         $channelId = $this->resolveChannelId($tenantId, $channelId);
         if ($channelId === null) {
-            throw new RuntimeException('No Slack channel selected.');
+            throw new RuntimeException(__('slack::messages.errors.channel_not_selected'));
         }
 
         $from = $from ?: now()->subDays((int) config('slack.api.sync_days_past', 14));
@@ -361,12 +361,12 @@ class SlackService
         $token = $this->getTokenOrFail($tenantId);
         $channelId = trim((string) ($payload['channel_id'] ?? ''));
         if ($channelId === '') {
-            throw new RuntimeException('Slack channel is required.');
+            throw new RuntimeException(__('slack::messages.errors.channel_required'));
         }
 
         $text = trim((string) ($payload['text'] ?? ''));
         if ($text === '') {
-            throw new RuntimeException('Message text is required.');
+            throw new RuntimeException(__('slack::messages.errors.message_required'));
         }
 
         $body = [
@@ -395,7 +395,7 @@ class SlackService
             'channel_id' => $channelId,
             'slack_ts' => (string) ($result['ts'] ?? ''),
             'text' => $text,
-            'username' => 'Me',
+            'username' => __('slack::messages.common.me'),
         ];
 
         $this->log($tenantId, 'send_message', $channelId, (string) ($formatted['slack_ts'] ?? ''), [
@@ -500,7 +500,7 @@ class SlackService
             'slack_ts' => $message->slack_ts,
             'thread_ts' => $message->thread_ts,
             'user_id' => $message->user_id,
-            'username' => $message->username ?: ($message->is_bot ? 'Bot' : 'Utilisateur'),
+            'username' => $message->username ?: ($message->is_bot ? __('slack::messages.common.bot') : __('slack::messages.common.user')),
             'text' => $message->text,
             'is_bot' => (bool) $message->is_bot,
             'sent_at' => $message->sent_at?->toIso8601String(),
@@ -611,12 +611,12 @@ class SlackService
             : $request->asJson()->post($url, $payload);
 
         if (!$response->ok()) {
-            throw new RuntimeException("Slack API {$endpoint} failed: HTTP " . $response->status());
+            throw new RuntimeException(__('slack::messages.errors.api_failed', ['endpoint' => $endpoint, 'status' => $response->status()]));
         }
 
         $data = $response->json();
         if (!is_array($data) || !($data['ok'] ?? false)) {
-            throw new RuntimeException($this->extractSlackError($data, "Slack API {$endpoint} failed."));
+            throw new RuntimeException($this->extractSlackError($data, __('slack::messages.errors.api_failed_generic', ['endpoint' => $endpoint])));
         }
 
         return $data;
@@ -633,7 +633,7 @@ class SlackService
         $configured = trim((string) config('slack.oauth.redirect_uri', ''));
         if ($configured !== '' && Str::contains($configured, '://') && !Str::startsWith($configured, ['http://', 'https://'])) {
             throw new RuntimeException(
-                'SLACK_REDIRECT_URI doit etre une URL web http/https. Les URI non-web necessitent PKCE et ne sont pas supportees ici.'
+                __('slack::messages.errors.redirect_uri_invalid_format')
             );
         }
 
@@ -663,7 +663,7 @@ class SlackService
     {
         if (!preg_match('~^https?://~i', $redirectUri)) {
             throw new RuntimeException(
-                'Redirect URI OAuth invalide. Utilisez une URL web http/https (ex: http://127.0.0.1:8000/extensions/slack/oauth/callback).'
+                __('slack::messages.errors.redirect_uri_invalid')
             );
         }
     }
@@ -685,10 +685,7 @@ class SlackService
         }
 
         throw new RuntimeException(
-            'Slack refuse cette connexion car l application utilise localhost comme redirect URI avec des scopes bot. '
-            . 'Depuis les changements PKCE de Slack, localhost est traite comme une redirection desktop dans ce cas. '
-            . 'Utilisez une URL web non-localhost pour SLACK_REDIRECT_URI (ex: https://crm.test/extensions/slack/oauth/callback) '
-            . 'et ajoutez-la aussi dans les Redirect URLs de votre app Slack, ou desactivez PKCE si vous devez rester sur localhost.'
+            __('slack::messages.errors.redirect_uri_localhost_bot_scopes')
         );
     }
 
@@ -696,7 +693,7 @@ class SlackService
     {
         if (Str::contains($clientId, 'apps.googleusercontent.com')) {
             throw new RuntimeException(
-                'SLACK_CLIENT_ID semble etre un identifiant Google. Utilisez le Client ID de votre application Slack (api.slack.com/apps).'
+                __('slack::messages.errors.client_id_google_detected')
             );
         }
     }
@@ -721,7 +718,7 @@ class SlackService
         if (is_array($data)) {
             $error = trim((string) ($data['error'] ?? ''));
             if ($error !== '') {
-                return "Slack API error: {$error}";
+                return __('slack::messages.common.api_error_prefix') . ' ' . $error;
             }
         }
 

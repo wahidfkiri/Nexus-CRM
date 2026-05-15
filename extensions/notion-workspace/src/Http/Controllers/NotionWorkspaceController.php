@@ -35,7 +35,7 @@ class NotionWorkspaceController extends Controller
         $linkedPages = ($storageReady && $extensionActive)
             ? $this->linkedPagesQuery($tenantId)->get()
             : collect();
-        $workspaceName = trim((string) ($token?->notion_workspace_name ?? 'Workspace Notion'));
+        $workspaceName = trim((string) ($token?->notion_workspace_name ?? __('notion-workspace::messages.defaults.workspace_name')));
         $workspaceImageUrl = null;
         $workspaceUserAvatarUrl = null;
 
@@ -133,7 +133,7 @@ class NotionWorkspaceController extends Controller
             $userId = (int) $state['user_id'];
 
             if ((int) Auth::id() !== $userId || (int) Auth::user()->tenant_id !== $tenantId) {
-                throw new RuntimeException('Etat OAuth invalide pour cette session.');
+                throw new RuntimeException(__('notion-workspace::messages.errors.oauth_state_mismatch'));
             }
 
             $this->ensureExtensionActivated($tenantId);
@@ -141,7 +141,7 @@ class NotionWorkspaceController extends Controller
             app(AutomationReconnectNotificationService::class)
                 ->notifyForProvider($tenantId, $userId, 'notion-workspace', route('notion-workspace.index'));
 
-            return redirect()->route('notion-workspace.index')->with('success', 'Workspace Notion connecte avec succes.');
+            return redirect()->route('notion-workspace.index')->with('success', __('notion-workspace::messages.success.connected'));
         } catch (Throwable $e) {
             return redirect()->route('notion-workspace.index')->with('error', $e->getMessage());
         }
@@ -156,7 +156,7 @@ class NotionWorkspaceController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Workspace Notion deconnecte.',
+                'message' => __('notion-workspace::messages.success.disconnected'),
             ]);
         } catch (Throwable $e) {
             return response()->json([

@@ -18,4 +18,15 @@ class GoogleDocxCreateDocumentRequest extends FormRequest
             'content' => ['nullable', 'string', 'max:50000'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'title.required' => __('google-docx::messages.validation.title_required'),
+            'title.string' => __('google-docx::messages.validation.title_string'),
+            'title.max' => __('google-docx::messages.validation.title_max'),
+            'content.string' => __('google-docx::messages.validation.content_string'),
+            'content.max' => __('google-docx::messages.validation.content_max'),
+        ];
+    }
 }

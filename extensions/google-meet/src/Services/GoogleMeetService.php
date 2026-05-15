@@ -40,7 +40,7 @@ class GoogleMeetService
     {
         $clientId = (string) config('google-meet.oauth.client_id');
         if ($clientId === '') {
-            throw new RuntimeException('GOOGLE_MEET_CLIENT_ID est manquant.');
+            throw new RuntimeException(__('google-meet::messages.errors.client_id_missing'));
         }
 
         $client = $this->makeClient();
@@ -59,7 +59,7 @@ class GoogleMeetService
     {
         $state = decrypt($encryptedState);
         if (!is_array($state) || !isset($state['tenant_id'], $state['user_id'])) {
-            throw new RuntimeException('Etat OAuth invalide.');
+            throw new RuntimeException(__('google-meet::messages.errors.invalid_oauth_state'));
         }
 
         return $state;
@@ -156,7 +156,7 @@ class GoogleMeetService
     {
         $token = $this->getToken($tenantId);
         if (!$token) {
-            throw new RuntimeException('Google Meet n est pas connecte pour ce tenant.');
+            throw new RuntimeException(__('google-meet::messages.errors.not_connected'));
         }
 
         return $token;
@@ -172,7 +172,7 @@ class GoogleMeetService
         if ($token->is_expired) {
             if (!$token->refresh_token) {
                 $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
-                throw new RuntimeException('Session Google Meet expiree. Reconnectez votre compte Google.');
+                throw new RuntimeException(__('google-meet::messages.errors.session_expired'));
             }
 
             $newToken = $client->fetchAccessTokenWithRefreshToken($token->refresh_token);
@@ -182,7 +182,7 @@ class GoogleMeetService
                     (string) ($newToken['error_description'] ?? '')
                 )) {
                     $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
-                    throw new RuntimeException('Session Google Meet expiree ou revoquee. Reconnectez votre compte Google.');
+                    throw new RuntimeException(__('google-meet::messages.errors.session_expired'));
                 }
                 throw new RuntimeException((string) ($newToken['error_description'] ?? $newToken['error']));
             }
@@ -267,7 +267,7 @@ class GoogleMeetService
             ->first();
 
         if (!$calendar) {
-            throw new RuntimeException('Le calendrier selectionne n existe pas pour ce tenant.');
+            throw new RuntimeException(__('google-meet::messages.errors.calendar_missing'));
         }
 
         GoogleMeetCalendar::forTenant($tenantId)->update(['is_selected' => false]);
@@ -293,7 +293,7 @@ class GoogleMeetService
         $calendarIds = $this->resolveSyncCalendarIds($tenantId, $calendarId);
 
         if (empty($calendarIds)) {
-            throw new RuntimeException('Aucun calendrier selectionne.');
+            throw new RuntimeException(__('google-meet::messages.errors.no_calendar_selected'));
         }
 
         $from = $from ?: now()->subDays((int) config('google-meet.api.sync_days_past', 30));
@@ -347,7 +347,7 @@ class GoogleMeetService
         $calendarId = $this->resolveCalendarId($tenantId, (string) ($data['calendar_id'] ?? ''));
 
         if (!$calendarId) {
-            throw new RuntimeException('Aucun calendrier selectionne.');
+            throw new RuntimeException(__('google-meet::messages.errors.no_calendar_selected'));
         }
 
         $payload = $this->buildMeetingPayload($data, true);
@@ -379,7 +379,7 @@ class GoogleMeetService
         $calendarId = $this->resolveCalendarId($tenantId, $calendarId);
 
         if (!$calendarId) {
-            throw new RuntimeException('Aucun calendrier selectionne.');
+            throw new RuntimeException(__('google-meet::messages.errors.no_calendar_selected'));
         }
 
         try {
@@ -419,7 +419,7 @@ class GoogleMeetService
         $calendarId = $this->resolveCalendarId($tenantId, $calendarId);
 
         if (!$calendarId) {
-            throw new RuntimeException('Aucun calendrier selectionne.');
+            throw new RuntimeException(__('google-meet::messages.errors.no_calendar_selected'));
         }
 
         try {
@@ -552,7 +552,7 @@ class GoogleMeetService
         $endAt = Carbon::parse((string) $data['end_at'], $timezone);
 
         if ($endAt->lessThanOrEqualTo($startAt)) {
-            throw new RuntimeException('La date de fin de reunion doit etre apres la date de debut.');
+            throw new RuntimeException(__('google-meet::messages.errors.end_after_start'));
         }
 
         $attendees = $this->parseAttendees((string) ($data['attendees'] ?? ''));
@@ -691,7 +691,7 @@ class GoogleMeetService
     {
         $eventId = trim((string) ($event->getId() ?? ''));
         if ($eventId === '') {
-            throw new RuntimeException('L identifiant d evenement Google Meet est manquant.');
+            throw new RuntimeException(__('google-meet::messages.errors.event_id_missing'));
         }
 
         $start = $event->getStart();
@@ -836,23 +836,23 @@ class GoogleMeetService
         $msg = Str::lower($raw);
 
         if (str_contains($msg, 'invalid_grant')) {
-            return new RuntimeException('Session Google invalide ou expiree. Reconnectez Google Meet.');
+            return new RuntimeException(__('google-meet::messages.errors.google_session_invalid'));
         }
 
         if (str_contains($msg, 'not found') || str_contains($msg, 'requested entity was not found')) {
             $suffix = $eventId ? ' (ID: ' . $eventId . ')' : '';
-            return new RuntimeException('Reunion introuvable sur Google Calendar' . $suffix . '.');
+            return new RuntimeException(__('google-meet::messages.errors.google_event_not_found') . $suffix . '.');
         }
 
         if (str_contains($msg, 'permission') || str_contains($msg, 'forbidden') || str_contains($msg, 'insufficient')) {
-            return new RuntimeException('Google a refuse la requete. Verifiez les scopes OAuth et les droits du compte.');
+            return new RuntimeException(__('google-meet::messages.errors.google_permission_denied'));
         }
 
         if (str_contains($msg, 'access blocked') || str_contains($msg, 'access_denied')) {
-            return new RuntimeException('Acces Google bloque. Verifiez la configuration OAuth et les URI de redirection.');
+            return new RuntimeException(__('google-meet::messages.errors.google_access_blocked'));
         }
 
-        return new RuntimeException($raw !== '' ? $raw : 'Erreur Google Meet inattendue.');
+        return new RuntimeException($raw !== '' ? $raw : __('google-meet::messages.errors.unexpected'));
     }
 
     private function log(

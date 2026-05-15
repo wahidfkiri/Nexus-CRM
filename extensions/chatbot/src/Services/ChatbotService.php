@@ -42,7 +42,7 @@ class ChatbotService
             'updated_by' => (int) $user->id,
             'room_uuid' => (string) Str::uuid(),
             'name' => 'general',
-            'description' => 'Salon general de votre entreprise.',
+            'description' => __('chatbot::messages.defaults.general_description'),
             'icon' => 'fa-hashtag',
             'color' => '#2563eb',
             'is_private' => false,
@@ -76,7 +76,7 @@ class ChatbotService
     {
         $name = trim((string) ($data['name'] ?? ''));
         if ($name === '') {
-            throw new RuntimeException('Le nom du salon est obligatoire.');
+            throw new RuntimeException(__('chatbot::messages.errors.room_name_required'));
         }
 
         if (
@@ -85,7 +85,7 @@ class ChatbotService
                 ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
                 ->exists()
         ) {
-            throw new RuntimeException('Un salon avec ce nom existe deja.');
+            throw new RuntimeException(__('chatbot::messages.errors.room_name_exists'));
         }
 
         $room = DB::transaction(function () use ($tenantId, $user, $data, $name) {
@@ -136,7 +136,7 @@ class ChatbotService
 
         $newName = trim((string) ($data['name'] ?? $room->name));
         if ($newName === '') {
-            throw new RuntimeException('Le nom du salon est obligatoire.');
+            throw new RuntimeException(__('chatbot::messages.errors.room_name_required'));
         }
 
         if (
@@ -146,7 +146,7 @@ class ChatbotService
                 ->whereRaw('LOWER(name) = ?', [mb_strtolower($newName)])
                 ->exists()
         ) {
-            throw new RuntimeException('Un salon avec ce nom existe deja.');
+            throw new RuntimeException(__('chatbot::messages.errors.room_name_exists'));
         }
 
         DB::transaction(function () use ($tenantId, $user, $room, $data, $newName) {
@@ -188,7 +188,7 @@ class ChatbotService
         $this->assertManageRoom($tenantId, $user, $room);
 
         if ((bool) $room->is_default) {
-            throw new RuntimeException('Le salon par defaut ne peut pas etre supprime.');
+            throw new RuntimeException(__('chatbot::messages.errors.default_room_delete_forbidden'));
         }
 
         $room->update([
@@ -208,7 +208,7 @@ class ChatbotService
     {
         $roomId = (int) ($filters['room_id'] ?? 0);
         if ($roomId <= 0) {
-            throw new RuntimeException('Selectionnez un salon.');
+            throw new RuntimeException(__('chatbot::messages.errors.room_select'));
         }
 
         $room = $this->roomForUserOrFail($tenantId, $user, $roomId);
@@ -251,7 +251,7 @@ class ChatbotService
     {
         $roomId = (int) ($payload['room_id'] ?? 0);
         if ($roomId <= 0) {
-            throw new RuntimeException('Le salon est obligatoire.');
+            throw new RuntimeException(__('chatbot::messages.errors.room_required'));
         }
 
         $room = $this->roomForUserOrFail($tenantId, $user, $roomId);
@@ -261,7 +261,7 @@ class ChatbotService
         $attachments = $this->storeAttachments($tenantId, (int) $room->id, $files);
 
         if ($text === '' && empty($attachments)) {
-            throw new RuntimeException('Le message est vide.');
+            throw new RuntimeException(__('chatbot::messages.errors.message_empty'));
         }
 
         $messageType = 'text';
@@ -279,7 +279,7 @@ class ChatbotService
                 'reply_to_message_id' => !empty($payload['reply_to_message_id']) ? (int) $payload['reply_to_message_id'] : null,
                 'message_uuid' => (string) Str::uuid(),
                 'message_type' => $messageType,
-                'sender_name' => (string) ($user->name ?: 'Utilisateur'),
+                'sender_name' => (string) ($user->name ?: __('chatbot::messages.defaults.user')),
                 'text' => $text !== '' ? $text : null,
                 'attachments' => $attachments,
                 'sent_at' => now(),
@@ -314,7 +314,7 @@ class ChatbotService
         $room = $this->roomForUserOrFail($tenantId, $user, (int) $message->room_id);
 
         if ((int) $message->user_id !== (int) $user->id && !$this->canManageRoom($user, $room)) {
-            throw new RuntimeException('Vous n avez pas le droit de supprimer ce message.');
+            throw new RuntimeException(__('chatbot::messages.errors.message_delete_forbidden'));
         }
 
         $deleted = DB::transaction(function () use ($tenantId, $user, $room, $message) {
@@ -427,7 +427,7 @@ class ChatbotService
             ->map(function (ChatbotRoomMember $member) {
                 return [
                     'user_id' => (int) $member->user_id,
-                    'name' => (string) ($member->user?->name ?? 'Utilisateur'),
+                    'name' => (string) ($member->user?->name ?? __('chatbot::messages.defaults.user')),
                     'email' => (string) ($member->user?->email ?? ''),
                 ];
             })
@@ -461,7 +461,7 @@ class ChatbotService
             ->get(['id', 'name', 'email'])
             ->map(fn (User $user) => [
                 'id' => (int) $user->id,
-                'name' => (string) ($user->name ?? 'Utilisateur'),
+                'name' => (string) ($user->name ?? __('chatbot::messages.defaults.user')),
                 'email' => (string) ($user->email ?? ''),
             ])
             ->values();
@@ -480,7 +480,7 @@ class ChatbotService
 
                 return [
                     'id' => (string) ($file['id'] ?? ''),
-                    'name' => (string) ($file['name'] ?? 'fichier'),
+                    'name' => (string) ($file['name'] ?? __('chatbot::messages.defaults.file')),
                     'mime_type' => $mime,
                     'size' => (int) ($file['size'] ?? 0),
                     'size_kb' => (int) ($file['size_kb'] ?? 0),
@@ -497,7 +497,7 @@ class ChatbotService
             'message_uuid' => (string) $message->message_uuid,
             'room_id' => (int) $message->room_id,
             'user_id' => $message->user_id ? (int) $message->user_id : null,
-            'sender_name' => (string) ($message->sender_name ?: 'Utilisateur'),
+            'sender_name' => (string) ($message->sender_name ?: __('chatbot::messages.defaults.user')),
             'message_type' => (string) $message->message_type,
             'text' => (string) ($message->text ?? ''),
             'attachments' => $attachments,
@@ -512,11 +512,11 @@ class ChatbotService
     {
         $room = ChatbotRoom::query()->forTenant($tenantId)->where('id', $roomId)->first();
         if (!$room) {
-            throw new RuntimeException('Salon introuvable.');
+            throw new RuntimeException(__('chatbot::messages.errors.room_not_found'));
         }
 
         if (!$this->canAccessRoom($room, (int) $user->id)) {
-            throw new RuntimeException('Acces refuse a ce salon.');
+            throw new RuntimeException(__('chatbot::messages.errors.room_access_denied'));
         }
 
         return $room;
@@ -560,11 +560,11 @@ class ChatbotService
     private function assertManageRoom(int $tenantId, User $user, ChatbotRoom $room): void
     {
         if ((int) $room->tenant_id !== $tenantId) {
-            throw new RuntimeException('Salon invalide.');
+            throw new RuntimeException(__('chatbot::messages.errors.room_invalid'));
         }
 
         if (!$this->canManageRoom($user, $room)) {
-            throw new RuntimeException('Vous n avez pas la permission de modifier ce salon.');
+            throw new RuntimeException(__('chatbot::messages.errors.room_manage_forbidden'));
         }
     }
 

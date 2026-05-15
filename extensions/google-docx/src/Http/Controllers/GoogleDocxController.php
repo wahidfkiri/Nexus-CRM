@@ -68,7 +68,7 @@ class GoogleDocxController extends Controller
             $userId = (int) $state['user_id'];
 
             if ((int) Auth::id() !== $userId || (int) Auth::user()->tenant_id !== $tenantId) {
-                throw new RuntimeException('État OAuth invalide pour la session en cours.');
+                throw new RuntimeException(__('google-docx::messages.errors.oauth_state_mismatch'));
             }
 
             $this->ensureExtensionActivated($tenantId);
@@ -76,7 +76,7 @@ class GoogleDocxController extends Controller
             app(AutomationReconnectNotificationService::class)
                 ->notifyForProvider($tenantId, $userId, 'google-docx', route('google-docx.index'));
 
-            return redirect()->route('google-docx.index')->with('success', 'Google Docs connecté avec succès.');
+            return redirect()->route('google-docx.index')->with('success', __('google-docx::messages.success.connected'));
         } catch (Throwable $e) {
             return redirect()->route('google-docx.index')->with('error', $e->getMessage());
         }
@@ -91,7 +91,7 @@ class GoogleDocxController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Google Docs déconnecté.',
+                'message' => __('google-docx::messages.success.disconnected'),
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -168,7 +168,7 @@ class GoogleDocxController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Document créé avec succès.',
+                'message' => __('google-docx::messages.success.document_created'),
                 'data' => $document,
             ], 201);
         } catch (Throwable $e) {
@@ -185,7 +185,7 @@ class GoogleDocxController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $document = $this->service->renameDocument($tenantId, $documentId, (string) $request->string('title'));
 
-            return response()->json(['success' => true, 'message' => 'Document renommé.', 'data' => $document]);
+            return response()->json(['success' => true, 'message' => __('google-docx::messages.success.document_renamed'), 'data' => $document]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -204,7 +204,7 @@ class GoogleDocxController extends Controller
                 (string) $request->string('title', '')
             );
 
-            return response()->json(['success' => true, 'message' => 'Document dupliqué.', 'data' => $document]);
+            return response()->json(['success' => true, 'message' => __('google-docx::messages.success.document_duplicated'), 'data' => $document]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -217,7 +217,7 @@ class GoogleDocxController extends Controller
             $this->ensureExtensionActivated($tenantId);
             $this->service->deleteDocument($tenantId, $documentId);
 
-            return response()->json(['success' => true, 'message' => 'Document supprimé.']);
+            return response()->json(['success' => true, 'message' => __('google-docx::messages.success.document_deleted')]);
         } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -232,7 +232,7 @@ class GoogleDocxController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Texte ajouté au document.',
+                'message' => __('google-docx::messages.success.text_appended'),
                 'data' => $document,
             ]);
         } catch (Throwable $e) {
@@ -255,7 +255,7 @@ class GoogleDocxController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Remplacement terminé.',
+                'message' => __('google-docx::messages.success.replace_done'),
                 'data' => $document,
             ]);
         } catch (Throwable $e) {
@@ -267,6 +267,8 @@ class GoogleDocxController extends Controller
     {
         $request->validate([
             'format' => ['nullable', 'in:txt,html,pdf,docx'],
+        ], [
+            'format.in' => __('google-docx::messages.validation.format_in'),
         ]);
 
         try {
@@ -293,7 +295,7 @@ class GoogleDocxController extends Controller
         $this->assertStorageReady();
 
         if (!$this->isExtensionActive($tenantId)) {
-            throw new RuntimeException('Google Docs n’est pas activé pour ce tenant. Activez l’application depuis le Marketplace.');
+            throw new RuntimeException(__('google-docx::messages.errors.extension_inactive'));
         }
     }
 
@@ -321,7 +323,7 @@ class GoogleDocxController extends Controller
     private function assertStorageReady(): void
     {
         if (!$this->isStorageReady()) {
-            throw new RuntimeException('Les tables Google Docs sont absentes. Exécutez: php artisan migrate');
+            throw new RuntimeException(__('google-docx::messages.errors.storage_missing'));
         }
     }
 }

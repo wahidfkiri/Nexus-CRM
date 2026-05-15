@@ -22,6 +22,7 @@ class SlackServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
         $this->loadViewsFrom(__DIR__ . '/Resources/views', 'slack');
+        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'slack');
 
         $this->publishes([
             __DIR__ . '/../config/slack.php' => config_path('slack.php'),
@@ -38,6 +39,9 @@ class SlackServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Resources/assets' => public_path('vendor/slack'),
         ], 'slack-assets');
+
+        $this->publishes([
+            __DIR__ . '/Resources/lang' => lang_path('vendor/slack'),
+        ], 'slack-lang');
     }
 }
-

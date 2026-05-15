@@ -20,6 +20,7 @@ class GoogleSheetsServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
         $this->loadViewsFrom(__DIR__ . '/Resources/views', 'google-sheets');
+        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'google-sheets');
 
         $this->publishes([
             __DIR__ . '/../config/google-sheets.php' => config_path('google-sheets.php'),
@@ -36,5 +37,9 @@ class GoogleSheetsServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Resources/assets' => public_path('vendor/google-sheets'),
         ], 'google-sheets-assets');
+
+        $this->publishes([
+            __DIR__ . '/Resources/lang' => lang_path('vendor/google-sheets'),
+        ], 'google-sheets-lang');
     }
 }

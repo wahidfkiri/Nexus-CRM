@@ -20,6 +20,7 @@ class GoogleDriveServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
         $this->loadViewsFrom(__DIR__ . '/Resources/views', 'google-drive');
+        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'google-drive');
 
         $this->publishes([
             __DIR__ . '/../config/google-drive.php' => config_path('google-drive.php'),
@@ -36,6 +37,9 @@ class GoogleDriveServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Resources/assets' => public_path('vendor/google-drive'),
         ], 'google-drive-assets');
+
+        $this->publishes([
+            __DIR__ . '/Resources/lang' => lang_path('vendor/google-drive'),
+        ], 'google-drive-lang');
     }
 }
-

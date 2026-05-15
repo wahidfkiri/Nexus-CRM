@@ -88,7 +88,7 @@ class NotionLinkController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Page Notion liee au CRM.',
+                'message' => __('notion-workspace::messages.success.link_created'),
                 'data' => $this->formatLink($link),
             ]);
         } catch (Throwable $e) {
@@ -136,7 +136,7 @@ class NotionLinkController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lien CRM mis a jour.',
+                'message' => __('notion-workspace::messages.success.link_updated'),
                 'data' => $this->formatLink($link),
             ]);
         } catch (Throwable $e) {
@@ -158,7 +158,7 @@ class NotionLinkController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Lien CRM supprime.',
+                'message' => __('notion-workspace::messages.success.link_deleted'),
             ]);
         } catch (Throwable $e) {
             return response()->json([

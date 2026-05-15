@@ -298,14 +298,18 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   @if(session('success'))
-  Toast.success('Succès', @json(session('success')));
+  Toast.success(@json(__('google-sheets::messages.common.success')), @json(session('success')));
   @endif
 
   @if(session('error'))
   if (window.GoogleSheetsModule?.handleFailure) {
-    window.GoogleSheetsModule.handleFailure('Erreur', @json(session('error')), 'Une erreur Google Sheets est survenue.');
+    window.GoogleSheetsModule.handleFailure(
+      @json(__('google-sheets::messages.common.error')),
+      @json(session('error')),
+      @json(__('google-sheets::messages.errors.unexpected'))
+    );
   } else {
-    Toast.error('Erreur', @json(session('error')));
+    Toast.error(@json(__('google-sheets::messages.common.error')), @json(session('error')));
   }
   @endif
 });

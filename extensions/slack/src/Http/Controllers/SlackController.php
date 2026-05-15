@@ -82,7 +82,7 @@ class SlackController extends Controller
             $userId = (int) $state['user_id'];
 
             if ((int) Auth::id() !== $userId || (int) Auth::user()->tenant_id !== $tenantId) {
-                throw new RuntimeException('OAuth state does not match current session.');
+                throw new RuntimeException(__('slack::messages.errors.oauth_state_mismatch'));
             }
 
             $this->ensureExtensionActivated($tenantId);
@@ -90,7 +90,7 @@ class SlackController extends Controller
             app(AutomationReconnectNotificationService::class)
                 ->notifyForProvider($tenantId, $userId, 'slack', route('slack.index'));
 
-            return redirect()->route('slack.index')->with('success', 'Slack connecte avec succes.');
+            return redirect()->route('slack.index')->with('success', __('slack::messages.success.connected'));
         } catch (Throwable $e) {
             return redirect()->route('slack.index')->with('error', $e->getMessage());
         }
@@ -105,7 +105,7 @@ class SlackController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Slack deconnecte.',
+                'message' => __('slack::messages.success.disconnected'),
             ]);
         } catch (Throwable $e) {
             return response()->json([
@@ -151,7 +151,7 @@ class SlackController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Canal selectionne.',
+                'message' => __('slack::messages.success.channel_selected'),
                 'data' => $this->service->formatChannel($channel),
             ]);
         } catch (Throwable $e) {
@@ -215,7 +215,7 @@ class SlackController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Message envoye.',
+                'message' => __('slack::messages.success.message_sent'),
                 'data' => $message,
             ], 201);
         } catch (Throwable $e) {
@@ -262,7 +262,7 @@ class SlackController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "{$channelsCount} canaux synchronises, {$messagesCount} messages importes.",
+                'message' => __('slack::messages.success.sync_done', ['channels' => $channelsCount, 'messages' => $messagesCount]),
                 'channels_count' => $channelsCount,
                 'messages_count' => $messagesCount,
             ]);
@@ -283,7 +283,7 @@ class SlackController extends Controller
     {
         $this->assertStorageReady();
         if (!$this->isExtensionActive($tenantId)) {
-            throw new RuntimeException('Slack n est pas active pour ce tenant. Activez-la depuis le Marketplace.');
+            throw new RuntimeException(__('slack::messages.errors.extension_inactive'));
         }
     }
 
@@ -313,7 +313,7 @@ class SlackController extends Controller
     private function assertStorageReady(): void
     {
         if (!$this->isStorageReady()) {
-            throw new RuntimeException('Les tables Slack sont absentes. Executez: php artisan migrate');
+            throw new RuntimeException(__('slack::messages.errors.storage_missing'));
         }
     }
 }

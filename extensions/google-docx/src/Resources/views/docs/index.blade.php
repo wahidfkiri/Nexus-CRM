@@ -211,14 +211,18 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   @if(session('success'))
-  Toast.success('Succès', @json(session('success')));
+  Toast.success(@json(__('google-docx::messages.common.success')), @json(session('success')));
   @endif
 
   @if(session('error'))
   if (window.GoogleDocxModule?.handleFailure) {
-    window.GoogleDocxModule.handleFailure('Erreur', @json(session('error')), 'Une erreur Google Docs est survenue.');
+    window.GoogleDocxModule.handleFailure(
+      @json(__('google-docx::messages.common.error')),
+      @json(session('error')),
+      @json(__('google-docx::messages.errors.unexpected'))
+    );
   } else {
-    Toast.error('Erreur', @json(session('error')));
+    Toast.error(@json(__('google-docx::messages.common.error')), @json(session('error')));
   }
   @endif
 });

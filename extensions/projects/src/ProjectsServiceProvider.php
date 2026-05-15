@@ -19,6 +19,7 @@ class ProjectsServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
         $this->loadViewsFrom(__DIR__ . '/Resources/views', 'projects');
+        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'projects');
 
         $this->publishes([
             __DIR__ . '/../config/projects.php' => config_path('projects.php'),
@@ -35,6 +36,10 @@ class ProjectsServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Resources/assets' => public_path('vendor/projects'),
         ], 'projects-assets');
+
+        $this->publishes([
+            __DIR__ . '/Resources/lang' => lang_path('vendor/projects'),
+        ], 'projects-lang');
 
         app(ProjectPermissionService::class)->ensurePermissions();
     }

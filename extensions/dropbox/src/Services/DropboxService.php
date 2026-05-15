@@ -23,7 +23,7 @@ class DropboxService
     {
         $clientId = trim((string) config('dropbox.oauth.client_id'));
         if ($clientId === '') {
-            throw new RuntimeException('DROPBOX_CLIENT_ID est manquant.');
+            throw new RuntimeException(__('dropbox::messages.errors.client_id_missing'));
         }
 
         $state = encrypt([
@@ -49,7 +49,7 @@ class DropboxService
     {
         $state = decrypt($encryptedState);
         if (!is_array($state) || !isset($state['tenant_id'], $state['user_id'])) {
-            throw new RuntimeException('Etat OAuth Dropbox invalide.');
+            throw new RuntimeException(__('dropbox::messages.errors.invalid_oauth_state'));
         }
 
         return $state;
@@ -69,7 +69,7 @@ class DropboxService
         $tokenData = $this->parseOauthResponse($response);
         $accessToken = (string) ($tokenData['access_token'] ?? '');
         if ($accessToken === '') {
-            throw new RuntimeException('Dropbox n a retourne aucun access token.');
+            throw new RuntimeException(__('dropbox::messages.errors.missing_access_token'));
         }
 
         $account = $this->apiWithAccessToken($accessToken, 'users/get_current_account');
@@ -117,7 +117,7 @@ class DropboxService
                 $this->sendJsonRequest($this->jsonClient((string) $token->access_token), 'auth/token/revoke');
             }
         } catch (\Throwable $e) {
-            Log::warning('[Dropbox] revoke failed', ['message' => $e->getMessage()]);
+            Log::warning('[Dropbox] echec de revocation du token', ['message' => $e->getMessage()]);
         }
 
         $token->update([
@@ -203,12 +203,12 @@ class DropboxService
         $mimeType = (string) ($file->getMimeType() ?: 'application/octet-stream');
         $allowed = (array) config('dropbox.allowed_mime_types', []);
         if (!empty($allowed) && !in_array($mimeType, $allowed, true)) {
-            throw new RuntimeException('Type de fichier non autorise: ' . $mimeType);
+            throw new RuntimeException(__('dropbox::messages.errors.file_type_not_allowed', ['mime' => $mimeType]));
         }
 
         $maxBytes = (int) config('dropbox.api.max_file_size_mb', 100) * 1024 * 1024;
         if ((int) $file->getSize() > $maxBytes) {
-            throw new RuntimeException('Fichier trop volumineux.');
+            throw new RuntimeException(__('dropbox::messages.errors.file_too_large'));
         }
 
         $parentPath = $this->resolveFolderPath($tenantId, $parentId);
@@ -311,11 +311,11 @@ class DropboxService
     {
         $record = DropboxFile::withTrashed()->forTenant($tenantId)->where('dropbox_id', $fileId)->first();
         if (!$record || !$record->trashed()) {
-            throw new RuntimeException('Fichier Dropbox introuvable dans la corbeille.');
+            throw new RuntimeException(__('dropbox::messages.errors.trash_file_not_found'));
         }
 
         if (!$record->path_lower || !$record->rev) {
-            throw new RuntimeException('Revision Dropbox manquante pour restaurer ce fichier.');
+            throw new RuntimeException(__('dropbox::messages.errors.trash_revision_missing'));
         }
 
         $data = $this->api($tenantId, 'files/restore', [
@@ -354,7 +354,7 @@ class DropboxService
         );
 
         if (!$exportResponse->successful()) {
-            throw new RuntimeException($this->extractErrorMessage($response, 'Impossible de telecharger ce fichier Dropbox.'));
+            throw new RuntimeException($this->extractErrorMessage($response, __('dropbox::messages.errors.download_failed')));
         }
 
         $this->log($tenantId, $fileId, basename($path), 'download_export');
@@ -448,7 +448,7 @@ class DropboxService
                     $this->api($tenantId, 'files/permanently_delete', ['path' => $item->path_lower]);
                 }
             } catch (\Throwable $e) {
-                Log::debug('[Dropbox] permanent delete skipped', [
+                Log::debug('[Dropbox] suppression definitive ignoree', [
                     'file_id' => $item->dropbox_id,
                     'message' => $e->getMessage(),
                 ]);
@@ -589,7 +589,7 @@ class DropboxService
     {
         $token = $this->getToken($tenantId);
         if (!$token) {
-            throw new RuntimeException('Dropbox n est pas connecte pour ce tenant.');
+            throw new RuntimeException(__('dropbox::messages.errors.not_connected'));
         }
 
         return $token;
@@ -605,7 +605,7 @@ class DropboxService
 
         if (empty($token->refresh_token)) {
             $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
-            throw new RuntimeException('Dropbox demande une reconnexion: refresh token manquant.');
+            throw new RuntimeException(__('dropbox::messages.errors.refresh_token_missing'));
         }
 
         $response = $this->oauthClient()->post((string) config('dropbox.api.token_url'), [
@@ -621,7 +621,7 @@ class DropboxService
             $message = mb_strtolower($e->getMessage());
             if (str_contains($message, 'invalid_grant') || str_contains($message, 'refresh token')) {
                 $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
-                throw new RuntimeException('Session Dropbox expiree ou revoquee. Reconnectez Dropbox.');
+                throw new RuntimeException(__('dropbox::messages.errors.session_expired'));
             }
 
             throw $e;
@@ -629,7 +629,7 @@ class DropboxService
 
         $newAccessToken = (string) ($data['access_token'] ?? '');
         if ($newAccessToken === '') {
-            throw new RuntimeException('Impossible de rafraichir le token Dropbox.');
+            throw new RuntimeException(__('dropbox::messages.errors.refresh_failed'));
         }
 
         $token->update([
@@ -653,7 +653,7 @@ class DropboxService
 
             $this->log((int) $token->tenant_id, null, null, 'oauth_invalidated', ['reason' => $reason]);
         } catch (\Throwable $e) {
-            Log::warning('[Dropbox] invalidate token failed', ['message' => $e->getMessage()]);
+            Log::warning('[Dropbox] echec de l invalidation du token', ['message' => $e->getMessage()]);
         }
     }
 
@@ -757,7 +757,7 @@ class DropboxService
     private function parseOauthResponse(Response $response): array
     {
         if (!$response->successful()) {
-            throw new RuntimeException($this->extractErrorMessage($response, 'Impossible de finaliser l authentification Dropbox.'));
+            throw new RuntimeException($this->extractErrorMessage($response, __('dropbox::messages.errors.auth_finalize_failed')));
         }
 
         return (array) $response->json();
@@ -868,7 +868,7 @@ class DropboxService
         $metadata = $this->metadataById($tenantId, $fileId);
         $path = (string) ($metadata['path_lower'] ?? '');
         if ($path === '') {
-            throw new RuntimeException('Impossible de resoudre le chemin Dropbox du fichier.');
+            throw new RuntimeException(__('dropbox::messages.errors.resolve_path_failed'));
         }
 
         return $path;
@@ -1058,7 +1058,7 @@ class DropboxService
         $cleanParent = $cleanParent === '/' ? '' : rtrim($cleanParent, '/');
         $cleanName = trim(str_replace('\\', '-', str_replace('/', '-', $name)));
         if ($cleanName === '') {
-            throw new RuntimeException('Nom Dropbox invalide.');
+            throw new RuntimeException(__('dropbox::messages.errors.invalid_name'));
         }
 
         return ($cleanParent !== '' ? $cleanParent : '') . '/' . $cleanName;
@@ -1133,7 +1133,7 @@ class DropboxService
                 'ip_address' => request()?->ip(),
             ]);
         } catch (\Throwable $e) {
-            Log::debug('[Dropbox] log skipped', ['message' => $e->getMessage()]);
+            Log::debug('[Dropbox] ecriture du journal ignoree', ['message' => $e->getMessage()]);
         }
     }
 }

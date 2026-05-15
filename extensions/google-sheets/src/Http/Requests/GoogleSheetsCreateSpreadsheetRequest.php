@@ -16,4 +16,17 @@ class GoogleSheetsCreateSpreadsheetRequest extends FormRequest
             'sheet_titles.*' => ['string', 'max:100'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'title.required' => __('google-sheets::messages.validation.title_required'),
+            'title.string' => __('google-sheets::messages.validation.title_string'),
+            'title.max' => __('google-sheets::messages.validation.title_max'),
+            'sheet_titles.array' => __('google-sheets::messages.validation.sheet_titles_array'),
+            'sheet_titles.max' => __('google-sheets::messages.validation.sheet_titles_max'),
+            'sheet_titles.*.string' => __('google-sheets::messages.validation.sheet_title_string'),
+            'sheet_titles.*.max' => __('google-sheets::messages.validation.sheet_title_max'),
+        ];
+    }
 }

@@ -19,4 +19,15 @@ class GoogleDocxReplaceTextRequest extends FormRequest
             'match_case' => ['nullable', 'boolean'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'search.required' => __('google-docx::messages.validation.search_required'),
+            'search.string' => __('google-docx::messages.validation.search_string'),
+            'search.max' => __('google-docx::messages.validation.search_max'),
+            'replace.string' => __('google-docx::messages.validation.replace_string'),
+            'replace.max' => __('google-docx::messages.validation.replace_max'),
+        ];
+    }
 }

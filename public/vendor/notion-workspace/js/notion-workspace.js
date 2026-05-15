@@ -165,7 +165,7 @@ const NotionWorkspaceModule = (() => {
       const icon = renderIcon(page.icon, 'nw-api-page-icon');
       const tags = [];
       if (page.link) tags.push('<span class="nw-api-tag success"><i class="fas fa-link"></i> Liée au CRM</span>');
-      if (page.parent?.type === 'workspace') tags.push('<span class="nw-api-tag slate">Racine workspace</span>');
+      if (page.parent?.type === 'workspace') tags.push('<span class="nw-api-tag slate">Racine de l espace</span>');
       return `
         <button type="button" class="nw-api-page-item ${state.selectedPageId === page.id ? 'active' : ''}" data-page-id="${escapeHtml(page.id)}">
           <div class="nw-api-page-title">${icon}<span>${escapeHtml(page.title || 'Sans titre')}</span></div>
@@ -230,7 +230,7 @@ const NotionWorkspaceModule = (() => {
     }
     if (els.previewMeta) {
       const meta = [];
-      if (page.parent?.type) meta.push(`Parent: ${page.parent.type}`);
+      if (page.parent?.type) meta.push(`Parent : ${page.parent.type}`);
       if (page.last_edited_time) meta.push(`Maj ${formatDate(page.last_edited_time)}`);
       meta.push(page.in_trash ? 'Dans la corbeille' : 'Actif');
       els.previewMeta.textContent = meta.join(' · ');
@@ -292,7 +292,7 @@ const NotionWorkspaceModule = (() => {
         content = '<div class="nw-api-divider"></div>';
         break;
       case 'image':
-        content = block.url ? `<div class="nw-api-media"><img src="${escapeHtml(block.url)}" alt="Notion image"></div>` : '<p>Image sans URL exploitable.</p>';
+        content = block.url ? `<div class="nw-api-media"><img src="${escapeHtml(block.url)}" alt="Image Notion"></div>` : '<p>Image sans URL exploitable.</p>';
         break;
       case 'table_row':
         content = `<div class="nw-api-table-wrap"><table class="nw-api-table"><tbody><tr>${(block.cells || []).map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr></tbody></table></div>`;
@@ -438,7 +438,7 @@ const NotionWorkspaceModule = (() => {
       toggleButtonLoading(els.disconnectBtn, true);
       try {
         const response = await apiFetch(routes.disconnect, { method: 'POST' });
-        toastSuccess('Notion', response.message || 'Workspace Notion déconnecté.');
+        toastSuccess('Notion', response.message || 'Espace Notion deconnecte.');
         window.location.reload();
       } catch (error) {
         toggleButtonLoading(els.disconnectBtn, false);
@@ -450,7 +450,7 @@ const NotionWorkspaceModule = (() => {
       window.Modal.confirm({
         title: 'Déconnecter Notion ?',
         message: 'Le token local sera révoqué. Les liens CRM existants seront conservés mais la lecture live des pages sera arrêtée jusqu à la prochaine connexion.',
-        confirmText: 'D?connecter',
+        confirmText: 'Deconnecter',
         type: 'warning',
         onConfirm: runDisconnect,
       });
@@ -467,7 +467,7 @@ const NotionWorkspaceModule = (() => {
     state.createParentId = state.selectedPage?.page?.id || null;
     els.createParentLabel.value = state.selectedPage?.page
       ? `${state.selectedPage.page.title || 'Sans titre'} (${state.selectedPage.page.id})`
-      : 'Aucun parent sélectionné, la page sera créée à la racine du workspace';
+      : 'Aucun parent selectionne, la page sera creee a la racine de l espace';
   }
 
   async function createPage() {

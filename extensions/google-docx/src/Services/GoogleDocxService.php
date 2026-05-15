@@ -43,7 +43,7 @@ class GoogleDocxService
     {
         $clientId = (string) config('google-docx.oauth.client_id');
         if ($clientId === '') {
-            throw new RuntimeException('GOOGLE_DOCX_CLIENT_ID is missing.');
+            throw new RuntimeException(__('google-docx::messages.errors.client_id_missing'));
         }
 
         $client = $this->makeClient();
@@ -63,7 +63,7 @@ class GoogleDocxService
     {
         $state = decrypt($encryptedState);
         if (!is_array($state) || !isset($state['tenant_id'], $state['user_id'])) {
-            throw new RuntimeException('Invalid OAuth state.');
+            throw new RuntimeException(__('google-docx::messages.errors.invalid_oauth_state'));
         }
 
         return $state;
@@ -155,7 +155,7 @@ class GoogleDocxService
         if ($token->is_expired) {
             if (!$token->refresh_token) {
                 $this->invalidateTokenAfterOAuthFailure($token, 'missing_refresh_token');
-                throw new RuntimeException('Session Google Docs expiree ou revoquee. Reconnectez votre compte Google.');
+                throw new RuntimeException(__('google-docx::messages.errors.session_expired'));
             }
 
             $newToken = $client->fetchAccessTokenWithRefreshToken($token->refresh_token);
@@ -172,7 +172,7 @@ class GoogleDocxService
                     (string) ($newToken['error_description'] ?? '')
                 )) {
                     $this->invalidateTokenAfterOAuthFailure($token, 'invalid_grant');
-                    throw new RuntimeException('Session Google Docs expiree ou revoquee. Reconnectez votre compte Google.');
+                    throw new RuntimeException(__('google-docx::messages.errors.session_expired'));
                 }
 
                 throw new RuntimeException((string) ($newToken['error_description'] ?? $newToken['error']));
@@ -588,7 +588,7 @@ class GoogleDocxService
     {
         $token = $this->getToken($tenantId);
         if (!$token) {
-            throw new RuntimeException('Google Docs is not connected for this tenant.');
+            throw new RuntimeException(__('google-docx::messages.errors.not_connected'));
         }
 
         return $token;
@@ -612,7 +612,7 @@ class GoogleDocxService
     {
         $value = trim(rawurldecode($documentId));
         if ($value === '') {
-            throw new RuntimeException('Identifiant Google Docs manquant.');
+            throw new RuntimeException(__('google-docx::messages.errors.document_id_missing'));
         }
 
         $value = trim($value, " \t\n\r\0\x0B'\"");
@@ -645,7 +645,7 @@ class GoogleDocxService
                 }
             }
 
-            throw new RuntimeException('URL Google Docs invalide. Utilisez le lien du document ou son identifiant.');
+            throw new RuntimeException(__('google-docx::messages.errors.document_url_invalid'));
         }
 
         if (preg_match('/^[a-zA-Z0-9\-_]{15,}$/', $value) === 1) {
@@ -656,7 +656,7 @@ class GoogleDocxService
             return $matches[1];
         }
 
-        throw new RuntimeException('Identifiant Google Docs invalide.');
+        throw new RuntimeException(__('google-docx::messages.errors.document_id_invalid'));
     }
 
     private function translateGoogleApiException(\Throwable $e, ?string $documentId = null): RuntimeException
@@ -669,7 +669,7 @@ class GoogleDocxService
             || str_contains($message, 'expired or revoked')
             || str_contains($message, 'token has been expired or revoked')
         ) {
-            return new RuntimeException('Session Google Docs expiree ou revoquee. Reconnectez Google Docs.');
+            return new RuntimeException(__('google-docx::messages.errors.session_expired'));
         }
 
         $isNotFound = str_contains($message, 'requested entity was not found')
@@ -678,9 +678,7 @@ class GoogleDocxService
 
         if ($isNotFound) {
             $idInfo = $documentId ? " (ID: {$documentId})" : '';
-            return new RuntimeException(
-                "Document Google Docs introuvable{$idInfo}. Vérifiez l'ID et les accès du compte Google connecté."
-            );
+            return new RuntimeException(__('google-docx::messages.errors.document_not_found') . $idInfo . '.');
         }
 
         $isPermissionDenied = str_contains($message, 'permission')
@@ -688,12 +686,10 @@ class GoogleDocxService
             || str_contains($message, 'insufficient');
 
         if ($isPermissionDenied) {
-            return new RuntimeException(
-                "Accès refusé au document Google Docs. Partagez le document avec le compte connecté puis réessayez."
-            );
+            return new RuntimeException(__('google-docx::messages.errors.permission_denied'));
         }
 
-        return new RuntimeException($raw !== '' ? $raw : 'Erreur Google Docs inattendue.');
+        return new RuntimeException($raw !== '' ? $raw : __('google-docx::messages.errors.unexpected'));
     }
 
     private function isRevokedOrExpiredOAuthError(string $error, string $description = ''): bool

@@ -138,7 +138,7 @@ class NotionApiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Page Notion creee avec succes.',
+                'message' => __('notion-workspace::messages.success.page_created'),
                 'data' => $page,
             ], 201);
         } catch (Throwable $e) {
