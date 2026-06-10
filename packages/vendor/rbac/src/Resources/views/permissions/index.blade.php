@@ -49,14 +49,16 @@
       </div>
       <div class="info-card-body" style="padding:0;">
         @foreach($group['permissions'] as $permission)
-        <div class="perm-item" data-name="{{ $permission->name }}" data-label="{{ strtolower(config("rbac.permission_groups.{$groupKey}.permissions.{$permission->name}", $permission->name)) }}" style="display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--c-ink-05);transition:background var(--dur-fast);" onmouseover="this.style.background='var(--c-accent-xl)'" onmouseout="this.style.background=''">
+        @php
+          $permissionLabel = $permission->display_label ?: config("rbac.permission_groups.{$groupKey}.permissions.{$permission->name}", $permission->name);
+        @endphp
+        <div class="perm-item" data-name="{{ $permission->name }}" data-label="{{ \Illuminate\Support\Str::lower($permissionLabel) }}" style="display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--c-ink-05);transition:background var(--dur-fast);" onmouseover="this.style.background='var(--c-accent-xl)'" onmouseout="this.style.background=''">
           <div style="display:flex;align-items:center;gap:10px;">
             <i class="fas fa-key" style="color:var(--c-ink-20);font-size:12px;width:14px;text-align:center;"></i>
             <div>
               <div style="font-size:13.5px;font-weight:var(--fw-medium);color:var(--c-ink);">
-                {{ config("rbac.permission_groups.{$groupKey}.permissions.{$permission->name}", $permission->name) }}
+                {{ $permissionLabel }}
               </div>
-              <div style="font-size:11.5px;color:var(--c-ink-40);font-family:monospace;">{{ $permission->name }}</div>
             </div>
           </div>
           @php

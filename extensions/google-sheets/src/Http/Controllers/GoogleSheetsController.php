@@ -64,6 +64,11 @@ class GoogleSheetsController extends Controller
         $request->validate([
             'code'  => ['required', 'string'],
             'state' => ['required', 'string'],
+        ], [
+            'code.required' => __('google-sheets::messages.validation.auth_code_required'),
+            'code.string' => __('google-sheets::messages.validation.auth_code_string'),
+            'state.required' => __('google-sheets::messages.validation.oauth_state_required'),
+            'state.string' => __('google-sheets::messages.validation.oauth_state_string'),
         ]);
 
         try {
@@ -107,6 +112,11 @@ class GoogleSheetsController extends Controller
         $request->validate([
             'search'     => ['nullable', 'string', 'max:255'],
             'page_token' => ['nullable', 'string', 'max:255'],
+        ], [
+            'search.string' => __('google-sheets::messages.validation.search_string'),
+            'search.max' => __('google-sheets::messages.validation.search_max'),
+            'page_token.string' => __('google-sheets::messages.validation.page_token_string'),
+            'page_token.max' => __('google-sheets::messages.validation.page_token_max'),
         ]);
 
         try {
@@ -161,7 +171,11 @@ class GoogleSheetsController extends Controller
 
     public function renameSpreadsheet(Request $request, string $spreadsheetId): JsonResponse
     {
-        $request->validate(['title' => ['required', 'string', 'max:500']]);
+        $request->validate(['title' => ['required', 'string', 'max:500']], [
+            'title.required' => __('google-sheets::messages.validation.title_required'),
+            'title.string' => __('google-sheets::messages.validation.title_string'),
+            'title.max' => __('google-sheets::messages.validation.title_max'),
+        ]);
 
         try {
             $tenantId    = $this->tenantId();
@@ -189,7 +203,10 @@ class GoogleSheetsController extends Controller
 
     public function duplicateSpreadsheet(Request $request, string $spreadsheetId): JsonResponse
     {
-        $request->validate(['title' => ['nullable', 'string', 'max:500']]);
+        $request->validate(['title' => ['nullable', 'string', 'max:500']], [
+            'title.string' => __('google-sheets::messages.validation.title_string'),
+            'title.max' => __('google-sheets::messages.validation.title_max'),
+        ]);
 
         try {
             $tenantId    = $this->tenantId();
@@ -210,7 +227,11 @@ class GoogleSheetsController extends Controller
 
     public function addSheet(Request $request, string $spreadsheetId): JsonResponse
     {
-        $request->validate(['title' => ['required', 'string', 'max:100']]);
+        $request->validate(['title' => ['required', 'string', 'max:100']], [
+            'title.required' => __('google-sheets::messages.validation.sheet_title_required'),
+            'title.string' => __('google-sheets::messages.validation.sheet_title_string'),
+            'title.max' => __('google-sheets::messages.validation.sheet_title_max'),
+        ]);
 
         try {
             $tenantId = $this->tenantId();
@@ -225,7 +246,11 @@ class GoogleSheetsController extends Controller
 
     public function renameSheet(Request $request, string $spreadsheetId, int $sheetId): JsonResponse
     {
-        $request->validate(['title' => ['required', 'string', 'max:100']]);
+        $request->validate(['title' => ['required', 'string', 'max:100']], [
+            'title.required' => __('google-sheets::messages.validation.sheet_title_required'),
+            'title.string' => __('google-sheets::messages.validation.sheet_title_string'),
+            'title.max' => __('google-sheets::messages.validation.sheet_title_max'),
+        ]);
 
         try {
             $tenantId = $this->tenantId();
@@ -255,7 +280,11 @@ class GoogleSheetsController extends Controller
 
     public function readRange(Request $request, string $spreadsheetId): JsonResponse
     {
-        $request->validate(['range' => ['required', 'string', 'max:255']]);
+        $request->validate(['range' => ['required', 'string', 'max:255']], [
+            'range.required' => __('google-sheets::messages.validation.range_required'),
+            'range.string' => __('google-sheets::messages.validation.range_string'),
+            'range.max' => __('google-sheets::messages.validation.range_max'),
+        ]);
 
         try {
             $tenantId = $this->tenantId();
@@ -292,6 +321,13 @@ class GoogleSheetsController extends Controller
             'range'    => ['required', 'string', 'max:255'],
             'values'   => ['required', 'array'],
             'values.*' => ['array'],
+        ], [
+            'range.required' => __('google-sheets::messages.validation.range_required'),
+            'range.string' => __('google-sheets::messages.validation.range_string'),
+            'range.max' => __('google-sheets::messages.validation.range_max'),
+            'values.required' => __('google-sheets::messages.validation.values_required'),
+            'values.array' => __('google-sheets::messages.validation.values_array'),
+            'values.*.array' => __('google-sheets::messages.validation.values_array'),
         ]);
 
         try {
@@ -312,7 +348,11 @@ class GoogleSheetsController extends Controller
 
     public function clearRange(Request $request, string $spreadsheetId): JsonResponse
     {
-        $request->validate(['range' => ['required', 'string', 'max:255']]);
+        $request->validate(['range' => ['required', 'string', 'max:255']], [
+            'range.required' => __('google-sheets::messages.validation.range_required'),
+            'range.string' => __('google-sheets::messages.validation.range_string'),
+            'range.max' => __('google-sheets::messages.validation.range_max'),
+        ]);
 
         try {
             $tenantId = $this->tenantId();
@@ -330,6 +370,13 @@ class GoogleSheetsController extends Controller
         $request->validate([
             'ranges'   => ['required', 'array', 'min:1', 'max:20'],
             'ranges.*' => ['string', 'max:255'],
+        ], [
+            'ranges.required' => __('google-sheets::messages.validation.ranges_required'),
+            'ranges.array' => __('google-sheets::messages.validation.ranges_array'),
+            'ranges.min' => __('google-sheets::messages.validation.ranges_min'),
+            'ranges.max' => __('google-sheets::messages.validation.ranges_max'),
+            'ranges.*.string' => __('google-sheets::messages.validation.range_string'),
+            'ranges.*.max' => __('google-sheets::messages.validation.range_max'),
         ]);
 
         try {
@@ -350,6 +397,17 @@ class GoogleSheetsController extends Controller
             'data.*.range'    => ['required', 'string', 'max:255'],
             'data.*.values'   => ['required', 'array'],
             'data.*.values.*' => ['array'],
+        ], [
+            'data.required' => __('google-sheets::messages.validation.data_required'),
+            'data.array' => __('google-sheets::messages.validation.data_array'),
+            'data.min' => __('google-sheets::messages.validation.data_min'),
+            'data.max' => __('google-sheets::messages.validation.data_max'),
+            'data.*.range.required' => __('google-sheets::messages.validation.range_required'),
+            'data.*.range.string' => __('google-sheets::messages.validation.range_string'),
+            'data.*.range.max' => __('google-sheets::messages.validation.range_max'),
+            'data.*.values.required' => __('google-sheets::messages.validation.values_required'),
+            'data.*.values.array' => __('google-sheets::messages.validation.values_array'),
+            'data.*.values.*.array' => __('google-sheets::messages.validation.values_array'),
         ]);
 
         try {

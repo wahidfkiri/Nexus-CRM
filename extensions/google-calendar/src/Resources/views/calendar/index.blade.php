@@ -51,7 +51,7 @@
     <p style="margin-top:0;color:var(--c-ink-60);font-size:14px;line-height:1.7;">
       {{ __('google-calendar::messages.storage.description') }}
     </p>
-    <div style="background:var(--surface-2);border:1px solid var(--c-ink-05);border-radius:var(--r-sm);padding:10px 12px;font-family:monospace;font-size:12px;color:var(--c-ink-80);margin-bottom:10px;">
+    <div style="background:var(--surface-2);border:1px solid var(--c-ink-05);border-radius:var(--r-sm);padding:10px 12px;font-family: "DM Sans", sans-serif;font-size:12px;color:var(--c-ink-80);margin-bottom:10px;">
       php artisan migrate
     </div>
   </div>

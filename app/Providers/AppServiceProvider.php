@@ -42,6 +42,12 @@ class AppServiceProvider extends ServiceProvider
             $appsByCategory = collect();
             $notifications = collect();
             $notificationsUnreadCount = 0;
+            $layoutAccess = [
+                'dashboard' => false,
+                'users' => false,
+                'marketplace' => false,
+                'settings' => false,
+            ];
 
             if (
                 Auth::check()
@@ -49,24 +55,34 @@ class AppServiceProvider extends ServiceProvider
                 && Schema::hasTable('tenant_extensions')
                 && Schema::hasTable('extensions')
             ) {
-                $tenantId = (int) Auth::user()->tenant_id;
+                $user = Auth::user();
+                $tenantId = (int) (session('current_tenant_id') ?: ($user->tenant_id ?? 0));
+                $canAccessAny = $this->tenantUserCanAccessAny($user, $tenantId);
+
+                $layoutAccess = [
+                    'dashboard' => $canAccessAny(['dashboard.read']),
+                    'users' => $canAccessAny(['users.read']),
+                    'marketplace' => $canAccessAny(['marketplace.read']),
+                    'settings' => $canAccessAny(['settings.read']),
+                ];
 
                 $routeMap = [
-                    'clients' => ['route' => 'clients.index', 'icon' => 'fa-users', 'icon_bg_color' => '#2563eb'],
-                    'stock' => ['route' => 'stock.articles.index', 'icon' => 'fa-boxes-stacked', 'icon_bg_color' => '#0891b2'],
-                    'invoice' => ['route' => 'invoices.index', 'icon' => 'fa-file-invoice', 'icon_bg_color' => '#7c3aed'],
-                    'projects' => ['route' => 'projects.index', 'icon' => 'fa-diagram-project', 'icon_bg_color' => '#0ea5e9'],
-                    'notion-workspace' => ['route' => 'notion-workspace.index', 'icon' => 'fa-book-open', 'icon_bg_color' => '#111827'],
-                    'trello-integration' => ['route' => 'trello-integration.index', 'icon' => 'fab fa-trello', 'icon_bg_color' => '#026aa7'],
-                    'google-drive' => ['route' => 'google-drive.index', 'icon' => 'fa-google-drive', 'icon_bg_color' => '#4285F4'],
-                    'gdrive' => ['route' => 'google-drive.index', 'icon' => 'fa-google-drive', 'icon_bg_color' => '#4285F4'],
-                    'google-calendar' => ['route' => 'google-calendar.index', 'icon' => 'fa-calendar-days', 'icon_bg_color' => '#4285F4'],
-                    'google-sheets' => ['route' => 'google-sheets.index', 'icon' => 'fa-file-excel', 'icon_bg_color' => '#0f9d58'],
-                    'google-docx' => ['route' => 'google-docx.index', 'icon' => 'fa-file-word', 'icon_bg_color' => '#1a73e8'],
-                    'google-gmail' => ['route' => 'google-gmail.index', 'icon' => 'fa-envelope-open-text', 'icon_bg_color' => '#ea4335'],
-                    'google-meet' => ['route' => 'google-meet.index', 'icon' => 'fa-video', 'icon_bg_color' => '#34a853'],
-                    'slack' => ['route' => 'slack.index', 'icon' => 'fa-slack', 'icon_bg_color' => '#4A154B'],
-                    'chatbot' => ['route' => 'chatbot.index', 'icon' => 'fa-comments', 'icon_bg_color' => '#0ea5e9'],
+                    'clients' => ['route' => 'clients.index', 'permission' => 'clients.read', 'icon' => 'fa-users', 'icon_bg_color' => '#2563eb'],
+                    'stock' => ['route' => 'stock.articles.index', 'permission' => 'stock.read', 'icon' => 'fa-boxes-stacked', 'icon_bg_color' => '#0891b2'],
+                    'invoice' => ['route' => 'invoices.index', 'permission' => 'invoices.read', 'icon' => 'fa-file-invoice', 'icon_bg_color' => '#7c3aed'],
+                    'projects' => ['route' => 'projects.index', 'permission' => 'projects.view', 'icon' => 'fa-diagram-project', 'icon_bg_color' => '#0ea5e9'],
+                    'notion-workspace' => ['route' => 'notion-workspace.index', 'permission' => 'notion.view', 'icon' => 'fa-book-open', 'icon_bg_color' => '#111827'],
+                    'trello-integration' => ['route' => 'trello-integration.index', 'permission' => 'trello.view', 'icon' => 'fab fa-trello', 'icon_bg_color' => '#026aa7'],
+                    'google-drive' => ['route' => 'google-drive.index', 'permission' => 'google-drive.view', 'icon' => 'fa-google-drive', 'icon_bg_color' => '#4285F4'],
+                    'gdrive' => ['route' => 'google-drive.index', 'permission' => 'google-drive.view', 'icon' => 'fa-google-drive', 'icon_bg_color' => '#4285F4'],
+                    'dropbox' => ['route' => 'dropbox.index', 'permission' => 'dropbox.view', 'icon' => 'fa-dropbox', 'icon_bg_color' => '#0061ff'],
+                    'google-calendar' => ['route' => 'google-calendar.index', 'permission' => 'google-calendar.view', 'icon' => 'fa-calendar-days', 'icon_bg_color' => '#4285F4'],
+                    'google-sheets' => ['route' => 'google-sheets.index', 'permission' => 'google-sheets.view', 'icon' => 'fa-file-excel', 'icon_bg_color' => '#0f9d58'],
+                    'google-docx' => ['route' => 'google-docx.index', 'permission' => 'google-docx.view', 'icon' => 'fa-file-word', 'icon_bg_color' => '#1a73e8'],
+                    'google-gmail' => ['route' => 'google-gmail.index', 'permission' => 'google-gmail.view', 'icon' => 'fa-envelope-open-text', 'icon_bg_color' => '#ea4335'],
+                    'google-meet' => ['route' => 'google-meet.index', 'permission' => 'google-meet.view', 'icon' => 'fa-video', 'icon_bg_color' => '#34a853'],
+                    'slack' => ['route' => 'slack.index', 'permission' => 'slack.view', 'icon' => 'fa-slack', 'icon_bg_color' => '#4A154B'],
+                    'chatbot' => ['route' => 'chatbot.index', 'permission' => 'chatbot.view', 'icon' => 'fa-comments', 'icon_bg_color' => '#0ea5e9'],
                 ];
 
                 $normalizeFaClass = static function (?string $value, string $fallback = 'fa-puzzle-piece'): string {
@@ -97,17 +113,19 @@ class AppServiceProvider extends ServiceProvider
                     ->with('extension')
                     ->get()
                     ->filter(fn ($activation) => $activation->extension !== null && (string) $activation->extension->status === 'active')
-                    ->map(function ($activation) use ($routeMap, $normalizeFaClass) {
+                    ->map(function ($activation) use ($routeMap, $normalizeFaClass, $canAccessAny) {
                         $extension = $activation->extension;
                         $slug = (string) $extension->slug;
                         $map = $routeMap[$slug] ?? null;
                         $targetRoute = $map['route'] ?? null;
+                        $permissions = (array) ($map['permissions'] ?? ($map['permission'] ?? ['extensions.read']));
                         $url = null;
 
                         if ($targetRoute && Route::has($targetRoute)) {
                             $url = route($targetRoute);
                         } elseif (Route::has('marketplace.show')) {
                             $url = route('marketplace.show', $slug);
+                            $permissions = ['marketplace.read'];
                         }
 
                         $icon = $normalizeFaClass((string) ($extension->icon_class ?? $extension->icon ?? ''), (string) ($map['icon'] ?? 'fa-puzzle-piece'));
@@ -127,9 +145,10 @@ class AppServiceProvider extends ServiceProvider
                             'category_label' => (string) ($extension->category_label ?? ucfirst($categoryKey)),
                             'category_icon' => $normalizeFaClass((string) ($extension->category_icon ?? ''), 'fa-puzzle-piece'),
                             'category_color' => (string) ($extension->category_color ?? '#64748b'),
+                            'can_access' => $canAccessAny($permissions),
                         ];
                     })
-                    ->filter(fn ($app) => !empty($app->url))
+                    ->filter(fn ($app) => !empty($app->url) && (bool) ($app->can_access ?? false))
                     ->sortBy(fn ($app) => sprintf('%05d-%s', (int) ($app->sort_order ?? 9999), mb_strtolower((string) $app->name)))
                     ->values();
 
@@ -186,6 +205,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('layoutInstalledAppsCount', $apps->count());
             $view->with('layoutNotifications', $notifications);
             $view->with('layoutNotificationsUnreadCount', $notificationsUnreadCount);
+            $view->with('layoutAccess', $layoutAccess);
         });
 
         View::composer([
@@ -204,6 +224,64 @@ class AppServiceProvider extends ServiceProvider
         ], function ($view): void {
             $view->with('currentExtensionMeta', $this->resolveCurrentExtensionMeta());
         });
+    }
+
+    private function tenantUserCanAccessAny($user, int $tenantId): \Closure
+    {
+        return function (array|string $permissions) use ($user, $tenantId): bool {
+            $permissions = is_array($permissions) ? $permissions : [$permissions];
+            $permissions = array_values(array_filter(array_map('trim', $permissions)));
+
+            if (!$user || $permissions === []) {
+                return false;
+            }
+
+            try {
+                $isSuperAdmin = false;
+                if (method_exists($user, 'hasAnyRole')) {
+                    $isSuperAdmin = $user->hasAnyRole(['super_admin', 'super-admin']);
+                } elseif (method_exists($user, 'hasRole')) {
+                    $isSuperAdmin = $user->hasRole('super_admin') || $user->hasRole('super-admin');
+                }
+
+                if ($isSuperAdmin) {
+                    return true;
+                }
+
+                $platformMarketplacePermissions = [
+                    'marketplace.read',
+                    'extensions.read',
+                    'extensions.manage',
+                    'extensions.settings',
+                ];
+
+                if (count(array_intersect($permissions, $platformMarketplacePermissions)) > 0) {
+                    return false;
+                }
+
+                if (method_exists($user, 'hasTenantRole') && $user->hasTenantRole(['owner', 'admin'], $tenantId)) {
+                    return true;
+                }
+
+                $rbacReady = Schema::hasTable('permissions')
+                    && Schema::hasTable('roles')
+                    && Schema::hasTable('role_has_permissions');
+
+                if (!$rbacReady || !method_exists($user, 'hasTenantPermission')) {
+                    return true;
+                }
+
+                foreach ($permissions as $permission) {
+                    if ($user->hasTenantPermission($permission, $tenantId)) {
+                        return true;
+                    }
+                }
+            } catch (\Throwable) {
+                return true;
+            }
+
+            return false;
+        };
     }
 
     private function resolveCurrentExtensionMeta(): ?object

@@ -1,4 +1,4 @@
-﻿@extends('client::layouts.crm')
+@extends('client::layouts.crm')
 
 @section('title', $client->company_name)
 
@@ -18,7 +18,7 @@
 
 <div class="page-header">
   <div class="page-header-left" style="display:flex;align-items:center;gap:16px;">
-    <div style="width:56px;height:56px;border-radius:var(--r-md);background:{{ $avatarColor ?? '#2563eb' }};color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);font-size:20px;font-weight:700;flex-shrink:0;">
+    <div style="width:56px;height:56px;border-radius:var(--r-md);background:{{ $avatarColor ?? '#2563eb' }};color:#fff;display:flex;align-items:center;justify-content:center;font-family: "DM Sans", sans-serif;font-size:20px;font-weight:700;flex-shrink:0;">
       {{ $avatarInitials ?? 'CL' }}
     </div>
     <div>
@@ -77,7 +77,7 @@
   </div>
 
   <div class="col-4" style="padding:0 0 0 12px;">
-    <div class="info-card" style="margin-bottom:16px;"><div class="info-card-header"><i class="fas fa-chart-bar"></i><h3>{{ __('client::clients.sections.business') }}</h3></div><div class="info-card-body"><div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.type') }}</span><span class="badge badge-{{ $client->type }}">{{ $client->type_label }}</span></div><div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.status') }}</span><span class="badge badge-{{ $client->status }}">{{ $client->status_label }}</span></div>@if($client->source)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.source') }}</span><span class="info-row-value">{{ $client->source_label }}</span></div>@endif @if($client->industry)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.industry') }}</span><span class="info-row-value">{{ $client->industry }}</span></div>@endif @if($client->payment_term)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.payment_term') }}</span><span class="info-row-value">{{ $paymentTerms[$client->payment_term] ?? $client->payment_term }}</span></div>@endif @if($client->vat_number)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.vat_number_short') }}</span><span class="info-row-value" style="font-family:monospace;font-size:12px;">{{ $client->vat_number }}</span></div>@endif @if($client->siret)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.siret') }}</span><span class="info-row-value" style="font-family:monospace;font-size:12px;">{{ $client->siret }}</span></div>@endif<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.created_at') }}</span><span class="info-row-value">{{ $client->created_at->format('d/m/Y') }}</span></div>@if($client->last_contact_at)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.last_contact_at') }}</span><span class="info-row-value">{{ $client->last_contact_at->format('d/m/Y') }}</span></div>@endif</div></div>
+    <div class="info-card" style="margin-bottom:16px;"><div class="info-card-header"><i class="fas fa-chart-bar"></i><h3>{{ __('client::clients.sections.business') }}</h3></div><div class="info-card-body"><div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.type') }}</span><span class="badge badge-{{ $client->type }}">{{ $client->type_label }}</span></div><div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.status') }}</span><span class="badge badge-{{ $client->status }}">{{ $client->status_label }}</span></div>@if($client->source)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.source') }}</span><span class="info-row-value">{{ $client->source_label }}</span></div>@endif @if($client->industry)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.industry') }}</span><span class="info-row-value">{{ $client->industry }}</span></div>@endif @if($client->payment_term)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.payment_term') }}</span><span class="info-row-value">{{ $paymentTerms[$client->payment_term] ?? $client->payment_term }}</span></div>@endif @if($client->vat_number)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.vat_number_short') }}</span><span class="info-row-value" style="font-family: "DM Sans", sans-serif;font-size:12px;">{{ $client->vat_number }}</span></div>@endif @if($client->siret)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.siret') }}</span><span class="info-row-value" style="font-family: "DM Sans", sans-serif;font-size:12px;">{{ $client->siret }}</span></div>@endif<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.created_at') }}</span><span class="info-row-value">{{ $client->created_at->format('d/m/Y') }}</span></div>@if($client->last_contact_at)<div class="info-row"><span class="info-row-label">{{ __('client::clients.fields.last_contact_at') }}</span><span class="info-row-value">{{ $client->last_contact_at->format('d/m/Y') }}</span></div>@endif</div></div>
 
     <div class="info-card"><div class="info-card-header"><i class="fas fa-bolt"></i><h3>{{ __('client::clients.sections.quick_actions') }}</h3></div><div class="info-card-body" style="display:flex;flex-direction:column;gap:8px;"><a href="mailto:{{ $client->email }}" class="btn btn-secondary" style="justify-content:flex-start;"><i class="fas fa-envelope"></i> {{ __('client::clients.actions.send_email') }}</a>@if($client->phone)<a href="tel:{{ $client->phone }}" class="btn btn-secondary" style="justify-content:flex-start;"><i class="fas fa-phone"></i> {{ __('client::clients.actions.call') }}</a>@endif<a href="{{ route('clients.edit', $client) }}" class="btn btn-secondary" style="justify-content:flex-start;"><i class="fas fa-pen"></i> {{ __('client::clients.actions.edit_profile') }}</a><button class="btn btn-secondary" style="justify-content:flex-start;color:var(--c-danger);border-color:var(--c-danger-lt);" onclick="deleteThisClient()"><i class="fas fa-trash"></i> {{ __('client::clients.actions.delete') }}</button></div></div>
   </div>
@@ -95,10 +95,10 @@ async function deleteThisClient() {
     onConfirm: async () => {
       const { ok, data } = await Http.delete('{{ route("clients.destroy", $client) }}');
       if (ok) {
-        Toast.success(@json('Client supprimé'), data.message);
+        Toast.success(@json(__('client::clients.messages.deleted')), data.message);
         setTimeout(() => window.location.href = '{{ route('clients.index') }}', 900);
       } else {
-        Toast.error(@json('Erreur'), data.message || @json(__('client::clients.messages.delete_error', ['error' => ''])));
+        Toast.error(@json(__('client::clients.messages.unexpected_error')), data.message || @json(__('client::clients.messages.delete_error', ['error' => ''])));
       }
     },
   });

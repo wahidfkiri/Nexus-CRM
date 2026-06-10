@@ -22,6 +22,13 @@
   $avatarColor = $avatarColors[$avatarSeed % count($avatarColors)] ?? '#2563eb';
   $avatarInitials = \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr((string) ($user->name ?: 'U'), 0, 2));
   $permissions = $tenantRole?->permissions?->pluck('name')->all() ?? [];
+  $permissionLabels = collect(config('rbac.permission_groups', []))
+      ->flatMap(fn ($group) => $group['permissions'] ?? [])
+      ->all();
+  $formatPermissionLabel = static function (string $permission) use ($permissionLabels): string {
+      return $permissionLabels[$permission]
+          ?? \Illuminate\Support\Str::headline(str_replace(['.', '-', '_'], ' ', $permission));
+  };
   $showI18n = [
       'suspendTitle' => __('user::users.confirmations.suspend_user_title', ['name' => $user->name]),
       'suspendMessage' => __('user::users.confirmations.suspend_user_message'),
@@ -137,7 +144,7 @@
           <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
             @foreach($permissions as $permission)
               <span style="background:var(--c-accent-lt);color:var(--c-accent);padding:3px 10px;border-radius:var(--r-full);font-size:12px;font-weight:600;">
-                <i class="fas fa-check" style="font-size:10px;margin-right:4px;"></i>{{ $permission }}
+                <i class="fas fa-check" style="font-size:10px;margin-right:4px;"></i>{{ $formatPermissionLabel($permission) }}
               </span>
             @endforeach
           </div>
@@ -182,7 +189,7 @@
         @if($user->last_login_ip)
           <div class="info-row">
             <span class="info-row-label">{{ __('user::users.fields.last_ip') }}</span>
-            <span class="info-row-value" style="font-family:monospace;font-size:12px;">{{ $user->last_login_ip }}</span>
+            <span class="info-row-value" style="font-family: "DM Sans", sans-serif;font-size:12px;">{{ $user->last_login_ip }}</span>
           </div>
         @endif
       </div>

@@ -196,6 +196,7 @@ class RbacController extends Controller
 
     private function formatRole(Role $role): array
     {
+        $isDefaultRole = array_key_exists((string) $role->name, config('rbac.default_roles', []));
         $usersCount = TenantUserMembership::query()
             ->where('tenant_id', auth()->user()->tenant_id)
             ->where('role_id', (int) $role->id)
@@ -209,6 +210,8 @@ class RbacController extends Controller
             'description' => $role->description,
             'color' => $role->color ?? '#64748b',
             'is_system' => (bool) $role->is_system,
+            'is_default_role' => $isDefaultRole,
+            'is_deletable' => ! (bool) $role->is_system && ! $isDefaultRole,
             'is_active' => (bool) ($role->is_active ?? true),
             'tenant_id' => $role->tenant_id,
             'permissions_count' => $role->permissions_count ?? $role->permissions->count(),

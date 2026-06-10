@@ -30,20 +30,22 @@ class PermissionSeeder extends Seeder
             }
         }
 
-        Role::query()->firstOrCreate(
-            [
-                'tenant_id' => null,
-                'name' => 'super_admin',
-                'guard_name' => 'web',
-            ],
-            [
-                'label' => 'Super administrateur',
-                'description' => 'Accès global plateforme',
-                'color' => '#dc2626',
-                'is_system' => true,
-                'is_active' => true,
-            ]
-        );
+        foreach (['super_admin', 'super-admin'] as $roleName) {
+            Role::query()->firstOrCreate(
+                [
+                    'tenant_id' => null,
+                    'name' => $roleName,
+                    'guard_name' => 'web',
+                ],
+                [
+                    'label' => 'Super administrateur',
+                    'description' => 'Accès global plateforme',
+                    'color' => '#dc2626',
+                    'is_system' => true,
+                    'is_active' => true,
+                ]
+            );
+        }
 
         $tenantRoleService = app(TenantRoleService::class);
         foreach (Tenant::query()->get(['id']) as $tenant) {

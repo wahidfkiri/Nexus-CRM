@@ -24,7 +24,7 @@ class DeliveryNoteController extends Controller
     public function index()
     {
         return view('stock::delivery-notes.index', [
-            'types' => ['in' => 'BL entrée', 'out' => 'BL sortie'],
+            'types' => trans('stock::stock.labels.delivery_note_types'),
             'statuses' => config('stock.delivery_note_statuses', []),
         ]);
     }
@@ -36,7 +36,7 @@ class DeliveryNoteController extends Controller
             'clients' => Client::orderBy('company_name')->get(['id', 'company_name']),
             'orders' => Order::with('supplier')->orderByDesc('created_at')->limit(100)->get(['id', 'supplier_id', 'number', 'status', 'reference']),
             'articles' => Article::query()->withCurrentStock()->where('status', 'active')->orderBy('name')->get(['stock_articles.id', 'name', 'sku', 'unit']),
-            'types' => ['in' => 'BL entrée', 'out' => 'BL sortie'],
+            'types' => trans('stock::stock.labels.delivery_note_types'),
         ]);
     }
 
@@ -78,7 +78,7 @@ class DeliveryNoteController extends Controller
             'clients' => Client::orderBy('company_name')->get(['id', 'company_name']),
             'orders' => Order::with('supplier')->orderByDesc('created_at')->limit(100)->get(['id', 'supplier_id', 'number', 'status', 'reference']),
             'articles' => Article::query()->withCurrentStock()->where('status', 'active')->orderBy('name')->get(['stock_articles.id', 'name', 'sku', 'unit']),
-            'types' => ['in' => 'BL entrée', 'out' => 'BL sortie'],
+            'types' => trans('stock::stock.labels.delivery_note_types'),
         ]);
     }
 
@@ -163,7 +163,7 @@ class DeliveryNoteController extends Controller
                     $automation['count'] = count($automation['suggestions']);
                     $automation['pending_count'] = $automation['count'];
                     $automation['should_prompt'] = $automation['count'] > 0;
-                    $automation['subtitle'] = 'Suggestions disponibles pour ce bon de livraison et pour le stock bas détecté.';
+                    $automation['subtitle'] = trans('stock::stock.automation.low_stock_delivery_note_subtitle');
                 }
             }
 

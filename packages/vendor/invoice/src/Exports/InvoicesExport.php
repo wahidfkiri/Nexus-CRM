@@ -13,7 +13,7 @@ use Vendor\Invoice\Models\Invoice;
 
 class InvoicesExport implements FromQuery, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithTitle
 {
-    public function title(): string { return 'Factures'; }
+    public function title(): string { return (string) trans('invoice::invoices.exports.invoices_title'); }
 
     public function query()
     {
@@ -22,12 +22,7 @@ class InvoicesExport implements FromQuery, WithHeadings, WithMapping, WithStyles
 
     public function headings(): array
     {
-        return [
-            'Numéro', 'Client', 'Référence', 'Statut',
-            'Date émission', 'Échéance', 'Devise',
-            'HT', 'Remise', 'TVA', 'Retenue', 'TTC',
-            'Payé', 'Reste dû', 'Mode paiement', 'Date paiement',
-        ];
+        return (array) trans('invoice::invoices.exports.invoice_headings');
     }
 
     public function map($invoice): array

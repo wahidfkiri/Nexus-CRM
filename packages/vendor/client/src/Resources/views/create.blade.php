@@ -1,4 +1,4 @@
-﻿@extends('client::layouts.crm')
+@extends('client::layouts.crm')
 
 @section('title', __('client::clients.pages.create.title'))
 
@@ -190,9 +190,9 @@
 @push('scripts')
 <script>
 window.CLIENT_LANG = Object.assign(window.CLIENT_LANG || {}, {
-  successTitle: @json('Succès'),
-  createdTitle: @json('Client créé !'),
-  createdMessage: @json('Le client a été ajouté à votre portefeuille.'),
+  successTitle: @json(__('client::clients.messages.success_title')),
+  createdTitle: @json(__('client::clients.messages.created_title')),
+  createdMessage: @json(__('client::clients.messages.created_help')),
 });
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -6,7 +6,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Connexion Trello</title>
   <style>
-    body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#dbeafe,#f8fafc);font-family:Segoe UI,system-ui,sans-serif;color:#0f172a}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#dbeafe,#f8fafc);font-family: "DM Sans", sans-serif;color:#0f172a}
     .card{width:min(520px,calc(100vw - 32px));background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:24px;padding:32px;box-shadow:0 30px 80px rgba(15,23,42,.14)}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:700;letter-spacing:.02em}
     h1{margin:18px 0 10px;font-size:28px;line-height:1.1}
@@ -15,6 +15,7 @@
     .error{background:#fef2f2;color:#b91c1c;border-radius:14px;padding:12px 14px;margin-top:18px;font-size:14px}
     @keyframes spin{to{transform:rotate(360deg)}}
   </style>
+  <link rel="stylesheet" href="{{ asset('css/global-font.css') }}">
 </head>
 <body>
   <div class="card">

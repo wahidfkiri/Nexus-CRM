@@ -2,9 +2,9 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Export Factures</title>
+    <title>{{ __('invoice::invoices.common.export_invoices_title') }}</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #0f172a; }
+        body { font-family: "DM Sans", sans-serif; font-size: 11px; color: #0f172a; }
         h1 { font-size: 18px; margin-bottom: 8px; }
         p { color: #64748b; margin-top: 0; }
         table { width: 100%; border-collapse: collapse; margin-top: 16px; }
@@ -14,17 +14,17 @@
     </style>
 </head>
 <body>
-    <h1>Export des factures</h1>
+    <h1>{{ __('invoice::invoices.common.export_invoices_heading') }}</h1>
     <p>Généré le {{ now()->format('d/m/Y H:i') }}</p>
     <table>
         <thead>
             <tr>
-                <th>Numéro</th>
-                <th>Client</th>
-                <th>Statut</th>
-                <th>Date</th>
-                <th class="right">Total</th>
-                <th class="right">Reste dû</th>
+                <th>{{ __('invoice::invoices.fields.number') }}</th>
+                <th>{{ __('invoice::invoices.fields.client') }}</th>
+                <th>{{ __('invoice::invoices.fields.status') }}</th>
+                <th>{{ __('invoice::invoices.fields.issue_date') }}</th>
+                <th class="right">{{ __('invoice::invoices.common.total') }}</th>
+                <th class="right">{{ __('invoice::invoices.fields.amount_due') }}</th>
             </tr>
         </thead>
         <tbody>

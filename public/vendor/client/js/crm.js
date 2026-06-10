@@ -99,7 +99,7 @@ const Modal = (() => {
     return true;
   }
 
-  function setConfirmBusy(overlayEl, btn, busy, loadingText = 'Traitement...') {
+  function setConfirmBusy(overlayEl, btn, busy, loadingText = window.CLIENT_LANG?.processing || 'Processing...') {
     if (!overlayEl || !btn) return;
     overlayEl.dataset.busy = busy ? '1' : '0';
 
@@ -174,8 +174,8 @@ const Modal = (() => {
   function confirm({
     title,
     message,
-    confirmText = 'Confirmer',
-    cancelText = 'Annuler',
+    confirmText = window.CLIENT_LANG?.confirmText || 'Confirm',
+    cancelText = window.CLIENT_LANG?.cancelText || 'Cancel',
     type = 'danger',
     iconHtml = '',
     iconVariant = '',
@@ -224,7 +224,9 @@ const Modal = (() => {
 
       overlay.__confirmCancelAction = async () => {
         if (overlay.dataset.busy === '1') return;
-        const loadingText = /supprim/i.test(cancelText) ? 'Suppression...' : 'Traitement...';
+        const loadingText = /supprim/i.test(cancelText)
+          ? (window.CLIENT_LANG?.deleting || 'Deleting...')
+          : (window.CLIENT_LANG?.processing || 'Processing...');
         setConfirmBusy(overlay, newCancelBtn, true, loadingText);
         try {
           if (typeof onCancel === 'function') {
@@ -233,7 +235,7 @@ const Modal = (() => {
             close(overlay, true);
           }
         } catch (err) {
-          Toast.error('Erreur', err?.message || 'Une erreur est survenue.');
+          Toast.error(window.CLIENT_LANG?.errorTitle || 'Error', err?.message || window.CLIENT_LANG?.unexpectedError || 'Unexpected error.');
         } finally {
           setConfirmBusy(overlay, newCancelBtn, false);
         }
@@ -248,14 +250,16 @@ const Modal = (() => {
 
     newBtn.addEventListener('click', async () => {
       if (overlay.dataset.busy === '1') return;
-      const loadingText = /supprim/i.test(confirmText) ? 'Suppression...' : 'Traitement...';
+      const loadingText = /supprim/i.test(confirmText)
+        ? (window.CLIENT_LANG?.deleting || 'Deleting...')
+        : (window.CLIENT_LANG?.processing || 'Processing...');
       setConfirmBusy(overlay, newBtn, true, loadingText);
       try {
         if (typeof onConfirm === 'function') {
           await onConfirm();
         }
       } catch (err) {
-        Toast.error('Erreur', err?.message || 'Une erreur est survenue.');
+        Toast.error(window.CLIENT_LANG?.errorTitle || 'Error', err?.message || window.CLIENT_LANG?.unexpectedError || 'Unexpected error.');
       } finally {
         setConfirmBusy(overlay, newBtn, false);
       }
@@ -748,7 +752,7 @@ class CrmTable {
     const { ok, data } = await Http.get(this.options.dataUrl, params);
     this.state.loading = false;
 
-    if (!ok) { Toast.error('Erreur', 'Impossible de charger les données.'); return; }
+    if (!ok) { Toast.error(window.CLIENT_LANG?.errorTitle || 'Error', window.CLIENT_LANG?.loadFailed || 'Unable to load data.'); return; }
 
     this.state.total = data.total || 0;
     this._renderRows(data.data || []);
@@ -910,18 +914,18 @@ class CrmTable {
   /* Static helper called from inline onclick */
   static deleteClient(id, name) {
     Modal.confirm({
-      title:       'Supprimer ce client ?',
-      message:     `Vous allez supprimer "${name}". Cette action est irréversible.`, 
-      confirmText: 'Supprimer',
+      title:       window.CLIENT_LANG?.deleteTitle || '',
+      message:     (window.CLIENT_LANG?.deleteMessage || ':name').replace(':name', name),
+      confirmText: window.CLIENT_LANG?.deleteAction || '',
       type:        'danger',
       onConfirm:   async () => {
         const { ok, data } = await Http.delete(`/clients/${id}`);
         if (ok) {
-          Toast.success('Client supprimé', data.message || 'Client supprimé avec succès.');
+          Toast.success(window.CLIENT_LANG?.deletedTitle || '', data.message || window.CLIENT_LANG?.deletedTitle || '');
           window._crmTable?.load();
           window._crmTable?.loadStats();
         } else {
-          Toast.error('Erreur', data.message || 'Impossible de supprimer ce client.');
+          Toast.error(window.CLIENT_LANG?.errorTitle || 'Error', data.message || window.CLIENT_LANG?.deleteUnable || '');
         }
       },
     });
@@ -937,20 +941,20 @@ async function bulkDelete() {
   const ids = window._crmTable?.getSelectedIds();
   if (!ids?.length) return;
   Modal.confirm({
-    title:       `Supprimer ${ids.length} client(s) ?`,
-    message:     'Cette action est irréversible.',
-    confirmText: 'Supprimer',
+    title:       (window.CLIENT_LANG?.bulkDeleteTitle || ':count').replace(':count', ids.length),
+    message:     window.CLIENT_LANG?.bulkDeleteMessage || '',
+    confirmText: window.CLIENT_LANG?.deleteAction || '',
     type:        'danger',
     onConfirm:   async () => {
       const { ok, data } = await Http.post(window.CRM_ROUTES?.bulkDelete, { ids });
       if (ok) {
-        Toast.success('Succès', data.message);
+        Toast.success(window.CLIENT_LANG?.successTitle || 'Success', data.message);
         window._crmTable?.load();
         window._crmTable?.loadStats();
         window._crmTable?.selectedIds.clear();
         window._crmTable?._updateBulkBar();
       } else {
-        Toast.error('Erreur', data.message);
+        Toast.error(window.CLIENT_LANG?.errorTitle || 'Error', data.message);
       }
     },
   });
@@ -961,12 +965,12 @@ async function bulkStatus(status) {
   if (!ids?.length) return;
   const { ok, data } = await Http.post(window.CRM_ROUTES?.bulkStatus, { ids, status });
   if (ok) {
-    Toast.success('Succès', data.message);
+    Toast.success(window.CLIENT_LANG?.successTitle || 'Success', data.message);
     window._crmTable?.load();
     window._crmTable?.selectedIds.clear();
     window._crmTable?._updateBulkBar();
   } else {
-    Toast.error('Erreur', data.message);
+    Toast.error(window.CLIENT_LANG?.errorTitle || 'Error', data.message);
   }
 }
 
@@ -1010,7 +1014,7 @@ function ajaxForm(formId, options = {}) {
         form.__crmDraftManager.complete(res.data);
       }
 
-      Toast.success('Succès !', res.data.message || 'Opération réussie.');
+      Toast.success(window.CLIENT_LANG?.successTitle || 'Success', res.data.message || window.CLIENT_LANG?.operationSuccess || '');
       const automationFlow = !options.skipAutomation
         && window.AutomationSuggestions
         && res.data?.automation?.should_prompt
@@ -1033,9 +1037,9 @@ function ajaxForm(formId, options = {}) {
       }
     } else if (res.status === 422) {
       CrmForm.showErrors(form, res.data.errors || {});
-      Toast.error('Validation', res.data.message || 'Veuillez corriger les erreurs.');
+      Toast.error(window.CLIENT_LANG?.validationTitle || 'Form', res.data.message || window.CLIENT_LANG?.fixErrors || '');
     } else {
-      Toast.error('Erreur', res.data.message || 'Une erreur est survenue.');
+      Toast.error(window.CLIENT_LANG?.errorTitle || 'Error', res.data.message || window.CLIENT_LANG?.unexpectedError || '');
     }
   });
 }
@@ -1156,7 +1160,7 @@ const CrmDrafts = (() => {
     function scheduleSave() {
       clearTimeout(state.timer);
       state.skipExitPersist = false;
-      setStatus('Sauvegarde...', 'muted');
+      setStatus(window.CLIENT_LANG?.draftSaving || '', 'muted');
       state.timer = window.setTimeout(() => {
         saveNow();
       }, Math.max(300, settings.debounceMs || 1500));
@@ -1169,7 +1173,7 @@ const CrmDrafts = (() => {
 
       const res = await Http.get(settings.loadUrl, params);
       if (!res.ok) {
-        setStatus(res.data?.message || 'Sauvegarde automatique indisponible', 'danger');
+        setStatus(res.data?.message || window.CLIENT_LANG?.draftUnavailable || '', 'danger');
         return null;
       }
 
@@ -1203,7 +1207,7 @@ const CrmDrafts = (() => {
       state.loading = false;
 
       if (!res.ok || !res.data?.data) {
-        setStatus(res.data?.message || 'Echec de sauvegarde', 'danger');
+        setStatus(res.data?.message || window.CLIENT_LANG?.draftFailed || '', 'danger');
         return null;
       }
 
@@ -1212,7 +1216,7 @@ const CrmDrafts = (() => {
       state.prompted = false;
       draftInput.value = state.draft.id || '';
       refreshUi();
-      setStatus('Sauvegardée ' + formatRelativeTime(state.draft.updated_at), 'success');
+      setStatus((window.CLIENT_LANG?.draftSavedAt || ':time').replace(':time', formatRelativeTime(state.draft.updated_at)), 'success');
       emitStateChange();
 
       if (typeof settings.onSaved === 'function') {
@@ -1239,9 +1243,9 @@ const CrmDrafts = (() => {
       state.resumed = true;
       state.prompted = false;
       refreshUi();
-      setStatus('Brouillon restauré', 'success');
+      setStatus(window.CLIENT_LANG?.draftRestoredStatus || '', 'success');
       emitStateChange();
-      Toast.success('Brouillon', 'Le formulaire a été restauré.');
+      Toast.success(window.CLIENT_LANG?.draftRestoredTitle || '', window.CLIENT_LANG?.draftRestoredHelp || '');
     }
 
     async function discard() {
@@ -1252,8 +1256,8 @@ const CrmDrafts = (() => {
 
       state.skipExitPersist = true;
       resetLocal();
-      setStatus('Brouillon supprimé', 'muted');
-      Toast.success('Brouillon', 'Le brouillon a été supprimé.');
+      setStatus(window.CLIENT_LANG?.draftDeletedStatus || '', 'muted');
+      Toast.success(window.CLIENT_LANG?.draftRestoredTitle || '', window.CLIENT_LANG?.draftDeletedHelp || '');
     }
 
     function resetLocal() {
@@ -1341,10 +1345,10 @@ const CrmDrafts = (() => {
       }
 
       Modal.confirm({
-        title: 'Brouillon disponible',
-        message: 'Un brouillon ' + resolveLabel() + ' est disponible. Voulez-vous le reprendre ?',
-        confirmText: 'Reprendre',
-        cancelText: 'Annuler et supprimer',
+        title: window.CLIENT_LANG?.draftAvailableTitle || '',
+        message: (window.CLIENT_LANG?.draftAvailableMessage || ':label').replace(':label', resolveLabel()),
+        confirmText: window.CLIENT_LANG?.draftResume || '',
+        cancelText: window.CLIENT_LANG?.draftCancelDelete || '',
         type: 'info',
         onConfirm: async () => {
           await resume();
@@ -1362,7 +1366,7 @@ const CrmDrafts = (() => {
     function resolveLabel() {
       return typeof settings.label === 'function'
         ? settings.label()
-        : (settings.label || resolveType() || 'en cours');
+        : (settings.label || resolveType() || window.CLIENT_LANG?.draftCurrent || '');
     }
 
     function resolveRoute() {
@@ -1395,8 +1399,8 @@ const CrmDrafts = (() => {
       ui.resumeBtn.style.display = hasDraft && !state.resumed ? '' : 'none';
       ui.discardBtn.style.display = hasDraft ? '' : 'none';
       ui.labelEl.textContent = hasDraft
-        ? 'Brouillon ' + resolveLabel() + ' disponible'
-        : 'Sauvegarde automatique';
+        ? (window.CLIENT_LANG?.draftAvailableLabel || ':label').replace(':label', resolveLabel())
+        : (window.CLIENT_LANG?.draftAutoSave || '');
     }
 
     function emitStateChange() {
@@ -1438,12 +1442,12 @@ const CrmDrafts = (() => {
       root.style.background = 'rgba(15, 23, 42, 0.03)';
       root.innerHTML = ''
         + '<div style="display:flex;flex-direction:column;gap:4px;">'
-        + '  <strong data-draft-label style="font-size:13px;color:var(--c-ink);">Sauvegarde automatique</strong>'
+        + '  <strong data-draft-label style="font-size:13px;color:var(--c-ink);">' + (window.CLIENT_LANG?.draftAutoSave || '') + '</strong>'
         + '  <span data-draft-status style="font-size:12px;color:var(--c-ink-40);"></span>'
         + '</div>'
         + '<div style="display:flex;align-items:center;gap:8px;">'
-        + '  <button type="button" class="btn btn-secondary btn-sm" data-draft-resume style="display:none;">Reprendre brouillon</button>'
-        + '  <button type="button" class="btn btn-ghost btn-sm" data-draft-discard style="display:none;">Supprimer</button>'
+        + '  <button type="button" class="btn btn-secondary btn-sm" data-draft-resume style="display:none;">' + (window.CLIENT_LANG?.draftResumeButton || '') + '</button>'
+        + '  <button type="button" class="btn btn-ghost btn-sm" data-draft-discard style="display:none;">' + (window.CLIENT_LANG?.deleteAction || '') + '</button>'
         + '</div>';
       form.insertBefore(root, form.firstChild);
     }
@@ -1865,8 +1869,8 @@ const AutomationSuggestions = (() => {
 
   function showSuccessState(title, message) {
     state.mode = 'success';
-    state.successTitle = title || 'Succès';
-    state.successMessage = message || 'Toutes les suggestions ont été traitées avec succès.';
+    state.successTitle = title || window.CLIENT_LANG?.successTitle || 'Success';
+    state.successMessage = message || window.CLIENT_LANG?.automationSuccessMessage || '';
     render();
   }
 
@@ -1980,10 +1984,10 @@ const AutomationSuggestions = (() => {
       success.style.display = successMode ? 'flex' : 'none';
     }
     if (successTitle) {
-      successTitle.textContent = state.successTitle || 'Succès';
+      successTitle.textContent = state.successTitle || window.CLIENT_LANG?.successTitle || 'Success';
     }
     if (successText) {
-      successText.textContent = state.successMessage || 'Toutes les suggestions ont été traitées avec succès.';
+      successText.textContent = state.successMessage || window.CLIENT_LANG?.automationSuccessMessage || '';
     }
 
     if (successMode) {
@@ -2008,7 +2012,7 @@ const AutomationSuggestions = (() => {
       const targetUrl = item.integration?.target_url ? esc(item.integration.target_url) : '';
       const targetBlank = item.integration?.target_blank ? ' target="_blank" rel="noopener"' : '';
       const openLink = targetUrl
-        ? `<a class="btn btn-secondary btn-sm" href="${targetUrl}"${targetBlank}><i class="fas fa-up-right-from-square"></i> Ouvrir</a>`
+        ? `<a class="btn btn-secondary btn-sm" href="${targetUrl}"${targetBlank}><i class="fas fa-up-right-from-square"></i> ${esc(window.CLIENT_LANG?.openAction || 'Open')}</a>`
         : '';
       const statusPill = item.status === 'pending'
         ? ''
@@ -2016,8 +2020,8 @@ const AutomationSuggestions = (() => {
       const inlineActions = actionable
         ? `
             <span class="automation-card-inline-actions">
-              <button type="button" class="btn btn-primary btn-sm" data-automation-action="accept" data-id="${item.id}">Accepter</button>
-              <button type="button" class="btn btn-secondary btn-sm" data-automation-action="reject" data-id="${item.id}">Annuler</button>
+              <button type="button" class="btn btn-primary btn-sm" data-automation-action="accept" data-id="${item.id}">${esc(window.CLIENT_LANG?.acceptAction || 'Accept')}</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-automation-action="reject" data-id="${item.id}">${esc(window.CLIENT_LANG?.cancelText || 'Cancel')}</button>
             </span>
           `
         : '';
@@ -2056,7 +2060,7 @@ const AutomationSuggestions = (() => {
   async function processSingle(id, action, button) {
     const endpointTemplate = action === 'accept' ? routes().accept : routes().reject;
     if (!endpointTemplate) {
-      Toast.error('Automation', 'Routes automation indisponibles.');
+      Toast.error('Automation', window.CLIENT_LANG?.automationRoutesUnavailable || 'Automation routes unavailable.');
       return;
     }
 
@@ -2087,7 +2091,7 @@ const AutomationSuggestions = (() => {
     if (!response.ok) {
       closeReservedWindow(reservedWindow);
       render();
-      Toast.error('Automation', response.data?.message || 'Opération automation impossible.');
+      Toast.error('Automation', response.data?.message || window.CLIENT_LANG?.automationActionFailed || 'Automation action failed.');
       return;
     }
 
@@ -2114,7 +2118,7 @@ const AutomationSuggestions = (() => {
 
     const endpoint = action === 'accept' ? routes().bulkAccept : routes().bulkReject;
     if (!endpoint) {
-      Toast.error('Automation', 'Routes automation indisponibles.');
+      Toast.error('Automation', window.CLIENT_LANG?.automationRoutesUnavailable || 'Automation routes unavailable.');
       return;
     }
 
@@ -2133,7 +2137,7 @@ const AutomationSuggestions = (() => {
         handleAutomationFailure(reconnectError.event, reconnectError.message || response.data?.message || 'Certaines automations ont échoué.');
         return;
       }
-      Toast.error('Automation', response.data?.message || 'Traitement groupé impossible.');
+      Toast.error('Automation', response.data?.message || window.CLIENT_LANG?.automationBulkFailed || 'Bulk processing failed.');
       return;
     }
 
@@ -2152,14 +2156,14 @@ const AutomationSuggestions = (() => {
       const allAccepted = errorCount === 0 && processedIds.length === ids.length;
       await dismissItems(processedIds, allAccepted ? {
         successState: {
-          title: 'Succès',
-          message: response.data?.message || 'Toutes les suggestions ont été traitées avec succès.',
+          title: window.CLIENT_LANG?.successTitle || 'Success',
+          message: response.data?.message || window.CLIENT_LANG?.automationSuccessMessage || '',
         },
       } : {});
     }
 
     if (errorCount > 0) {
-      Toast.warning('Automation', `${errorCount} suggestion(s) n'ont pas pu être traitées.`);
+      Toast.warning('Automation', (window.CLIENT_LANG?.automationPartialFailed || ':count').replace(':count', errorCount));
       const reconnectError = response.data.data.errors.find((item) => item?.event?.requires_reconnect && item?.event?.reconnect_url);
       if (reconnectError) {
         handleAutomationFailure(reconnectError.event, reconnectError.message || 'Un service externe doit être reconnecté avant de rejouer ces automations.');
@@ -2252,7 +2256,7 @@ const AutomationSuggestions = (() => {
     });
 
     if (!response.ok) {
-      Toast.error('Automation', response.data?.message || 'Impossible de recharger la suggestion en attente.');
+      Toast.error('Automation', response.data?.message || window.CLIENT_LANG?.automationReloadFailed || 'Unable to reload pending suggestion.');
       return;
     }
 
@@ -2455,13 +2459,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sidebarCompactToggle.classList.toggle('is-active', enabled);
     sidebarCompactToggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+    const sidebarCompactIcon = sidebarCompactToggle.querySelector('i');
+    if (sidebarCompactIcon) {
+      sidebarCompactIcon.className = `fas ${enabled ? 'fa-arrow-right' : 'fa-arrow-left'}`;
+    }
 
     const label = enabled
       ? 'Réafficher les libellés du menu'
       : 'Afficher le menu en mode icônes';
 
     sidebarCompactToggle.setAttribute('aria-label', label);
-    sidebarCompactToggle.setAttribute('data-tooltip', enabled ? 'Réafficher le menu complet' : 'Mode compact du menu');
   };
 
   applySidebarCompactState();

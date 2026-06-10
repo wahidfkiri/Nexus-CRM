@@ -7,6 +7,7 @@
   <title>@yield('title', 'Finalisation compte') - {{ config('app.name') }}</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="{{ asset('vendor/client/css/crm.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/global-font.css') }}">
   <style>
     body.onboarding-body {
       margin: 0;
@@ -15,7 +16,7 @@
                   radial-gradient(1000px 560px at 95% 10%, #e2e8f0 0%, rgba(226,232,240,0) 60%),
                   linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
       color: #0f172a;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      font-family: "DM Sans", sans-serif;
     }
   </style>
   @stack('styles')

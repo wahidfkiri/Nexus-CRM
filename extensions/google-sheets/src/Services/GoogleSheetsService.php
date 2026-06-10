@@ -259,7 +259,7 @@ class GoogleSheetsService
 
         $sheetsData = [];
         if (empty($sheetTitles)) {
-            $sheetTitles = ['Sheet1'];
+            $sheetTitles = [__('google-sheets::messages.common.default_sheet')];
         }
 
         foreach ($sheetTitles as $idx => $sheetTitle) {
@@ -350,7 +350,9 @@ class GoogleSheetsService
             ->where('spreadsheet_id', $spreadsheetId)
             ->first();
 
-        $title = $newTitle !== '' ? $newTitle : ('Copy of ' . ($local?->title ?? $spreadsheetId));
+        $title = $newTitle !== '' ? $newTitle : __('google-sheets::messages.prompts.copy_of', [
+            'title' => $local?->title ?? $spreadsheetId,
+        ]);
 
         try {
             $copied = $drive->files->copy($spreadsheetId, new Drive\DriveFile(['name' => $title]), [

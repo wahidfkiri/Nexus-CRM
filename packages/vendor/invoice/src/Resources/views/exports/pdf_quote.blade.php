@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -16,7 +16,7 @@
     @endphp
     <style>
         * { box-sizing: border-box; }
-        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 10pt; color: {{ $palette['text'] }}; margin: 0; }
+        body { font-family: "DM Sans", sans-serif; font-size: 10pt; color: {{ $palette['text'] }}; margin: 0; }
         /* Extra bottom padding so fixed footer never overlaps content */
         .wrap { padding: 34px 36px 120px; }
 
@@ -91,7 +91,7 @@
                     </div>
                 </td>
                 <td class="doc-title" style="width:42%;">
-                    <div class="kicker">Devis</div>
+                    <div class="kicker">{{ __('invoice::invoices.common.quote') }}</div>
                     <div class="big">{{ $quote->number }}</div>
                     @if($quote->reference)<div class="ref">Référence : {{ $quote->reference }}</div>@endif
                     <span class="status-pill status-{{ $status }}">{{ $quote->status_label ?? $status }}</span>
@@ -103,19 +103,19 @@
     <table class="meta-grid table-layout">
         <tr>
             <td>
-                <div class="meta-label">Date d'émission</div>
+                <div class="meta-label">{{ __('invoice::invoices.fields.issue_date') }}</div>
                 <div class="meta-val">{{ optional($quote->issue_date)->format('d/m/Y') }}</div>
             </td>
             <td>
-                <div class="meta-label">Valide jusqu'au</div>
+                <div class="meta-label">{{ __('invoice::invoices.fields.valid_until') }}</div>
                 <div class="meta-val">{{ optional($quote->valid_until)->format('d/m/Y') ?: '-' }}</div>
             </td>
             <td>
-                <div class="meta-label">Devise</div>
+                <div class="meta-label">{{ __('invoice::invoices.fields.currency') }}</div>
                 <div class="meta-val">{{ $quote->currency ?? 'EUR' }}</div>
             </td>
             <td>
-                <div class="meta-label">Statut</div>
+                <div class="meta-label">{{ __('invoice::invoices.fields.status') }}</div>
                 <div class="meta-val">{{ $quote->status_label ?? $status }}</div>
             </td>
         </tr>
@@ -124,7 +124,7 @@
     <table class="addr-card">
         <tr>
             <td>
-                <div class="addr-title">Émetteur</div>
+                <div class="addr-title">{{ __('invoice::invoices.common.issuer') }}</div>
                 <div class="addr-name">{{ $quote->tenant->name ?? config('app.name') }}</div>
                 <div class="addr-lines">
                     {{ $quote->tenant->address ?? '' }}<br>
@@ -132,7 +132,7 @@
                 </div>
             </td>
             <td>
-                <div class="addr-title">Client</div>
+                <div class="addr-title">{{ __('invoice::invoices.fields.client') }}</div>
                 <div class="addr-name">{{ $quote->client->company_name ?? '-' }}</div>
                 <div class="addr-lines">
                     {{ $quote->client->contact_name ?? '' }}<br>
@@ -149,13 +149,13 @@
         <thead>
             <tr>
                 <th style="width:28px;">#</th>
-                <th>Description</th>
-                <th style="width:70px;" class="right">Qte</th>
-                <th style="width:58px;">Unité</th>
-                <th style="width:92px;" class="right">PU HT</th>
-                <th style="width:70px;" class="right">Remise</th>
-                <th style="width:56px;" class="right">TVA</th>
-                <th style="width:100px;" class="right">Total</th>
+                <th>{{ __('invoice::invoices.fields.description') }}</th>
+                <th style="width:70px;" class="right">{{ __('invoice::invoices.common.line_quantity') }}</th>
+                <th style="width:58px;">{{ __('invoice::invoices.fields.unit') }}</th>
+                <th style="width:92px;" class="right">{{ __('invoice::invoices.common.line_unit_price_ht') }}</th>
+                <th style="width:70px;" class="right">{{ __('invoice::invoices.fields.discount') }}</th>
+                <th style="width:56px;" class="right">{{ __('invoice::invoices.common.vat') }}</th>
+                <th style="width:100px;" class="right">{{ __('invoice::invoices.common.total') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -179,34 +179,34 @@
 
     <table class="totals">
         <tr>
-            <td class="label">Sous-total HT</td>
+            <td class="label">{{ __('invoice::invoices.common.subtotal_ht') }}</td>
             <td class="right"><strong>{{ number_format((float) $quote->subtotal, 2, ',', ' ') }} {{ $quote->currency }}</strong></td>
         </tr>
         @if((float) $quote->discount_amount > 0)
             <tr>
-                <td class="label">Remise</td>
+                <td class="label">{{ __('invoice::invoices.fields.discount') }}</td>
                 <td class="right">-{{ number_format((float) $quote->discount_amount, 2, ',', ' ') }} {{ $quote->currency }}</td>
             </tr>
         @endif
         <tr>
-            <td class="label">TVA</td>
+            <td class="label">{{ __('invoice::invoices.common.vat') }}</td>
             <td class="right">{{ number_format((float) $quote->tax_amount, 2, ',', ' ') }} {{ $quote->currency }}</td>
         </tr>
         @if((float) $quote->withholding_tax_rate > 0)
             <tr>
-                <td class="label">Retenue a la source</td>
+                <td class="label">{{ __('invoice::invoices.withholding.label') }}</td>
                 <td class="right">-{{ number_format((float) $quote->withholding_tax_amount, 2, ',', ' ') }} {{ $quote->currency }}</td>
             </tr>
         @endif
         <tr class="grand">
-            <td>Total TTC</td>
+            <td>{{ __('invoice::invoices.common.total_ttc') }}</td>
             <td class="right">{{ number_format((float) $quote->total, 2, ',', ' ') }} {{ $quote->currency }}</td>
         </tr>
     </table>
 
     @if(!empty($quote->notes))
         <div class="info-box">
-            <div class="info-title">Notes</div>
+            <div class="info-title">{{ __('invoice::invoices.fields.notes') }}</div>
             <div class="info-body">{{ $quote->notes }}</div>
         </div>
     @endif
@@ -220,7 +220,7 @@
 
     @if(($signature['enabled'] ?? false) && ($signature['show_on_quote'] ?? false) && !empty($signature['data']))
         <div class="signature">
-            <div class="muted" style="font-size:8pt;margin-bottom:4px;">Signature</div>
+            <div class="muted" style="font-size:8pt;margin-bottom:4px;">{{ __('invoice::invoices.common.signature') }}</div>
             <img src="{{ $signature['data'] }}" alt="Signature">
             @if(!empty($signature['name']))<div style="font-size:9pt;font-weight:bold;">{{ $signature['name'] }}</div>@endif
             @if(!empty($signature['title']))<div class="muted" style="font-size:8pt;">{{ $signature['title'] }}</div>@endif

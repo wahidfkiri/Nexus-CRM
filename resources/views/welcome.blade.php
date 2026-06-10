@@ -3,325 +3,353 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $appName }} | CRM, operations et integrations dans un meme espace</title>
-    <meta name="description" content="{{ $appName }} centralise CRM, facturation, stock, automatisations et integrations cloud dans une interface moderne et exploitable.">
+    <title>{{ $appName }} — CRM SaaS intelligent</title>
+    <meta name="description" content="{{ $appName }} centralise CRM, facturation, stock, automatisations et intégrations dans une interface moderne et exploitable.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkR4j8yp4/4J+X/w7u2z5Flt9P1F4lW+Xq0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/welcome.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/global-font.css') }}">
 </head>
 <body class="welcome-page">
-    <div class="welcome-shell">
-        <div class="welcome-noise"></div>
-        <header class="welcome-header">
-            <a href="{{ url('/') }}" class="welcome-brand">
-                <span class="welcome-brand-mark"><i class="fa-solid fa-grid-2"></i></span>
-                <span>
-                    <strong>{{ $appName }}</strong>
-                    <small>CRM, operations et integrations</small>
+
+    <!-- ═══ HEADER (dark) ═══ -->
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="{{ url('/') }}" class="brand">
+                <span class="brand-orb" aria-hidden="true">
+                    <span class="orb-ring"></span>
+                    <span class="orb-dot"></span>
                 </span>
+                <strong>{{ $appName }}</strong>
             </a>
 
-            <nav class="welcome-nav">
+            <nav class="site-nav">
                 <a href="#modules">Modules</a>
-                <a href="#workflows">Automations</a>
-                <a href="#integrations">Integrations</a>
-                <a href="#pricing">Tarifs</a>
-                <a href="#securite">Sauvegarde</a>
+                <a href="#workflow">Workflow</a>
+                <a href="#integrations">Intégrations</a>
+                <a href="#tarifs">Tarifs</a>
             </nav>
 
-            <div class="welcome-actions">
-                <a href="{{ route('login') }}" class="btn btn-ghost">Se connecter</a>
-                <a href="{{ route('register') }}" class="btn btn-primary">Commencer</a>
+            <div class="header-cta">
+                <a href="{{ route('login') }}" class="btn-outline">Connexion</a>
+                <a href="{{ route('register') }}" class="btn-fill">Commencer</a>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <main>
-            <section class="hero-section">
-                <div class="hero-backdrop">
-                    <div class="hero-glow hero-glow-a"></div>
-                    <div class="hero-glow hero-glow-b"></div>
-                    <div class="hero-grid"></div>
-                    <div class="hero-app-cloud" aria-hidden="true">
-                        @foreach($heroApps as $app)
-                            <span class="hero-app-mark" style="--x: {{ $app['x'] }}%; --y: {{ $app['y'] }}%; --size: {{ $app['size'] }}px; --delay: {{ $app['delay'] }}s; --drift: {{ $app['drift'] }}s; --accent: {{ $app['accent'] }};" title="{{ $app['name'] }}">
-                                <span class="hero-app-core">
-                                    @if($app['icon_url'])
-                                        <img src="{{ $app['icon_url'] }}" alt="{{ $app['name'] }}">
-                                    @else
-                                        <i class="{{ $app['icon_class'] }}"></i>
-                                    @endif
-                                </span>
-                            </span>
-                        @endforeach
-                    </div>
-                </div>
+    <main>
 
+        <!-- ═══ HERO ═══ -->
+        <section class="hero">
+            <!-- CSS circle animations -->
+            <div class="orbs" aria-hidden="true">
+                <span class="orb orb--1"></span>
+                <span class="orb orb--2"></span>
+                <span class="orb orb--3"></span>
+                <span class="orb orb--4"></span>
+                <span class="orb orb--5"></span>
+                <span class="orb orb--6"></span>
+            </div>
+
+            <div class="hero-inner">
                 <div class="hero-copy" data-reveal>
-                    <h1 class="hero-animated-title">
-                        <span class="hero-title-static">Le cockpit qui aligne</span>
-                        <span class="hero-title-rotator" aria-label="ventes, opérations, croissance">
-                            <span class="hero-title-word is-active" data-color="#2563eb">ventes.</span>
-                            <span class="hero-title-word" data-color="#f97316">op&eacute;rations.</span>
-                            <span class="hero-title-word" data-color="#10b981">croissance.</span>
-                        </span>
+                    <span class="pill">CRM nouvelle génération</span>
+                    <h1>
+                        Votre pipeline,<br>
+                        <span class="hero-word" id="rotating-word">vos clients.</span>
                     </h1>
-                    <p class="hero-lead">
-                        {{ $appName }} rassemble les modules metier, les integrations cloud et les automatisations utiles dans une interface qui reste lisible pour les utilisateurs et fiable pour l entreprise.
+                    <p class="hero-sub">
+                        {{ $appName }} réunit CRM, facturation, stock et automatisations dans un seul espace — fluide, lisible, et taillé pour votre équipe.
                     </p>
-                    <div class="hero-cta-row">
-                        <a href="{{ route('register') }}" class="btn btn-primary btn-large">Creer mon espace</a>
-                        <a href="#modules" class="btn btn-soft btn-large">Explorer les modules</a>
+                    <div class="hero-btns">
+                        <a href="{{ route('register') }}" class="btn-fill btn-lg">Créer mon espace</a>
+                        <a href="#modules" class="btn-line btn-lg">Voir les modules</a>
                     </div>
-                    <ul class="hero-proof-list">
-                        <li><i class="fa-solid fa-check"></i> CRM, facturation, stock et projets</li>
-                        <li><i class="fa-solid fa-check"></i> Google, Dropbox, Slack, Notion, Trello</li>
-                        <li><i class="fa-solid fa-check"></i> Exports, sauvegardes cloud et historique exploitable</li>
+                    <ul class="proof-list">
+                        <li>CRM, facturation, stock et projets</li>
+                        <li>Google, Slack, Notion, Trello inclus</li>
+                        <li>Sauvegardes cloud et exports automatiques</li>
                     </ul>
                 </div>
 
-                <aside class="hero-panel" data-reveal>
-                    <div class="hero-panel-shell">
-                        <div class="hero-shot-frame">
-                            <div class="hero-shot-toolbar">
-                                <span class="hero-shot-dots" aria-hidden="true">
-                                    <span class="hero-shot-dot dot-red"></span>
-                                    <span class="hero-shot-dot dot-amber"></span>
-                                    <span class="hero-shot-dot dot-green"></span>
-                                </span>
-                                <span class="hero-shot-label">Apercu du dashboard</span>
+                <div class="hero-visual" data-reveal>
+                    <div class="dash-mock">
+                        <div class="dash-header">
+                            <span class="dash-dot"></span><span class="dash-dot"></span><span class="dash-dot"></span>
+                            <span class="dash-label">{{ $appName }} · Dashboard</span>
+                        </div>
+                        <div class="dash-body">
+                            <!-- Simulated metric cards -->
+                            <div class="dash-metrics">
+                                <div class="metric-card">
+                                    <span class="metric-label">Chiffre d'affaires</span>
+                                    <span class="metric-value" data-count="128400" data-suffix=" DT">0</span>
+                                    <span class="metric-delta up">+14%</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Clients actifs</span>
+                                    <span class="metric-value" data-count="342" data-suffix="">0</span>
+                                    <span class="metric-delta up">+28</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Taux de conversion</span>
+                                    <span class="metric-value" data-count="68.4" data-suffix="%">0</span>
+                                    <span class="metric-delta up">+3.1</span>
+                                </div>
                             </div>
-                            <img
-                                src="{{ asset('images/welcome/dashboard-preview.png') }}"
-                                alt="Capture d ecran du tableau de bord {{ $appName }}"
-                                class="hero-shot-image"
-                                loading="eager"
-                            >
+                            <!-- Simulated pipeline bar -->
+                            <div class="pipeline-block">
+                                <span class="pipeline-label">Pipeline commercial</span>
+                                <div class="pipeline-bar">
+                                    <span class="pb pb--blue" style="width:38%"><em>Prospects</em></span>
+                                    <span class="pb pb--indigo" style="width:26%"><em>Qualifiés</em></span>
+                                    <span class="pb pb--teal" style="width:19%"><em>Propositions</em></span>
+                                    <span class="pb pb--green" style="width:17%"><em>Signés</em></span>
+                                </div>
+                            </div>
+                            <!-- Simulated activity feed -->
+                            <div class="feed-block">
+                                <span class="pipeline-label">Activité récente</span>
+                                <ul class="feed">
+                                    <li><span class="feed-dot dot--blue"></span><span>Nouvelle opportunité — <strong>Agence Nova</strong></span><time>il y a 3 min</time></li>
+                                    <li><span class="feed-dot dot--green"></span><span>Facture envoyée — <strong>TechPro SARL</strong></span><time>il y a 11 min</time></li>
+                                    <li><span class="feed-dot dot--amber"></span><span>Devis signé — <strong>BioLab Inc.</strong></span><time>il y a 38 min</time></li>
+                                    <li><span class="feed-dot dot--teal"></span><span>Stock mis à jour — <strong>Ref. AX-402</strong></span><time>il y a 1h</time></li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                </aside>
-            </section>
-
-            <section class="stats-strip" data-reveal>
-                @foreach($stats as $stat)
-                    <article class="stat-card">
-                        <strong data-count="{{ $stat['value'] }}" data-suffix="{{ $stat['suffix'] }}">0</strong>
-                        <span>{{ $stat['label'] }}</span>
-                    </article>
-                @endforeach
-            </section>
-
-            <section class="section-block" id="modules">
-                <div class="section-heading" data-reveal>
-                    <span class="eyebrow">Modules et services</span>
-                    <h2>Une application qui relie le front commercial, les documents, les operations et la documentation.</h2>
-                    <p>La valeur ne vient pas seulement d un module isole. Elle vient de la facon dont les blocs cooperent dans le meme espace de travail.</p>
                 </div>
-                <div class="pillar-grid">
+            </div>
+        </section>
+
+        <!-- ═══ STATS ═══ -->
+        <section class="stats-row" data-reveal>
+            @foreach($stats as $stat)
+            <div class="stat-item">
+                <strong data-count="{{ $stat['value'] }}" data-suffix="{{ $stat['suffix'] }}">0</strong>
+                <span>{{ $stat['label'] }}</span>
+            </div>
+            @endforeach
+        </section>
+
+        <!-- ═══ MODULES ═══ -->
+        <section class="section-light" id="modules">
+            <div class="container">
+                <div class="section-tag" data-reveal>
+                    <span class="tag-pill">Modules</span>
+                    <h2>Tout ce dont votre équipe a besoin,<br>dans un seul tableau de bord.</h2>
+                    <p>Chaque module est pensé pour coopérer. Pas des outils séparés — un système qui grandit avec vous.</p>
+                </div>
+
+                <div class="modules-grid">
                     @foreach($pillars as $pillar)
-                        <article class="pillar-card tone-{{ $pillar['tone'] }}" data-reveal>
-                            <span class="pillar-eyebrow">{{ $pillar['eyebrow'] }}</span>
+                    <article class="module-card" data-reveal>
+                        <div class="module-accent module-accent--{{ $pillar['tone'] }}">
+                            <span class="module-circle"></span>
+                        </div>
+                        <div class="module-body">
+                            <span class="module-kicker">{{ $pillar['eyebrow'] }}</span>
                             <h3>{{ $pillar['title'] }}</h3>
                             <p>{{ $pillar['body'] }}</p>
-                            <ul>
+                            <ul class="module-points">
                                 @foreach($pillar['points'] as $point)
-                                    <li><i class="fa-solid fa-circle-check"></i>{{ $point }}</li>
+                                <li>{{ $point }}</li>
                                 @endforeach
                             </ul>
-                        </article>
-                    @endforeach
-                </div>
-            </section>
-
-            <section class="section-band" id="workflows">
-                <div class="section-heading narrow" data-reveal>
-                    <span class="eyebrow">Flux de travail</span>
-                    <h2>Le produit accompagne une trajectoire complete: capter, orchestrer, tracer, decider.</h2>
-                </div>
-                <div class="workflow-grid">
-                    @foreach($workflowSteps as $step)
-                        <article class="workflow-card" data-reveal>
-                            <span class="workflow-step">{{ $step['step'] }}</span>
-                            <h3>{{ $step['title'] }}</h3>
-                            <p>{{ $step['body'] }}</p>
-                        </article>
-                    @endforeach
-                </div>
-            </section>
-
-            <section class="section-block" id="integrations">
-                <div class="section-heading" data-reveal>
-                    <span class="eyebrow">Integrations connectees</span>
-                    <h2>Les services externes renforcent le travail quotidien sans casser le rythme du CRM.</h2>
-                    <p>Le systeme reste centre sur l usage. Les integrations servent les actions, les exports, la documentation, la messagerie et la sauvegarde.</p>
-                </div>
-                <div class="integration-clusters">
-                    @foreach($extensionCategories as $category)
-                        <section class="integration-cluster" data-reveal>
-                            <header>
-                                <span class="cluster-badge" style="--cluster-color: {{ $category['color'] }};">
-                                    <i class="fas {{ $category['icon'] }}"></i>
-                                </span>
-                                <div>
-                                    <h3>{{ $category['label'] }}</h3>
-                                    <p>{{ count($category['items']) }} extension{{ count($category['items']) > 1 ? 's' : '' }} active{{ count($category['items']) > 1 ? 's' : '' }}</p>
-                                </div>
-                            </header>
-                            <div class="integration-list">
-                                @foreach($category['items'] as $extension)
-                                    <article class="integration-chip" style="--chip-accent: {{ $extension['accent'] }};">
-                                        <span class="integration-icon">
-                                            @if($extension['icon_url'])
-                                                <img src="{{ $extension['icon_url'] }}" alt="{{ $extension['name'] }}">
-                                            @else
-                                                <i class="{{ $extension['icon_class'] }}"></i>
-                                            @endif
-                                        </span>
-                                        <span class="integration-copy">
-                                            <strong>{{ $extension['name'] }}</strong>
-                                            <small>{{ $extension['tagline'] }}</small>
-                                        </span>
-                                    </article>
-                                @endforeach
-                            </div>
-                        </section>
-                    @endforeach
-                </div>
-            </section>
-
-            <section class="section-band" id="pricing">
-                <div class="section-heading narrow" data-reveal>
-                    <span class="eyebrow">Tarifs</span>
-                    <h2>Un seul abonnement. Toutes les fonctionnalites. Quatre rythmes de paiement.</h2>
-                    <p>Le prix reste simple: tous les modules, toutes les integrations et toute la logique metier sont inclus, quel que soit l engagement choisi.</p>
-                </div>
-
-                <div class="pricing-shell" data-reveal>
-                    <article class="pricing-plan-card">
-                        <div class="pricing-plan-head">
-                            <div>
-                                <span class="pricing-plan-kicker">Abonnement complet</span>
-                                <h3>{{ $appName }}</h3>
-                                <p>CRM, clients, facturation, stock, projets, automatisations, sauvegardes cloud et integrations inclus.</p>
-                            </div>
-                            <span class="pricing-plan-allin">Tout inclus</span>
-                        </div>
-
-                        <div class="pricing-period-grid">
-                            @foreach($pricingPeriods as $period)
-                                <article class="pricing-period-card{{ $period['recommended'] ? ' is-recommended' : '' }}">
-                                    <div class="pricing-period-top">
-                                        <strong>{{ $period['label'] }}</strong>
-                                        <span class="pricing-period-badge">{{ $period['badge'] }}</span>
-                                    </div>
-                                    <div class="pricing-period-price">{{ $period['total_label'] }}</div>
-                                    <p>{{ $period['monthly_label'] }} / mois</p>
-                                    @if($period['discount'] > 0)
-                                        <small>Au lieu de {{ number_format($period['gross_total'], 0, ',', ' ') }} DT sans remise.</small>
-                                    @else
-                                        <small>Sans engagement long terme.</small>
-                                    @endif
-                                </article>
-                            @endforeach
-                        </div>
-
-                        <div class="pricing-feature-grid">
-                            <span><i class="fa-solid fa-circle-check"></i> CRM clients et suivi commercial</span>
-                            <span><i class="fa-solid fa-circle-check"></i> Devis, factures, PDF et exports</span>
-                            <span><i class="fa-solid fa-circle-check"></i> Stock, fournisseurs, commandes et BL</span>
-                            <span><i class="fa-solid fa-circle-check"></i> Projets, automatisations et suggestions</span>
-                            <span><i class="fa-solid fa-circle-check"></i> Google, Dropbox, Slack, Notion, Trello</span>
-                            <span><i class="fa-solid fa-circle-check"></i> Sauvegardes cloud et historique exploitable</span>
-                        </div>
-
-                        <div class="hero-cta-row center">
-                            <a href="{{ route('register') }}" class="btn btn-primary btn-large">Choisir mon abonnement</a>
-                            <a href="{{ route('login') }}" class="btn btn-soft btn-large">J ai deja un espace</a>
                         </div>
                     </article>
-                </div>
-            </section>
-
-            <section class="section-band" id="securite">
-                <div class="section-heading narrow" data-reveal>
-                    <span class="eyebrow">Fiabilite et pilotage</span>
-                    <h2>Une interface de travail, mais aussi un socle pour proteger, exporter et faire evoluer les donnees.</h2>
-                </div>
-                <div class="highlight-grid">
-                    @foreach($highlights as $highlight)
-                        <article class="highlight-card" data-reveal>
-                            <h3>{{ $highlight['title'] }}</h3>
-                            <p>{{ $highlight['body'] }}</p>
-                        </article>
                     @endforeach
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <section class="cta-section" data-reveal>
-                <div class="cta-card">
-                    <span class="eyebrow">Commencer maintenant</span>
-                    <h2>Offre a tes utilisateurs une base de travail claire, moderne et connectee.</h2>
-                    <p>Commence avec un espace simple, puis fais grandir le CRM avec les integrations, les automatismes et les modules qui soutiennent ton activite reelle.</p>
-                    <div class="hero-cta-row center">
-                        <a href="{{ route('register') }}" class="btn btn-primary btn-large">Creer un compte</a>
-                        <a href="{{ route('login') }}" class="btn btn-ghost btn-large">Acceder a mon espace</a>
-                    </div>
+        <!-- ═══ WORKFLOW ═══ -->
+        <section class="section-light section-sep" id="workflow">
+            <div class="container">
+                <div class="section-tag narrow" data-reveal>
+                    <span class="tag-pill">Workflow</span>
+                    <h2>De la capture à la décision —<br>un flux continu.</h2>
                 </div>
-            </section>
-        </main>
 
-        <footer class="welcome-footer" data-reveal>
-            <div class="welcome-footer-grid">
-                <section class="footer-block footer-brand-block">
-                    <a href="{{ url('/') }}" class="welcome-brand footer-brand">
-                        <span class="welcome-brand-mark"><i class="fa-solid fa-grid-2"></i></span>
-                        <span>
-                            <strong>{{ $appName }}</strong>
-                            <small>CRM, operations et integrations</small>
-                        </span>
-                    </a>
-                    <p>
-                        Une application metier pour centraliser relation client, execution, documents, sauvegardes et services connectes dans le meme espace.
-                    </p>
-                </section>
+                <div class="workflow-track">
+                    @foreach($workflowSteps as $i => $step)
+                    <div class="wf-step" data-reveal>
+                        <div class="wf-num">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</div>
+                        <div class="wf-content">
+                            <h3>{{ $step['title'] }}</h3>
+                            <p>{{ $step['body'] }}</p>
+                        </div>
+                        <div class="wf-orbs" aria-hidden="true">
+                            <span class="wf-orb wf-orb--a"></span>
+                            <span class="wf-orb wf-orb--b"></span>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
 
-                <section class="footer-block">
-                    <h3>Parcours</h3>
-                    <nav class="footer-links">
-                        <a href="#modules">Modules</a>
-                        <a href="#workflows">Automations</a>
-                        <a href="#integrations">Integrations</a>
-                        <a href="#pricing">Tarifs</a>
-                        <a href="#securite">Sauvegarde</a>
-                    </nav>
-                </section>
+        <!-- ═══ INTEGRATIONS ═══ -->
+        <section class="section-light section-sep" id="integrations">
+            <div class="container">
+                <div class="section-tag" data-reveal>
+                    <span class="tag-pill">Intégrations</span>
+                    <h2>Connecté à vos outils dès le premier jour.</h2>
+                    <p>{{ $appName }} s'intègre aux services que vous utilisez déjà — sans configuration complexe.</p>
+                </div>
 
-                <section class="footer-block">
-                    <h3>Acces</h3>
-                    <nav class="footer-links">
-                        <a href="{{ route('login') }}">Se connecter</a>
-                        <a href="{{ route('register') }}">Creer un compte</a>
-                        <a href="{{ route('password.request') }}">Mot de passe oublie</a>
-                    </nav>
-                </section>
+                <div class="integrations-area" data-reveal>
+                    @foreach($extensionCategories as $cat)
+                    <div class="int-group">
+                        <span class="int-cat">{{ $cat['label'] }}</span>
+                        <div class="int-chips">
+                            @foreach($cat['items'] as $item)
+                            <span class="int-chip">{{ $item }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
 
-                <section class="footer-block">
-                    <h3>Extensions actives</h3>
-                    <div class="footer-chips">
-                        @foreach(collect($heroApps)->take(6) as $app)
-                            <span class="footer-chip">{{ $app['name'] }}</span>
+        <!-- ═══ PRICING ═══ -->
+        <section class="section-light section-sep" id="tarifs">
+            <div class="container">
+                <div class="section-tag narrow" data-reveal>
+                    <span class="tag-pill">Tarifs</span>
+                    <h2>Un abonnement. Tous les modules.<br>Quatre rythmes.</h2>
+                    <p>Pas de module payant en extra. Tout est inclus, quel que soit l'engagement choisi.</p>
+                </div>
+
+                <div class="pricing-wrap" data-reveal>
+                    <div class="pricing-head">
+                        <h3>{{ $appName }} — Accès complet</h3>
+                        <span class="pricing-allin">Tout inclus</span>
+                    </div>
+
+                    <div class="pricing-periods">
+                        @foreach($pricingPeriods as $period)
+                        <div class="period-card{{ $period['recommended'] ? ' period-card--featured' : '' }}">
+                            <div class="period-top">
+                                <strong>{{ $period['label'] }}</strong>
+                                @if($period['badge'])
+                                <span class="period-badge">{{ $period['badge'] }}</span>
+                                @endif
+                            </div>
+                            <div class="period-price">{{ $period['total_label'] }}</div>
+                            <p>{{ $period['monthly_label'] }} / mois</p>
+                            @if($period['discount'] > 0)
+                            <small>Économie vs mensuel : {{ $period['discount'] }}%</small>
+                            @else
+                            <small>Sans engagement.</small>
+                            @endif
+                        </div>
                         @endforeach
                     </div>
-                </section>
+
+                    <div class="pricing-features">
+                        <div class="pf-item">CRM clients et suivi commercial</div>
+                        <div class="pf-item">Devis, factures et exports PDF</div>
+                        <div class="pf-item">Stock, fournisseurs et bons de livraison</div>
+                        <div class="pf-item">Projets, automatisations et alertes</div>
+                        <div class="pf-item">Google, Dropbox, Slack, Notion, Trello</div>
+                        <div class="pf-item">Sauvegardes cloud et historique complet</div>
+                    </div>
+
+                    <div class="pricing-actions">
+                        <a href="{{ route('register') }}" class="btn-fill btn-lg">Choisir mon abonnement</a>
+                        <a href="{{ route('login') }}" class="btn-line btn-lg">J'ai déjà un espace</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ SECURITY / RELIABILITY ═══ -->
+        <section class="section-light section-sep" id="securite">
+            <div class="container">
+                <div class="section-tag" data-reveal>
+                    <span class="tag-pill">Fiabilité</span>
+                    <h2>Sécurisé, sauvegardé,<br>toujours disponible.</h2>
+                </div>
+                <div class="reliability-grid">
+                    @foreach($highlights as $h)
+                    <div class="rely-card" data-reveal>
+                        <div class="rely-circle" aria-hidden="true"></div>
+                        <h3>{{ $h['title'] }}</h3>
+                        <p>{{ $h['body'] }}</p>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ CTA ═══ -->
+        <section class="cta-band" data-reveal>
+            <div class="cta-orbs" aria-hidden="true">
+                <span class="cta-orb cta-orb--1"></span>
+                <span class="cta-orb cta-orb--2"></span>
+                <span class="cta-orb cta-orb--3"></span>
+            </div>
+            <div class="cta-inner">
+                <span class="tag-pill tag-pill--light">Commencer maintenant</span>
+                <h2>Votre CRM opérationnel<br>en moins de 5 minutes.</h2>
+                <p>Créez votre espace, invitez votre équipe et connectez vos outils — dès aujourd'hui.</p>
+                <div class="cta-btns">
+                    <a href="{{ route('register') }}" class="btn-fill btn-lg">Créer un compte gratuit</a>
+                    <a href="{{ route('login') }}" class="btn-outline-light btn-lg">Accéder à mon espace</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ═══ FOOTER (dark) ═══ -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a href="{{ url('/') }}" class="brand brand--light">
+                    <span class="brand-orb" aria-hidden="true">
+                        <span class="orb-ring"></span>
+                        <span class="orb-dot"></span>
+                    </span>
+                    <strong>{{ $appName }}</strong>
+                </a>
+                <p>Une plateforme CRM pour centraliser relation client, documents, opérations et services connectés dans un seul espace.</p>
             </div>
 
-            <div class="welcome-footer-bar">
-                <span>{{ date('Y') }} {{ $appName }}</span>
-                <span>{{ count($extensionCategories) }} univers d integrations actifs</span>
+            <nav class="footer-nav">
+                <h4>Plateforme</h4>
+                <a href="#modules">Modules</a>
+                <a href="#workflow">Workflow</a>
+                <a href="#integrations">Intégrations</a>
+                <a href="#tarifs">Tarifs</a>
+            </nav>
+
+            <nav class="footer-nav">
+                <h4>Accès</h4>
+                <a href="{{ route('login') }}">Se connecter</a>
+                <a href="{{ route('register') }}">Créer un compte</a>
+                <a href="{{ route('password.request') }}">Mot de passe oublié</a>
+            </nav>
+
+            <div class="footer-integrations">
+                <h4>Intégrations actives</h4>
+                <div class="footer-chips">
+                    @foreach(collect($heroApps)->take(8) as $app)
+                    <span class="footer-chip">{{ $app['name'] }}</span>
+                    @endforeach
+                </div>
             </div>
-        </footer>
-    </div>
+        </div>
+
+        <div class="footer-bar">
+            <span>© {{ date('Y') }} {{ $appName }}</span>
+            <span>{{ count($extensionCategories) }} univers d'intégrations</span>
+        </div>
+    </footer>
 
     <script src="{{ asset('js/welcome.js') }}"></script>
 </body>

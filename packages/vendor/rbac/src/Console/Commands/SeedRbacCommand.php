@@ -29,22 +29,24 @@ class SeedRbacCommand extends Command
 
         $this->info('Initialisation RBAC multi-tenant...');
 
-        $superAdmin = Role::query()->firstOrCreate(
-            [
-                'tenant_id' => null,
-                'name' => 'super_admin',
-                'guard_name' => 'web',
-            ],
-            [
-                'label' => 'Super administrateur',
-                'description' => 'Accès global plateforme',
-                'color' => '#dc2626',
-                'is_system' => true,
-                'is_active' => true,
-            ]
-        );
+        foreach (['super_admin', 'super-admin'] as $roleName) {
+            $superAdmin = Role::query()->firstOrCreate(
+                [
+                    'tenant_id' => null,
+                    'name' => $roleName,
+                    'guard_name' => 'web',
+                ],
+                [
+                    'label' => 'Super administrateur',
+                    'description' => 'Accès global plateforme',
+                    'color' => '#dc2626',
+                    'is_system' => true,
+                    'is_active' => true,
+                ]
+            );
 
-        $this->line("  ✓ Rôle global {$superAdmin->name}");
+            $this->line("  ✓ Rôle global {$superAdmin->name}");
+        }
 
         foreach ($tenants as $tenant) {
             $roles = $this->tenantRoleService->ensureTenantRoles((int) $tenant->id);

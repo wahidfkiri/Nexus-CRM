@@ -183,7 +183,10 @@ class WelcomeController extends Controller
                     'label' => (string) ($first['category_label'] ?? 'Autre'),
                     'icon' => (string) ($first['category_icon'] ?? 'fa-puzzle-piece'),
                     'color' => (string) ($first['category_color'] ?? '#64748b'),
-                    'items' => $items->values()->all(),
+                    'items' => $items
+                        ->map(fn (array $item) => (string) ($item['name'] ?? 'Intégration'))
+                        ->values()
+                        ->all(),
                 ];
             })
             ->values()

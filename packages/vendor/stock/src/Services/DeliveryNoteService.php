@@ -242,7 +242,7 @@ class DeliveryNoteService
                 'name' => $item['name'],
                 'description' => $item['description'] ?? null,
                 'quantity' => (float) $item['quantity'],
-                'unit' => $item['unit'] ?? 'pièce',
+                'unit' => $item['unit'] ?? trans('stock::stock.common.unit_piece'),
             ]);
         }
     }

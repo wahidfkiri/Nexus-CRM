@@ -10,6 +10,8 @@ return [
     ],
     'command' => [
         'eyebrow' => 'Cockpit du tenant courant',
+        'hero_title' => 'Votre espace',
+        'hero_title_highlight' => 'CRM unifié',
         'description' => 'Suivez vos ventes, vos documents, vos projets et vos synchronisations dans une interface unique, avec uniquement les modules et extensions réellement actifs sur cet espace.',
         'highlights' => [
             'modules' => ':count modules visibles',
@@ -40,6 +42,8 @@ return [
         'fallback_status' => 'Actif',
     ],
     'integrations' => [
+        'title' => 'Intégrations connectées',
+        'description' => 'Santé des connecteurs actifs, comptes reliés et volumes synchronisés.',
         'connected' => 'Connectées',
         'reconnect' => 'À reconnecter',
         'installed_without_connection' => 'Installées sans connexion',

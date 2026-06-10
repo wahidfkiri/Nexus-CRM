@@ -84,6 +84,9 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  window.StockLang = Object.assign(window.StockLang || {}, {
+    unitPiece: @json(__('stock::stock.common.unit_piece')),
+  });
   window.StockArticleOptionsHtml = @json($articleOptionsHtml ?? '');
   @if($deliveryNote->status === 'draft')
   Stock.bindAjaxForm('deliveryNoteForm');

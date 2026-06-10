@@ -12,5 +12,5 @@
 #gdxAppendText,
 #gdxSearchText,
 #gdxReplaceText {
-  font-family: var(--ff-mono, monospace);
+  font-family: "DM Sans", sans-serif;
 }

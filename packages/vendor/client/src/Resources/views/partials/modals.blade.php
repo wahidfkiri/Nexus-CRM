@@ -1,4 +1,4 @@
-﻿<!-- Delete Modal -->
+<!-- Delete Modal -->
 <div class="modal-overlay" id="deleteModal">
     <div class="modal-container delete-modal">
         <div class="modal-icon">

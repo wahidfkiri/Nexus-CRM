@@ -13,15 +13,31 @@ trait InteractsWithNotionWorkspace
 {
     protected function authorizePermission(string $permission): void
     {
-        if ($this->isTenantAdmin() || auth()->user()->can($permission)) {
+        if ($this->isTenantAdmin() || $this->userHasPermission($permission)) {
             return;
         }
 
-        if ($permission === 'notion.view' && auth()->user()->can('notion.create')) {
+        if ($permission === 'notion.view' && $this->userHasPermission('notion.create')) {
             return;
         }
 
         abort(403, __('notion-workspace::messages.errors.permission_insufficient', ['permission' => $permission]));
+    }
+
+    protected function userHasPermission(string $permission): bool
+    {
+        $user = auth()->user();
+        $tenantId = (int) ($user->tenant_id ?? 0);
+
+        if (method_exists($user, 'hasTenantPermission')) {
+            try {
+                return $user->hasTenantPermission($permission, $tenantId);
+            } catch (\Throwable) {
+                return false;
+            }
+        }
+
+        return $user->can($permission);
     }
 
     protected function isTenantAdmin(): bool

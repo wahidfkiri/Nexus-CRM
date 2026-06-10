@@ -6,6 +6,7 @@
   <title>{{ __('user::users.titles.invalid_invitation') }} - {{ config('app.name') }}</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="{{ asset('vendor/client/css/crm.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/global-font.css') }}">
   <style>
     body { background: var(--surface-1); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
     .invalid-card { background: var(--surface-0); border: 1px solid var(--c-ink-05); border-radius: var(--r-2xl); box-shadow: var(--shadow-xl); width: 100%; max-width: 520px; overflow: hidden; }
@@ -19,7 +20,7 @@
   <div class="invalid-card">
     <div class="invalid-header">
       <div class="invalid-icon"><i class="fas fa-link-slash"></i></div>
-      <div style="font-family:var(--ff-display);font-size:20px;font-weight:700;color:#fff;">{{ __('user::users.titles.invalid_invitation') }}</div>
+      <div style="font-family: "DM Sans", sans-serif;font-size:20px;font-weight:700;color:#fff;">{{ __('user::users.titles.invalid_invitation') }}</div>
       <div style="font-size:13px;color:rgba(255,255,255,.55);margin-top:6px;">{{ __('user::users.subtitles.invitation_link_unusable') }}</div>
     </div>
     <div class="invalid-body">

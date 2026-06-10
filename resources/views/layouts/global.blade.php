@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="{{ asset('vendor/client/css/crm.css') }}">
   <link rel="stylesheet" href="{{ asset('vendor/invoice/css/invoice.css') }}">
   <link rel="stylesheet" href="{{ asset('vendor/stock/css/stock.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/global-font.css') }}">
   <style>
     .global-search-wrap{position:relative;min-width:320px;max-width:520px;width:42vw}
     .global-search-wrap input{padding-left:36px}
@@ -264,6 +265,14 @@
       box-shadow:none;
       flex:0 0 22px;
     }
+    .sidebar-app-link .app-icon-badge.has-image{
+      width:30px;
+      height:30px;
+      padding:5px;
+      background:rgba(16,19,26,.86);
+      border-radius:8px;
+      flex:0 0 30px;
+    }
     .sidebar-app-link .app-icon-badge i{
       width:auto;
       font-size:16px;
@@ -405,6 +414,117 @@
     #userDropdown.open .dropdown-menu{
       transform:translate(0,0);
     }
+    .crm-layout .crm-sidebar{
+      background:#10131a;
+      border-right:1px solid rgba(148,163,184,.16);
+      color:#e5edf8;
+      box-shadow:18px 0 48px rgba(2,6,23,.28);
+    }
+    .crm-layout .sidebar-brand{
+      border-bottom:1px solid rgba(148,163,184,.14);
+    }
+    .crm-layout .sidebar-brand-name{color:#f8fafc}
+    .crm-layout .sidebar-brand-tag{color:#94a3b8}
+    .crm-layout .sidebar-brand-fallback{
+      background:rgba(37,99,235,.16);
+      color:#bfdbfe;
+      box-shadow:inset 0 0 0 1px rgba(96,165,250,.25);
+    }
+    .crm-layout .sidebar-nav-section{
+      color:#64748b;
+    }
+    .crm-layout .sidebar-nav a{
+      position:relative;
+      color:#cbd5e1;
+      border:1px solid transparent;
+      overflow:hidden;
+    }
+    .crm-layout .sidebar-nav a:hover{
+      background:rgba(255,255,255,.06);
+      border-color:rgba(255,255,255,.08);
+      color:#f8fafc;
+    }
+    .crm-layout .sidebar-nav a.active{
+      background:rgba(255,255,255,.08);
+      border-color:rgba(255,255,255,.10);
+      color:#fff;
+      box-shadow:none;
+    }
+    .crm-layout .sidebar-nav a.active::before{
+      content:'';
+      position:absolute;
+      left:0;
+      top:10px;
+      bottom:10px;
+      width:3px;
+      border-radius:0 999px 999px 0;
+      background:#2563eb;
+    }
+    .crm-layout .sidebar-nav a i{color:#93c5fd}
+    .crm-layout .sidebar-nav a.active i{color:#60a5fa}
+    .crm-layout .sidebar-nav a .nav-badge,
+    .crm-layout .sidebar-market-link .nav-badge{
+      background:rgba(37,99,235,.18);
+      color:#bfdbfe;
+      border:1px solid rgba(96,165,250,.22);
+    }
+    .crm-layout .sidebar-nav-subsection{
+      color:#94a3b8;
+    }
+    .crm-layout .sidebar-nav-subsection::before{
+      background:rgba(148,163,184,.24);
+    }
+    .crm-layout .sidebar-app-link .app-icon-badge{
+      background:transparent;
+      color:#dbeafe;
+      border-radius:8px;
+      box-shadow:none;
+    }
+    .crm-layout .sidebar-app-link .app-icon-badge.has-image{
+      background:rgba(255,255,255,.08);
+      border-radius:8px;
+    }
+    .crm-layout .sidebar-footer{
+      border-top:1px solid rgba(148,163,184,.14);
+      background:linear-gradient(180deg,rgba(15,23,42,0),rgba(15,23,42,.54));
+    }
+    .crm-layout .sidebar-user{
+      background:rgba(255,255,255,.06);
+      border:0;
+      color:#f8fafc;
+    }
+    .crm-layout .sidebar-user:hover{
+      background:rgba(37,99,235,.14);
+    }
+    .crm-layout .sidebar-user-avatar{
+      background:linear-gradient(135deg,#2563eb,#0ea5e9);
+      color:#fff;
+      box-shadow:0 10px 22px rgba(37,99,235,.28);
+    }
+    .crm-layout .sidebar-user-name{color:#f8fafc}
+    .crm-layout .sidebar-user-role{color:#94a3b8}
+    .crm-layout #userDropdown .sidebar-user .user-chevron{color:#93c5fd}
+    .crm-layout #userDropdown.open .sidebar-user .user-chevron{color:#bfdbfe}
+    .crm-layout #userDropdown .dropdown-menu{
+      background:#0f172a;
+      border:1px solid rgba(148,163,184,.18);
+      box-shadow:0 24px 56px rgba(2,6,23,.44);
+    }
+    .crm-layout #userDropdown .dropdown-item{
+      color:#cbd5e1;
+    }
+    .crm-layout #userDropdown .dropdown-item:hover{
+      background:rgba(37,99,235,.16);
+      color:#fff;
+    }
+    .crm-layout #userDropdown .dropdown-divider{
+      border-color:rgba(148,163,184,.14);
+    }
+    .crm-layout #userDropdown .dropdown-item.danger{color:#fecaca}
+    .crm-layout #userDropdown .dropdown-item.danger:hover{
+      background:rgba(239,68,68,.16);
+      color:#fff;
+    }
     body.sidebar-collapsed .crm-layout{--sidebar-w:92px}
     body.sidebar-collapsed .sidebar-brand{
       justify-content:center;
@@ -469,8 +589,8 @@
   </style>
   @stack('styles')
 </head>
-<body>
-<div class="crm-layout">
+<body class="@yield('body_class')">
+<div class="crm-layout @yield('layout_class')">
   <aside class="crm-sidebar" id="sidebar">
     <div class="sidebar-brand">
       <img
@@ -488,71 +608,112 @@
       </div>
     </div>
 
-    <nav class="sidebar-nav">
-      <div class="sidebar-nav-section">Principal</div>
-      <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}" data-tooltip="Tableau de bord">
-        <i class="fas fa-home"></i>
-        <span class="sidebar-link-label">Tableau de bord</span>
-      </a>
+    @php
+      $layoutUser = auth()->user();
+      $layoutIsSuperAdmin = $layoutUser && (
+        (method_exists($layoutUser, 'hasAnyRole') && $layoutUser->hasAnyRole(['super_admin', 'super-admin'])) ||
+        (method_exists($layoutUser, 'hasRole') && ($layoutUser->hasRole('super_admin') || $layoutUser->hasRole('super-admin')))
+      );
+      $layoutAccess = $layoutAccess ?? [];
+      $layoutCanDashboard = (bool) ($layoutAccess['dashboard'] ?? true);
+      $layoutCanUsers = (bool) ($layoutAccess['users'] ?? false);
+      $layoutCanMarketplace = (bool) ($layoutAccess['marketplace'] ?? false);
+      $layoutCanSettings = (bool) ($layoutAccess['settings'] ?? false);
+      $layoutHasVisibleApps = (bool) (($layoutInstalledAppsByCategory ?? collect())->count());
+      $layoutMarketplaceUrl = null;
+      $layoutMarketplaceSub = 'Découvrir des applications';
+      $layoutMarketplaceActivePattern = 'marketplace.*';
+      if ($layoutIsSuperAdmin && Route::has('superadmin.extensions.index')) {
+        $layoutMarketplaceUrl = route('superadmin.extensions.index');
+        $layoutMarketplaceSub = 'Gérer le catalogue global';
+        $layoutMarketplaceActivePattern = 'superadmin.extensions.*';
+      } elseif ($layoutCanMarketplace && Route::has('marketplace.index')) {
+        $layoutMarketplaceUrl = route('marketplace.index');
+      }
+    @endphp
 
-      <div class="sidebar-nav-section">Utilisateurs</div>
-      <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') || request()->routeIs('rbac.*') ? 'active' : '' }}" data-tooltip="Utilisateurs">
-        <i class="fa fa-user-cog"></i>
-        <span class="sidebar-link-label">Utilisateurs</span>
-      </a>
-      <div class="sidebar-nav-section">Applications</div>
-      <a href="{{ route('marketplace.index') }}" class="sidebar-market-link {{ request()->routeIs('marketplace.*') ? 'active' : '' }}" data-tooltip="Marketplace: installer de nouvelles applications">
-        <i class="fa fa-store"></i>
-        <span class="sidebar-link-label">Marketplace</span>
-        <span class="nav-badge">Store</span>
-      </a>
-      @php
-        $appRoutePatterns = [
-          'clients' => 'clients.*',
-          'stock' => 'stock.*',
-          'invoice' => 'invoices.*',
-          'projects' => 'projects.*',
-          'notion-workspace' => 'notion-workspace.*',
-          'google-drive' => 'google-drive.*',
-          'gdrive' => 'google-drive.*',
-          'google-calendar' => 'google-calendar.*',
-          'google-sheets' => 'google-sheets.*',
-          'google-docx' => 'google-docx.*',
-          'google-gmail' => 'google-gmail.*',
-          'google-meet' => 'google-meet.*',
-          'slack' => 'slack.*',
-          'chatbot' => 'chatbot.*',
-        ];
-      @endphp
-      @if(($layoutInstalledAppsByCategory ?? collect())->count())
-        @foreach(($layoutInstalledAppsByCategory ?? collect()) as $category)
-          <div class="sidebar-nav-subsection">
-            <i class="{{ $category->icon ?? 'fas fa-puzzle-piece' }}" style="color:{{ $category->color ?? '#64748b' }}"></i>
-            {{ $category->label ?? 'Autre' }}
-          </div>
-          @foreach(($category->apps ?? collect()) as $installedApp)
-            @php
-              $pattern = $appRoutePatterns[$installedApp->slug] ?? null;
-              $isActive = $pattern ? request()->routeIs($pattern) : false;
-            @endphp
-            <a href="{{ $installedApp->url }}" class="sidebar-app-link {{ $isActive ? 'active' : '' }}" data-tooltip="{{ $installedApp->name }}: ouvrir l'application">
-              <span class="app-icon-badge" style="--app-bg: {{ $installedApp->icon_bg_color ?? '#334155' }};">
-                @if(!empty($installedApp->icon_url))
-                  <img src="{{ $installedApp->icon_url }}" alt="{{ $installedApp->name }}">
-                @else
-                  <i class="{{ $installedApp->icon }}"></i>
-                @endif
-              </span>
-              <span class="sidebar-link-label">{{ $installedApp->name }}</span>
-            </a>
+    <nav class="sidebar-nav">
+      @if($layoutCanDashboard)
+        <div class="sidebar-nav-section">Principal</div>
+        <a href="{{ url('/dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}">
+          <i class="fas fa-home"></i>
+          <span class="sidebar-link-label">Tableau de bord</span>
+        </a>
+      @endif
+
+      @if($layoutCanUsers && Route::has('users.index'))
+        <div class="sidebar-nav-section">Utilisateurs</div>
+        <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') || request()->routeIs('rbac.*') ? 'active' : '' }}">
+          <i class="fa fa-user-cog"></i>
+          <span class="sidebar-link-label">Utilisateurs</span>
+        </a>
+      @endif
+      @if($layoutIsSuperAdmin && Route::has('superadmin.tenants.index'))
+        <div class="sidebar-nav-section">Tenants</div>
+        <a href="{{ route('superadmin.tenants.index') }}" class="{{ request()->routeIs('superadmin.tenants.*') ? 'active' : '' }}">
+          <i class="fas fa-building-user"></i>
+          <span class="sidebar-link-label">Tenants actifs</span>
+        </a>
+      @endif
+      @if($layoutMarketplaceUrl || $layoutHasVisibleApps)
+        <div class="sidebar-nav-section">Applications</div>
+        @if($layoutMarketplaceUrl)
+          <a href="{{ $layoutMarketplaceUrl }}" class="sidebar-market-link {{ request()->routeIs($layoutMarketplaceActivePattern) || request()->routeIs('marketplace.*') ? 'active' : '' }}">
+            <i class="fa fa-store"></i>
+            <span class="sidebar-link-label">Marketplace</span>
+            <span class="nav-badge">Store</span>
+          </a>
+        @endif
+        @php
+          $appRoutePatterns = [
+            'clients' => 'clients.*',
+            'stock' => 'stock.*',
+            'invoice' => 'invoices.*',
+            'projects' => 'projects.*',
+            'notion-workspace' => 'notion-workspace.*',
+            'trello-integration' => 'trello-integration.*',
+            'google-drive' => 'google-drive.*',
+            'gdrive' => 'google-drive.*',
+            'dropbox' => 'dropbox.*',
+            'google-calendar' => 'google-calendar.*',
+            'google-sheets' => 'google-sheets.*',
+            'google-docx' => 'google-docx.*',
+            'google-gmail' => 'google-gmail.*',
+            'google-meet' => 'google-meet.*',
+            'slack' => 'slack.*',
+            'chatbot' => 'chatbot.*',
+          ];
+        @endphp
+        @if($layoutHasVisibleApps)
+          @foreach(($layoutInstalledAppsByCategory ?? collect()) as $category)
+            <div class="sidebar-nav-subsection">
+              <i class="{{ $category->icon ?? 'fas fa-puzzle-piece' }}" style="color:{{ $category->color ?? '#64748b' }}"></i>
+              {{ $category->label ?? 'Autre' }}
+            </div>
+            @foreach(($category->apps ?? collect()) as $installedApp)
+              @php
+                $pattern = $appRoutePatterns[$installedApp->slug] ?? null;
+                $isActive = $pattern ? request()->routeIs($pattern) : false;
+              @endphp
+              <a href="{{ $installedApp->url }}" class="sidebar-app-link {{ $isActive ? 'active' : '' }}">
+                <span class="app-icon-badge {{ !empty($installedApp->icon_url) ? 'has-image' : '' }}" style="--app-bg: {{ $installedApp->icon_bg_color ?? '#334155' }};">
+                  @if(!empty($installedApp->icon_url))
+                    <img src="{{ $installedApp->icon_url }}" alt="{{ $installedApp->name }}">
+                  @else
+                    <i class="{{ $installedApp->icon }}"></i>
+                  @endif
+                </span>
+                <span class="sidebar-link-label">{{ $installedApp->name }}</span>
+              </a>
+            @endforeach
           @endforeach
-        @endforeach
+        @endif
       @endif
     </nav>
 
     <div class="sidebar-footer">
       <div class="dropdown" id="userDropdown" style="margin-top:4px;">
-        <div class="sidebar-user" data-dropdown-toggle data-tooltip="{{ auth()->user()->name ?? 'Utilisateur' }}: profil et paramètres">
+        <div class="sidebar-user" data-dropdown-toggle>
           <div class="sidebar-user-avatar">{{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}</div>
           <div class="sidebar-user-copy" style="flex:1;min-width:0;">
             <div class="sidebar-user-name">{{ auth()->user()->name ?? 'Utilisateur' }}</div>
@@ -562,7 +723,7 @@
         </div>
         <div class="dropdown-menu">
           <a href="{{ route('profile-settings') }}" class="dropdown-item"><i class="fas fa-user"></i> Mon profil</a>
-          @if(Route::has('settings.global'))
+          @if($layoutCanSettings && Route::has('settings.global'))
             <a href="{{ route('settings.global') }}" class="dropdown-item"><i class="fas fa-gear"></i> Paramètres globaux</a>
           @endif
           <div class="dropdown-divider"></div>
@@ -581,8 +742,8 @@
   <div class="crm-main">
     <header class="crm-header">
       <button id="sidebarToggle" class="btn-icon" aria-label="Ouvrir le menu"><i class="fas fa-bars"></i></button>
-      <button class="btn-icon sidebar-compact-toggle" id="sidebarCompactToggle" type="button" aria-label="Réduire le menu en mode icônes" aria-pressed="false" data-tooltip="Réduire le menu: afficher seulement les icônes">
-        <i class="fas fa-bolt"></i>
+      <button class="btn-icon sidebar-compact-toggle" id="sidebarCompactToggle" type="button" aria-label="Réduire le menu en mode icônes" aria-pressed="false">
+        <i class="fas fa-arrow-left"></i>
       </button>
       <div class="crm-header-breadcrumb">@yield('breadcrumb')</div>
       <div class="crm-header-spacer"></div>
@@ -666,7 +827,7 @@
       @include($moduleMenu)
     @endif
 
-    <main class="crm-content">@yield('content')</main>
+    <main class="crm-content @yield('content_class')">@yield('content')</main>
   </div>
 </div>
 
@@ -682,13 +843,15 @@
     </div>
     <div class="modal-body">
       <div class="apps-drawer-list">
-        <a href="{{ route('marketplace.index') }}" class="apps-drawer-item">
+        @if($layoutMarketplaceUrl ?? false)
+        <a href="{{ $layoutMarketplaceUrl }}" class="apps-drawer-item">
           <span class="apps-drawer-icon"><i class="fas fa-store"></i></span>
           <span>
             <strong>Marketplace</strong><br>
-            <small style="color:var(--c-ink-40)">Découvrir des applications</small>
+            <small style="color:var(--c-ink-40)">{{ $layoutMarketplaceSub }}</small>
           </span>
         </a>
+        @endif
 
         @forelse(($layoutInstalledAppsByCategory ?? collect()) as $category)
           <div class="apps-drawer-category">
@@ -721,7 +884,11 @@
       </div>
     </div>
     <div class="modal-footer" style="justify-content:flex-start">
-      <a href="{{ route('marketplace.my-apps') }}" class="btn btn-secondary"><i class="fas fa-th-list"></i> Gérer mes applications</a>
+      @if(($layoutIsSuperAdmin ?? false) && Route::has('superadmin.extensions.index'))
+        <a href="{{ route('superadmin.extensions.index') }}" class="btn btn-secondary"><i class="fas fa-sliders-h"></i> Gérer le marketplace</a>
+      @elseif(($layoutCanMarketplace ?? false) && Route::has('marketplace.my-apps'))
+        <a href="{{ route('marketplace.my-apps') }}" class="btn btn-secondary"><i class="fas fa-th-list"></i> Gérer mes applications</a>
+      @endif
     </div>
   </div>
 </div>
@@ -735,7 +902,7 @@
         <div class="modal-subtitle" data-automation-subtitle>Le CRM vous propose les prochaines actions utiles.</div>
       </div>
       <div class="modal-header-actions">
-        @if(Route::has('settings.global'))
+        @if(($layoutCanSettings ?? false) && Route::has('settings.global'))
           <a href="{{ route('settings.global') }}#automation-suggestions-settings" class="modal-icon-link" aria-label="Parametres des suggestions">
             <i class="fas fa-gear"></i>
           </a>
@@ -805,10 +972,11 @@
     ->all();
 
   $globalSearchQuickLinks = array_values(array_filter([
-    ['label' => 'Tableau de bord', 'sub' => 'Vue generale', 'icon' => 'fa-home', 'url' => url('/dashboard'), 'keywords' => 'dashboard accueil principal'],
-    Route::has('applications') ? ['label' => 'Applications', 'sub' => 'Mes applications CRM', 'icon' => 'fa-th-large', 'url' => route('applications'), 'keywords' => 'apps applications modules'] : null,
-    Route::has('marketplace.index') ? ['label' => 'Marketplace', 'sub' => 'Installer de nouvelles applications', 'icon' => 'fa-store', 'url' => route('marketplace.index'), 'keywords' => 'marketplace store installer'] : null,
-    Route::has('settings.global') ? ['label' => 'Parametres globaux', 'sub' => 'Configuration generale', 'icon' => 'fa-sliders', 'url' => route('settings.global'), 'keywords' => 'config parametres reglage'] : null,
+    ($layoutCanDashboard ?? true) ? ['label' => 'Tableau de bord', 'sub' => 'Vue generale', 'icon' => 'fa-home', 'url' => url('/dashboard'), 'keywords' => 'dashboard accueil principal'] : null,
+    !($layoutIsSuperAdmin ?? false) && ($layoutCanMarketplace ?? false) && Route::has('applications') ? ['label' => 'Applications', 'sub' => 'Mes applications CRM', 'icon' => 'fa-th-large', 'url' => route('applications'), 'keywords' => 'apps applications modules'] : null,
+    ($layoutMarketplaceUrl ?? null) ? ['label' => 'Marketplace', 'sub' => $layoutMarketplaceSub ?? 'Installer de nouvelles applications', 'icon' => 'fa-store', 'url' => $layoutMarketplaceUrl, 'keywords' => 'marketplace store installer extensions'] : null,
+    ($layoutIsSuperAdmin ?? false) && Route::has('superadmin.tenants.index') ? ['label' => 'Tenants actifs', 'sub' => 'Gestion super-admin des entreprises', 'icon' => 'fa-building-user', 'url' => route('superadmin.tenants.index'), 'keywords' => 'tenants entreprises organisations clients actifs'] : null,
+    ($layoutCanSettings ?? false) && Route::has('settings.global') ? ['label' => 'Parametres globaux', 'sub' => 'Configuration generale', 'icon' => 'fa-sliders', 'url' => route('settings.global'), 'keywords' => 'config parametres reglage'] : null,
   ]));
 @endphp
 <script>

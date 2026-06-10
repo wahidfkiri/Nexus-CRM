@@ -49,6 +49,7 @@ return [
         'linked_article' => 'Article lié',
         'quantity' => 'Quantité',
         'unit' => 'Unité',
+        'unit_piece' => 'pièce',
         'current_stock' => 'Stock courant',
         'opening_stock' => 'Stock initial',
         'starting_stock' => 'Stock de départ',
@@ -58,6 +59,8 @@ return [
         'total' => 'Total',
         'reason' => 'Raison',
         'directions' => 'Sens',
+        'direction_in' => 'Entrée',
+        'direction_out' => 'Sortie',
         'all_statuses' => 'Tous statuts',
         'all_types' => 'Tous types',
         'all_articles' => 'Tous articles',
@@ -154,6 +157,23 @@ return [
     'marketplace' => [
         'clients_description' => 'Installez Clients pour rattacher vos articles et commandes à vos clients CRM.',
         'invoice_description' => 'Installez Facturation pour transformer vos articles en devis et factures en quelques clics.',
+    ],
+
+    'labels' => [
+        'delivery_note_types' => [
+            'in' => 'BL entrée',
+            'out' => 'BL sortie',
+        ],
+        'delivery_note_statuses' => [
+            'draft' => 'Brouillon',
+            'validated' => 'Validé',
+            'cancelled' => 'Annulé',
+        ],
+    ],
+
+    'automation' => [
+        'low_stock_article_subtitle' => 'Suggestions disponibles pour cet article et pour son niveau de stock.',
+        'low_stock_delivery_note_subtitle' => 'Suggestions disponibles pour ce bon de livraison et pour le stock bas détecté.',
     ],
 
     'exports' => [

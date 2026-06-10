@@ -13,7 +13,7 @@ use Vendor\Invoice\Models\Quote;
 
 class QuotesExport implements FromQuery, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithTitle
 {
-    public function title(): string { return 'Devis'; }
+    public function title(): string { return (string) trans('invoice::invoices.exports.quotes_title'); }
 
     public function query()
     {
@@ -22,11 +22,7 @@ class QuotesExport implements FromQuery, WithHeadings, WithMapping, WithStyles, 
 
     public function headings(): array
     {
-        return [
-            'Numéro', 'Client', 'Référence', 'Statut',
-            'Date émission', 'Valide jusqu\'au', 'Devise',
-            'HT', 'Remise', 'TVA', 'Retenue', 'TTC', 'Converti en facture',
-        ];
+        return (array) trans('invoice::invoices.exports.quote_headings');
     }
 
     public function map($quote): array
@@ -44,7 +40,7 @@ class QuotesExport implements FromQuery, WithHeadings, WithMapping, WithStyles, 
             number_format($quote->tax_amount, 2, ',', ' '),
             number_format($quote->withholding_tax_amount, 2, ',', ' '),
             number_format($quote->total, 2, ',', ' '),
-            $quote->is_converted ? 'Oui' : 'Non',
+            $quote->is_converted ? trans('invoice::invoices.exports.yes') : trans('invoice::invoices.exports.no'),
         ];
     }
 

@@ -13,6 +13,8 @@
   $color = $role->color ?? '#64748b';
   $rolePerms = $role->permissions->pluck('name')->toArray();
   $isSystem = (bool) $role->is_system;
+  $isDefaultRole = array_key_exists((string) $role->name, config('rbac.default_roles', []));
+  $isProtectedRole = $isSystem || $isDefaultRole;
   $showI18n = [
       'saveError' => __('rbac::rbac.messages.save_failed'),
       'error' => __('rbac::rbac.toasts.error'),
@@ -36,6 +38,10 @@
         @if($isSystem)
           <span style="font-size:11px;background:#f3e8ff;color:#7c3aed;padding:3px 9px;border-radius:99px;margin-left:8px;font-weight:600;vertical-align:middle;">
             <i class="fas fa-lock"></i> {{ __('rbac::rbac.badges.system') }}
+          </span>
+        @elseif($isDefaultRole)
+          <span style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:3px 9px;border-radius:99px;margin-left:8px;font-weight:600;vertical-align:middle;">
+            <i class="fas fa-shield"></i> {{ __('rbac::rbac.badges.default') }}
           </span>
         @endif
       </h1>
@@ -65,8 +71,13 @@
       <div class="dropdown-menu">
         @if(!$isSystem)
           <a href="{{ route('rbac.roles.edit', $role) }}" class="dropdown-item"><i class="fas fa-pen"></i> {{ __('rbac::rbac.buttons.edit') }}</a>
-          <div class="dropdown-divider"></div>
-          <button class="dropdown-item danger" onclick="deleteRole()"><i class="fas fa-trash"></i> {{ __('rbac::rbac.buttons.delete') }}</button>
+          @if(!$isProtectedRole)
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item danger" onclick="deleteRole()"><i class="fas fa-trash"></i> {{ __('rbac::rbac.buttons.delete') }}</button>
+          @else
+            <div class="dropdown-divider"></div>
+            <span class="dropdown-item" style="color:var(--c-ink-40);cursor:default;"><i class="fas fa-shield"></i> {{ __('rbac::rbac.badges.default') }}</span>
+          @endif
         @else
           <span class="dropdown-item" style="color:var(--c-ink-40);cursor:default;"><i class="fas fa-lock"></i> {{ __('rbac::rbac.labels.system_role_readonly') }}</span>
         @endif
@@ -117,15 +128,17 @@
 
       <div>
         @foreach($group['permissions'] as $permission)
-        @php $active = in_array($permission->name, $rolePerms, true); @endphp
+        @php
+          $active = in_array($permission->name, $rolePerms, true);
+          $permissionLabel = $permission->display_label ?: config("rbac.permission_groups.{$groupKey}.permissions.{$permission->name}", $permission->name);
+        @endphp
         <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 24px;border-bottom:1px solid var(--c-ink-05);" class="perm-show-row" data-group="{{ $groupKey }}">
           <div style="display:flex;align-items:center;gap:12px;">
             <i class="fas {{ $active ? 'fa-circle-check' : 'fa-circle-xmark' }}" style="color:{{ $active ? 'var(--c-success)' : 'var(--c-ink-10)' }};font-size:16px;transition:color .2s;width:16px;" id="permIcon_{{ str_replace('.', '_', $permission->name) }}"></i>
             <div>
               <div style="font-size:13.5px;font-weight:var(--fw-medium);color:var(--c-ink);">
-                {{ config("rbac.permission_groups.{$groupKey}.permissions.{$permission->name}", $permission->name) }}
+                {{ $permissionLabel }}
               </div>
-              <div style="font-size:11.5px;color:var(--c-ink-40);font-family:monospace;">{{ $permission->name }}</div>
             </div>
           </div>
           @if(!$isSystem)
@@ -156,7 +169,7 @@
       <div class="info-card-body">
         <div class="info-row">
           <span class="info-row-label">{{ __('rbac::rbac.labels.internal_slug') }}</span>
-          <span class="info-row-value" style="font-family:monospace;font-size:12px;">{{ $role->name }}</span>
+          <span class="info-row-value" style="font-family:'DM Sans', sans-serif;font-size:12px;">{{ $role->name }}</span>
         </div>
         <div class="info-row">
           <span class="info-row-label">{{ __('rbac::rbac.labels.color') }}</span>
@@ -231,9 +244,11 @@
         <a href="{{ route('rbac.roles.edit', $role) }}" class="btn btn-secondary" style="justify-content:flex-start;">
           <i class="fas fa-pen"></i> {{ __('rbac::rbac.buttons.edit') }}
         </a>
+        @if(!$isProtectedRole)
         <button class="btn btn-secondary" style="justify-content:flex-start;color:var(--c-danger);border-color:var(--c-danger-lt);" onclick="deleteRole()">
           <i class="fas fa-trash"></i> {{ __('rbac::rbac.buttons.delete') }}
         </button>
+        @endif
       </div>
     </div>
     @endif

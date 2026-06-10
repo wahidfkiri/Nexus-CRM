@@ -118,7 +118,7 @@
       </div>
       <div class="chart-body">
         @php
-          $months = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+          $months = $reportsPage['months_short'];
           $maxVal = max(1, max(array_merge(array_values($monthlyRevenue ?? [1]), array_values($monthlyPaid ?? [1]))));
         @endphp
         <div style="display:flex;align-items:flex-end;gap:6px;height:200px;padding:0 0 24px;border-bottom:2px solid var(--c-ink-05);position:relative;">
@@ -132,7 +132,7 @@
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
             <div style="display:flex;gap:3px;align-items:flex-end;width:100%;justify-content:center;">
               <div style="width:45%;height:{{ $revH }}px;background:var(--c-accent);border-radius:3px 3px 0 0;opacity:.8;transition:height .6s;" title="{{ $month }}: {{ number_format($rev,0,',',' ') }} €"></div>
-              <div style="width:45%;height:{{ $paidH }}px;background:var(--c-success);border-radius:3px 3px 0 0;opacity:.8;transition:height .6s;" title="{{ $month }} payé: {{ number_format($paid,0,',',' ') }} €"></div>
+              <div style="width:45%;height:{{ $paidH }}px;background:var(--c-success);border-radius:3px 3px 0 0;opacity:.8;transition:height .6s;" title="{{ __('invoice::invoices.pages.reports_index.month_paid_title', ['month' => $month, 'amount' => number_format($paid,0,',',' ').' €']) }}"></div>
             </div>
             <div style="font-size:10px;color:var(--c-ink-40);">{{ $month }}</div>
           </div>
@@ -153,7 +153,7 @@
       <table class="crm-table">
         <thead>
           <tr>
-            <th>Mois</th>
+            <th>{{ $reportsPage['month'] }}</th>
             <th style="text-align:right">{{ $reportsPage['invoices_issued'] }}</th>
             <th style="text-align:right">{{ $reportsPage['billed_revenue'] }}</th>
             <th style="text-align:right">{{ $reportsPage['collected'] }}</th>
@@ -255,9 +255,9 @@
           <div class="client-avatar-sm" style="width:32px;height:32px;font-size:11px;">{{ strtoupper(substr($c->company_name ?? 'C', 0, 2)) }}</div>
           <div style="flex:1;min-width:0;">
             <div style="font-weight:var(--fw-medium);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ $c->company_name }}</div>
-            <div style="font-size:11.5px;color:var(--c-ink-40);">{{ $c->invoice_count }} facture(s)</div>
+            <div style="font-size:11.5px;color:var(--c-ink-40);">{{ __('invoice::invoices.pages.reports_index.invoice_count_suffix', ['count' => $c->invoice_count]) }}</div>
           </div>
-          <div style="font-weight:var(--fw-semi);font-size:13px;font-family:var(--ff-display);color:var(--c-ink);">{{ number_format($c->total_revenue, 0, ',', ' ') }} €</div>
+          <div style="font-weight:var(--fw-semi);font-size:13px;font-family: "DM Sans", sans-serif;color:var(--c-ink);">{{ number_format($c->total_revenue, 0, ',', ' ') }} €</div>
         </div>
         @empty
         <div style="padding:20px;text-align:center;color:var(--c-ink-40);font-size:13px;">{{ $common['no_data'] }}</div>

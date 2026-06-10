@@ -4,7 +4,7 @@ return [
     'titles' => [
         'team' => "Équipe",
         'manage_team' => "Gestion de l'équipe",
-        'invite_member' => "Inviter un membre",
+        'invite_member' => "Créer un membre",
         'edit_member' => "Modifier le membre",
         'member_profile' => "Profil du membre",
         'invitations' => "Invitations",
@@ -17,7 +17,7 @@ return [
         'crm' => "CRM",
         'team' => "Équipe",
         'edit' => "Modifier",
-        'invite' => "Inviter un membre",
+        'invite' => "Nouveau membre",
         'invitations' => "Invitations",
     ],
 
@@ -40,14 +40,16 @@ return [
         'account_information' => "Informations du compte",
         'quick_actions' => "Actions rapides",
         'invitation_information' => "Informations de l'invitation",
+        'manual_member_information' => "Informations du membre",
         'custom_message' => "Message personnalisé",
         'invitation_details' => "Détails de votre invitation",
         'what_guest_receives' => "Ce que recevra votre invité",
+        'manual_access' => "Création manuelle du compte",
     ],
 
     'subtitles' => [
         'manage_team' => "Gérez les membres, rôles et accès de votre organisation.",
-        'invite_member' => "Un email d'invitation sera envoyé avec un lien d'activation.",
+        'invite_member' => "Créez un compte membre actif sans envoyer d'email d'invitation.",
         'invitation_history' => "Suivez les invitations envoyées à votre équipe.",
         'owner_warning' => "Ce membre est le propriétaire du compte. Son rôle ne peut pas être modifié.",
         'accept_space' => "Votre compte va être ajouté à cet espace.",
@@ -56,7 +58,8 @@ return [
         'existing_account_accept' => "Vous êtes connecté avec :email. L'acceptation ajoutera uniquement cet espace à votre compte existant.",
         'need_another_account' => "Besoin d'un autre compte ?",
         'change_connection' => "Changer de connexion",
-        'invitation_email_hint' => "Un email d'invitation sera envoyé à cette adresse.",
+        'invitation_email_hint' => "Aucun email d'invitation ne sera envoyé. Le compte sera actif immédiatement.",
+        'manual_password_hint' => "Communiquez ce mot de passe manuellement au membre après la création du compte.",
         'message_hint' => "Ce message sera inclus dans l'email d'invitation.",
         'permissions_context' => "Les permissions affichées correspondent au rôle rattaché à cet utilisateur dans ce tenant.",
         'total_access' => "Accès total à toutes les fonctionnalités du tenant.",
@@ -80,6 +83,8 @@ return [
         'sent_at' => "Envoyée le",
         'expires_at' => "Expire le",
         'message' => "Message d'accompagnement",
+        'password' => "Mot de passe",
+        'password_confirmation' => "Confirmation du mot de passe",
         'type' => "Type",
         'internal_type' => "Type",
         'last_ip' => "Dernière IP",
@@ -116,7 +121,7 @@ return [
     ],
 
     'actions' => [
-        'invite' => "Inviter un membre",
+        'invite' => "Créer un membre",
         'view' => "Voir",
         'edit' => "Modifier",
         'delete' => "Supprimer",
@@ -132,6 +137,7 @@ return [
         'back' => "Retour",
         'cancel' => "Annuler",
         'send_invitation' => "Envoyer l'invitation",
+        'create_member' => "Créer le membre",
         'save_changes' => "Enregistrer les modifications",
         'change_photo' => "Changer la photo",
         'send_email' => "Envoyer un email",
@@ -170,6 +176,7 @@ return [
         'invited_member' => "Membre invité",
         'step_1_of_2' => "Étape 1/2",
         'step_2_of_2_optional' => "Étape 2/2 · Optionnel",
+        'active_by_default' => "Actif par défaut",
     ],
 
     'empty' => [
@@ -186,10 +193,16 @@ return [
         'email_expiry' => "Un email avec un lien d'invitation valable :days jours",
         'password_form' => "Un formulaire pour créer son mot de passe",
         'immediate_access' => "L'accès immédiat avec le rôle sélectionné",
+        'no_invitation_email' => "Aucun email d'invitation n'est envoyé automatiquement",
+        'manual_password_share' => "Le mot de passe doit être transmis manuellement au membre",
+        'active_immediately' => "Le compte est créé avec le statut actif par défaut",
     ],
 
     'placeholders' => [
         'collaborator_email' => "collaborateur@entreprise.com",
+        'member_name' => "Nom du collaborateur",
+        'manual_password' => "Minimum 8 caractères",
+        'manual_password_confirmation' => "Répétez le mot de passe",
         'phone' => "+33 6 12 34 56 78",
         'job_title' => "Responsable commercial",
         'department' => "Commercial, Finance…",
@@ -198,6 +211,8 @@ return [
 
     'messages' => [
         'invited_to' => "Invitation envoyée à :email.",
+        'member_created_to' => "Membre :email créé et activé.",
+        'manual_creation_replaced_invitation' => "Invitation remplacée par une création manuelle du membre.",
         'updated' => "Membre mis à jour avec succès.",
         'deleted' => "Membre supprimé avec succès.",
         'suspended' => "Membre suspendu.",
@@ -217,6 +232,7 @@ return [
         'role_updated_toast' => "Membre mis à jour !",
         'role_updated_toast_subtitle' => "Les modifications ont été enregistrées.",
         'invitation_sent_toast' => "Invitation envoyée !",
+        'member_created_toast' => "Membre créé !",
         'welcome' => "Bienvenue",
         'resend_success' => "Renvoyée !",
         'revoke_success' => "Révoquée",
@@ -267,6 +283,9 @@ return [
         'email_unique' => "Cet email est déjà utilisé.",
         'invite_email_required' => "L'adresse email est requise.",
         'invite_email_invalid' => "Veuillez saisir un email valide.",
+        'password_required' => "Le mot de passe est requis.",
+        'password_min' => "Le mot de passe doit contenir au moins 8 caractères.",
+        'password_confirmed' => "La confirmation du mot de passe ne correspond pas.",
         'role_required' => "Le rôle est requis.",
         'role_invalid' => "Le rôle sélectionné est invalide.",
         'role_not_found' => "Le rôle sélectionné est introuvable.",

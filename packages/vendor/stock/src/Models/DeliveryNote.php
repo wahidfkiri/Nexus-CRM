@@ -4,6 +4,7 @@ namespace Vendor\Stock\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Lang;
 use Vendor\Client\Models\Client;
 use Vendor\CrmCore\Traits\MultiTenantTrait;
 use Vendor\Invoice\Models\Invoice;
@@ -74,17 +75,16 @@ class DeliveryNote extends Model
 
     public function getTypeLabelAttribute(): string
     {
-        return $this->type === 'in' ? 'BL entrée' : 'BL sortie';
+        $key = 'stock::stock.labels.delivery_note_types.' . $this->type;
+
+        return Lang::has($key) ? trans($key) : ucfirst((string) $this->type);
     }
 
     public function getStatusLabelAttribute(): string
     {
-        return match ($this->status) {
-            'draft' => 'Brouillon',
-            'validated' => 'Validé',
-            'cancelled' => 'Annulé',
-            default => ucfirst((string) $this->status),
-        };
+        $key = 'stock::stock.labels.delivery_note_statuses.' . $this->status;
+
+        return Lang::has($key) ? trans($key) : ucfirst((string) $this->status);
     }
 
     public function scopeSearch($query, ?string $term)

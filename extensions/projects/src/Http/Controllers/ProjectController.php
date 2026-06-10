@@ -1536,7 +1536,7 @@ class ProjectController extends Controller
             return;
         }
 
-        if (auth()->user()->can($permission)) {
+        if ($this->userHasPermission($permission)) {
             return;
         }
 
@@ -1550,12 +1550,28 @@ class ProjectController extends Controller
     private function hasAnyPermission(array $permissions): bool
     {
         foreach ($permissions as $permission) {
-            if (auth()->user()->can($permission)) {
+            if ($this->userHasPermission($permission)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private function userHasPermission(string $permission): bool
+    {
+        $user = auth()->user();
+        $tenantId = (int) ($user->tenant_id ?? 0);
+
+        if (method_exists($user, 'hasTenantPermission')) {
+            try {
+                return $user->hasTenantPermission($permission, $tenantId);
+            } catch (\Throwable) {
+                return false;
+            }
+        }
+
+        return $user->can($permission);
     }
 
     private function isTenantAdmin(): bool

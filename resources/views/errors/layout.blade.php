@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('vendor/client/css/crm.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/invoice/css/invoice.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/global-font.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/stock/css/stock.css') }}">
     @yield('head')
     <style>

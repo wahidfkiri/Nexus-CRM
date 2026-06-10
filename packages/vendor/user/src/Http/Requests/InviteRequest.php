@@ -40,6 +40,7 @@ class InviteRequest extends FormRequest
         }
 
         $this->merge([
+            'name' => trim((string) $this->input('name')),
             'email' => $email,
             'role_id' => $roleId,
         ]);
@@ -50,7 +51,9 @@ class InviteRequest extends FormRequest
         $allowedRoles = array_keys(array_diff_key(config('user.tenant_roles', []), ['owner' => '']));
 
         return [
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email:rfc,dns', 'max:255'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role_id' => [
                 'nullable',
                 'integer',
@@ -121,8 +124,12 @@ class InviteRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'name.required' => __('user::users.validation.name_required'),
             'email.required' => __('user::users.validation.invite_email_required'),
             'email.email' => __('user::users.validation.invite_email_invalid'),
+            'password.required' => __('user::users.validation.password_required'),
+            'password.min' => __('user::users.validation.password_min'),
+            'password.confirmed' => __('user::users.validation.password_confirmed'),
             'role_in_tenant.required_without' => __('user::users.validation.role_required'),
             'role_in_tenant.in' => __('user::users.validation.role_invalid'),
             'role_id.exists' => __('user::users.validation.role_not_found'),

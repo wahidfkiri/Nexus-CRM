@@ -21,6 +21,7 @@
       'createFirstRole' => __('rbac::rbac.labels.create_first_role'),
       'newRole' => __('rbac::rbac.buttons.new_role'),
       'system' => __('rbac::rbac.badges.system'),
+      'defaultRole' => __('rbac::rbac.badges.default'),
       'custom' => __('rbac::rbac.badges.custom'),
       'inactive' => __('rbac::rbac.labels.inactive'),
       'view' => __('rbac::rbac.buttons.view'),
@@ -213,9 +214,13 @@ class RolesTable {
     const color = role.color || '#64748b';
     const label = this._esc(role.label || role.name);
     const isSystem = role.is_system;
+    const isDefaultRole = !!role.is_default_role;
+    const isDeletable = role.is_deletable !== false && !isSystem && !isDefaultRole;
     const typeBadge = isSystem
       ? `<span style="background:#f3e8ff;color:#7c3aed;border:1px solid #e9d5ff;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;"><i class="fas fa-lock" style="font-size:10px;margin-right:4px;"></i>${window.RBAC_I18N.system}</span>`
-      : `<span style="background:var(--c-accent-lt);color:var(--c-accent);border:1px solid var(--c-accent-lt);padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;"><i class="fas fa-pen" style="font-size:10px;margin-right:4px;"></i>${window.RBAC_I18N.custom}</span>`;
+      : (isDefaultRole
+        ? `<span style="background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;"><i class="fas fa-shield" style="font-size:10px;margin-right:4px;"></i>${window.RBAC_I18N.defaultRole}</span>`
+        : `<span style="background:var(--c-accent-lt);color:var(--c-accent);border:1px solid var(--c-accent-lt);padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;"><i class="fas fa-pen" style="font-size:10px;margin-right:4px;"></i>${window.RBAC_I18N.custom}</span>`);
 
     return `
       <tr data-id="${role.id}">
@@ -229,7 +234,7 @@ class RolesTable {
                 ${label}
                 ${!role.is_active ? `<span style="font-size:10px;background:var(--c-danger-lt);color:var(--c-danger);padding:2px 7px;border-radius:99px;margin-left:6px;">${window.RBAC_I18N.inactive}</span>` : ''}
               </div>
-              <div style="font-size:11.5px;color:var(--c-ink-40);font-family:monospace;">${this._esc(role.name)}</div>
+              <div style="font-size:11.5px;color:var(--c-ink-40);font-family:'DM Sans', sans-serif;">${this._esc(role.name)}</div>
             </div>
           </div>
         </td>
@@ -252,7 +257,7 @@ class RolesTable {
             <a href="/rbac/roles/${role.id}" class="btn-icon" title="${window.RBAC_I18N.view}"><i class="fas fa-eye"></i></a>
             ${!isSystem ? `
               <a href="/rbac/roles/${role.id}/edit" class="btn-icon" title="${window.RBAC_I18N.edit}"><i class="fas fa-pen"></i></a>
-              <button class="btn-icon danger" onclick="RolesTable.deleteRole(${role.id}, '${label.replace(/'/g, '&#39;')}')" title="${window.RBAC_I18N.deleteButton}"><i class="fas fa-trash"></i></button>
+              ${isDeletable ? `<button class="btn-icon danger" onclick="RolesTable.deleteRole(${role.id}, '${label.replace(/'/g, '&#39;')}')" title="${window.RBAC_I18N.deleteButton}"><i class="fas fa-trash"></i></button>` : `<span style="padding:0 4px;color:var(--c-ink-20);font-size:12px;"><i class="fas fa-shield"></i></span>`}
             ` : `<span style="padding:0 4px;color:var(--c-ink-20);font-size:12px;"><i class="fas fa-lock"></i></span>`}
           </div>
         </td>
@@ -310,8 +315,13 @@ class RolesTable {
         const { ok, data } = await Http.delete(`/rbac/roles/${id}`);
         if (ok) {
           Toast.success(window.RBAC_I18N.deleted, data.message);
-          window._rolesTable?.load();
-          window._rolesTable?.loadStats();
+          document.querySelector(`#rolesTableBody tr[data-id="${id}"]`)?.remove();
+          const visibleRows = document.querySelectorAll('#rolesTableBody tr[data-id]').length;
+          if (!visibleRows && window._rolesTable?.state?.page > 1) {
+            window._rolesTable.state.page -= 1;
+          }
+          await window._rolesTable?.load();
+          await window._rolesTable?.loadStats();
         } else {
           Toast.error(window.RBAC_I18N.error, data.message);
         }

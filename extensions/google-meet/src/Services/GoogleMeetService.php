@@ -723,7 +723,7 @@ class GoogleMeetService
             ],
             [
                 'ical_uid' => $event->getICalUID(),
-                'summary' => (string) ($event->getSummary() ?? '(Sans titre)'),
+                'summary' => (string) ($event->getSummary() ?? __('google-meet::messages.common.no_title')),
                 'description' => $event->getDescription(),
                 'location' => $event->getLocation(),
                 'status' => $event->getStatus(),

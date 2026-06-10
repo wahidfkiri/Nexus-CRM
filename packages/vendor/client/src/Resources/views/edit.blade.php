@@ -1,4 +1,4 @@
-﻿@extends('client::layouts.crm')
+@extends('client::layouts.crm')
 
 @section('title', __('client::clients.pages.edit.title') . ' — ' . $client->company_name)
 
@@ -70,8 +70,8 @@
 @push('scripts')
 <script>
 window.CLIENT_LANG = Object.assign(window.CLIENT_LANG || {}, {
-  updatedTitle: @json('Client mis à jour !'),
-  updatedMessage: @json('Les modifications ont été enregistrées.'),
+  updatedTitle: @json(__('client::clients.messages.updated_title')),
+  updatedMessage: @json(__('client::clients.messages.updated_help')),
 });
 
 ajaxForm('clientForm', {

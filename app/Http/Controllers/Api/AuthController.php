@@ -412,7 +412,7 @@ class AuthController extends Controller
         try {
             $user = User::findOrFail($id);
 
-            if (!$request->user()->hasRole('super_admin')) {
+            if (!$request->user()->hasAnyRole(['super_admin', 'super-admin'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour désactiver un compte',
@@ -455,7 +455,7 @@ class AuthController extends Controller
         try {
             $user = User::findOrFail($id);
 
-            if (!$request->user()->hasRole('super_admin')) {
+            if (!$request->user()->hasAnyRole(['super_admin', 'super-admin'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Vous n\'avez pas les droits pour activer un compte',

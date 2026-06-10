@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -16,7 +16,7 @@
     @endphp
     <style>
         * { box-sizing: border-box; }
-        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 10pt; color: {{ $palette['text'] }}; margin: 0; }
+        body { font-family: "DM Sans", sans-serif; font-size: 10pt; color: {{ $palette['text'] }}; margin: 0; }
         /* Extra bottom padding so fixed footer never overlaps content */
         .wrap { padding: 34px 36px 120px; }
 
@@ -88,7 +88,7 @@
 </head>
 <body>
 @if(in_array($status, ['draft', 'cancelled']))
-    <div class="watermark">{{ strtoupper($status === 'draft' ? 'Brouillon' : 'Annulée') }}</div>
+    <div class="watermark">{{ mb_strtoupper($status === 'draft' ? __('invoice::invoices.status.draft') : __('invoice::invoices.status.cancelled')) }}</div>
 @endif
 
 <div class="wrap">
@@ -108,7 +108,7 @@
                     </div>
                 </td>
                 <td class="doc-title" style="width:42%;">
-                    <div class="kicker">Facture</div>
+                    <div class="kicker">{{ __('invoice::invoices.common.invoice') }}</div>
                     <div class="big">{{ $invoice->number }}</div>
                     @if($invoice->reference)<div class="ref">Référence : {{ $invoice->reference }}</div>@endif
                     <span class="status-pill status-{{ $status }}">{{ $invoice->status_label ?? $status }}</span>
@@ -120,19 +120,19 @@
     <table class="meta-grid table-layout">
         <tr>
             <td>
-                <div class="meta-label">Date d'émission</div>
+                <div class="meta-label">{{ __('invoice::invoices.fields.issue_date') }}</div>
                 <div class="meta-val">{{ optional($invoice->issue_date)->format('d/m/Y') }}</div>
             </td>
             <td>
-                <div class="meta-label">Échéance</div>
+                <div class="meta-label">{{ __('invoice::invoices.fields.due_date') }}</div>
                 <div class="meta-val">{{ optional($invoice->due_date)->format('d/m/Y') ?: '-' }}</div>
             </td>
             <td>
-                <div class="meta-label">Devise</div>
+                <div class="meta-label">{{ __('invoice::invoices.fields.currency') }}</div>
                 <div class="meta-val">{{ $invoice->currency ?? 'EUR' }} {{ $invoice->currency_symbol ?? '' }}</div>
             </td>
             <td>
-                <div class="meta-label">Mode de paiement</div>
+                <div class="meta-label">{{ __('invoice::invoices.fields.payment_method') }}</div>
                 <div class="meta-val">{{ $invoice->payment_method ? (config("invoice.payment_methods.{$invoice->payment_method}") ?? $invoice->payment_method) : '-' }}</div>
             </td>
         </tr>
@@ -141,7 +141,7 @@
     <table class="addr-card">
         <tr>
             <td>
-                <div class="addr-title">Émetteur</div>
+                <div class="addr-title">{{ __('invoice::invoices.common.issuer') }}</div>
                 <div class="addr-name">{{ $invoice->tenant->name ?? config('app.name') }}</div>
                 <div class="addr-lines">
                     {{ $invoice->tenant->address ?? '' }}<br>
@@ -149,7 +149,7 @@
                 </div>
             </td>
             <td>
-                <div class="addr-title">Facturé à</div>
+                <div class="addr-title">{{ __('invoice::invoices.common.billed_to') }}</div>
                 <div class="addr-name">{{ $invoice->client->company_name ?? '-' }}</div>
                 <div class="addr-lines">
                     {{ $invoice->client->contact_name ?? '' }}<br>
@@ -166,13 +166,13 @@
         <thead>
             <tr>
                 <th style="width:28px;">#</th>
-                <th>Description</th>
-                <th style="width:70px;" class="right">Qte</th>
-                <th style="width:58px;">Unité</th>
-                <th style="width:92px;" class="right">PU HT</th>
-                <th style="width:70px;" class="right">Remise</th>
-                <th style="width:56px;" class="right">TVA</th>
-                <th style="width:100px;" class="right">Total</th>
+                <th>{{ __('invoice::invoices.fields.description') }}</th>
+                <th style="width:70px;" class="right">{{ __('invoice::invoices.common.line_quantity') }}</th>
+                <th style="width:58px;">{{ __('invoice::invoices.fields.unit') }}</th>
+                <th style="width:92px;" class="right">{{ __('invoice::invoices.common.line_unit_price_ht') }}</th>
+                <th style="width:70px;" class="right">{{ __('invoice::invoices.fields.discount') }}</th>
+                <th style="width:56px;" class="right">{{ __('invoice::invoices.common.vat') }}</th>
+                <th style="width:100px;" class="right">{{ __('invoice::invoices.common.total') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -196,46 +196,46 @@
 
     <table class="totals">
         <tr>
-            <td class="label">Sous-total HT</td>
+            <td class="label">{{ __('invoice::invoices.common.subtotal_ht') }}</td>
             <td class="right"><strong>{{ number_format((float) $invoice->subtotal, 2, ',', ' ') }} {{ $invoice->currency_symbol }}</strong></td>
         </tr>
         @if((float) $invoice->discount_amount > 0)
             <tr>
-                <td class="label">Remise</td>
+                <td class="label">{{ __('invoice::invoices.fields.discount') }}</td>
                 <td class="right">-{{ number_format((float) $invoice->discount_amount, 2, ',', ' ') }} {{ $invoice->currency_symbol }}</td>
             </tr>
         @endif
         <tr>
-            <td class="label">TVA</td>
+            <td class="label">{{ __('invoice::invoices.common.vat') }}</td>
             <td class="right">{{ number_format((float) $invoice->tax_amount, 2, ',', ' ') }} {{ $invoice->currency_symbol }}</td>
         </tr>
         @if((float) $invoice->withholding_tax_rate > 0)
             <tr>
-                <td class="label">Retenue à la source</td>
+                <td class="label">{{ __('invoice::invoices.withholding.label') }}</td>
                 <td class="right">-{{ number_format((float) $invoice->withholding_tax_amount, 2, ',', ' ') }} {{ $invoice->currency_symbol }}</td>
             </tr>
         @endif
         @if((float) $invoice->amount_paid > 0)
             <tr>
-                <td class="label">Montant payé</td>
+                <td class="label">{{ __('invoice::invoices.fields.amount_paid') }}</td>
                 <td class="right">{{ number_format((float) $invoice->amount_paid, 2, ',', ' ') }} {{ $invoice->currency_symbol }}</td>
             </tr>
         @endif
         @if((float) $invoice->amount_due > 0)
             <tr>
-                <td class="label">Reste à payer</td>
+                <td class="label">{{ __('invoice::invoices.fields.amount_due') }}</td>
                 <td class="right">{{ number_format((float) $invoice->amount_due, 2, ',', ' ') }} {{ $invoice->currency_symbol }}</td>
             </tr>
         @endif
         <tr class="grand">
-            <td>Total TTC</td>
+            <td>{{ __('invoice::invoices.common.total_ttc') }}</td>
             <td class="right">{{ number_format((float) $invoice->total, 2, ',', ' ') }} {{ $invoice->currency_symbol }}</td>
         </tr>
     </table>
 
     @if(!empty($invoice->notes))
         <div class="info-box">
-            <div class="info-title">Notes</div>
+            <div class="info-title">{{ __('invoice::invoices.fields.notes') }}</div>
             <div class="info-body">{{ $invoice->notes }}</div>
         </div>
     @endif
@@ -249,7 +249,7 @@
 
     @if(($signature['enabled'] ?? false) && ($signature['show_on_invoice'] ?? false) && !empty($signature['data']))
         <div class="signature">
-            <div class="muted" style="font-size:8pt;margin-bottom:4px;">Signature</div>
+            <div class="muted" style="font-size:8pt;margin-bottom:4px;">{{ __('invoice::invoices.common.signature') }}</div>
             <img src="{{ $signature['data'] }}" alt="Signature">
             @if(!empty($signature['name']))<div style="font-size:9pt;font-weight:bold;">{{ $signature['name'] }}</div>@endif
             @if(!empty($signature['title']))<div class="muted" style="font-size:8pt;">{{ $signature['title'] }}</div>@endif

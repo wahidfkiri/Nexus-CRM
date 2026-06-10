@@ -5,74 +5,72 @@ use Vendor\Stock\Http\Controllers\DeliveryNoteController;
 use Vendor\Stock\Http\Controllers\StockController;
 use Vendor\Stock\Http\Controllers\StockMovementController;
 
-Route::middleware(['web', 'auth', 'tenant', 'extension.active:stock'])->prefix('stock')->name('stock.')->group(function () {
-    Route::get('/', fn () => redirect()->route('stock.articles.index'));
+Route::middleware(['web', 'auth', 'tenant', 'extension.active:stock'])
+    ->prefix('stock')
+    ->name('stock.')
+    ->group(function () {
+        Route::get('/', fn () => redirect()->route('stock.articles.index'))->middleware('tenant.permission:stock.read');
+        Route::get('/data/stats', [StockController::class, 'stats'])->middleware('tenant.permission:stock.read')->name('stats');
 
-    Route::prefix('articles')->name('articles.')->group(function () {
-        Route::get('/', [StockController::class, 'articlesIndex'])->name('index');
-        Route::get('/create', [StockController::class, 'articlesCreate'])->name('create');
-        Route::post('/', [StockController::class, 'articlesStore'])->name('store');
-        Route::get('/{article}', [StockController::class, 'articlesShow'])->whereNumber('article')->name('show');
-        Route::get('/{article}/edit', [StockController::class, 'articlesEdit'])->whereNumber('article')->name('edit');
-        Route::put('/{article}', [StockController::class, 'articlesUpdate'])->whereNumber('article')->name('update');
-        Route::delete('/{article}', [StockController::class, 'articlesDestroy'])->whereNumber('article')->name('destroy');
+        Route::prefix('articles')->name('articles.')->group(function () {
+            Route::get('/', [StockController::class, 'articlesIndex'])->middleware('tenant.permission:stock.read')->name('index');
+            Route::get('/create', [StockController::class, 'articlesCreate'])->middleware('tenant.permission:stock.create')->name('create');
+            Route::post('/', [StockController::class, 'articlesStore'])->middleware('tenant.permission:stock.create')->name('store');
+            Route::get('/data/table', [StockController::class, 'articlesData'])->middleware('tenant.permission:stock.read')->name('data');
+            Route::get('/data/search', [StockController::class, 'articlesSearch'])->middleware('tenant.permission:stock.read')->name('search');
+            Route::get('/export/excel', [StockController::class, 'articlesExportExcel'])->middleware('tenant.permission:stock.export')->name('export.excel');
+            Route::post('/import', [StockController::class, 'articlesImport'])->middleware('tenant.permission:stock.import')->name('import');
+            Route::get('/{article}', [StockController::class, 'articlesShow'])->middleware('tenant.permission:stock.read')->whereNumber('article')->name('show');
+            Route::get('/{article}/edit', [StockController::class, 'articlesEdit'])->middleware('tenant.permission:stock.update')->whereNumber('article')->name('edit');
+            Route::put('/{article}', [StockController::class, 'articlesUpdate'])->middleware('tenant.permission:stock.update')->whereNumber('article')->name('update');
+            Route::delete('/{article}', [StockController::class, 'articlesDestroy'])->middleware('tenant.permission:stock.delete')->whereNumber('article')->name('destroy');
+        });
 
-        Route::get('/data/table', [StockController::class, 'articlesData'])->name('data');
-        Route::get('/data/search', [StockController::class, 'articlesSearch'])->name('search');
-        Route::get('/export/excel', [StockController::class, 'articlesExportExcel'])->name('export.excel');
-        Route::post('/import', [StockController::class, 'articlesImport'])->name('import');
+        Route::prefix('suppliers')->name('suppliers.')->group(function () {
+            Route::get('/', [StockController::class, 'suppliersIndex'])->middleware('tenant.permission:suppliers.read')->name('index');
+            Route::get('/create', [StockController::class, 'suppliersCreate'])->middleware('tenant.permission:suppliers.create')->name('create');
+            Route::post('/', [StockController::class, 'suppliersStore'])->middleware('tenant.permission:suppliers.create')->name('store');
+            Route::get('/data/table', [StockController::class, 'suppliersData'])->middleware('tenant.permission:suppliers.read')->name('data');
+            Route::get('/export/excel', [StockController::class, 'suppliersExportExcel'])->middleware('tenant.permission:suppliers.export')->name('export.excel');
+            Route::get('/{supplier}', [StockController::class, 'suppliersShow'])->middleware('tenant.permission:suppliers.read')->whereNumber('supplier')->name('show');
+            Route::get('/{supplier}/edit', [StockController::class, 'suppliersEdit'])->middleware('tenant.permission:suppliers.update')->whereNumber('supplier')->name('edit');
+            Route::put('/{supplier}', [StockController::class, 'suppliersUpdate'])->middleware('tenant.permission:suppliers.update')->whereNumber('supplier')->name('update');
+            Route::delete('/{supplier}', [StockController::class, 'suppliersDestroy'])->middleware('tenant.permission:suppliers.delete')->whereNumber('supplier')->name('destroy');
+        });
+
+        Route::prefix('orders')->name('orders.')->group(function () {
+            Route::get('/', [StockController::class, 'ordersIndex'])->middleware('tenant.permission:orders.read')->name('index');
+            Route::get('/create', [StockController::class, 'ordersCreate'])->middleware('tenant.permission:orders.create')->name('create');
+            Route::post('/', [StockController::class, 'ordersStore'])->middleware('tenant.permission:orders.create')->name('store');
+            Route::get('/data/table', [StockController::class, 'ordersData'])->middleware('tenant.permission:orders.read')->name('data');
+            Route::get('/data/search', [StockController::class, 'ordersSearch'])->middleware('tenant.permission:orders.read')->name('search');
+            Route::get('/data/{order}', [StockController::class, 'ordersDetail'])->middleware('tenant.permission:orders.read')->whereNumber('order')->name('detail');
+            Route::get('/export/excel', [StockController::class, 'ordersExportExcel'])->middleware('tenant.permission:orders.export')->name('export.excel');
+            Route::get('/{order}', [StockController::class, 'ordersShow'])->middleware('tenant.permission:orders.read')->whereNumber('order')->name('show');
+            Route::get('/{order}/edit', [StockController::class, 'ordersEdit'])->middleware('tenant.permission:orders.update')->whereNumber('order')->name('edit');
+            Route::put('/{order}', [StockController::class, 'ordersUpdate'])->middleware('tenant.permission:orders.update')->whereNumber('order')->name('update');
+            Route::delete('/{order}', [StockController::class, 'ordersDestroy'])->middleware('tenant.permission:orders.delete')->whereNumber('order')->name('destroy');
+            Route::post('/{order}/receive', [StockController::class, 'ordersReceive'])->middleware('tenant.permission:orders.receive')->whereNumber('order')->name('receive');
+        });
+
+        Route::prefix('delivery-notes')->name('delivery-notes.')->group(function () {
+            Route::get('/', [DeliveryNoteController::class, 'index'])->middleware('tenant.permission:delivery-notes.read')->name('index');
+            Route::get('/create', [DeliveryNoteController::class, 'create'])->middleware('tenant.permission:delivery-notes.create')->name('create');
+            Route::post('/', [DeliveryNoteController::class, 'store'])->middleware('tenant.permission:delivery-notes.create')->name('store');
+            Route::get('/data/table', [DeliveryNoteController::class, 'data'])->middleware('tenant.permission:delivery-notes.read')->name('data');
+            Route::get('/export/excel', [DeliveryNoteController::class, 'exportExcel'])->middleware('tenant.permission:delivery-notes.export')->name('export.excel');
+            Route::get('/{deliveryNote}', [DeliveryNoteController::class, 'show'])->middleware('tenant.permission:delivery-notes.read')->whereNumber('deliveryNote')->name('show');
+            Route::get('/{deliveryNote}/edit', [DeliveryNoteController::class, 'edit'])->middleware('tenant.permission:delivery-notes.update')->whereNumber('deliveryNote')->name('edit');
+            Route::put('/{deliveryNote}', [DeliveryNoteController::class, 'update'])->middleware('tenant.permission:delivery-notes.update')->whereNumber('deliveryNote')->name('update');
+            Route::delete('/{deliveryNote}', [DeliveryNoteController::class, 'destroy'])->middleware('tenant.permission:delivery-notes.delete')->whereNumber('deliveryNote')->name('destroy');
+            Route::post('/{deliveryNote}/validate', [DeliveryNoteController::class, 'validateNote'])->middleware('tenant.permission:delivery-notes.manage')->whereNumber('deliveryNote')->name('validate');
+            Route::post('/{deliveryNote}/cancel', [DeliveryNoteController::class, 'cancel'])->middleware('tenant.permission:delivery-notes.manage')->whereNumber('deliveryNote')->name('cancel');
+            Route::get('/{deliveryNote}/pdf', [DeliveryNoteController::class, 'downloadPdf'])->middleware('tenant.permission:delivery-notes.export')->whereNumber('deliveryNote')->name('pdf');
+        });
+
+        Route::prefix('movements')->name('movements.')->group(function () {
+            Route::get('/', [StockMovementController::class, 'index'])->middleware('tenant.permission:stock-movements.read')->name('index');
+            Route::get('/data/table', [StockMovementController::class, 'data'])->middleware('tenant.permission:stock-movements.read')->name('data');
+            Route::get('/export/excel', [StockMovementController::class, 'exportExcel'])->middleware('tenant.permission:stock-movements.export')->name('export.excel');
+        });
     });
-
-    Route::prefix('suppliers')->name('suppliers.')->group(function () {
-        Route::get('/', [StockController::class, 'suppliersIndex'])->name('index');
-        Route::get('/create', [StockController::class, 'suppliersCreate'])->name('create');
-        Route::post('/', [StockController::class, 'suppliersStore'])->name('store');
-        Route::get('/{supplier}', [StockController::class, 'suppliersShow'])->whereNumber('supplier')->name('show');
-        Route::get('/{supplier}/edit', [StockController::class, 'suppliersEdit'])->whereNumber('supplier')->name('edit');
-        Route::put('/{supplier}', [StockController::class, 'suppliersUpdate'])->whereNumber('supplier')->name('update');
-        Route::delete('/{supplier}', [StockController::class, 'suppliersDestroy'])->whereNumber('supplier')->name('destroy');
-
-        Route::get('/data/table', [StockController::class, 'suppliersData'])->name('data');
-        Route::get('/export/excel', [StockController::class, 'suppliersExportExcel'])->name('export.excel');
-    });
-
-    Route::prefix('orders')->name('orders.')->group(function () {
-        Route::get('/', [StockController::class, 'ordersIndex'])->name('index');
-        Route::get('/create', [StockController::class, 'ordersCreate'])->name('create');
-        Route::post('/', [StockController::class, 'ordersStore'])->name('store');
-        Route::get('/{order}', [StockController::class, 'ordersShow'])->whereNumber('order')->name('show');
-        Route::get('/{order}/edit', [StockController::class, 'ordersEdit'])->whereNumber('order')->name('edit');
-        Route::put('/{order}', [StockController::class, 'ordersUpdate'])->whereNumber('order')->name('update');
-        Route::delete('/{order}', [StockController::class, 'ordersDestroy'])->whereNumber('order')->name('destroy');
-
-        Route::get('/data/table', [StockController::class, 'ordersData'])->name('data');
-        Route::get('/data/search', [StockController::class, 'ordersSearch'])->name('search');
-        Route::get('/data/{order}', [StockController::class, 'ordersDetail'])->whereNumber('order')->name('detail');
-        Route::post('/{order}/receive', [StockController::class, 'ordersReceive'])->whereNumber('order')->name('receive');
-        Route::get('/export/excel', [StockController::class, 'ordersExportExcel'])->name('export.excel');
-    });
-
-    Route::prefix('delivery-notes')->name('delivery-notes.')->group(function () {
-        Route::get('/', [DeliveryNoteController::class, 'index'])->name('index');
-        Route::get('/create', [DeliveryNoteController::class, 'create'])->name('create');
-        Route::post('/', [DeliveryNoteController::class, 'store'])->name('store');
-        Route::get('/{deliveryNote}', [DeliveryNoteController::class, 'show'])->whereNumber('deliveryNote')->name('show');
-        Route::get('/{deliveryNote}/edit', [DeliveryNoteController::class, 'edit'])->whereNumber('deliveryNote')->name('edit');
-        Route::put('/{deliveryNote}', [DeliveryNoteController::class, 'update'])->whereNumber('deliveryNote')->name('update');
-        Route::delete('/{deliveryNote}', [DeliveryNoteController::class, 'destroy'])->whereNumber('deliveryNote')->name('destroy');
-
-        Route::get('/data/table', [DeliveryNoteController::class, 'data'])->name('data');
-        Route::post('/{deliveryNote}/validate', [DeliveryNoteController::class, 'validateNote'])->whereNumber('deliveryNote')->name('validate');
-        Route::post('/{deliveryNote}/cancel', [DeliveryNoteController::class, 'cancel'])->whereNumber('deliveryNote')->name('cancel');
-        Route::get('/{deliveryNote}/pdf', [DeliveryNoteController::class, 'downloadPdf'])->whereNumber('deliveryNote')->name('pdf');
-        Route::get('/export/excel', [DeliveryNoteController::class, 'exportExcel'])->name('export.excel');
-    });
-
-    Route::prefix('movements')->name('movements.')->group(function () {
-        Route::get('/', [StockMovementController::class, 'index'])->name('index');
-        Route::get('/data/table', [StockMovementController::class, 'data'])->name('data');
-        Route::get('/export/excel', [StockMovementController::class, 'exportExcel'])->name('export.excel');
-    });
-
-    Route::get('/data/stats', [StockController::class, 'stats'])->name('stats');
-});

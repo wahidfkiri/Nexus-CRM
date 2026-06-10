@@ -131,8 +131,8 @@
       @endforeach
     </select>
 
-    <input type="date" class="filter-select" data-filter="date_from" style="width:140px" title="Du">
-    <input type="date" class="filter-select" data-filter="date_to"   style="width:140px" title="Au">
+    <input type="date" class="filter-select" data-filter="date_from" style="width:140px" title="{{ $common['from'] }}">
+    <input type="date" class="filter-select" data-filter="date_to"   style="width:140px" title="{{ $common['to'] }}">
 
     <button class="btn btn-ghost btn-sm" id="resetFilters" title="{{ $common['reset'] }}">
       <i class="fas fa-rotate-left"></i>
@@ -147,7 +147,7 @@
         <i class="fas fa-paper-plane"></i> {{ $page['mark_sent'] }}
       </button>
       <button class="btn btn-sm btn-danger" onclick="bulkInvoiceAction('delete')">
-        <i class="fas fa-trash"></i> Supprimer
+        <i class="fas fa-trash"></i> {{ __('invoice::invoices.actions.delete') }}
       </button>
     </div>
   </div>
@@ -157,13 +157,13 @@
       <tr>
         <th style="width:40px"><input type="checkbox" id="selectAll"></th>
         <th data-sort="number" class="sortable">{{ $page['number_column'] }} <i class="fas fa-sort" style="font-size:10px;opacity:.4"></i></th>
-        <th data-sort="client_id" class="sortable">Client</th>
+        <th data-sort="client_id" class="sortable">{{ __('invoice::invoices.fields.client') }}</th>
         <th data-sort="issue_date" class="sortable">{{ $page['issue_column'] }}</th>
         <th data-sort="due_date" class="sortable">{{ $page['due_column'] }}</th>
         <th>{{ __('invoice::invoices.fields.currency') }}</th>
         <th data-sort="total" class="sortable" style="text-align:right">{{ $common['total_ttc'] }}</th>
         <th data-sort="amount_due" class="sortable" style="text-align:right">{{ $page['remaining_column'] }}</th>
-        <th>Statut</th>
+        <th>{{ __('invoice::invoices.fields.status') }}</th>
         <th style="text-align:right;padding-right:20px">{{ $common['actions_label'] }}</th>
       </tr>
     </thead>
@@ -201,7 +201,7 @@
                onclick="document.getElementById('importFile').click()">
             <i class="fas fa-cloud-arrow-up" style="font-size:28px;color:var(--c-ink-20);margin-bottom:10px;display:block;"></i>
             <div style="font-size:14px;color:var(--c-ink-60);margin-bottom:4px;">{{ $page['import_dropzone'] }}</div>
-            <div style="font-size:12px;color:var(--c-ink-40);" id="dropzoneText">CSV, XLSX jusqu'à 10 Mo</div>
+            <div style="font-size:12px;color:var(--c-ink-40);" id="dropzoneText">{{ __('invoice::invoices.js.import_dropzone_default') }}</div>
           </div>
           <input type="file" id="importFile" name="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleImportFile(this)">
         </div>
@@ -232,6 +232,7 @@ const invoiceIndexLang = {
   importErrorTitle: @json(__('invoice::invoices.js.import_error_title')),
   importFileSelected: @json(__('invoice::invoices.js.import_dropzone_selected')),
   deleteLabel: @json(__('invoice::invoices.actions.delete')),
+  bulkDeleteTitle: @json(__('invoice::invoices.js.bulk_invoice_delete_title')),
 };
 
 window.CRM_ROUTES = {
@@ -257,7 +258,7 @@ function bulkInvoiceAction(action) {
   if (!ids?.length) return;
   if (action === 'delete') {
     Modal.confirm({
-      title: `Supprimer ${ids.length} facture(s) ?`,
+      title: invoiceIndexLang.bulkDeleteTitle.replace(':count', ids.length),
       message: invoiceIndexLang.irreversibleAction,
       confirmText: invoiceIndexLang.deleteLabel,
       type: 'danger',

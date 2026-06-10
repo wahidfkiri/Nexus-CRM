@@ -33,7 +33,7 @@ return [
     ],
 
     'actions' => [
-        'invite'   => 'Inviter un membre',
+        'invite'   => 'Créer un membre',
         'edit'     => 'Modifier',
         'delete'   => 'Supprimer',
         'suspend'  => 'Suspendre',

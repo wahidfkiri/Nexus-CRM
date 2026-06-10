@@ -78,6 +78,9 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  window.StockLang = Object.assign(window.StockLang || {}, {
+    unitPiece: @json(__('stock::stock.common.unit_piece')),
+  });
   window.StockArticleOptionsHtml = @json($articleOptionsHtml);
   Stock.bindAjaxForm('deliveryNoteForm');
   Stock.toggleDeliveryType(document.getElementById('deliveryTypeInput')?.value || 'in');

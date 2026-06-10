@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Vendor\Rbac\Services\TenantRoleService;
@@ -91,8 +92,12 @@ class RbacRepository
 
     public function deleteRole(Role $role): bool
     {
-        if ((bool) $role->is_system || (int) $role->tenant_id <= 0) {
+        if ((bool) $role->is_system || (int) $role->tenant_id <= 0 || in_array($role->name, config('rbac.system_roles', []), true)) {
             throw new \RuntimeException(__('rbac::rbac.errors.system_role_delete_forbidden'));
+        }
+
+        if (array_key_exists((string) $role->name, config('rbac.default_roles', []))) {
+            throw new \RuntimeException(__('rbac::rbac.errors.default_role_delete_forbidden'));
         }
 
         if (
@@ -122,6 +127,8 @@ class RbacRepository
 
     public function getAllPermissions(): Collection
     {
+        $this->tenantRoleService->ensureGlobalPermissions();
+
         return Permission::query()
             ->whereNull('tenant_id')
             ->orderBy('group')
@@ -145,12 +152,63 @@ class RbacRepository
             foreach (array_keys($groupDefinition['permissions']) as $permissionName) {
                 $permission = $permissions->firstWhere('name', $permissionName);
                 if ($permission) {
+                    $permission->setAttribute(
+                        'display_label',
+                        $this->resolvePermissionLabel($permission, $groupDefinition['permissions'][$permissionName] ?? null)
+                    );
+
                     $result[$groupKey]['permissions'][] = $permission;
                 }
             }
         }
 
         return $result;
+    }
+
+    private function resolvePermissionLabel(Permission $permission, ?string $configuredLabel = null): string
+    {
+        if (!empty($permission->label)) {
+            return (string) $permission->label;
+        }
+
+        if (!empty($configuredLabel)) {
+            return $configuredLabel;
+        }
+
+        return $this->humanizePermissionName((string) $permission->name);
+    }
+
+    private function humanizePermissionName(string $permissionName): string
+    {
+        $parts = explode('.', $permissionName);
+        $action = (string) array_pop($parts);
+        $resource = implode('.', $parts);
+
+        $actions = [
+            'read' => 'Voir',
+            'view' => 'Voir',
+            'create' => 'Créer',
+            'store' => 'Créer',
+            'update' => 'Modifier',
+            'edit' => 'Modifier',
+            'delete' => 'Supprimer',
+            'destroy' => 'Supprimer',
+            'manage' => 'Gérer',
+            'export' => 'Exporter',
+            'import' => 'Importer',
+            'send' => 'Envoyer',
+            'sync' => 'Synchroniser',
+            'approve' => 'Approuver',
+            'reject' => 'Refuser',
+            'restore' => 'Restaurer',
+            'download' => 'Télécharger',
+            'upload' => 'Téléverser',
+        ];
+
+        $actionLabel = $actions[$action] ?? Str::of($action)->replace(['-', '_'], ' ')->ucfirst()->toString();
+        $resourceLabel = Str::of($resource ?: $permissionName)->replace(['.', '-', '_'], ' ')->title()->toString();
+
+        return trim($actionLabel . ' - ' . $resourceLabel);
     }
 
     public function ensurePermissionsExist(): void
@@ -162,10 +220,14 @@ class RbacRepository
     {
         $tenantId = (int) Auth::user()->tenant_id;
         $roles = $this->getRolesForTenant($tenantId);
+        $defaultRoleNames = array_keys(config('rbac.default_roles', []));
 
         return [
             'total_roles' => $roles->count(),
-            'custom_roles' => $roles->where('is_system', false)->count(),
+            'custom_roles' => $roles
+                ->where('is_system', false)
+                ->reject(fn ($role) => in_array($role->name, $defaultRoleNames, true))
+                ->count(),
             'total_permissions' => Permission::query()->whereNull('tenant_id')->count(),
             'users_without_role' => User::query()
                 ->whereHas('tenantMemberships', fn ($query) => $query

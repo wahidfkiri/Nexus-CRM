@@ -5,29 +5,33 @@
 'use strict';
 
 const InvoiceLang = Object.assign({
-  successTitle: 'Succès',
-  errorTitle: 'Erreur',
-  warningTitle: 'Attention',
-  validationTitle: 'Validation',
-  loadError: 'Impossible de charger les données.',
-  emptyDefaultLabel: 'élément',
-  emptyHelp: 'Modifiez vos filtres ou créez votre premier document.',
-  paidLockTitle: 'Action désactivée : facture déjà payée.',
-  referencePrefix: 'Réf. :',
-  settledLabel: '✓ Soldée',
-  convertedBadge: '✓ Converti',
-  viewInvoiceTitle: 'Voir la facture',
-  paginationInfo: 'Affichage de :from à :to sur :total résultat(s)',
-  countLabel: ':total résultat(s)',
-  irreversibleAction: 'Cette action est irréversible.',
-  paymentRecalculation: 'La facture associée sera recalculée.',
-  lineDescriptionPlaceholder: 'Description du produit ou du service…',
-  optionalReferencePlaceholder: 'Référence (optionnel)',
-  unitPlaceholder: 'unité',
-  minOneLine: 'Au moins une ligne est requise.',
-  deleteConfirmText: 'Supprimer',
-  invoiceDeleteTitle: 'Supprimer la facture :number ?',
-  paymentDeleteTitle: 'Supprimer ce paiement ?',
+  successTitle: 'Success',
+  errorTitle: 'Error',
+  warningTitle: 'Warning',
+  validationTitle: 'Form',
+  loadError: 'Unable to load data.',
+  emptyDefaultLabel: 'item',
+  emptyInvoiceLabel: 'invoice',
+  emptyQuoteLabel: 'quote',
+  emptyPaymentLabel: 'payment',
+  emptyTitleTemplate: 'No :label found',
+  emptyHelp: '',
+  paidLockTitle: '',
+  referencePrefix: 'Ref.:',
+  settledLabel: 'Settled',
+  convertedBadge: 'Converted',
+  viewInvoiceTitle: 'View invoice',
+  paginationInfo: 'Showing :from to :to of :total result(s)',
+  countLabel: ':total result(s)',
+  irreversibleAction: '',
+  paymentRecalculation: '',
+  lineDescriptionPlaceholder: '',
+  optionalReferencePlaceholder: '',
+  unitPlaceholder: '',
+  minOneLine: '',
+  deleteConfirmText: 'Delete',
+  invoiceDeleteTitle: 'Delete invoice :number?',
+  paymentDeleteTitle: 'Delete this payment?',
 }, window.InvoiceLang || {});
 
 function invoiceLang(key, replacements = {}) {
@@ -199,12 +203,19 @@ class InvTable {
     if (!tbody) return;
 
     if (!rows.length) {
-      const labels = { invoice:'facture', quote:'devis', payment:'paiement' };
+      const labels = {
+        invoice: InvoiceLang.emptyInvoiceLabel,
+        quote: InvoiceLang.emptyQuoteLabel,
+        payment: InvoiceLang.emptyPaymentLabel,
+      };
+      const emptyTitle = invoiceLang('emptyTitleTemplate', {
+        label: labels[this.options.mode] || InvoiceLang.emptyDefaultLabel,
+      });
       tbody.innerHTML = `
         <tr><td colspan="${this.options.mode === 'payment' ? 8 : 10}">
           <div class="table-empty">
             <div class="table-empty-icon"><i class="fas fa-file-invoice"></i></div>
-            <h3>Aucun ${labels[this.options.mode] || InvoiceLang.emptyDefaultLabel} trouvé</h3>
+            <h3>${this._esc(emptyTitle)}</h3>
             <p>${InvoiceLang.emptyHelp}</p>
           </div>
         </td></tr>`;
@@ -286,6 +297,7 @@ class InvTable {
         <td>
           <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
             <a href="/invoices/quotes/${q.id}" class="btn-icon" title="Voir"><i class="fas fa-eye"></i></a>
+            ${q.status==='accepted'?`<a href="/invoices/quotes/${q.id}/pdf" target="_blank" class="btn-icon" title="PDF"><i class="fas fa-file-pdf"></i></a>`:''}
             ${!['accepted','declined'].includes(q.status)?`<a href="/invoices/quotes/${q.id}/edit" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>`:''}
             ${!q.is_converted&&q.status==='sent'?`<button class="btn btn-sm btn-success" onclick="convertQuote(${q.id},'${this._esc(q.number)}')" title="Convertir"><i class="fas fa-arrow-right"></i> FAC</button>`:''}
             <button class="btn-icon danger" onclick="deleteQuote(${q.id})" title="Supprimer"><i class="fas fa-trash"></i></button>

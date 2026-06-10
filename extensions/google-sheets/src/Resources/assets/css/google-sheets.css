@@ -36,7 +36,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
-  font-family: var(--ff-mono, monospace);
+  font-family: "DM Sans", sans-serif;
 }
 
 .gs-data-table th {
@@ -108,7 +108,7 @@
 }
 
 .gs-range-input {
-  font-family: var(--ff-mono, monospace);
+  font-family: "DM Sans", sans-serif;
   font-size: 13px;
   letter-spacing: .02em;
 }

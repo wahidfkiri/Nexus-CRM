@@ -192,7 +192,7 @@ class StockService
                 'name' => $item['name'],
                 'description' => $item['description'] ?? null,
                 'quantity' => $quantity,
-                'unit' => $item['unit'] ?? 'pièce',
+                'unit' => $item['unit'] ?? trans('stock::stock.common.unit_piece'),
                 'unit_price' => $unitPrice,
                 'total' => $quantity * $unitPrice,
             ]);

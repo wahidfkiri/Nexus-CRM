@@ -140,6 +140,88 @@ class UserService
         return $this->repository->update($user, ['avatar' => $filename]);
     }
 
+    public function createManualMember(array $data): User
+    {
+        return DB::transaction(function () use ($data) {
+            /** @var User $actor */
+            $actor = Auth::user();
+            $tenantId = (int) $actor->tenant_id;
+            $this->tenantRoleService->ensureTenantRoles($tenantId);
+
+            $email = mb_strtolower(trim((string) $data['email']));
+            $name = trim((string) $data['name']);
+            $role = $this->resolveRolePayload($data, $tenantId);
+
+            UserInvitation::query()
+                ->where('tenant_id', $tenantId)
+                ->where('pending_email_key', $email)
+                ->lockForUpdate()
+                ->get();
+
+            $existingUser = User::query()->whereRaw('LOWER(email) = ?', [$email])->first();
+
+            if ($existingUser && $existingUser->hasTenantAccess($tenantId)) {
+                throw new \RuntimeException(__('user::users.errors.member_email_exists'));
+            }
+
+            if ($existingUser) {
+                $user = $existingUser;
+                $user->forceFill([
+                    'status' => 'active',
+                    'is_active' => true,
+                    'email_verified_at' => $user->email_verified_at ?: now(),
+                ])->save();
+            } else {
+                $user = User::create([
+                    'name' => $name,
+                    'email' => $email,
+                    'password' => Hash::make((string) $data['password']),
+                    'tenant_id' => $tenantId,
+                    'role_in_tenant' => $role['role_name'],
+                    'is_tenant_owner' => false,
+                    'status' => 'active',
+                    'is_active' => true,
+                    'auth_provider' => 'manual',
+                ]);
+
+                $user->forceFill([
+                    'email_verified_at' => now(),
+                    'invited_by' => $actor->id,
+                ])->save();
+            }
+
+            $this->tenantRoleService->syncUserRole($user, $tenantId, (int) $role['role_id'], [
+                'invited_by' => $actor->id,
+                'joined_at' => now(),
+                'status' => 'active',
+                'is_tenant_owner' => false,
+            ]);
+
+            UserInvitation::query()
+                ->where('tenant_id', $tenantId)
+                ->whereRaw('LOWER(email) = ?', [$email])
+                ->where('status', UserInvitation::STATUS_PENDING)
+                ->update([
+                    'status' => UserInvitation::STATUS_REVOKED,
+                    'revoked_at' => now(),
+                    'revoked_reason' => __('user::users.messages.manual_creation_replaced_invitation'),
+                    'pending_email_key' => null,
+                ]);
+
+            event(new UserActivated($user));
+
+            Log::channel('daily')->info('[User] Manual member created', [
+                'tenant_id' => $tenantId,
+                'user_id' => $user->id,
+                'email' => $email,
+                'role' => $role['role_name'],
+                'created_by' => $actor->id,
+            ]);
+
+            return $user->fresh(['roles']);
+        });
+    }
+
     public function invite(array $data): UserInvitation
     {
         return DB::transaction(function () use ($data) {

@@ -89,7 +89,7 @@ class StockController extends Controller
                     $automation['count'] = count($automation['suggestions']);
                     $automation['pending_count'] = $automation['count'];
                     $automation['should_prompt'] = $automation['count'] > 0;
-                    $automation['subtitle'] = 'Suggestions disponibles pour cet article et pour son niveau de stock.';
+                    $automation['subtitle'] = trans('stock::stock.automation.low_stock_article_subtitle');
                 }
             }
 

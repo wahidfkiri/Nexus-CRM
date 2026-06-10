@@ -1,4 +1,4 @@
-﻿@extends('client::layouts.crm')
+@extends('client::layouts.crm')
 
 @section('title', __('client::clients.pages.index.title'))
 
@@ -224,10 +224,10 @@ window.CLIENT_LANG = {
   tableNone: @json(__('client::clients.table.none')),
   showing: @json(__('client::clients.table.showing')),
   loadingError: @json(__('client::clients.messages.loading_error')),
-  successTitle: @json('Succès'),
-  errorTitle: @json('Erreur'),
-  validationTitle: @json('Validation'),
-  deletedTitle: @json('Client supprimé'),
+  successTitle: @json(__('client::clients.messages.success_title')),
+  errorTitle: @json(__('client::clients.messages.error_title')),
+  validationTitle: @json(__('client::clients.messages.validation_title')),
+  deletedTitle: @json(__('client::clients.messages.deleted')),
   deleteTitle: @json(__('client::clients.confirmations.delete_title')),
   deleteMessage: @json(__('client::clients.confirmations.delete_message', ['name' => ':name'])),
   bulkDeleteTitle: @json(__('client::clients.confirmations.bulk_delete_title', ['count' => ':count'])),

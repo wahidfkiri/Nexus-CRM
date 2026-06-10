@@ -11,7 +11,7 @@
 @section('content')
 @php
   $inviteI18n = [
-      'success' => __('user::users.messages.invitation_sent_toast'),
+      'success' => __('user::users.messages.member_created_toast'),
   ];
 @endphp
 
@@ -32,18 +32,48 @@
 
       <div class="form-section">
         <h3 class="form-section-title">
-          <i class="fas fa-envelope"></i> {{ __('user::users.headings.invitation_information') }}
-          <span class="form-section-badge">{{ __('user::users.badges.step_1_of_2') }}</span>
+          <i class="fas fa-user-plus"></i> {{ __('user::users.headings.manual_member_information') }}
+          <span class="form-section-badge">{{ __('user::users.badges.active_by_default') }}</span>
         </h3>
+
+        <div class="form-group">
+          <label class="form-label">{{ __('user::users.fields.name') }} <span class="required">*</span></label>
+          <div class="input-group">
+            <i class="fas fa-user input-icon"></i>
+            <input type="text" name="name" class="form-control" placeholder="{{ __('user::users.placeholders.member_name') }}" autofocus required>
+          </div>
+        </div>
 
         <div class="form-group">
           <label class="form-label">{{ __('user::users.fields.email_address') }} <span class="required">*</span></label>
           <div class="input-group">
             <i class="fas fa-envelope input-icon"></i>
-            <input type="email" name="email" class="form-control" placeholder="{{ __('user::users.placeholders.collaborator_email') }}" autofocus required>
+            <input type="email" name="email" class="form-control" placeholder="{{ __('user::users.placeholders.collaborator_email') }}" required>
           </div>
           <span class="form-hint">{{ __('user::users.subtitles.invitation_email_hint') }}</span>
         </div>
+
+        <div class="row">
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label">{{ __('user::users.fields.password') }} <span class="required">*</span></label>
+              <div class="input-group">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" name="password" class="form-control" placeholder="{{ __('user::users.placeholders.manual_password') }}" minlength="8" required autocomplete="new-password">
+              </div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label">{{ __('user::users.fields.password_confirmation') }} <span class="required">*</span></label>
+              <div class="input-group">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" name="password_confirmation" class="form-control" placeholder="{{ __('user::users.placeholders.manual_password_confirmation') }}" minlength="8" required autocomplete="new-password">
+              </div>
+            </div>
+          </div>
+        </div>
+        <span class="form-hint" style="display:block;margin-top:-10px;margin-bottom:18px;">{{ __('user::users.subtitles.manual_password_hint') }}</span>
 
         <div class="form-group">
           <label class="form-label">{{ __('user::users.fields.role') }} <span class="required">*</span></label>
@@ -65,29 +95,16 @@
             @endforeach
           </div>
         </div>
-      </div>
-
-      <div class="form-section">
-        <h3 class="form-section-title">
-          <i class="fas fa-message"></i> {{ __('user::users.headings.custom_message') }}
-          <span class="form-section-badge">{{ __('user::users.badges.step_2_of_2_optional') }}</span>
-        </h3>
-        <div class="form-group">
-          <label class="form-label">{{ __('user::users.fields.message') }} <span class="hint">({{ __('user::users.fields.optional') }})</span></label>
-          <textarea name="message" class="form-control" rows="3"
-            placeholder="{{ __('user::users.placeholders.invitation_message') }}"></textarea>
-          <span class="form-hint">{{ __('user::users.subtitles.message_hint') }}</span>
-        </div>
 
         <div style="background:var(--c-accent-xl);border:1px solid var(--c-accent-lt);border-radius:var(--r-md);padding:16px 20px;font-size:13px;color:var(--c-ink-60);">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-weight:var(--fw-semi);color:var(--c-ink);">
             <i class="fas fa-circle-info" style="color:var(--c-accent);"></i>
-            {{ __('user::users.headings.what_guest_receives') }}
+            {{ __('user::users.headings.manual_access') }}
           </div>
           <ul style="margin:0;padding-left:18px;line-height:1.9;">
-            <li>{{ __('user::users.hints.email_expiry', ['days' => config('user.invitation.expire_days', 7)]) }}</li>
-            <li>{{ __('user::users.hints.password_form') }}</li>
-            <li>{{ __('user::users.hints.immediate_access') }}</li>
+            <li>{{ __('user::users.hints.no_invitation_email') }}</li>
+            <li>{{ __('user::users.hints.manual_password_share') }}</li>
+            <li>{{ __('user::users.hints.active_immediately') }}</li>
           </ul>
         </div>
       </div>
@@ -97,7 +114,7 @@
           <i class="fas fa-times"></i> {{ __('user::users.actions.cancel') }}
         </a>
         <button type="submit" class="btn btn-primary" id="submitBtn">
-          <i class="fas fa-paper-plane"></i> {{ __('user::users.actions.send_invitation') }}
+          <i class="fas fa-user-check"></i> {{ __('user::users.actions.create_member') }}
         </button>
       </div>
     </form>

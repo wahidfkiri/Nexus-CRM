@@ -36,7 +36,7 @@
   <div class="info-card-header"><i class="fas fa-database"></i><h3>Migration base de donnees requise</h3></div>
   <div class="info-card-body">
     <p style="margin-top:0;color:var(--c-ink-60);font-size:14px;line-height:1.7;">Les tables Slack sont absentes. Executez la migration avant utilisation.</p>
-    <div style="background:var(--surface-2);border:1px solid var(--c-ink-05);border-radius:var(--r-sm);padding:10px 12px;font-family:monospace;font-size:12px;color:var(--c-ink-80);">php artisan migrate</div>
+    <div style="background:var(--surface-2);border:1px solid var(--c-ink-05);border-radius:var(--r-sm);padding:10px 12px;font-family: "DM Sans", sans-serif;font-size:12px;color:var(--c-ink-80);">php artisan migrate</div>
   </div>
 </div>
 @elseif(!$extensionActive)

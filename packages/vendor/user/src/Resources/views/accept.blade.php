@@ -7,6 +7,7 @@
   <title>{{ __('user::users.titles.accept_invitation') }} - {{ config('app.name') }}</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="{{ asset('vendor/client/css/crm.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/global-font.css') }}">
   <style>
     html, body { height: 100%; }
     body { margin: 0; background: var(--surface-1); }
@@ -34,7 +35,7 @@
       <div class="accept-logo">
         <img src="{{ asset('logo.png') }}" alt="{{ config('app.name') }}">
       </div>
-      <div style="font-family:var(--ff-display);font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;">
+      <div style="font-family: "DM Sans", sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;">
         {{ $invitation->tenant?->name ?? config('app.name') }}
       </div>
       <div style="font-size:13px;color:rgba(255,255,255,.55);">{{ __('user::users.subtitles.accept_space') }}</div>

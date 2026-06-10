@@ -260,7 +260,7 @@
         @endif
         <div class="info-row">
           <span class="info-row-label">{{ __('extensions::extensions.common.version') }}</span>
-          <span class="info-row-value" style="font-family:monospace;font-size:12px;">{{ $extension->version }}</span>
+          <span class="info-row-value" style="font-family: "DM Sans", sans-serif;font-size:12px;">{{ $extension->version }}</span>
         </div>
         <div class="info-row">
           <span class="info-row-label">{{ __('extensions::extensions.marketplace.show.installs') }}</span>

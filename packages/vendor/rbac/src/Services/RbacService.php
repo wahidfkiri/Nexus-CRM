@@ -70,7 +70,7 @@ class RbacService
 
     public function deleteRole(Role $role): bool
     {
-        $this->assertNotSystem($role);
+        $this->assertDeletableRole($role);
 
         return DB::transaction(function () use ($role) {
             $result = $this->repository->deleteRole($role);
@@ -135,6 +135,17 @@ class RbacService
     {
         if ($role->is_system || in_array($role->name, config('rbac.system_roles', []), true)) {
             throw new \RuntimeException(__('rbac::rbac.errors.system_role_locked'));
+        }
+    }
+
+    private function assertDeletableRole(Role $role): void
+    {
+        if ($role->is_system || in_array($role->name, config('rbac.system_roles', []), true)) {
+            throw new \RuntimeException(__('rbac::rbac.errors.system_role_delete_forbidden'));
+        }
+
+        if (array_key_exists((string) $role->name, config('rbac.default_roles', []))) {
+            throw new \RuntimeException(__('rbac::rbac.errors.default_role_delete_forbidden'));
         }
     }
 

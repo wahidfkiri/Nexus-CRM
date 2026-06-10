@@ -59,7 +59,9 @@ class StockMovement extends Model
 
     public function getDirectionLabelAttribute(): string
     {
-        return $this->direction === 'out' ? 'Sortie' : 'Entrée';
+        return $this->direction === 'out'
+            ? trans('stock::stock.common.direction_out')
+            : trans('stock::stock.common.direction_in');
     }
 
     public function getMovementTypeLabelAttribute(): string
@@ -71,9 +73,9 @@ class StockMovement extends Model
     public function getDisplayReferenceAttribute(): string
     {
         return match ((string) $this->reference) {
-            'LEGACY-STOCK' => 'Reprise de l’ancien stock',
-            'OPENING-STOCK' => 'Stock initial',
-            default => (string) ($this->reference ?: '—'),
+            'LEGACY-STOCK' => trans('stock::stock.reasons.opening_stock_legacy'),
+            'OPENING-STOCK' => trans('stock::stock.common.opening_stock'),
+            default => (string) ($this->reference ?: trans('stock::stock.common.none_short')),
         };
     }
 
@@ -99,12 +101,12 @@ class StockMovement extends Model
 
         return match ($reason) {
             'Opening stock declared at article creation' => trans('stock::stock.reasons.opening_stock_declared'),
-            default => $reason !== '' ? $reason : '—',
+            default => $reason !== '' ? $reason : trans('stock::stock.common.none_short'),
         };
     }
 
     public function getHappenedAtDisplayAttribute(): string
     {
-        return $this->happened_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? '—';
+        return $this->happened_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? trans('stock::stock.common.none_short');
     }
 }

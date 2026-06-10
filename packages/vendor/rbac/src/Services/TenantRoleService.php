@@ -6,6 +6,7 @@ use App\Models\TenantUserMembership;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -42,6 +43,8 @@ class TenantRoleService
                 ]);
 
                 $this->syncDefaultPermissions($role);
+            } else {
+                $this->syncDefaultPermissions($role, true);
             }
 
             $roles->push($role->fresh(['permissions']));
@@ -166,28 +169,39 @@ class TenantRoleService
         return null;
     }
 
-    private function ensureGlobalPermissions(): void
+    public function ensureGlobalPermissions(): void
     {
         $groups = config('rbac.permission_groups', []);
 
         foreach ($groups as $groupKey => $groupDefinition) {
             foreach (($groupDefinition['permissions'] ?? []) as $name => $label) {
-                Permission::query()->firstOrCreate(
-                    [
-                        'name' => $name,
-                        'guard_name' => 'web',
-                    ],
-                    [
-                        'tenant_id' => null,
-                        'label' => $label,
-                        'group' => $groupKey,
-                    ]
-                );
+                $permission = Permission::query()->firstOrNew([
+                    'name' => $name,
+                    'guard_name' => 'web',
+                ]);
+
+                if (Schema::hasColumn('permissions', 'tenant_id')) {
+                    $permission->tenant_id = null;
+                }
+
+                if (Schema::hasColumn('permissions', 'label')) {
+                    $permission->label = $label;
+                }
+
+                if (Schema::hasColumn('permissions', 'group')) {
+                    $permission->group = $groupKey;
+                }
+
+                if (Schema::hasColumn('permissions', 'description') && empty($permission->description)) {
+                    $permission->description = $groupDefinition['label'] ?? $groupKey;
+                }
+
+                $permission->save();
             }
         }
     }
 
-    private function syncDefaultPermissions(Role $role): void
+    private function syncDefaultPermissions(Role $role, bool $onlyMissing = false): void
     {
         $permissionNames = config("rbac.default_role_permissions.{$role->name}", []);
 
@@ -198,11 +212,21 @@ class TenantRoleService
                 ->all();
         }
 
+        $platformOnlyPermissions = config('rbac.platform_only_permissions', []);
+        if ($platformOnlyPermissions !== []) {
+            $permissionNames = array_values(array_diff($permissionNames, $platformOnlyPermissions));
+        }
+
         $validPermissionNames = Permission::query()
             ->whereNull('tenant_id')
             ->whereIn('name', $permissionNames)
             ->pluck('name')
             ->all();
+
+        if ($onlyMissing) {
+            $role->givePermissionTo($validPermissionNames);
+            return;
+        }
 
         $role->syncPermissions($validPermissionNames);
     }

@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  font-family: "Segoe UI", "IBM Plex Sans", sans-serif;
+  font-family: "DM Sans", sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color: #dbe4f0;
@@ -128,7 +128,7 @@ a {
 }
 
 .status-mono {
-  font-family: "IBM Plex Mono", "Consolas", monospace;
+  font-family: "DM Sans", sans-serif;
   font-size: 13px;
   line-height: 1.6;
   word-break: break-all;

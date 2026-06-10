@@ -7,7 +7,7 @@
   <style>
     :root{
       color-scheme:light;
-      font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+      font-family: "DM Sans", sans-serif;
       background:linear-gradient(160deg,#f8fbff 0%,#e9f2ff 100%);
       color:#102033;
     }
@@ -42,7 +42,7 @@
       border-radius:16px;
       background:#f8fafc;
       border:1px solid rgba(15,23,42,.06);
-      font-family:Consolas,"Courier New",monospace;
+      font-family: "DM Sans", sans-serif;
       font-size:12px;
       color:#334155;
       word-break:break-all;

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bienvenue</title>
 </head>
-<body style="margin:0;padding:0;background:#f5f7fb;font-family:Arial,sans-serif;color:#0f172a;">
+<body style="margin:0;padding:0;background:#f5f7fb;font-family: "DM Sans", sans-serif;color:#0f172a;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:30px 14px;">
     <tr>
       <td align="center">

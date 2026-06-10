@@ -42,12 +42,13 @@ class UserController extends Controller
     public function store(InviteRequest $request): JsonResponse
     {
         try {
-            $invitation = $this->userService->invite($request->validated());
+            $user = $this->userService->createManualMember($request->validated());
 
             return response()->json([
                 'success' => true,
-                'message' => __('user::users.messages.invited_to', ['email' => $invitation->email]),
-                'data' => $invitation,
+                'message' => __('user::users.messages.member_created_to', ['email' => $user->email]),
+                'data' => $user,
+                'redirect' => route('users.show', $user),
             ], 201);
         } catch (Throwable $e) {
             return response()->json([

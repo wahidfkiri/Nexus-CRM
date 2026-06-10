@@ -702,7 +702,7 @@
 .wysiwyg-editor {
   min-height: 120px;
   padding: 10px 12px;
-  font-family: inherit;
+  font-family: "DM Sans", sans-serif;
   line-height: 1.6;
   outline: none;
 }

@@ -101,8 +101,8 @@
       @endforeach
     </select>
 
-    <input type="date" class="filter-select" data-filter="date_from" style="width:140px" title="Du">
-    <input type="date" class="filter-select" data-filter="date_to"   style="width:140px" title="Au">
+    <input type="date" class="filter-select" data-filter="date_from" style="width:140px" title="{{ $common['from'] }}">
+    <input type="date" class="filter-select" data-filter="date_to"   style="width:140px" title="{{ $common['to'] }}">
 
     <button class="btn btn-ghost btn-sm" id="resetFilters">
       <i class="fas fa-rotate-left"></i>
@@ -114,12 +114,12 @@
       <tr>
         <th style="width:40px"><input type="checkbox" id="selectAll"></th>
         <th data-sort="number" class="sortable">{{ $page['number_column'] }} <i class="fas fa-sort" style="font-size:10px;opacity:.4"></i></th>
-        <th data-sort="client_id" class="sortable">Client</th>
+        <th data-sort="client_id" class="sortable">{{ __('invoice::invoices.fields.client') }}</th>
         <th data-sort="issue_date" class="sortable">{{ $page['issue_column'] }}</th>
         <th data-sort="valid_until" class="sortable">{{ $page['valid_until_column'] }}</th>
         <th>{{ __('invoice::invoices.fields.currency') }}</th>
         <th data-sort="total" class="sortable" style="text-align:right">{{ $common['total_ttc'] }}</th>
-        <th>Statut</th>
+        <th>{{ __('invoice::invoices.fields.status') }}</th>
         <th style="text-align:right;padding-right:20px">{{ $common['actions_label'] }}</th>
       </tr>
     </thead>
@@ -145,6 +145,8 @@ const quoteIndexLang = {
   irreversibleAction: @json(__('invoice::invoices.alerts.irreversible')),
   convertConfirm: @json(__('invoice::invoices.js.quote_convert_confirm')),
   deleteLabel: @json(__('invoice::invoices.actions.delete')),
+  convertTitleTemplate: @json(__('invoice::invoices.js.quote_convert_title')),
+  deleteTitle: @json(__('invoice::invoices.js.quote_delete_title')),
 };
 
 window.QUOTE_ROUTES = {
@@ -172,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function convertQuote(id, number) {
   Modal.confirm({
-    title: `Convertir le devis ${number} ?`,
+    title: quoteIndexLang.convertTitleTemplate.replace(':number', number),
     message: @json(__('invoice::invoices.js.quote_convert_message')),
     confirmText: quoteIndexLang.convertConfirm,
     type: 'danger',
@@ -186,7 +188,7 @@ async function convertQuote(id, number) {
 
 async function deleteQuote(id) {
   Modal.confirm({
-    title: 'Supprimer ce devis ?',
+    title: quoteIndexLang.deleteTitle,
     message: quoteIndexLang.irreversibleAction,
     confirmText: quoteIndexLang.deleteLabel,
     type: 'danger',

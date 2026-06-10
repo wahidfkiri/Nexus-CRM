@@ -91,15 +91,17 @@
 
         <div id="group-{{ $groupKey }}" style="padding:8px 0;">
           @foreach($group['permissions'] as $permission)
-          @php $isChecked = in_array($permission->name, $activePerms, true); @endphp
+          @php
+            $isChecked = in_array($permission->name, $activePerms, true);
+            $permissionLabel = $permission->display_label ?: config("rbac.permission_groups.{$groupKey}.permissions.{$permission->name}", $permission->name);
+          @endphp
           <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px;cursor:pointer;transition:background var(--dur-fast);" class="perm-row" data-group="{{ $groupKey }}" onmouseover="this.style.background='var(--c-accent-xl)'" onmouseout="this.style.background=''">
             <div style="display:flex;align-items:center;gap:12px;">
               <div style="width:8px;height:8px;border-radius:50%;background:var(--c-ink-10);flex-shrink:0;" class="perm-dot"></div>
               <div>
                 <div style="font-size:13.5px;font-weight:var(--fw-medium);color:var(--c-ink);">
-                  {{ config("rbac.permission_groups.{$groupKey}.permissions.{$permission->name}", $permission->name) }}
+                  {{ $permissionLabel }}
                 </div>
-                <div style="font-size:11.5px;color:var(--c-ink-40);font-family:monospace;">{{ $permission->name }}</div>
               </div>
             </div>
             <div style="position:relative;width:44px;height:24px;flex-shrink:0;">

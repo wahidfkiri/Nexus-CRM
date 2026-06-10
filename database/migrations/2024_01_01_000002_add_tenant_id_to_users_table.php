@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->foreignId('tenant_id')->nullable()->constrained('tenants')->onDelete('cascade');
-            $table->enum('role_in_tenant', ['owner', 'admin', 'manager', 'user'])->default('user');
+            $table->string('role_in_tenant', 50)->default('user');
             $table->boolean('is_tenant_owner')->default(false);
             
             $table->index(['tenant_id', 'role_in_tenant']);

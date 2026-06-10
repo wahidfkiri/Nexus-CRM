@@ -34,13 +34,13 @@ class ClientController extends Controller
                     $tenantId,
                     'invoice',
                     'Facturation',
-                    'Installez Facturation pour créer des devis, des factures et suivre vos paiements depuis votre CRM.'
+                    trans('client::clients.marketplace.invoice_description')
                 ),
                 $this->makeMarketplaceSuggestion(
                     $tenantId,
                     'stock',
                     'Stock',
-                    'Installez Stock pour synchroniser produits, niveaux et commandes avec vos clients.'
+                    trans('client::clients.marketplace.stock_description')
                 ),
             ])),
         ]);

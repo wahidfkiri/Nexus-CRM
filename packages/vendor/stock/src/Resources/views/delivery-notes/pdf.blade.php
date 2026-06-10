@@ -5,7 +5,7 @@
     <title>{{ __('stock::stock.pages.delivery_notes.pdf.title', ['number' => $deliveryNote->number]) }}</title>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 10pt; color: #0f172a; margin: 0; }
+        body { font-family: "DM Sans", sans-serif; font-size: 10pt; color: #0f172a; margin: 0; }
         .wrap { padding: 34px 36px 40px; }
         .header-band { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 18px; }
         .title { font-size: 22px; font-weight: bold; color: #0f766e; }

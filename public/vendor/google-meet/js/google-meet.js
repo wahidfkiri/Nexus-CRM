@@ -20,6 +20,20 @@ const GoogleMeetModule = (() => {
     googleCalendarTargetUrl: '',
   };
 
+  function t(path, fallback = '', replacements = {}) {
+    const source = window.GMEET_I18N || {};
+    const value = String(path || '').split('.').reduce((carry, segment) => (
+      carry && Object.prototype.hasOwnProperty.call(carry, segment) ? carry[segment] : undefined
+    ), source);
+
+    let text = typeof value === 'string' ? value : fallback;
+    Object.entries(replacements).forEach(([key, replacement]) => {
+      text = text.split(`:${key}`).join(String(replacement));
+    });
+
+    return text;
+  }
+
   function boot(bootstrap = {}) {
     state.connected = !!bootstrap.connected;
     state.selectedCalendarId = bootstrap.selectedCalendarId || null;
@@ -85,7 +99,7 @@ const GoogleMeetModule = (() => {
     document.getElementById('gmCreateMeetingBtn')?.addEventListener('click', () => {
       resetMeetingForm();
       state.editingMeeting = null;
-      setModalTitle('Nouvelle reunion');
+      setModalTitle(t('modal.create_meeting', 'Nouvelle réunion'));
     });
 
     document.getElementById('gmSaveMeetingBtn')?.addEventListener('click', saveMeeting);
@@ -114,7 +128,7 @@ const GoogleMeetModule = (() => {
     const { ok, data } = await Http.get(window.GMEET_ROUTES.calendarsData, { refresh: refresh ? 1 : 0 });
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible de charger les calendriers.');
+      Toast.error(t('common.error', 'Erreur'), data.message || t('errors.load_calendars', 'Impossible de charger les calendriers.'));
       return;
     }
 
@@ -136,15 +150,15 @@ const GoogleMeetModule = (() => {
       wrap.innerHTML = `
         <div class="table-empty" style="padding:24px 12px;">
           <div class="table-empty-icon"><i class="fas fa-calendar-xmark"></i></div>
-          <h3>Aucun calendrier</h3>
-          <p>Lancez une synchronisation apres connexion.</p>
+          <h3>${esc(t('calendars.no_calendars_title', 'Aucun calendrier'))}</h3>
+          <p>${esc(t('calendars.no_calendars_desc', 'Lancez une synchronisation après connexion.'))}</p>
         </div>`;
       return;
     }
 
     wrap.innerHTML = state.calendars.map((calendar) => {
       const active = state.selectedCalendarId === calendar.calendar_id;
-      const badge = calendar.is_primary ? '<span class="nav-badge" style="margin-left:8px;">Principal</span>' : '';
+      const badge = calendar.is_primary ? `<span class="nav-badge" style="margin-left:8px;">${esc(t('calendars.primary', 'Principal'))}</span>` : '';
 
       return `
         <button class="gm-calendar-item ${active ? 'active' : ''}" data-calendar-id="${esc(calendar.calendar_id)}" type="button">
@@ -165,7 +179,7 @@ const GoogleMeetModule = (() => {
     const { ok, data } = await Http.post(window.GMEET_ROUTES.selectCalendar, { calendar_id: calendarId });
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible de selectionner ce calendrier.');
+      Toast.error(t('common.error', 'Erreur'), data.message || t('errors.select_calendar', 'Impossible de sélectionner ce calendrier.'));
       return;
     }
 
@@ -173,7 +187,7 @@ const GoogleMeetModule = (() => {
     renderCalendars();
     state.page = 1;
 
-    Toast.success('Succes', 'Calendrier selectionne.');
+    Toast.success(t('common.success', 'Succès'), t('success.calendar_selected_short', 'Calendrier sélectionné.'));
     loadMeetings(true);
   }
 
@@ -199,8 +213,8 @@ const GoogleMeetModule = (() => {
     state.loadingMeetings = false;
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'Impossible de charger les reunions.');
-      if (tbody) tbody.innerHTML = emptyRow('Impossible de charger les reunions.');
+      Toast.error(t('common.error', 'Erreur'), data.message || t('errors.load_meetings', 'Impossible de charger les réunions.'));
+      if (tbody) tbody.innerHTML = emptyRow(t('errors.load_meetings', 'Impossible de charger les réunions.'));
       return;
     }
 
@@ -210,7 +224,7 @@ const GoogleMeetModule = (() => {
     renderPagination(data);
 
     const count = document.getElementById('gmCount');
-    if (count) count.textContent = `${data.total || 0} resultat(s)`;
+    if (count) count.textContent = t('table.count_results', ':count résultat(s)', { count: data.total || 0 });
 
     const lastSync = document.getElementById('gmLastSyncLabel');
     if (refresh && lastSync) {
@@ -223,7 +237,7 @@ const GoogleMeetModule = (() => {
     if (!tbody) return;
 
     if (!state.meetings.length) {
-      tbody.innerHTML = emptyRow('Aucune reunion trouvee pour les filtres selectionnes.');
+      tbody.innerHTML = emptyRow(t('table.empty_filtered', 'Aucune réunion trouvée pour les filtres sélectionnés.'));
       return;
     }
 
@@ -232,18 +246,18 @@ const GoogleMeetModule = (() => {
       const calendarName = calendarLabel(meeting.calendar_id);
       const calendarAppUrl = buildCalendarAppUrl(meeting);
       const meetBtn = meeting.meet_link
-        ? `<a href="${esc(meeting.meet_link)}" target="_blank" rel="noopener" class="btn-icon" title="Rejoindre Meet"><i class="fas fa-video"></i></a>`
+        ? `<a href="${esc(meeting.meet_link)}" target="_blank" rel="noopener" class="btn-icon" title="${esc(t('tooltips.join_meet', 'Rejoindre Meet'))}"><i class="fas fa-video"></i></a>`
         : '';
 
       return `
         <tr>
           <td>
             <div style="font-weight:var(--fw-medium);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              ${esc(meeting.summary || '(Sans titre)')}
+              ${esc(meeting.summary || t('common.no_title', '(Sans titre)'))}
             </div>
             <div style="font-size:12px;color:var(--c-ink-40);display:flex;flex-wrap:wrap;gap:8px;">
               ${meeting.organizer_email ? `<span><i class="fas fa-user"></i> ${esc(meeting.organizer_email)}</span>` : ''}
-              ${meeting.meet_link ? `<span class="badge badge-sent">Lien Meet</span>` : '<span class="badge badge-draft">Sans lien</span>'}
+              ${meeting.meet_link ? `<span class="badge badge-sent">${esc(t('badges.meet_link', 'Lien Meet'))}</span>` : `<span class="badge badge-draft">${esc(t('badges.no_link', 'Sans lien'))}</span>`}
             </div>
           </td>
           <td>${esc(calendarName)}</td>
@@ -253,11 +267,11 @@ const GoogleMeetModule = (() => {
           <td>
             <div class="row-actions" style="justify-content:flex-end;padding-right:4px;opacity:1;">
               ${meetBtn}
-              <a href="${esc(calendarAppUrl)}" class="btn-icon" title="${state.googleCalendarInstalled ? 'Ouvrir dans notre module Google Calendar' : 'Installer Google Calendar depuis Marketplace'}">
+              <a href="${esc(calendarAppUrl)}" class="btn-icon" title="${esc(state.googleCalendarInstalled ? t('tooltips.open_calendar_module', 'Ouvrir dans notre module Google Calendar') : t('tooltips.install_calendar', 'Installer Google Calendar depuis Marketplace'))}">
                 <i class="fas fa-calendar-days"></i>
               </a>
-              <button class="btn-icon" data-gm-edit="${idx}" title="Modifier"><i class="fas fa-pen"></i></button>
-              <button class="btn-icon danger" data-gm-delete="${idx}" title="Supprimer"><i class="fas fa-trash"></i></button>
+              <button class="btn-icon" data-gm-edit="${idx}" title="${esc(t('actions.edit', 'Modifier'))}"><i class="fas fa-pen"></i></button>
+              <button class="btn-icon danger" data-gm-delete="${idx}" title="${esc(t('actions.delete', 'Supprimer'))}"><i class="fas fa-trash"></i></button>
             </div>
           </td>
         </tr>`;
@@ -273,7 +287,11 @@ const GoogleMeetModule = (() => {
     const lastPage = payload.last_page || 1;
 
     if (info) {
-      info.textContent = `Affichage ${payload.from || 0} a ${payload.to || 0} sur ${payload.total || 0} reunion(s)`;
+      info.textContent = t('table.pagination_showing', 'Affichage :from à :to sur :total réunion(s)', {
+        from: payload.from || 0,
+        to: payload.to || 0,
+        total: payload.total || 0,
+      });
     }
 
     const pages = [];
@@ -338,11 +356,11 @@ const GoogleMeetModule = (() => {
     if (btn) CrmForm.setLoading(btn, false);
 
     if (!ok || !data.success) {
-      Toast.error('Erreur', data.message || 'La synchronisation a echoue.');
+      Toast.error(t('common.error', 'Erreur'), data.message || t('errors.sync', 'La synchronisation a échoué.'));
       return;
     }
 
-    Toast.success('Succes', data.message || 'Synchronisation terminee.');
+    Toast.success(t('common.success', 'Succès'), data.message || t('success.sync', 'Synchronisation terminée.'));
 
     await loadCalendars(false);
     await loadStats();
@@ -351,18 +369,18 @@ const GoogleMeetModule = (() => {
 
   async function disconnect() {
     Modal.confirm({
-      title: 'Deconnecter Google Meet ?',
-      message: 'Les tokens OAuth seront supprimes pour ce tenant.',
-      confirmText: 'Deconnecter',
+      title: t('confirm.disconnect_title', 'Déconnecter Google Meet ?'),
+      message: t('confirm.disconnect_message', 'Les tokens OAuth seront supprimés pour ce tenant.'),
+      confirmText: t('confirm.disconnect_button', 'Déconnecter'),
       type: 'danger',
       onConfirm: async () => {
         const { ok, data } = await Http.post(window.GMEET_ROUTES.disconnect, {});
         if (!ok || !data.success) {
-          Toast.error('Erreur', data.message || 'Impossible de deconnecter Google Meet.');
+          Toast.error(t('common.error', 'Erreur'), data.message || t('errors.disconnect', 'Impossible de déconnecter Google Meet.'));
           return;
         }
 
-        Toast.success('Deconnecte', data.message || 'Google Meet deconnecte.');
+        Toast.success(t('success.disconnected_title', 'Déconnecté'), data.message || t('success.disconnected_message', 'Google Meet déconnecté.'));
         setTimeout(() => window.location.reload(), 700);
       },
     });
@@ -436,7 +454,7 @@ const GoogleMeetModule = (() => {
     const email = normalizeEmailToken(token);
     if (!email) return false;
     if (!isValidEmail(email)) {
-      Toast.error('Email invalide', `"${email}" n'est pas un email valide.`);
+      Toast.error(t('errors.invalid_email_title', 'Email invalide'), t('errors.invalid_email_message', '":email" n’est pas un email valide.', { email }));
       return false;
     }
     if (state.attendeeEmails.includes(email)) {
@@ -501,7 +519,7 @@ const GoogleMeetModule = (() => {
       .map((email, idx) => `
         <span class="gm-tag">
           <span>${esc(email)}</span>
-          <button type="button" class="gm-tag-remove" data-gm-tag-remove="${idx}" aria-label="Supprimer">&times;</button>
+          <button type="button" class="gm-tag-remove" data-gm-tag-remove="${idx}" aria-label="${esc(t('actions.delete', 'Supprimer'))}">&times;</button>
         </span>
       `)
       .join('');
@@ -512,7 +530,7 @@ const GoogleMeetModule = (() => {
     if (!meeting) return;
 
     state.editingMeeting = meeting;
-    setModalTitle('Modifier la reunion');
+    setModalTitle(t('modal.edit_meeting', 'Modifier la réunion'));
 
     resetMeetingForm();
 
@@ -552,20 +570,22 @@ const GoogleMeetModule = (() => {
     if (!meeting) return;
 
     Modal.confirm({
-      title: 'Supprimer cette reunion ?',
-      message: `La reunion "${meeting.summary || '(Sans titre)'}" sera supprimee de Google Calendar.`,
-      confirmText: 'Supprimer',
+      title: t('confirm.delete_title', 'Supprimer cette réunion ?'),
+      message: t('confirm.delete_message', 'La réunion ":title" sera supprimée de Google Calendar.', {
+        title: meeting.summary || t('common.no_title', '(Sans titre)'),
+      }),
+      confirmText: t('confirm.delete_button', 'Supprimer'),
       type: 'danger',
       onConfirm: async () => {
         const url = `${window.GMEET_ROUTES.meetingsBase}/${encodeURIComponent(meeting.calendar_id)}/${encodeURIComponent(meeting.event_id)}`;
         const { ok, data } = await Http.delete(url);
 
         if (!ok || !data.success) {
-          Toast.error('Erreur', data.message || 'Impossible de supprimer la reunion.');
+          Toast.error(t('common.error', 'Erreur'), data.message || t('errors.delete', 'Impossible de supprimer la réunion.'));
           return;
         }
 
-        Toast.success('Supprimee', data.message || 'Reunion supprimee.');
+        Toast.success(t('success.deleted_title', 'Supprimée'), data.message || t('success.deleted_message', 'Réunion supprimée.'));
         loadMeetings(false);
         loadStats();
       },
@@ -596,7 +616,7 @@ const GoogleMeetModule = (() => {
     const validationErrors = validatePayload(payload);
     if (Object.keys(validationErrors).length) {
       showFormErrors(form, validationErrors);
-      Toast.error('Validation', 'Merci de corriger les erreurs du formulaire.');
+      Toast.error(t('common.validation', 'Validation'), t('errors.validation', 'Merci de corriger les erreurs du formulaire.'));
       return;
     }
 
@@ -617,11 +637,11 @@ const GoogleMeetModule = (() => {
         showFormErrors(form, response.data.errors);
       }
 
-      Toast.error('Erreur', response.data?.message || 'Impossible d enregistrer la reunion.');
+      Toast.error(t('common.error', 'Erreur'), response.data?.message || t('errors.save', 'Impossible d’enregistrer la réunion.'));
       return;
     }
 
-    Toast.success('Succes', response.data?.message || 'Reunion enregistree.');
+    Toast.success(t('common.success', 'Succès'), response.data?.message || t('success.saved', 'Réunion enregistrée.'));
     Modal.close(document.getElementById('gmMeetingModal'));
 
     state.editingMeeting = null;
@@ -633,26 +653,26 @@ const GoogleMeetModule = (() => {
     const errors = {};
 
     if (!payload.calendar_id) {
-      errors.calendar_id = ['Veuillez selectionner un calendrier.'];
+      errors.calendar_id = [t('validation.calendar', 'Veuillez sélectionner un calendrier.')];
     }
 
     if (!payload.summary) {
-      errors.summary = ['Le titre est obligatoire.'];
+      errors.summary = [t('validation.title_required', 'Le titre est obligatoire.')];
     }
 
     if (!payload.start_at) {
-      errors.start_at = ['La date de debut est obligatoire.'];
+      errors.start_at = [t('validation.start_required', 'La date de début est obligatoire.')];
     }
 
     if (!payload.end_at) {
-      errors.end_at = ['La date de fin est obligatoire.'];
+      errors.end_at = [t('validation.end_required', 'La date de fin est obligatoire.')];
     }
 
     if (payload.start_at && payload.end_at) {
       const start = new Date(payload.start_at);
       const end = new Date(payload.end_at);
       if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
-        errors.end_at = ['La date de fin doit etre apres la date de debut.'];
+        errors.end_at = [t('validation.end_after_start', 'La date de fin doit être après la date de début.')];
       }
     }
 
@@ -660,7 +680,7 @@ const GoogleMeetModule = (() => {
       const emails = payload.attendees.split(',').map((v) => v.trim()).filter(Boolean);
       const invalid = emails.find((email) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
       if (invalid) {
-        errors.attendees = ['Un ou plusieurs emails participants sont invalides.'];
+        errors.attendees = [t('validation.attendees_invalid', 'Un ou plusieurs e-mails participants sont invalides.')];
       }
     }
 
@@ -698,11 +718,11 @@ const GoogleMeetModule = (() => {
 
   function statusToBadge(status) {
     const map = {
-      confirmed: { cls: 'badge-paid', label: 'Confirmee' },
-      tentative: { cls: 'badge-sent', label: 'Tentative' },
-      cancelled: { cls: 'badge-cancelled', label: 'Annulee' },
+      confirmed: { cls: 'badge-paid', label: t('status.confirmed', 'Confirmée') },
+      tentative: { cls: 'badge-sent', label: t('status.tentative', 'Tentative') },
+      cancelled: { cls: 'badge-cancelled', label: t('status.cancelled', 'Annulée') },
     };
-    const cfg = map[status] || { cls: 'badge-draft', label: status || 'Inconnu' };
+    const cfg = map[status] || { cls: 'badge-draft', label: status || t('status.unknown', 'Inconnu') };
     return `<span class="badge ${cfg.cls}">${esc(cfg.label)}</span>`;
   }
 
@@ -731,7 +751,7 @@ const GoogleMeetModule = (() => {
   }
 
   function emptyRow(message) {
-    return `<tr><td colspan="6"><div class="table-empty"><div class="table-empty-icon"><i class="fas fa-video"></i></div><h3>Aucune donnee</h3><p>${esc(message)}</p></div></td></tr>`;
+    return `<tr><td colspan="6"><div class="table-empty"><div class="table-empty-icon"><i class="fas fa-video"></i></div><h3>${esc(t('common.no_data_title', 'Aucune donnée'))}</h3><p>${esc(message)}</p></div></td></tr>`;
   }
 
   function toDateTimeLocal(value) {

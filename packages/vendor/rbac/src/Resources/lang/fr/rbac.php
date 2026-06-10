@@ -114,6 +114,7 @@ return [
 
     'badges' => [
         'system' => 'Système',
+        'default' => 'Par défaut',
         'custom' => 'Personnalisé',
     ],
 
@@ -147,6 +148,7 @@ return [
         'unauthorized_role_access' => 'Accès non autorisé à ce rôle.',
         'system_role_locked' => 'Les rôles système ne peuvent pas être modifiés.',
         'system_role_delete_forbidden' => 'Impossible de supprimer un rôle système.',
+        'default_role_delete_forbidden' => 'Ce rôle par défaut est recréé automatiquement et ne peut pas être supprimé. Vous pouvez le modifier ou le désactiver.',
         'role_assigned_users' => 'Ce rôle est assigné à des utilisateurs. Réassignez-les avant suppression.',
         'role_not_active_tenant' => 'Le rôle ne correspond pas au tenant actif.',
         'role_not_found_tenant' => 'Le rôle sélectionné est introuvable pour ce tenant.',
