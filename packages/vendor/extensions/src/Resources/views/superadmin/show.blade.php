@@ -36,11 +36,11 @@
     </div>
   </div>
   <div class="page-header-actions">
-    <button class="btn btn-secondary" onclick="toggleFeatured({{ $extension->id }})">
+    <button class="btn btn-secondary" onclick="toggleFeatured()">
       <i class="fas fa-star" style="color:{{ $extension->is_featured ? '#f59e0b' : 'var(--c-ink-40)' }};"></i>
       {{ $extension->is_featured ? __('extensions::extensions.actions.feature_off') : __('extensions::extensions.actions.feature_on') }}
     </button>
-    <button class="btn btn-secondary" onclick="toggleStatus({{ $extension->id }}, '{{ $extension->status }}')">
+    <button class="btn btn-secondary" onclick="toggleStatus()">
       <i class="fas fa-{{ $extension->status === 'active' ? 'pause' : 'play' }}"></i>
       {{ $extension->status === 'active' ? __('extensions::extensions.superadmin.show.toggle_deactivate') : __('extensions::extensions.superadmin.show.toggle_activate') }}
     </button>
@@ -167,11 +167,11 @@
         <a href="{{ route('superadmin.extensions.edit', $extension) }}" class="btn btn-secondary" style="justify-content:flex-start;">
           <i class="fas fa-pen"></i> {{ __('extensions::extensions.superadmin.show.edit_extension') }}
         </a>
-        <button class="btn btn-secondary" style="justify-content:flex-start;" onclick="toggleFeatured({{ $extension->id }})">
+        <button class="btn btn-secondary" style="justify-content:flex-start;" onclick="toggleFeatured()">
           <i class="fas fa-star" style="color:{{ $extension->is_featured ? '#f59e0b' : 'var(--c-ink-40)' }};"></i>
           {{ $extension->is_featured ? __('extensions::extensions.actions.feature_remove') : __('extensions::extensions.actions.feature_on') }}
         </button>
-        <button class="btn btn-secondary" style="justify-content:flex-start;color:var(--c-danger);border-color:var(--c-danger-lt);" onclick="deleteExt({{ $extension->id }}, '{{ addslashes($extension->name) }}')">
+        <button class="btn btn-secondary" style="justify-content:flex-start;color:var(--c-danger);border-color:var(--c-danger-lt);" onclick="deleteExt(@json($extension->name))">
           <i class="fas fa-trash"></i> {{ __('extensions::extensions.common.delete') }}
         </button>
       </div>
@@ -201,28 +201,40 @@
 @push('scripts')
 <script>
 let _suspendActId = null;
+const EXT_SHOW_ROUTES = {
+  featured: @json(route('superadmin.extensions.featured', $extension)),
+  status: @json(route('superadmin.extensions.status', $extension)),
+  destroy: @json(route('superadmin.extensions.destroy', $extension)),
+  index: @json(route('superadmin.extensions.index')),
+  suspend: @json(route('superadmin.extensions.activations.suspend', ['activation' => '__ACTIVATION_ID__'])),
+  restore: @json(route('superadmin.extensions.activations.restore', ['activation' => '__ACTIVATION_ID__'])),
+};
 
-async function toggleFeatured(id) {
-  const { ok, data } = await Http.post(`/superadmin/extensions/${id}/featured`, {});
+function activationRoute(template, id) {
+  return String(template).replace('__ACTIVATION_ID__', encodeURIComponent(String(id)));
+}
+
+async function toggleFeatured() {
+  const { ok, data } = await Http.post(EXT_SHOW_ROUTES.featured, {});
   if (ok) { Toast.success(@json(__('extensions::extensions.superadmin.show.toggle_featured_updated')), data.message); setTimeout(() => location.reload(), 800); }
   else Toast.error(@json(__('extensions::extensions.common.error')), data.message);
 }
 
-async function toggleStatus(id, status) {
-  const { ok, data } = await Http.post(`/superadmin/extensions/${id}/status`, {});
+async function toggleStatus() {
+  const { ok, data } = await Http.post(EXT_SHOW_ROUTES.status, {});
   if (ok) { Toast.success(@json(__('extensions::extensions.superadmin.show.toggle_status_updated')), data.message); setTimeout(() => location.reload(), 800); }
   else Toast.error(@json(__('extensions::extensions.common.error')), data.message);
 }
 
-async function deleteExt(id, name) {
+async function deleteExt(name) {
   Modal.confirm({
     title: @json(__('extensions::extensions.superadmin.show.delete_title', ['name' => ':name'])).replace(':name', name),
     message: @json(__('extensions::extensions.superadmin.show.delete_message')),
     confirmText: @json(__('extensions::extensions.common.delete')),
     type: 'danger',
     onConfirm: async () => {
-      const { ok, data } = await Http.delete(`/superadmin/extensions/${id}`);
-      if (ok) { Toast.success(@json(__('extensions::extensions.superadmin.show.deleted')), data.message); setTimeout(() => window.location.href = '{{ route("superadmin.extensions.index") }}', 900); }
+      const { ok, data } = await Http.delete(EXT_SHOW_ROUTES.destroy);
+      if (ok) { Toast.success(@json(__('extensions::extensions.superadmin.show.deleted')), data.message); setTimeout(() => window.location.href = EXT_SHOW_ROUTES.index, 900); }
       else Toast.error(@json(__('extensions::extensions.common.error')), data.message);
     }
   });
@@ -237,14 +249,14 @@ function suspendTenantAct(id) {
 document.getElementById('confirmSuspend').addEventListener('click', async () => {
   const reason = document.getElementById('suspendReason').value.trim();
   if (!reason) { Toast.warning(@json(__('extensions::extensions.common.required')), @json(__('extensions::extensions.superadmin.show.reason_required'))); return; }
-  const { ok, data } = await Http.post(`/superadmin/extensions/activations/${_suspendActId}/suspend`, { reason });
+  const { ok, data } = await Http.post(activationRoute(EXT_SHOW_ROUTES.suspend, _suspendActId), { reason });
   Modal.close(document.getElementById('suspendModal'));
   if (ok) { Toast.success(@json(__('extensions::extensions.superadmin.show.suspended')), data.message); setTimeout(() => location.reload(), 900); }
   else Toast.error(@json(__('extensions::extensions.common.error')), data.message);
 });
 
 async function restoreTenantAct(id) {
-  const { ok, data } = await Http.post(`/superadmin/extensions/activations/${id}/restore`, {});
+  const { ok, data } = await Http.post(activationRoute(EXT_SHOW_ROUTES.restore, id), {});
   if (ok) { Toast.success(@json(__('extensions::extensions.superadmin.show.restored')), data.message); setTimeout(() => location.reload(), 900); }
   else Toast.error(@json(__('extensions::extensions.common.error')), data.message);
 }

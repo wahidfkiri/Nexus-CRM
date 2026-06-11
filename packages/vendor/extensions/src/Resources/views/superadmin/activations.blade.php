@@ -82,8 +82,9 @@
 @push('scripts')
 <script>
 window.EXT_ACTIVATIONS_ROUTES = {
-  data: '{{ route('superadmin.extensions.activations.data') }}',
-  suspendBase: '{{ url('/superadmin/extensions/activations') }}',
+  data: @json(route('superadmin.extensions.activations.data')),
+  suspend: @json(route('superadmin.extensions.activations.suspend', ['activation' => '__ACTIVATION_ID__'])),
+  restore: @json(route('superadmin.extensions.activations.restore', ['activation' => '__ACTIVATION_ID__'])),
 };
 
 class ExtensionActivationsPage {
@@ -254,7 +255,7 @@ class ExtensionActivationsPage {
     }
 
     if (button) CrmForm.setLoading(button, true);
-    const { ok, data } = await Http.post(`${window.EXT_ACTIVATIONS_ROUTES.suspendBase}/${this.pendingSuspendId}/suspend`, { reason });
+    const { ok, data } = await Http.post(this.route(window.EXT_ACTIVATIONS_ROUTES.suspend, this.pendingSuspendId), { reason });
     if (button) CrmForm.setLoading(button, false);
 
     if (!ok) {
@@ -269,7 +270,7 @@ class ExtensionActivationsPage {
 
   async restoreActivation(id) {
     if (!id) return;
-    const { ok, data } = await Http.post(`${window.EXT_ACTIVATIONS_ROUTES.suspendBase}/${id}/restore`, {});
+    const { ok, data } = await Http.post(this.route(window.EXT_ACTIVATIONS_ROUTES.restore, id), {});
     if (!ok) {
       Toast.error(@json(__('extensions::extensions.common.error')), data?.message || @json(__('extensions::extensions.superadmin.activations.restore_error')));
       return;
@@ -298,6 +299,10 @@ class ExtensionActivationsPage {
     const div = document.createElement('div');
     div.textContent = String(value ?? '');
     return div.innerHTML;
+  }
+
+  route(template, id) {
+    return String(template).replace('__ACTIVATION_ID__', encodeURIComponent(String(id)));
   }
 }
 

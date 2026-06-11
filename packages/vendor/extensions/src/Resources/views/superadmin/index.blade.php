@@ -295,7 +295,7 @@ class ExtTable {
         <div style="font-size:11px;color:var(--c-ink-40);">${(e.active_installs || 0) + ' ' + EXT_I18N.activeInstalls.replace(':count', e.active_installs || 0).replace(/^\d+\s/, '')}</div>
       </td>
       <td style="text-align:center;">
-        <button onclick="ExtTable.toggleFeatured(${e.id})" title="${e.is_featured ? EXT_I18N.featureOff : EXT_I18N.featureOn}"
+        <button onclick="ExtTable.toggleFeatured('${this._attrJs(e.featured_url)}', ${e.id})" title="${e.is_featured ? EXT_I18N.featureOff : EXT_I18N.featureOn}"
                 style="background:none;border:none;cursor:pointer;font-size:18px;color:${e.is_featured ? '#f59e0b' : 'var(--c-ink-10)'};transition:color .2s;"
                 id="featBtn-${e.id}">
           <i class="fas fa-star"></i>
@@ -306,12 +306,12 @@ class ExtTable {
       </td>
       <td>
         <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
-          <a href="/superadmin/extensions/${e.id}" class="btn-icon" title="{{ __('extensions::extensions.actions.show') }}"><i class="fas fa-eye"></i></a>
-          <a href="/superadmin/extensions/${e.id}/edit" class="btn-icon" title="{{ __('extensions::extensions.common.edit') }}"><i class="fas fa-pen"></i></a>
-          <button class="btn-icon" onclick="ExtTable.toggleStatus(${e.id},'${e.status}')" title="{{ __('extensions::extensions.actions.toggle_status') }}">
+          <a href="${this._url(e.show_url)}" class="btn-icon" title="{{ __('extensions::extensions.actions.show') }}"><i class="fas fa-eye"></i></a>
+          <a href="${this._url(e.edit_url)}" class="btn-icon" title="{{ __('extensions::extensions.common.edit') }}"><i class="fas fa-pen"></i></a>
+          <button class="btn-icon" onclick="ExtTable.toggleStatus('${this._attrJs(e.status_url)}')" title="{{ __('extensions::extensions.actions.toggle_status') }}">
             <i class="fas fa-${e.status === 'active' ? 'pause' : 'play'}"></i>
           </button>
-          <button class="btn-icon danger" onclick="ExtTable.deleteExt(${e.id},'${this._esc(e.name)}')" title="{{ __('extensions::extensions.common.delete') }}">
+          <button class="btn-icon danger" onclick="ExtTable.deleteExt('${this._attrJs(e.delete_url)}','${this._attrJs(e.name)}')" title="{{ __('extensions::extensions.common.delete') }}">
             <i class="fas fa-trash"></i>
           </button>
         </div>
@@ -335,6 +335,11 @@ class ExtTable {
 
   goTo(p) { this.state.page = p; this.load(); window.scrollTo({top:0,behavior:'smooth'}); }
   _esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+  _url(s) { return this._esc(s || '#'); }
+  _js(s) {
+    return String(s ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '').replace(/\n/g, '\\n');
+  }
+  _attrJs(s) { return this._esc(this._js(s)); }
   _iconClass(value, fallback = 'fas fa-puzzle-piece') {
     const raw = String(value || '').trim();
     if (!raw) return fallback;
@@ -363,8 +368,8 @@ class ExtTable {
     return '';
   }
 
-  static async toggleFeatured(id) {
-    const { ok, data } = await Http.post(`/superadmin/extensions/${id}/featured`, {});
+  static async toggleFeatured(url, id) {
+    const { ok, data } = await Http.post(url, {});
     if (ok) {
       Toast.success(EXT_I18N.updated, data.message);
       const btn = document.getElementById(`featBtn-${id}`);
@@ -372,20 +377,20 @@ class ExtTable {
     } else Toast.error(EXT_I18N.error, data.message);
   }
 
-  static async toggleStatus(id, current) {
-    const { ok, data } = await Http.post(`/superadmin/extensions/${id}/status`, {});
+  static async toggleStatus(url) {
+    const { ok, data } = await Http.post(url, {});
     if (ok) { Toast.success(EXT_I18N.statusUpdated, data.message); window._extTable?.load(); }
     else Toast.error(EXT_I18N.error, data.message);
   }
 
-  static async deleteExt(id, name) {
+  static async deleteExt(url, name) {
     Modal.confirm({
       title: EXT_I18N.deleteTitle.replace(':name', name),
       message: EXT_I18N.deleteMessage,
       confirmText: EXT_I18N.deleteConfirm,
       type: 'danger',
       onConfirm: async () => {
-        const { ok, data } = await Http.delete(`/superadmin/extensions/${id}`);
+        const { ok, data } = await Http.delete(url);
         if (ok) { Toast.success(EXT_I18N.deleted, data.message); window._extTable?.load(); window._extTable?.loadStats(); }
         else Toast.error(EXT_I18N.error, data.message);
       }

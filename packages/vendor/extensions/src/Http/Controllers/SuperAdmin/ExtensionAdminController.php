@@ -288,6 +288,11 @@ class ExtensionAdminController extends Controller
             'active_installs' => $e->active_installs ?? $e->active_installs_count,
             'rating'          => $e->rating,
             'version'         => $e->version,
+            'show_url'        => route('superadmin.extensions.show', $e),
+            'edit_url'        => route('superadmin.extensions.edit', $e),
+            'featured_url'    => route('superadmin.extensions.featured', $e),
+            'status_url'      => route('superadmin.extensions.status', $e),
+            'delete_url'      => route('superadmin.extensions.destroy', $e),
         ];
     }
 }
