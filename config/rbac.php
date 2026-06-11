@@ -13,12 +13,7 @@ return [
 
     'system_roles' => ['owner', 'super_admin', 'super-admin'],
 
-    'platform_only_permissions' => [
-        'marketplace.read',
-        'extensions.read',
-        'extensions.manage',
-        'extensions.settings',
-    ],
+    'platform_only_permissions' => [],
 
     'default_roles' => [
         'owner'   => ['label' => 'Proprietaire',   'color' => '#7c3aed', 'description' => 'Acces total, non modifiable'],
@@ -232,6 +227,7 @@ return [
             'stock-movements.read','stock-movements.export',
             'projects.view','projects.create','projects.update','projects.delete','projects.manage_members','projects.manage_tasks','projects.comment','projects.admin',
             'reports.read','reports.export',
+            'marketplace.read','extensions.read','extensions.manage','extensions.settings',
             'google-drive.view','google-drive.manage','dropbox.view','dropbox.manage','google-calendar.view','google-calendar.manage','google-meet.view','google-meet.manage',
             'google-gmail.view','google-gmail.send','google-gmail.manage','google-sheets.view','google-sheets.manage','google-docx.view','google-docx.manage',
             'slack.view','slack.send','slack.manage','trello.view','trello.manage','chatbot.view','chatbot.manage',

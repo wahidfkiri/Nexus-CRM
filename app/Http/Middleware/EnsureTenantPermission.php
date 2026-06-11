@@ -11,15 +11,6 @@ use Throwable;
 
 class EnsureTenantPermission
 {
-    private const SUPER_ADMIN_ROLES = ['super_admin', 'super-admin'];
-
-    private const PLATFORM_MARKETPLACE_PERMISSIONS = [
-        'marketplace.read',
-        'extensions.read',
-        'extensions.manage',
-        'extensions.settings',
-    ];
-
     public function handle(Request $request, Closure $next, string ...$permissions): Response
     {
         $user = $request->user();
@@ -31,14 +22,6 @@ class EnsureTenantPermission
         $permissions = $this->normalizePermissions($permissions);
         if ($permissions === []) {
             return $next($request);
-        }
-
-        if ($this->containsPlatformMarketplacePermission($permissions)) {
-            if ($this->isSuperAdmin($user)) {
-                return $next($request);
-            }
-
-            return $this->deny($request, $permissions);
         }
 
         $tenantId = (int) (session('current_tenant_id') ?: ($user->tenant_id ?? 0));
@@ -103,30 +86,6 @@ class EnsureTenantPermission
 
         return (bool) ($user->is_tenant_owner ?? false)
             || in_array((string) ($user->role_in_tenant ?? ''), ['owner', 'admin'], true);
-    }
-
-    private function isSuperAdmin($user): bool
-    {
-        if (method_exists($user, 'hasAnyRole') && $user->hasAnyRole(self::SUPER_ADMIN_ROLES)) {
-            return true;
-        }
-
-        if (!method_exists($user, 'hasRole')) {
-            return false;
-        }
-
-        foreach (self::SUPER_ADMIN_ROLES as $role) {
-            if ($user->hasRole($role)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function containsPlatformMarketplacePermission(array $permissions): bool
-    {
-        return count(array_intersect($permissions, self::PLATFORM_MARKETPLACE_PERMISSIONS)) > 0;
     }
 
     private function rbacTablesAreReady(): bool

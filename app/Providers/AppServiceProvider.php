@@ -253,17 +253,6 @@ class AppServiceProvider extends ServiceProvider
                     return true;
                 }
 
-                $platformMarketplacePermissions = [
-                    'marketplace.read',
-                    'extensions.read',
-                    'extensions.manage',
-                    'extensions.settings',
-                ];
-
-                if (count(array_intersect($permissions, $platformMarketplacePermissions)) > 0) {
-                    return false;
-                }
-
                 if (method_exists($user, 'hasTenantRole') && $user->hasTenantRole(['owner', 'admin'], $tenantId)) {
                     return true;
                 }
