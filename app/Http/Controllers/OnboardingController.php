@@ -7,12 +7,14 @@ use App\Support\Security\PhoneNumberService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Vendor\CrmCore\Models\TenantSetting;
 use Vendor\Extensions\Models\Extension;
 use Vendor\Extensions\Models\TenantExtension;
 use Vendor\Extensions\Services\ExtensionService;
+use Vendor\Rbac\Services\TenantRoleService;
 
 class OnboardingController extends Controller
 {
@@ -482,6 +484,7 @@ class OnboardingController extends Controller
         $tenantId = (int) $user->tenant_id;
 
         if (self::isOwner($user)) {
+            $this->promoteBootstrapAdminToOwner($user);
             $this->setSetting($tenantId, 'onboarding_completed_at', now()->toDateTimeString());
 
             return response()->json([
@@ -516,7 +519,11 @@ class OnboardingController extends Controller
 
     public static function isOwner(User $user): bool
     {
-        return (bool) $user->is_tenant_owner || (string) $user->role_in_tenant === 'owner';
+        if ((bool) $user->is_tenant_owner || (string) $user->role_in_tenant === 'owner') {
+            return true;
+        }
+
+        return self::isBootstrapAdminWithoutTenantOwner($user);
     }
 
     public static function isCompletedForUser(User $user): bool
@@ -553,6 +560,100 @@ class OnboardingController extends Controller
         /** @var User $user */
         $user = $request->user();
         return self::isOwner($user);
+    }
+
+    private function promoteBootstrapAdminToOwner(User $user): void
+    {
+        if ((bool) $user->is_tenant_owner || (string) $user->role_in_tenant === 'owner') {
+            return;
+        }
+
+        if (!self::isBootstrapAdminWithoutTenantOwner($user)) {
+            return;
+        }
+
+        $tenantId = (int) $user->tenant_id;
+        if ($tenantId <= 0) {
+            return;
+        }
+
+        app(TenantRoleService::class)->syncUserRole($user, $tenantId, 'owner', [
+            'role_in_tenant' => 'owner',
+            'is_tenant_owner' => true,
+            'status' => 'active',
+            'joined_at' => now(),
+        ]);
+
+        $user->forceFill([
+            'role_in_tenant' => 'owner',
+            'is_tenant_owner' => true,
+            'status' => 'active',
+            'is_active' => true,
+        ])->save();
+    }
+
+    private static function isBootstrapAdminWithoutTenantOwner(User $user): bool
+    {
+        $tenantId = (int) ($user->tenant_id ?? 0);
+        if ($tenantId <= 0) {
+            return false;
+        }
+
+        $role = (string) ($user->role_in_tenant ?? '');
+        $membership = method_exists($user, 'membershipForTenant') ? $user->membershipForTenant($tenantId) : null;
+        if ($membership) {
+            $role = (string) ($membership->role_in_tenant ?: $role);
+        }
+
+        if ($role !== 'admin') {
+            return false;
+        }
+
+        return !self::tenantHasOwner($tenantId);
+    }
+
+    private static function tenantHasOwner(int $tenantId): bool
+    {
+        if ($tenantId <= 0) {
+            return false;
+        }
+
+        if (Schema::hasTable('tenant_user_memberships')) {
+            $membershipQuery = DB::table('tenant_user_memberships')
+                ->where('tenant_id', $tenantId)
+                ->where('status', 'active')
+                ->where(function ($query): void {
+                    $query->where('is_tenant_owner', true)
+                        ->orWhere('role_in_tenant', 'owner');
+                });
+
+            if ($membershipQuery->exists()) {
+                return true;
+            }
+        }
+
+        if (!Schema::hasTable('users') || !Schema::hasColumn('users', 'tenant_id')) {
+            return false;
+        }
+
+        $userQuery = DB::table('users')
+            ->where('tenant_id', $tenantId)
+            ->where(function ($query): void {
+                $query->where('is_tenant_owner', true)
+                    ->orWhere('role_in_tenant', 'owner');
+            });
+
+        if (Schema::hasColumn('users', 'deleted_at')) {
+            $userQuery->whereNull('deleted_at');
+        }
+
+        if (Schema::hasColumn('users', 'status')) {
+            $userQuery->where('status', 'active');
+        } elseif (Schema::hasColumn('users', 'is_active')) {
+            $userQuery->where('is_active', true);
+        }
+
+        return $userQuery->exists();
     }
 
     private function normalizeCountryCode(string $value, array $allowed, string $fallback): string

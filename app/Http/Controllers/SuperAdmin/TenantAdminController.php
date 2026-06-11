@@ -151,8 +151,8 @@ class TenantAdminController extends Controller
                     'email' => $adminEmail,
                     'password' => Hash::make((string) $data['admin_password']),
                     'tenant_id' => (int) $tenant->id,
-                    'role_in_tenant' => 'admin',
-                    'is_tenant_owner' => false,
+                    'role_in_tenant' => 'owner',
+                    'is_tenant_owner' => true,
                     'status' => 'active',
                     'is_active' => true,
                 ]);
@@ -169,9 +169,9 @@ class TenantAdminController extends Controller
                 ])->save();
             }
 
-            $tenantRoleService->syncUserRole($admin, (int) $tenant->id, 'admin', [
-                'role_in_tenant' => 'admin',
-                'is_tenant_owner' => false,
+            $tenantRoleService->syncUserRole($admin, (int) $tenant->id, 'owner', [
+                'role_in_tenant' => 'owner',
+                'is_tenant_owner' => true,
                 'status' => 'active',
                 'joined_at' => now(),
             ]);
