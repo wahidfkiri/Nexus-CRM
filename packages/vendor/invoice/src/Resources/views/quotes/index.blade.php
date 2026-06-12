@@ -152,9 +152,19 @@ const quoteIndexLang = {
 window.QUOTE_ROUTES = {
   data: @json(route('invoices.quotes.data')),
   stats: @json(route('invoices.stats')),
+  show: @json(route('invoices.quotes.show', ['quote' => '__QUOTE__'])),
+  edit: @json(route('invoices.quotes.edit', ['quote' => '__QUOTE__'])),
+  pdf: @json(route('invoices.quotes.pdf', ['quote' => '__QUOTE__'])),
   convert: @json(route('invoices.quotes.convert', ['quote' => '__QUOTE__'])),
   destroy: @json(route('invoices.quotes.destroy', ['quote' => '__QUOTE__'])),
 };
+window.INVOICE_ROUTES = Object.assign(window.INVOICE_ROUTES || {}, {
+  quoteShow: window.QUOTE_ROUTES.show,
+  quoteEdit: window.QUOTE_ROUTES.edit,
+  quotePdf: window.QUOTE_ROUTES.pdf,
+  quoteConvert: window.QUOTE_ROUTES.convert,
+  quoteDestroy: window.QUOTE_ROUTES.destroy,
+});
 window.INVOICE_CURRENCIES = @json(config('invoice.currencies'));
 const quoteRoute = (template, id) => String(template).replace('__QUOTE__', encodeURIComponent(String(id)));
 
