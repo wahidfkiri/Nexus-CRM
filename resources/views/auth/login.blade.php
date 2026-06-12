@@ -38,12 +38,12 @@
 
         <main class="login-stage">
             <section class="login-card" aria-labelledby="loginTitle">
-                <div class="login-brand-row">
+                <!-- <div class="login-brand-row">
                     <div class="login-brand-badge">
                         <span class="login-brand-icon"><i class="fas fa-chart-line"></i></span>
                         <span class="login-brand-name">{{ __('auth-ui.brand') }}</span>
                     </div>
-                </div>
+                </div> -->
 
                 <div class="login-copy">
                     <p class="login-eyebrow">{{ __('auth-ui.login.eyebrow') }}</p>
@@ -154,6 +154,6 @@
     </script>
     @include('layouts.partials.tauri-bridge')
     <script src="{{ asset('vendor/client/js/secure-form.js') }}"></script>
-    <script src="{{ asset('js/login.js') }}"></script>
+    
 </body>
 </html>
