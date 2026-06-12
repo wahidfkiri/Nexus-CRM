@@ -282,11 +282,11 @@
 @push('scripts')
 <script>
 window.MKT_ROUTES = {
-  data:       '{{ route("marketplace.data") }}',
-  stats:      '{{ route("marketplace.stats") }}',
-  activate:   '/marketplace/{slug}/activate',
-  deactivate: '/marketplace/{slug}/deactivate',
-  show:       '/marketplace/{slug}',
+  data:       @json(route('marketplace.data')),
+  stats:      @json(route('marketplace.stats')),
+  activate:   @json(route('marketplace.activate', ['slug' => '__SLUG__'])),
+  deactivate: @json(route('marketplace.deactivate', ['slug' => '__SLUG__'])),
+  show:       @json(route('marketplace.show', ['slug' => '__SLUG__'])),
 };
 
 const CATEGORIES = @json($categories);
@@ -462,7 +462,7 @@ function renderCardGrid(a) {
        </button>`;
 
   return `
-  <div class="app-card" style="--app-color:${color};" onclick="openAppModal('${a.slug}')">
+  <div class="app-card" style="--app-color:${color};" onclick="openAppModal(${slugArg})">
     ${activeBadge}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;">
       <div class="app-icon-wrap" style="background:${iconBg};">
@@ -510,7 +510,7 @@ function renderCardList(a) {
     : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();activateApp(${slugArg},${nameArg},${a.is_free},${a.has_trial},${iconUrlArg},${iconClassArg},${colorArg})"><i class="fas fa-plug"></i> ${MKT_I18N.installButton}</button>`;
 
   return `
-  <div class="app-list-item" onclick="openAppModal('${a.slug}')">
+  <div class="app-list-item" onclick="openAppModal(${slugArg})">
     <div style="width:44px;height:44px;border-radius:12px;background:${iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div>
     <div style="flex:1;min-width:0;">
       <div style="font-weight:var(--fw-semi);color:var(--c-ink);display:flex;align-items:center;gap:8px;">
@@ -566,7 +566,7 @@ async function activateApp(slug, name, isFree, hasTrial, iconUrl = '', iconClass
     iconVariant: 'app',
     iconColor: color,
     onConfirm: async () => {
-      const { ok, data } = await Http.post(`/marketplace/${slug}/activate`, {});
+      const { ok, data } = await Http.post(marketplaceRoute(window.MKT_ROUTES.activate, slug), {});
       if (ok) {
         Toast.success(MKT_I18N.activateSuccess, data.message);
         if (data.redirect) {
@@ -591,7 +591,7 @@ async function deactivateApp(slug, name, iconUrl = '', iconClass = 'fas fa-puzzl
     iconVariant: 'app',
     iconColor: color,
     onConfirm: async () => {
-      const { ok, data } = await Http.post(`/marketplace/${slug}/deactivate`, {});
+      const { ok, data } = await Http.post(marketplaceRoute(window.MKT_ROUTES.deactivate, slug), {});
       if (ok) { Toast.success(MKT_I18N.deactivateSuccess, data.message); loadApps(); }
       else Toast.error(MKT_I18N.error, data.message);
     }
@@ -600,11 +600,14 @@ async function deactivateApp(slug, name, iconUrl = '', iconClass = 'fas fa-puzzl
 
 async function openAppModal(slug) {
   // Charger la page show en AJAX pour afficher dans la modal
-  window.location.href = `/marketplace/${slug}`;
+  window.location.href = marketplaceRoute(window.MKT_ROUTES.show, slug);
 }
 
 function _esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
 function _attrJs(value) { return JSON.stringify(String(value ?? '')).replace(/"/g, '&quot;'); }
+function marketplaceRoute(template, slug) {
+  return String(template).replace('__SLUG__', encodeURIComponent(String(slug)));
+}
 function _iconClass(value, fallback = 'fas fa-puzzle-piece') {
   const raw = String(value || '').trim();
   if (!raw) return fallback;

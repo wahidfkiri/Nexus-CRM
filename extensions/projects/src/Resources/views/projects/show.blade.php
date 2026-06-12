@@ -116,7 +116,7 @@
         <span class="file-picker-name" id="projectFileName">Aucun fichier</span>
       </div>
       <button class="btn btn-primary" id="projectFileUploadBtn" data-loading-text="Ajout..."><i class="fas fa-upload"></i> Ajouter</button>
-      <a class="btn btn-secondary" href="{{ url('/extensions/google-drive') }}"><i class="fas fa-link"></i> Google Drive</a>
+      <a class="btn btn-secondary" href="{{ route('google-drive.index') }}"><i class="fas fa-link"></i> Google Drive</a>
     </div>
   </div>
 
@@ -577,10 +577,10 @@ window.PROJECTS_SHOW_BOOTSTRAP = {
 };
 
 window.PROJECTS_ROUTES = {
-  base: '{{ url('/extensions/projects') }}',
-  scheduleProject: '{{ route('projects.calendar.schedule-project', $project) }}',
-  scheduleTaskBase: '{{ url('/extensions/projects/' . $project->id . '/tasks') }}',
-  boardsData: '{{ route('projects.boards.data', $project) }}',
+  base: @json(route('projects.index')),
+  scheduleProject: @json(route('projects.calendar.schedule-project', $project)),
+  scheduleTaskBase: @json(route('projects.tasks.store', $project)),
+  boardsData: @json(route('projects.boards.data', $project)),
 };
 
 window.PROJECTS_USERS = @json($users->values()->map(fn($u) => ['id' => $u->id, 'name' => $u->name, 'email' => $u->email]));

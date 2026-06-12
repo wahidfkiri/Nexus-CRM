@@ -304,6 +304,11 @@
 
 @push('scripts')
 <script>
+const MKT_SHOW_ROUTES = {
+  activate: @json(route('marketplace.activate', $extension->slug)),
+  deactivate: @json(route('marketplace.deactivate', $extension->slug)),
+};
+
 function buildMarketplaceConfirmIcon(name, iconUrl, iconClass) {
   const safeName = document.createElement('div');
   safeName.textContent = name || '';
@@ -326,7 +331,7 @@ async function activateExt(slug, name, isTrial, iconUrl = '', iconClass = 'fas f
     iconVariant: 'app',
     iconColor: color,
     onConfirm: async () => {
-      const { ok, data } = await Http.post(`/marketplace/${slug}/activate`, {});
+      const { ok, data } = await Http.post(MKT_SHOW_ROUTES.activate, {});
       if (ok) {
         Toast.success(@json(__('extensions::extensions.marketplace.show.activate_success')), data.message);
         if (data.redirect) {
@@ -349,7 +354,7 @@ async function deactivateExt(slug, name, iconUrl = '', iconClass = 'fas fa-puzzl
     iconVariant: 'app',
     iconColor: color,
     onConfirm: async () => {
-      const { ok, data } = await Http.post(`/marketplace/${slug}/deactivate`, {});
+      const { ok, data } = await Http.post(MKT_SHOW_ROUTES.deactivate, {});
       if (ok) { Toast.success(@json(__('extensions::extensions.marketplace.show.deactivate_success')), data.message); setTimeout(() => location.reload(), 900); }
       else Toast.error(@json(__('extensions::extensions.common.error')), data.message);
     }

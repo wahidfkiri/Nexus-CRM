@@ -150,10 +150,13 @@ const quoteIndexLang = {
 };
 
 window.QUOTE_ROUTES = {
-  data:  '{{ route("invoices.quotes.data") }}',
-  stats: '{{ route("invoices.stats") }}',
+  data: @json(route('invoices.quotes.data')),
+  stats: @json(route('invoices.stats')),
+  convert: @json(route('invoices.quotes.convert', ['quote' => '__QUOTE__'])),
+  destroy: @json(route('invoices.quotes.destroy', ['quote' => '__QUOTE__'])),
 };
 window.INVOICE_CURRENCIES = @json(config('invoice.currencies'));
+const quoteRoute = (template, id) => String(template).replace('__QUOTE__', encodeURIComponent(String(id)));
 
 document.addEventListener('DOMContentLoaded', () => {
   window._quoteTable = new InvTable({
@@ -179,7 +182,7 @@ async function convertQuote(id, number) {
     confirmText: quoteIndexLang.convertConfirm,
     type: 'danger',
     onConfirm: async () => {
-      const { ok, data } = await Http.post(`/invoices/quotes/${id}/convert`, {});
+      const { ok, data } = await Http.post(quoteRoute(window.QUOTE_ROUTES.convert, id), {});
       if (ok) { Toast.success(@json(__('invoice::invoices.js.quote_converted_title')), data.message); setTimeout(() => window.location.href = data.redirect, 1000); }
       else Toast.error(quoteIndexLang.errorTitle, data.message);
     }
@@ -193,7 +196,7 @@ async function deleteQuote(id) {
     confirmText: quoteIndexLang.deleteLabel,
     type: 'danger',
     onConfirm: async () => {
-      const { ok, data } = await Http.delete(`/invoices/quotes/${id}`);
+      const { ok, data } = await Http.delete(quoteRoute(window.QUOTE_ROUTES.destroy, id));
       if (ok) { Toast.success(quoteIndexLang.successTitle, data.message); window._quoteTable?.load(); }
       else Toast.error(quoteIndexLang.errorTitle, data.message);
     }

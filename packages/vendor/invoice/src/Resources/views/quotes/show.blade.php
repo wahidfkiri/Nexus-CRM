@@ -121,6 +121,9 @@ const quoteShowLang = {
   convertConfirm: @json(__('invoice::invoices.actions.convert')),
   convertTitleTemplate: @json(__('invoice::invoices.pages.quote_show.convert_title', ['number' => ':number'])),
 };
+const quoteShowRoutes = {
+  convert: @json(route('invoices.quotes.convert', $quote)),
+};
 
 async function convertQuote(id, number) {
   Modal.confirm({
@@ -129,7 +132,7 @@ async function convertQuote(id, number) {
     confirmText: quoteShowLang.convertConfirm,
     type: 'success',
     onConfirm: async () => {
-      const { ok, data } = await Http.post(`/invoices/quotes/${id}/convert`, {});
+      const { ok, data } = await Http.post(quoteShowRoutes.convert, {});
       if (ok) {
         Toast.success(quoteShowLang.successTitle, data.message || quoteShowLang.convertFallbackSuccess);
         if (data.redirect) setTimeout(() => window.location.href = data.redirect, 800);

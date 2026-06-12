@@ -42,6 +42,14 @@ function invoiceLang(key, replacements = {}) {
   return value;
 }
 
+function invoiceRoute(name, replacements = {}) {
+  let template = window.INVOICE_ROUTES?.[name] || '#';
+  Object.entries(replacements).forEach(([key, value]) => {
+    template = template.replace(`__${key.toUpperCase()}__`, encodeURIComponent(String(value)));
+  });
+  return template;
+}
+
 /* ============================================================
    InvTable — Table manager (identique CrmTable mais pour factures/devis)
    ============================================================ */
@@ -240,9 +248,12 @@ class InvTable {
     const isOverdue = inv.is_overdue;
     const isPaid = String(inv.status || '').toLowerCase() === 'paid';
     const paidLockTitle = InvoiceLang.paidLockTitle;
+    const showUrl = invoiceRoute('show', { invoice: inv.id });
+    const editUrl = invoiceRoute('edit', { invoice: inv.id });
+    const pdfUrl = invoiceRoute('pdf', { invoice: inv.id });
     const editAction = isPaid
       ? `<button type="button" class="btn-icon is-disabled" aria-disabled="true" title="${paidLockTitle}"><i class="fas fa-pen"></i></button>`
-      : `<a href="/invoices/${inv.id}/edit" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>`;
+      : `<a href="${editUrl}" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>`;
     const deleteAction = isPaid
       ? `<button type="button" class="btn-icon danger is-disabled" aria-disabled="true" title="${paidLockTitle}"><i class="fas fa-trash"></i></button>`
       : `<button class="btn-icon danger" onclick="InvTable._deleteInvoice(${inv.id},'${this._esc(inv.number)}')" title="Supprimer"><i class="fas fa-trash"></i></button>`;
@@ -250,7 +261,7 @@ class InvTable {
       <tr data-id="${inv.id}" class="${this.selectedIds.has(inv.id) ? 'selected' : ''}">
         <td style="width:40px"><input type="checkbox" class="row-check" data-id="${inv.id}" ${this.selectedIds.has(inv.id)?'checked':''}></td>
         <td>
-          <div><a href="/invoices/${inv.id}" style="color:var(--c-accent);font-weight:var(--fw-semi);text-decoration:none;font-family:var(--ff-display);">${this._esc(inv.number)}</a></div>
+          <div><a href="${showUrl}" style="color:var(--c-accent);font-weight:var(--fw-semi);text-decoration:none;font-family:var(--ff-display);">${this._esc(inv.number)}</a></div>
           ${inv.reference ? `<div style="font-size:11.5px;color:var(--c-ink-40);">${InvoiceLang.referencePrefix} ${this._esc(inv.reference)}</div>` : ''}
         </td>
         <td>
@@ -265,8 +276,8 @@ class InvTable {
         <td><span class="badge badge-${inv.status}">${dot}${this._esc(inv.status_label||inv.status)}</span></td>
         <td>
           <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
-            <a href="/invoices/${inv.id}" class="btn-icon" title="Voir"><i class="fas fa-eye"></i></a>
-            <a href="/invoices/${inv.id}/pdf" target="_blank" class="btn-icon" title="PDF"><i class="fas fa-file-pdf"></i></a>
+            <a href="${showUrl}" class="btn-icon" title="Voir"><i class="fas fa-eye"></i></a>
+            <a href="${pdfUrl}" target="_blank" class="btn-icon" title="PDF"><i class="fas fa-file-pdf"></i></a>
             ${editAction}
             ${deleteAction}
           </div>
@@ -278,11 +289,14 @@ class InvTable {
     const cur = q.currency || 'EUR';
     const expired = q.is_expired;
     const dot = `<span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block;margin-right:5px;opacity:.7;"></span>`;
+    const showUrl = invoiceRoute('quoteShow', { quote: q.id });
+    const editUrl = invoiceRoute('quoteEdit', { quote: q.id });
+    const pdfUrl = invoiceRoute('quotePdf', { quote: q.id });
     return `
       <tr data-id="${q.id}" class="${this.selectedIds.has(q.id)?'selected':''}">
         <td style="width:40px"><input type="checkbox" class="row-check" data-id="${q.id}" ${this.selectedIds.has(q.id)?'checked':''}></td>
         <td>
-          <div><a href="/invoices/quotes/${q.id}" style="color:var(--c-purple);font-weight:var(--fw-semi);text-decoration:none;font-family:var(--ff-display);">${this._esc(q.number)}</a></div>
+          <div><a href="${showUrl}" style="color:var(--c-purple);font-weight:var(--fw-semi);text-decoration:none;font-family:var(--ff-display);">${this._esc(q.number)}</a></div>
           ${q.reference ? `<div style="font-size:11.5px;color:var(--c-ink-40);">${InvoiceLang.referencePrefix} ${this._esc(q.reference)}</div>` : ''}
         </td>
         <td>
@@ -296,9 +310,9 @@ class InvTable {
         <td><span class="badge badge-${q.status}">${dot}${this._esc(q.status_label||q.status)}</span>${q.is_converted?`<span class="badge badge-paid" style="margin-left:6px;">${InvoiceLang.convertedBadge}</span>`:''}</td>
         <td>
           <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
-            <a href="/invoices/quotes/${q.id}" class="btn-icon" title="Voir"><i class="fas fa-eye"></i></a>
-            ${q.status==='accepted'?`<a href="/invoices/quotes/${q.id}/pdf" target="_blank" class="btn-icon" title="PDF"><i class="fas fa-file-pdf"></i></a>`:''}
-            ${!['accepted','declined'].includes(q.status)?`<a href="/invoices/quotes/${q.id}/edit" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>`:''}
+            <a href="${showUrl}" class="btn-icon" title="Voir"><i class="fas fa-eye"></i></a>
+            ${q.status==='accepted'?`<a href="${pdfUrl}" target="_blank" class="btn-icon" title="PDF"><i class="fas fa-file-pdf"></i></a>`:''}
+            ${!['accepted','declined'].includes(q.status)?`<a href="${editUrl}" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>`:''}
             ${!q.is_converted&&q.status==='sent'?`<button class="btn btn-sm btn-success" onclick="convertQuote(${q.id},'${this._esc(q.number)}')" title="Convertir"><i class="fas fa-arrow-right"></i> FAC</button>`:''}
             <button class="btn-icon danger" onclick="deleteQuote(${q.id})" title="Supprimer"><i class="fas fa-trash"></i></button>
           </div>
@@ -308,10 +322,11 @@ class InvTable {
 
   _rowPayment(p) {
     const cur = p.currency || 'EUR';
+    const invoiceUrl = invoiceRoute('show', { invoice: p.invoice_id });
     return `
       <tr data-id="${p.id}">
         <td style="font-weight:var(--fw-medium);color:var(--c-ink-60);">${p.payment_date ? this._fmtDate(p.payment_date) : '—'}</td>
-        <td><a href="/invoices/${p.invoice_id}" style="color:var(--c-accent);font-weight:var(--fw-semi);text-decoration:none;">${this._esc(p.invoice?.number||'—')}</a></td>
+        <td><a href="${invoiceUrl}" style="color:var(--c-accent);font-weight:var(--fw-semi);text-decoration:none;">${this._esc(p.invoice?.number||'—')}</a></td>
         <td>
           <div style="font-weight:var(--fw-medium);">${this._esc(p.invoice?.client?.company_name||'—')}</div>
         </td>
@@ -326,7 +341,7 @@ class InvTable {
         <td style="text-align:right;font-weight:var(--fw-bold);font-family:var(--ff-display);color:var(--c-success);">${InvCurrencyFmt.format(p.amount, cur)}</td>
         <td>
           <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
-            <a href="/invoices/${p.invoice_id}" class="btn-icon" title="${InvoiceLang.viewInvoiceTitle}"><i class="fas fa-file-invoice"></i></a>
+            <a href="${invoiceUrl}" class="btn-icon" title="${InvoiceLang.viewInvoiceTitle}"><i class="fas fa-file-invoice"></i></a>
             <button class="btn-icon danger" onclick="InvTable._deletePayment(${p.id})" title="Supprimer"><i class="fas fa-trash"></i></button>
           </div>
         </td>
@@ -387,7 +402,7 @@ class InvTable {
       confirmText: InvoiceLang.deleteConfirmText,
       type: 'danger',
       onConfirm: async () => {
-        const { ok, data } = await Http.delete(`/invoices/${id}`);
+        const { ok, data } = await Http.delete(invoiceRoute('destroy', { invoice: id }));
         if (ok) { Toast.success(InvoiceLang.successTitle, data.message); window._invTable?.load(); }
         else Toast.error(InvoiceLang.errorTitle, data.message);
       }
@@ -401,7 +416,7 @@ class InvTable {
       confirmText: InvoiceLang.deleteConfirmText,
       type: 'danger',
       onConfirm: async () => {
-        const { ok, data } = await Http.delete(`/invoices/payments/${id}`);
+        const { ok, data } = await Http.delete(invoiceRoute('paymentsDestroy', { payment: id }));
         if (ok) { Toast.success(InvoiceLang.successTitle, data.message); window._payTable?.load(); }
         else Toast.error(InvoiceLang.errorTitle, data.message);
       }
@@ -652,7 +667,7 @@ const InvClientSearch = (() => {
         const q = input.value.trim();
         if (q.length < 2) { if (sugsEl) sugsEl.style.display = 'none'; return; }
         try {
-          const { ok, data } = await Http.get('/clients/data/search', { q });
+          const { ok, data } = await Http.get(window.CLIENT_ROUTES?.search || '#', { q });
           if (ok && data.data) renderSuggestions(data.data, sugsEl, input, hidden, opts);
         } catch(e) {}
       }, 300);

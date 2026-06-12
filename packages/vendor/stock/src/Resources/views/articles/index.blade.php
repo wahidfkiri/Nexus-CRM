@@ -84,6 +84,12 @@
 
 @push('scripts')
 <script>
+const STOCK_ARTICLE_ROUTES = {
+  show: @json(route('stock.articles.show', ['article' => '__ARTICLE__'])),
+  edit: @json(route('stock.articles.edit', ['article' => '__ARTICLE__'])),
+};
+const stockArticleRoute = (template, id) => String(template).replace('__ARTICLE__', encodeURIComponent(String(id)));
+
 document.addEventListener('DOMContentLoaded', () => {
   Stock.loadStats('{{ route('stock.stats') }}');
   window._stockArticlesTable = new CrmTable({
@@ -94,12 +100,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return `
         <tr>
           <td>${article.sku ?? '—'}</td>
-          <td><a href="/stock/articles/${article.id}" style="color:var(--c-accent);font-weight:600;text-decoration:none;">${article.name}</a></td>
+          <td><a href="${stockArticleRoute(STOCK_ARTICLE_ROUTES.show, article.id)}" style="color:var(--c-accent);font-weight:600;text-decoration:none;">${article.name}</a></td>
           <td>${article.supplier?.name ?? '—'}</td>
           <td><span style="font-weight:600;color:${isLow ? 'var(--c-danger)' : 'var(--c-ink)'};">${article.current_stock ?? 0}</span></td>
           <td>${article.min_stock ?? 0}</td>
           <td>${article.sale_price}</td>
-          <td><a class="btn-icon" href="/stock/articles/${article.id}/edit"><i class="fas fa-pen"></i></a></td>
+          <td><a class="btn-icon" href="${stockArticleRoute(STOCK_ARTICLE_ROUTES.edit, article.id)}"><i class="fas fa-pen"></i></a></td>
         </tr>`;
     },
   });

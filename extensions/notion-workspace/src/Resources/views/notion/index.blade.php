@@ -354,10 +354,10 @@ window.NOTION_WORKSPACE_ROUTES = {
   disconnect: '{{ route('notion-workspace.disconnect') }}',
   pagesSearch: '{{ route('notion-workspace.pages.search') }}',
   pagesStore: '{{ route('notion-workspace.pages.store') }}',
-  pageShowBase: '{{ url('/extensions/notion-workspace/pages/__PAGE_ID__') }}',
+  pageShowBase: @json(route('notion-workspace.pages.show', ['pageId' => '__PAGE_ID__'])),
   linksIndex: '{{ route('notion-workspace.links.index') }}',
   linksStore: '{{ route('notion-workspace.links.store') }}',
-  linksBase: '{{ url('/extensions/notion-workspace/links/__LINK_ID__') }}',
+  linksBase: @json(route('notion-workspace.links.update', ['link' => '__LINK_ID__'])),
 };
 
 window.NOTION_WORKSPACE_BOOTSTRAP = {

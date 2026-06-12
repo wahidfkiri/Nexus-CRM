@@ -95,9 +95,14 @@
 
 @push('scripts')
 <script>
-window.INV_ROUTES = { data: '{{ route("users.invitations.data") }}' };
+window.INV_ROUTES = {
+  data: @json(route('users.invitations.data')),
+  resend: @json(route('users.invitations.resend', ['invitation' => '__INVITATION__'])),
+  revoke: @json(route('users.invitations.revoke', ['invitation' => '__INVITATION__'])),
+};
 window.INV_I18N = @json($invitationI18n);
 const ROLE_LABELS = @json($roles);
+const invitationRoute = (template, id) => String(template).replace('__INVITATION__', encodeURIComponent(String(id)));
 
 class InvTable {
   constructor() {
@@ -199,7 +204,7 @@ class InvTable {
 window._invTable = new InvTable();
 
 async function resendInv(id) {
-  const { ok, data } = await Http.post(`/users/invitations/${id}/resend`, {});
+  const { ok, data } = await Http.post(invitationRoute(window.INV_ROUTES.resend, id), {});
   if (ok) { Toast.success(window.INV_I18N.resent, data.message); window._invTable?.load(); }
   else Toast.error(window.INV_I18N.error, data.message);
 }
@@ -211,7 +216,7 @@ async function revokeInv(id) {
     confirmText: window.INV_I18N.revoke,
     type: 'danger',
     onConfirm: async () => {
-      const { ok, data } = await Http.delete(`/users/invitations/${id}`);
+      const { ok, data } = await Http.delete(invitationRoute(window.INV_ROUTES.revoke, id));
       if (ok) { Toast.success(window.INV_I18N.revokedToast, data.message); window._invTable?.load(); }
       else Toast.error(window.INV_I18N.error, data.message);
     }

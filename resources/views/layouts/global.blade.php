@@ -953,6 +953,42 @@
   </div>
 </div>
 
+@php
+  $clientJsRoutes = [
+    'show' => Route::has('clients.show') ? route('clients.show', ['client' => '__CLIENT__']) : null,
+    'edit' => Route::has('clients.edit') ? route('clients.edit', ['client' => '__CLIENT__']) : null,
+    'destroy' => Route::has('clients.destroy') ? route('clients.destroy', ['client' => '__CLIENT__']) : null,
+    'search' => Route::has('clients.search') ? route('clients.search') : null,
+  ];
+  $clientExtensionRoutes = [
+    'googleGmail' => Route::has('google-gmail.index') ? route('google-gmail.index') : null,
+    'googleCalendar' => Route::has('google-calendar.index') ? route('google-calendar.index') : null,
+    'googleDrive' => Route::has('google-drive.index') ? route('google-drive.index') : null,
+    'dropbox' => Route::has('dropbox.index') ? route('dropbox.index') : null,
+    'slack' => Route::has('slack.index') ? route('slack.index') : null,
+    'googleMeet' => Route::has('google-meet.index') ? route('google-meet.index') : null,
+    'googleSheets' => Route::has('google-sheets.index') ? route('google-sheets.index') : null,
+    'googleDocx' => Route::has('google-docx.index') ? route('google-docx.index') : null,
+    'notionWorkspace' => Route::has('notion-workspace.index') ? route('notion-workspace.index') : null,
+  ];
+  $invoiceJsRoutes = [
+    'show' => Route::has('invoices.show') ? route('invoices.show', ['invoice' => '__INVOICE__']) : null,
+    'edit' => Route::has('invoices.edit') ? route('invoices.edit', ['invoice' => '__INVOICE__']) : null,
+    'pdf' => Route::has('invoices.pdf') ? route('invoices.pdf', ['invoice' => '__INVOICE__']) : null,
+    'destroy' => Route::has('invoices.destroy') ? route('invoices.destroy', ['invoice' => '__INVOICE__']) : null,
+    'paymentsDestroy' => Route::has('invoices.payments.destroy') ? route('invoices.payments.destroy', ['payment' => '__PAYMENT__']) : null,
+    'quoteShow' => Route::has('invoices.quotes.show') ? route('invoices.quotes.show', ['quote' => '__QUOTE__']) : null,
+    'quoteEdit' => Route::has('invoices.quotes.edit') ? route('invoices.quotes.edit', ['quote' => '__QUOTE__']) : null,
+    'quotePdf' => Route::has('invoices.quotes.pdf') ? route('invoices.quotes.pdf', ['quote' => '__QUOTE__']) : null,
+    'quoteDestroy' => Route::has('invoices.quotes.destroy') ? route('invoices.quotes.destroy', ['quote' => '__QUOTE__']) : null,
+    'quoteConvert' => Route::has('invoices.quotes.convert') ? route('invoices.quotes.convert', ['quote' => '__QUOTE__']) : null,
+  ];
+@endphp
+<script>
+window.CLIENT_ROUTES = Object.assign(window.CLIENT_ROUTES || {}, @json($clientJsRoutes));
+window.CLIENT_EXTENSION_ROUTES = Object.assign(window.CLIENT_EXTENSION_ROUTES || {}, @json($clientExtensionRoutes));
+window.INVOICE_ROUTES = Object.assign(window.INVOICE_ROUTES || {}, @json($invoiceJsRoutes));
+</script>
 <script src="{{ asset('vendor/client/js/crm.js') }}"></script>
 <script src="{{ asset('vendor/client/js/secure-form.js') }}"></script>
 <script src="{{ asset('vendor/invoice/js/invoice.js') }}"></script>
@@ -978,14 +1014,51 @@
     ($layoutIsSuperAdmin ?? false) && Route::has('superadmin.tenants.index') ? ['label' => 'Tenants actifs', 'sub' => 'Gestion super-admin des entreprises', 'icon' => 'fa-building-user', 'url' => route('superadmin.tenants.index'), 'keywords' => 'tenants entreprises organisations clients actifs'] : null,
     ($layoutCanSettings ?? false) && Route::has('settings.global') ? ['label' => 'Parametres globaux', 'sub' => 'Configuration generale', 'icon' => 'fa-sliders', 'url' => route('settings.global'), 'keywords' => 'config parametres reglage'] : null,
   ]));
+  $globalSearchRoutes = [
+    'clientsData' => Route::has('clients.data') ? route('clients.data') : null,
+    'clientsShow' => Route::has('clients.show') ? route('clients.show', ['client' => '__CLIENT__']) : null,
+    'stockArticlesData' => Route::has('stock.articles.data') ? route('stock.articles.data') : null,
+    'stockArticlesSearch' => Route::has('stock.articles.search') ? route('stock.articles.search') : null,
+    'stockArticleShow' => Route::has('stock.articles.show') ? route('stock.articles.show', ['article' => '__ARTICLE__']) : null,
+    'stockOrdersData' => Route::has('stock.orders.data') ? route('stock.orders.data') : null,
+    'stockOrdersSearch' => Route::has('stock.orders.search') ? route('stock.orders.search') : null,
+    'stockOrderDetail' => Route::has('stock.orders.detail') ? route('stock.orders.detail', ['order' => '__ORDER__']) : null,
+    'stockOrderShow' => Route::has('stock.orders.show') ? route('stock.orders.show', ['order' => '__ORDER__']) : null,
+    'invoicesData' => Route::has('invoices.data') ? route('invoices.data') : null,
+    'invoiceShow' => Route::has('invoices.show') ? route('invoices.show', ['invoice' => '__INVOICE__']) : null,
+    'quotesData' => Route::has('invoices.quotes.data') ? route('invoices.quotes.data') : null,
+    'quoteShow' => Route::has('invoices.quotes.show') ? route('invoices.quotes.show', ['quote' => '__QUOTE__']) : null,
+    'usersData' => Route::has('users.data') ? route('users.data') : null,
+    'userShow' => Route::has('users.show') ? route('users.show', ['user' => '__USER__']) : null,
+    'projectsData' => Route::has('projects.data') ? route('projects.data') : null,
+    'projectShow' => Route::has('projects.show') ? route('projects.show', ['project' => '__PROJECT__']) : null,
+    'notionPagesSearch' => Route::has('notion-workspace.pages.search') ? route('notion-workspace.pages.search') : null,
+    'notionIndex' => Route::has('notion-workspace.index') ? route('notion-workspace.index') : null,
+    'googleDriveSearch' => Route::has('google-drive.search') ? route('google-drive.search') : null,
+    'googleDriveIndex' => Route::has('google-drive.index') ? route('google-drive.index') : null,
+    'googleSheetsData' => Route::has('google-sheets.spreadsheets.data') ? route('google-sheets.spreadsheets.data') : null,
+    'googleSheetsIndex' => Route::has('google-sheets.index') ? route('google-sheets.index') : null,
+    'googleDocxData' => Route::has('google-docx.documents.data') ? route('google-docx.documents.data') : null,
+    'googleDocxIndex' => Route::has('google-docx.index') ? route('google-docx.index') : null,
+    'googleCalendarEvents' => Route::has('google-calendar.events.data') ? route('google-calendar.events.data') : null,
+    'googleCalendarIndex' => Route::has('google-calendar.index') ? route('google-calendar.index') : null,
+    'googleGmailMessages' => Route::has('google-gmail.messages.data') ? route('google-gmail.messages.data') : null,
+    'googleGmailIndex' => Route::has('google-gmail.index') ? route('google-gmail.index') : null,
+    'googleMeetMeetings' => Route::has('google-meet.meetings.data') ? route('google-meet.meetings.data') : null,
+    'googleMeetIndex' => Route::has('google-meet.index') ? route('google-meet.index') : null,
+    'slackMessages' => Route::has('slack.messages.data') ? route('slack.messages.data') : null,
+    'slackIndex' => Route::has('slack.index') ? route('slack.index') : null,
+    'chatbotSearch' => Route::has('chatbot.search.data') ? route('chatbot.search.data') : null,
+    'chatbotIndex' => Route::has('chatbot.index') ? route('chatbot.index') : null,
+  ];
 @endphp
 <script>
 window.CRM_AUTOMATION_ROUTES = {
   list: @json(route('automation.suggestions.index')),
   bulkAccept: @json(route('automation.suggestions.accept.bulk')),
   bulkReject: @json(route('automation.suggestions.reject.bulk')),
-  accept: @json(url('/automation/suggestions/__ID__/accept')),
-  reject: @json(url('/automation/suggestions/__ID__/reject')),
+  accept: @json(route('automation.suggestions.accept', ['suggestion' => '__ID__'])),
+  reject: @json(route('automation.suggestions.reject', ['suggestion' => '__ID__'])),
 };
 
 window.CRM_AUTH_ROUTES = {
@@ -996,6 +1069,7 @@ window.CRM_AUTH_ROUTES = {
   const layoutInstalledApps = @json(($layoutInstalledApps ?? collect())->pluck('slug')->values()->all());
   const layoutInstalledAppsMeta = @json($globalSearchInstalledAppsMeta);
   const globalQuickLinks = @json($globalSearchQuickLinks);
+  const globalSearchRoutes = @json($globalSearchRoutes);
 
   function initGlobalSearch() {
     const input = document.getElementById('globalSearchInput');
@@ -1067,6 +1141,7 @@ window.CRM_AUTH_ROUTES = {
       return '';
     };
     const safeGet = async (url, params = {}) => {
+      if (!url) return { ok: false, data: {} };
       try {
         const res = await Http.get(url, params);
         if (!res || !res.ok) return { ok: false, data: {} };
@@ -1074,6 +1149,20 @@ window.CRM_AUTH_ROUTES = {
       } catch (_) {
         return { ok: false, data: {} };
       }
+    };
+    const routeTo = (name, replacements = {}) => {
+      let template = globalSearchRoutes[name] || '#';
+      Object.entries(replacements).forEach(([key, value]) => {
+        template = template.replace(`__${key.toUpperCase()}__`, encodeURIComponent(String(value)));
+      });
+      return template;
+    };
+    const routeWithQuery = (name, params = {}) => {
+      const url = routeTo(name);
+      if (!url || url === '#') return '#';
+      const query = new URLSearchParams(params);
+      const qs = query.toString();
+      return qs ? `${url}?${qs}` : url;
     };
     const dedupeRows = (rows) => {
       const seen = new Set();
@@ -1197,22 +1286,22 @@ window.CRM_AUTH_ROUTES = {
         slackMessages,
         chatbotMessages,
       ] = await Promise.all([
-        hasClients ? safeGet('/clients/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
-        hasStock ? safeGet('/stock/articles/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
-        hasStock ? safeGet('/stock/orders/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
-        hasInvoice ? safeGet('/invoices/data/table', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
-        hasInvoice ? safeGet('/invoices/quotes/data/table', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
-        safeGet('/users/data/table', { search: q, per_page: 5 }),
-        hasProjects ? safeGet('/extensions/projects/data/list', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
-        hasNotion ? safeGet('/extensions/notion-workspace/data/tree', { search: q, scope: 'all' }) : Promise.resolve({ ok: false, data: {} }),
-        hasGoogleDrive && allowDeep ? safeGet('/extensions/google-drive/data/search', { q }) : Promise.resolve({ ok: false, data: {} }),
-        hasGoogleSheets && allowDeep ? safeGet('/extensions/google-sheets/data/spreadsheets', { search: q }) : Promise.resolve({ ok: false, data: {} }),
-        hasGoogleDocx && allowDeep ? safeGet('/extensions/google-docx/data/documents', { search: q }) : Promise.resolve({ ok: false, data: {} }),
-        hasGoogleCalendar && allowDeep ? safeGet('/extensions/google-calendar/data/events', { search: q, per_page: 5, include_holidays: 1 }) : Promise.resolve({ ok: false, data: {} }),
-        hasGoogleGmail && allowDeep ? safeGet('/extensions/google-gmail/data/messages', { q, max_results: 5, label_id: 'ALL' }) : Promise.resolve({ ok: false, data: {} }),
-        hasGoogleMeet && allowDeep ? safeGet('/extensions/google-meet/data/meetings', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
-        hasSlack && allowDeep ? safeGet('/extensions/slack/data/messages', { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
-        hasChatbot && allowDeep ? safeGet('/extensions/chatbot/data/search', { q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        hasClients ? safeGet(globalSearchRoutes.clientsData, { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        hasStock ? safeGet(globalSearchRoutes.stockArticlesSearch, { q }) : Promise.resolve({ ok: false, data: {} }),
+        hasStock ? safeGet(globalSearchRoutes.stockOrdersSearch, { q }) : Promise.resolve({ ok: false, data: {} }),
+        hasInvoice ? safeGet(globalSearchRoutes.invoicesData, { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        hasInvoice ? safeGet(globalSearchRoutes.quotesData, { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        safeGet(globalSearchRoutes.usersData, { search: q, per_page: 5 }),
+        hasProjects ? safeGet(globalSearchRoutes.projectsData, { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        hasNotion ? safeGet(globalSearchRoutes.notionPagesSearch, { query: q, page_size: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleDrive && allowDeep ? safeGet(globalSearchRoutes.googleDriveSearch, { q }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleSheets && allowDeep ? safeGet(globalSearchRoutes.googleSheetsData, { search: q }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleDocx && allowDeep ? safeGet(globalSearchRoutes.googleDocxData, { search: q }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleCalendar && allowDeep ? safeGet(globalSearchRoutes.googleCalendarEvents, { search: q, per_page: 5, include_holidays: 1 }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleGmail && allowDeep ? safeGet(globalSearchRoutes.googleGmailMessages, { q, max_results: 5, label_id: 'ALL' }) : Promise.resolve({ ok: false, data: {} }),
+        hasGoogleMeet && allowDeep ? safeGet(globalSearchRoutes.googleMeetMeetings, { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        hasSlack && allowDeep ? safeGet(globalSearchRoutes.slackMessages, { search: q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
+        hasChatbot && allowDeep ? safeGet(globalSearchRoutes.chatbotSearch, { q, per_page: 5 }) : Promise.resolve({ ok: false, data: {} }),
       ]);
 
       if (currentReq !== requestSeq) return;
@@ -1220,56 +1309,56 @@ window.CRM_AUTH_ROUTES = {
       const clientRows = (clients?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.company_name || 'Client',
         sub: row.email || row.phone || '',
-        url: `/clients/${row.id}`,
+        url: routeTo('clientsShow', { client: row.id }),
         icon: 'fa-users',
       }));
       const articleRows = (articles?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.name || 'Article',
         sub: `SKU: ${row.sku || '-'} | Stock: ${safeNum(row.current_stock ?? row.stock_quantity)}`,
-        url: `/stock/articles/${row.id}`,
+        url: routeTo('stockArticleShow', { article: row.id }),
         icon: 'fa-box',
       }));
       const orderRows = (orders?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.number || `Commande #${row.id}`,
         sub: `Statut: ${row.status || '-'}`,
-        url: `/stock/orders/${row.id}`,
+        url: routeTo('stockOrderShow', { order: row.id }),
         icon: 'fa-clipboard-list',
       }));
       const invoiceRows = (invoices?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.number || `Facture #${row.id}`,
         sub: row.client?.company_name || row.reference || '',
-        url: `/invoices/${row.id}`,
+        url: routeTo('invoiceShow', { invoice: row.id }),
         icon: 'fa-file-invoice',
       }));
       const quoteRows = (quotes?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.number || `Devis #${row.id}`,
         sub: row.client?.company_name || row.reference || row.status || '',
-        url: `/invoices/quotes/${row.id}`,
+        url: routeTo('quoteShow', { quote: row.id }),
         icon: 'fa-file-signature',
       }));
       const userRows = (users?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.name || row.email || `Utilisateur #${row.id}`,
         sub: [row.email, row.role_in_tenant].filter(Boolean).join(' | '),
-        url: `/users/${row.id}`,
+        url: routeTo('userShow', { user: row.id }),
         icon: 'fa-user',
       }));
       const projectRows = (projects?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.name || `Projet #${row.id}`,
         sub: [row.client_name, row.status, row.priority].filter(Boolean).join(' | '),
-        url: `/extensions/projects/${row.id}`,
+        url: routeTo('projectShow', { project: row.id }),
         icon: 'fa-diagram-project',
       }));
       const notionRows = (notionPages?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.title || `Page #${row.id}`,
         sub: [row.client_name, row.owner_name].filter(Boolean).join(' | '),
-        url: '/extensions/notion-workspace',
+        url: globalSearchRoutes.notionIndex || '#',
         icon: row.icon || 'fa-book-open',
         badge: 'Notion',
       }));
       const driveRows = (driveFiles?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.name || 'Fichier Google Drive',
         sub: [row.mime_type, row.size_formatted].filter(Boolean).join(' | '),
-        url: row.web_view_link || '/extensions/google-drive',
+        url: row.web_view_link || globalSearchRoutes.googleDriveIndex || '#',
         icon: row.icon || 'fa-google-drive',
         color: row.color || '#4285F4',
         external: Boolean(row.web_view_link),
@@ -1277,7 +1366,7 @@ window.CRM_AUTH_ROUTES = {
       const sheetsRows = (spreadsheets?.data?.data?.spreadsheets || []).slice(0, 5).map((row) => ({
         label: row.title || 'Google Sheet',
         sub: row.spreadsheet_id || '',
-        url: row.spreadsheet_url || '/extensions/google-sheets',
+        url: row.spreadsheet_url || globalSearchRoutes.googleSheetsIndex || '#',
         icon: 'fa-file-excel',
         color: '#0f9d58',
         external: Boolean(row.spreadsheet_url),
@@ -1285,7 +1374,7 @@ window.CRM_AUTH_ROUTES = {
       const docsRows = (documents?.data?.data?.documents || []).slice(0, 5).map((row) => ({
         label: row.title || 'Google Doc',
         sub: row.document_id || '',
-        url: row.document_url || '/extensions/google-docx',
+        url: row.document_url || globalSearchRoutes.googleDocxIndex || '#',
         icon: 'fa-file-word',
         color: '#1a73e8',
         external: Boolean(row.document_url),
@@ -1293,7 +1382,7 @@ window.CRM_AUTH_ROUTES = {
       const calendarRows = (calendarEvents?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.summary || 'Evenement',
         sub: [row.start_display, row.location].filter(Boolean).join(' | '),
-        url: `/extensions/google-calendar?event_id=${encodeURIComponent(row.event_id || '')}`,
+        url: routeWithQuery('googleCalendarIndex', { event_id: row.event_id || '' }),
         icon: 'fa-calendar-days',
         color: '#4285F4',
         badge: 'Calendrier',
@@ -1301,7 +1390,7 @@ window.CRM_AUTH_ROUTES = {
       const gmailRows = (gmailMessages?.data?.data?.messages || []).slice(0, 5).map((row) => ({
         label: row.subject || '(Sans objet)',
         sub: [row.from, row.snippet].filter(Boolean).join(' | '),
-        url: `/extensions/google-gmail?message_id=${encodeURIComponent(row.message_id || '')}`,
+        url: routeWithQuery('googleGmailIndex', { message_id: row.message_id || '' }),
         icon: 'fa-envelope',
         color: '#ea4335',
         badge: row.is_read ? 'Lu' : 'Non lu',
@@ -1309,7 +1398,7 @@ window.CRM_AUTH_ROUTES = {
       const meetRows = (meetEvents?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.summary || 'Reunion Meet',
         sub: [row.start_display, row.organizer_email].filter(Boolean).join(' | '),
-        url: `/extensions/google-meet?event_id=${encodeURIComponent(row.event_id || '')}`,
+        url: routeWithQuery('googleMeetIndex', { event_id: row.event_id || '' }),
         icon: 'fa-video',
         color: '#34a853',
         badge: 'Meet',
@@ -1317,7 +1406,7 @@ window.CRM_AUTH_ROUTES = {
       const slackRows = (slackMessages?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.username || 'Slack',
         sub: row.text || '',
-        url: '/extensions/slack',
+        url: globalSearchRoutes.slackIndex || '#',
         icon: 'fa-slack',
         color: '#4A154B',
         badge: 'Slack',
@@ -1325,7 +1414,7 @@ window.CRM_AUTH_ROUTES = {
       const chatbotRows = (chatbotMessages?.data?.data || []).slice(0, 5).map((row) => ({
         label: row.sender_name || 'Chatbot',
         sub: [row.room_name, row.text].filter(Boolean).join(' | '),
-        url: '/extensions/chatbot',
+        url: globalSearchRoutes.chatbotIndex || '#',
         icon: 'fa-comments',
         color: '#0ea5e9',
         badge: 'Chat',
@@ -1508,7 +1597,7 @@ window.CRM_AUTH_ROUTES = {
         if (q.length < 2 || !type) { suggestions.style.display = 'none'; return; }
 
         if (type === 'article') {
-          const { ok, data } = await Http.get('/stock/articles/data/search', { q });
+          const { ok, data } = await Http.get(globalSearchRoutes.stockArticlesSearch, { q });
           if (!ok || !data.data) return;
           const rows = data.data.map((a) => ({ id: a.id, label: `${a.name}${a.sku ? ' (' + a.sku + ')' : ''}`, sub: `Stock: ${a.current_stock ?? a.stock_quantity ?? 0}`, payload: a }));
           renderSuggestions(rows, (choice) => {
@@ -1519,11 +1608,11 @@ window.CRM_AUTH_ROUTES = {
         }
 
         if (type === 'order') {
-          const { ok, data } = await Http.get('/stock/orders/data/search', { q });
+          const { ok, data } = await Http.get(globalSearchRoutes.stockOrdersSearch, { q });
           if (!ok || !data.data) return;
           const rows = data.data.map((o) => ({ id: o.id, label: o.number, sub: `Statut: ${o.status}` }));
           renderSuggestions(rows, async (choice) => {
-            const detail = await Http.get(`/stock/orders/data/${choice.id}`);
+            const detail = await Http.get(routeTo('stockOrderDetail', { order: choice.id }));
             if (!detail.ok || !detail.data?.data) return;
             const order = detail.data.data;
             document.getElementById('stock_order_id').value = order.id;

@@ -402,7 +402,7 @@ window.GCAL_ROUTES = {
   selectCalendar: '{{ route('google-calendar.calendar.select') }}',
   eventsData: '{{ route('google-calendar.events.data') }}',
   eventsStore: '{{ route('google-calendar.events.store') }}',
-  eventsBase: '{{ url('/extensions/google-calendar/events') }}',
+  eventsBase: @json(rtrim(route('google-calendar.index'), '/') . '/events'),
   stats: '{{ route('google-calendar.stats') }}',
   sync: '{{ route('google-calendar.sync') }}',
 };

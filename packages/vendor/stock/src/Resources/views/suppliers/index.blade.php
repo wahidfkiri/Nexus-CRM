@@ -42,11 +42,17 @@
 
 @push('scripts')
 <script>
+const STOCK_SUPPLIER_ROUTES = {
+  show: @json(route('stock.suppliers.show', ['supplier' => '__SUPPLIER__'])),
+  edit: @json(route('stock.suppliers.edit', ['supplier' => '__SUPPLIER__'])),
+};
+const stockSupplierRoute = (template, id) => String(template).replace('__SUPPLIER__', encodeURIComponent(String(id)));
+
 document.addEventListener('DOMContentLoaded', () => {
  window._stockSuppliersTable = new CrmTable({
   tbodyId:'suppliersTableBody',
   dataUrl:'{{ route('stock.suppliers.data') }}',
-  renderRow:(supplier)=>`<tr><td><a href="/stock/suppliers/${supplier.id}" style="color:var(--c-accent);font-weight:600;text-decoration:none;">${supplier.name}</a></td><td>${supplier.contact_name ?? '—'}</td><td>${supplier.email ?? '—'}</td><td>${supplier.phone ?? '—'}</td><td><a class="btn-icon" href="/stock/suppliers/${supplier.id}/edit"><i class="fas fa-pen"></i></a></td></tr>`
+  renderRow:(supplier)=>`<tr><td><a href="${stockSupplierRoute(STOCK_SUPPLIER_ROUTES.show, supplier.id)}" style="color:var(--c-accent);font-weight:600;text-decoration:none;">${supplier.name}</a></td><td>${supplier.contact_name ?? '—'}</td><td>${supplier.email ?? '—'}</td><td>${supplier.phone ?? '—'}</td><td><a class="btn-icon" href="${stockSupplierRoute(STOCK_SUPPLIER_ROUTES.edit, supplier.id)}"><i class="fas fa-pen"></i></a></td></tr>`
  });
 });
 </script>

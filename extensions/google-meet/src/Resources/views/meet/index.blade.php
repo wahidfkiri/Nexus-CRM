@@ -292,7 +292,7 @@ window.GMEET_ROUTES = {
   selectCalendar: '{{ route('google-meet.calendar.select') }}',
   meetingsData: '{{ route('google-meet.meetings.data') }}',
   meetingsStore: '{{ route('google-meet.meetings.store') }}',
-  meetingsBase: '{{ url('/extensions/google-meet/meetings') }}',
+  meetingsBase: @json(rtrim(route('google-meet.index'), '/') . '/meetings'),
   stats: '{{ route('google-meet.stats') }}',
   sync: '{{ route('google-meet.sync') }}',
 };

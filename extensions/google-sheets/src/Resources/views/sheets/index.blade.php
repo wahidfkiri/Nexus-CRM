@@ -261,7 +261,7 @@ window.GS_ROUTES = {
   spreadsheetsData:   '{{ route('google-sheets.spreadsheets.data') }}',
   createSpreadsheet:  '{{ route('google-sheets.spreadsheets.store') }}',
   stats:              '{{ route('google-sheets.stats') }}',
-  spreadsheetBase:    '{{ url('/extensions/google-sheets/spreadsheets') }}',
+  spreadsheetBase: @json(rtrim(route('google-sheets.index'), '/') . '/spreadsheets'),
 };
 
 window.GS_BOOTSTRAP = {

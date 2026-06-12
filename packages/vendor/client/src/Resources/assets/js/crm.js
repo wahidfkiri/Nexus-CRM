@@ -1,6 +1,14 @@
 ﻿if (!window.__CRM_CORE_LOADED__) {
   window.__CRM_CORE_LOADED__ = true;
 
+function crmRoute(name, replacements = {}) {
+  let template = window.CLIENT_ROUTES?.[name] || '#';
+  Object.entries(replacements).forEach(([key, value]) => {
+    template = template.replace(`__${key.toUpperCase()}__`, encodeURIComponent(String(value)));
+  });
+  return template;
+}
+
 /**
  * CRM SaaS - Core JavaScript
  * Toast notifications, Modals, Table manager, Form helpers, AJAX utils
@@ -494,44 +502,45 @@ const Http = (() => {
 
     const providerRoutes = [
       {
-        url: '/extensions/google-gmail',
+        url: window.CLIENT_EXTENSION_ROUTES?.googleGmail || '',
         patterns: ['google gmail', 'gmail n est pas connecte', 'google gmail is not connected', 'session google gmail expiree', 'reconnectez google gmail', 'reconnect your gmail'],
       },
       {
-        url: '/extensions/google-calendar',
+        url: window.CLIENT_EXTENSION_ROUTES?.googleCalendar || '',
         patterns: ['google calendar', 'calendar n est pas connecte', 'google calendar is not connected', 'session google calendar expiree', 'reconnectez google calendar', 'reconnect google calendar'],
       },
       {
-        url: '/extensions/google-drive',
+        url: window.CLIENT_EXTENSION_ROUTES?.googleDrive || '',
         patterns: ['google drive', 'drive n est pas connecte', 'google drive is not connected', 'session google drive expiree', 'reconnectez google drive', 'reconnect google drive'],
       },
       {
-        url: '/extensions/dropbox',
+        url: window.CLIENT_EXTENSION_ROUTES?.dropbox || '',
         patterns: ['dropbox n est pas connecte', 'dropbox demande une reconnexion', 'reconnectez dropbox', 'reconnect dropbox', 'refresh token manquant', 'invalid_access_token', 'expired_access_token', 'invalid_grant'],
       },
       {
-        url: '/extensions/slack',
+        url: window.CLIENT_EXTENSION_ROUTES?.slack || '',
         patterns: ['slack n est pas connecte', 'slack is not connected', 'slack bot token is missing', 'reconnect your slack workspace', 'reconnectez slack', 'invalid_auth', 'token_revoked', 'account_inactive'],
       },
       {
-        url: '/extensions/google-meet',
+        url: window.CLIENT_EXTENSION_ROUTES?.googleMeet || '',
         patterns: ['google meet', 'google meet is not connected', 'session google meet expiree', 'reconnectez google meet', 'reconnect google meet'],
       },
       {
-        url: '/extensions/google-sheets',
+        url: window.CLIENT_EXTENSION_ROUTES?.googleSheets || '',
         patterns: ['google sheets', 'google sheets is not connected', 'session google sheets expiree', 'reconnectez votre compte google', 'reconnectez google sheets', 'reconnect google sheets'],
       },
       {
-        url: '/extensions/google-docx',
+        url: window.CLIENT_EXTENSION_ROUTES?.googleDocx || '',
         patterns: ['google docs', 'google docs is not connected', 'session google docs expiree', 'reconnectez google docs', 'reconnect google docs'],
       },
       {
-        url: '/extensions/notion-workspace',
+        url: window.CLIENT_EXTENSION_ROUTES?.notionWorkspace || '',
         patterns: ['notion workspace', 'notion n est pas connecte', 'session notion expiree', 'session notion workspace expiree', 'reconnectez notion', 'reconnect notion', 'reconnectez votre workspace notion', 'reconnect your notion workspace'],
       },
     ];
 
     for (const provider of providerRoutes) {
+      if (!provider.url) continue;
       if ((provider.patterns || []).some((pattern) => text.includes(pattern))) {
         return new URL(provider.url, window.location.origin).toString();
       }
@@ -851,8 +860,8 @@ class CrmTable {
         <td style="font-weight:500">${revenue}</td>
         <td>
           <div class="row-actions">
-            <a href="/clients/${c.id}" class="btn-icon" title="Voir"><i class="fas fa-eye"></i></a>
-            <a href="/clients/${c.id}/edit" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>
+            <a href="${crmRoute('show', { client: c.id })}" class="btn-icon" title="Voir"><i class="fas fa-eye"></i></a>
+            <a href="${crmRoute('edit', { client: c.id })}" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>
             <button class="btn-icon danger" onclick="CrmTable.deleteClient(${c.id},'${this._esc(c.company_name)}')" title="Supprimer">
               <i class="fas fa-trash"></i>
             </button>
@@ -919,7 +928,7 @@ class CrmTable {
       confirmText: window.CLIENT_LANG?.deleteAction || '',
       type:        'danger',
       onConfirm:   async () => {
-        const { ok, data } = await Http.delete(`/clients/${id}`);
+        const { ok, data } = await Http.delete(crmRoute('destroy', { client: id }));
         if (ok) {
           Toast.success(window.CLIENT_LANG?.deletedTitle || '', data.message || window.CLIENT_LANG?.deletedTitle || '');
           window._crmTable?.load();

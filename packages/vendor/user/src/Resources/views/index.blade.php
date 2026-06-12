@@ -161,16 +161,22 @@
 @push('scripts')
 <script>
 window.USER_ROUTES = {
-  data: '{{ route("users.data") }}',
-  stats: '{{ route("users.stats") }}',
-  bulkDelete: '{{ route("users.bulk.delete") }}',
-  bulkStatus: '{{ route("users.bulk.status") }}',
+  data: @json(route('users.data')),
+  stats: @json(route('users.stats')),
+  bulkDelete: @json(route('users.bulk.delete')),
+  bulkStatus: @json(route('users.bulk.status')),
+  show: @json(route('users.show', ['user' => '__USER__'])),
+  edit: @json(route('users.edit', ['user' => '__USER__'])),
+  suspend: @json(route('users.suspend', ['user' => '__USER__'])),
+  activate: @json(route('users.activate', ['user' => '__USER__'])),
+  destroy: @json(route('users.destroy', ['user' => '__USER__'])),
 };
 window.USER_I18N = @json($userIndexI18n);
 const ROLE_LABELS = @json($roles);
 const STATUS_LABELS = @json(config('user.user_statuses'));
 const ROLE_COLORS = { owner: '#7c3aed', admin: '#2563eb', manager: '#0891b2', user: '#059669', viewer: '#64748b' };
 const STATUS_COLORS = { active: 'success', inactive: 'danger', invited: 'info', suspended: 'secondary' };
+const userRoute = (template, id) => String(template).replace('__USER__', encodeURIComponent(String(id)));
 
 document.addEventListener('DOMContentLoaded', () => {
   window._userTable = new UserTable({
@@ -345,8 +351,8 @@ class UserTable {
         <td style="font-size:13px;color:var(--c-ink-60);">${lastLogin}</td>
         <td>
           <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
-            <a href="/users/${user.id}" class="btn-icon" title="${window.USER_I18N.view}"><i class="fas fa-eye"></i></a>
-            <a href="/users/${user.id}/edit" class="btn-icon" title="${window.USER_I18N.edit}"><i class="fas fa-pen"></i></a>
+            <a href="${userRoute(window.USER_ROUTES.show, user.id)}" class="btn-icon" title="${window.USER_I18N.view}"><i class="fas fa-eye"></i></a>
+            <a href="${userRoute(window.USER_ROUTES.edit, user.id)}" class="btn-icon" title="${window.USER_I18N.edit}"><i class="fas fa-pen"></i></a>
             ${!isOwner && !isSelf ? `
             <button class="btn-icon" title="${user.status === 'active' ? window.USER_I18N.suspend : window.USER_I18N.activate}" onclick="UserTable.toggleStatus(${user.id}, '${user.status}', '${this._esc(user.name)}')"><i class="fas fa-${user.status === 'active' ? 'ban' : 'check-circle'}"></i></button>
             <button class="btn-icon danger" onclick="UserTable.deleteUser(${user.id}, '${this._esc(user.name)}')" title="${window.USER_I18N.delete}"><i class="fas fa-trash"></i></button>` : ''}
@@ -391,7 +397,7 @@ class UserTable {
       confirmText: action,
       type: newStatus === 'active' ? 'success' : 'danger',
       onConfirm: async () => {
-        const url = newStatus === 'suspended' ? `/users/${id}/suspend` : `/users/${id}/activate`;
+        const url = newStatus === 'suspended' ? userRoute(window.USER_ROUTES.suspend, id) : userRoute(window.USER_ROUTES.activate, id);
         const { ok, data } = await Http.post(url, {});
         if (ok) { Toast.success(window.USER_I18N.success, data.message); window._userTable?.load(); window._userTable?.loadStats(); }
         else Toast.error(window.USER_I18N.error, data.message);
@@ -406,7 +412,7 @@ class UserTable {
       confirmText: window.USER_I18N.delete,
       type: 'danger',
       onConfirm: async () => {
-        const { ok, data } = await Http.delete(`/users/${id}`);
+        const { ok, data } = await Http.delete(userRoute(window.USER_ROUTES.destroy, id));
         if (ok) { Toast.success(window.USER_I18N.success, data.message); window._userTable?.load(); window._userTable?.loadStats(); }
         else Toast.error(window.USER_I18N.error, data.message);
       }

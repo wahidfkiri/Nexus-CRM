@@ -215,12 +215,12 @@ window.CHATBOT_ROUTES = {
   roomsData: '{{ route('chatbot.rooms.data') }}',
   usersData: '{{ route('chatbot.users.data') }}',
   roomStore: '{{ route('chatbot.rooms.store') }}',
-  roomUpdateBase: '{{ url('/extensions/chatbot/rooms') }}',
-  roomDeleteBase: '{{ url('/extensions/chatbot/rooms') }}',
+  roomUpdateBase: @json(rtrim(route('chatbot.index'), '/') . '/rooms'),
+  roomDeleteBase: @json(rtrim(route('chatbot.index'), '/') . '/rooms'),
   messagesData: '{{ route('chatbot.messages.data') }}',
   searchData: '{{ route('chatbot.search.data') }}',
   messageSend: '{{ route('chatbot.messages.send') }}',
-  messageDeleteBase: '{{ url('/extensions/chatbot/messages') }}',
+  messageDeleteBase: @json(rtrim(route('chatbot.index'), '/') . '/messages'),
   stats: '{{ route('chatbot.stats') }}',
 };
 

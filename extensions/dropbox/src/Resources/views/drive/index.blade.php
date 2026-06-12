@@ -281,7 +281,7 @@ window.DROPBOX_ROUTES = {
   trashData: '{{ route('dropbox.trash.data') }}',
   emptyTrash: '{{ route('dropbox.trash.empty') }}',
   search: '{{ route('dropbox.search') }}',
-  fileBase: '{{ url('/extensions/dropbox/files') }}',
+  fileBase: @json(rtrim(route('dropbox.index'), '/') . '/files'),
 };
 
 window.DROPBOX_BOOTSTRAP = {

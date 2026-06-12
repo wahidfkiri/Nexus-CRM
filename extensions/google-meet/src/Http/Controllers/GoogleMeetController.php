@@ -349,7 +349,7 @@ class GoogleMeetController extends Controller
             return route('marketplace.index');
         }
 
-        return url('/applications');
+        return \Route::has('applications') ? route('applications') : url('/');
     }
 
     private function isMarketplaceExtensionActive(int $tenantId, string $slug): bool

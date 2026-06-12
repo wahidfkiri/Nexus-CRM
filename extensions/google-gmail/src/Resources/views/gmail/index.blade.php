@@ -516,8 +516,8 @@ window.GGMAIL_ROUTES = {
   settingsData: '{{ route('google-gmail.settings.data') }}',
   settingsSave: '{{ route('google-gmail.settings.save') }}',
   send: '{{ route('google-gmail.messages.send') }}',
-  threadsBase: '{{ url('/extensions/google-gmail/threads') }}',
-  messageBase: '{{ url('/extensions/google-gmail/messages') }}',
+  threadsBase: @json(rtrim(route('google-gmail.index'), '/') . '/threads'),
+  messageBase: @json(rtrim(route('google-gmail.index'), '/') . '/messages'),
 };
 
 window.GGMAIL_BOOTSTRAP = {

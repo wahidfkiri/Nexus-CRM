@@ -118,10 +118,14 @@
 @push('scripts')
 <script>
 window.RBAC_ROUTES = {
-  data: '{{ route("rbac.roles.data") }}',
-  stats: '{{ route("rbac.roles.stats") }}',
+  data: @json(route('rbac.roles.data')),
+  stats: @json(route('rbac.roles.stats')),
+  show: @json(route('rbac.roles.show', ['role' => '__ROLE__'])),
+  edit: @json(route('rbac.roles.edit', ['role' => '__ROLE__'])),
+  destroy: @json(route('rbac.roles.destroy', ['role' => '__ROLE__'])),
 };
 window.RBAC_I18N = @json($rbacIndexI18n);
+const rbacRoute = (template, id) => String(template).replace('__ROLE__', encodeURIComponent(String(id)));
 
 document.addEventListener('DOMContentLoaded', () => {
   window._rolesTable = new RolesTable({
@@ -254,9 +258,9 @@ class RolesTable {
         <td>${typeBadge}</td>
         <td>
           <div class="row-actions" style="justify-content:flex-end;padding-right:4px;">
-            <a href="/rbac/roles/${role.id}" class="btn-icon" title="${window.RBAC_I18N.view}"><i class="fas fa-eye"></i></a>
+            <a href="${rbacRoute(window.RBAC_ROUTES.show, role.id)}" class="btn-icon" title="${window.RBAC_I18N.view}"><i class="fas fa-eye"></i></a>
             ${!isSystem ? `
-              <a href="/rbac/roles/${role.id}/edit" class="btn-icon" title="${window.RBAC_I18N.edit}"><i class="fas fa-pen"></i></a>
+              <a href="${rbacRoute(window.RBAC_ROUTES.edit, role.id)}" class="btn-icon" title="${window.RBAC_I18N.edit}"><i class="fas fa-pen"></i></a>
               ${isDeletable ? `<button class="btn-icon danger" onclick="RolesTable.deleteRole(${role.id}, '${label.replace(/'/g, '&#39;')}')" title="${window.RBAC_I18N.deleteButton}"><i class="fas fa-trash"></i></button>` : `<span style="padding:0 4px;color:var(--c-ink-20);font-size:12px;"><i class="fas fa-shield"></i></span>`}
             ` : `<span style="padding:0 4px;color:var(--c-ink-20);font-size:12px;"><i class="fas fa-lock"></i></span>`}
           </div>
@@ -312,7 +316,7 @@ class RolesTable {
       confirmText: window.RBAC_I18N.deleteButton,
       type: 'danger',
       onConfirm: async () => {
-        const { ok, data } = await Http.delete(`/rbac/roles/${id}`);
+        const { ok, data } = await Http.delete(rbacRoute(window.RBAC_ROUTES.destroy, id));
         if (ok) {
           Toast.success(window.RBAC_I18N.deleted, data.message);
           document.querySelector(`#rolesTableBody tr[data-id="${id}"]`)?.remove();

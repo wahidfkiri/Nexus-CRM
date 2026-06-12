@@ -59,7 +59,7 @@ class DashboardController extends Controller
 
         $user = Auth::user();
         if (! $user) {
-            return redirect()->route('login')->with('error', 'Session expirée');
+            return redirect()->route('login')->with('error', 'Session expirÃ©e');
         }
 
         if ($user->tenant_id && OnboardingController::mustCompleteOnboarding($user)) {
@@ -68,7 +68,7 @@ class DashboardController extends Controller
 
         $tenantId = (int) session('current_tenant_id', $user->tenant_id ?? 0);
         if ($tenantId <= 0 || ! $user->hasTenantAccess($tenantId)) {
-            abort(403, 'Vous n’avez pas accès à cet espace.');
+            abort(403, 'Vous nâ€™avez pas accÃ¨s Ã  cet espace.');
         }
 
         $tenant = Tenant::query()->find($tenantId) ?: $user->tenant;
@@ -107,7 +107,7 @@ class DashboardController extends Controller
             'meta' => [
                 'title' => 'Tableau de bord',
                 'eyebrow' => null,
-                'subtitle' => 'Une vue exécutive, rapide et actionnable sur votre activité, vos modules et vos intégrations.',
+                'subtitle' => 'Une vue exÃ©cutive, rapide et actionnable sur votre activitÃ©, vos modules et vos intÃ©grations.',
                 'tenant' => $tenant?->name ?: 'Espace CRM',
                 'currency' => $currency,
                 'date' => now()->translatedFormat('l d F Y'),
@@ -306,7 +306,7 @@ class DashboardController extends Controller
             'status_counts' => $statusCounts,
             'upcoming_tasks' => $upcomingTasks,
             'chart' => [
-                'labels' => ['À faire', 'En cours', 'En revue', 'Terminées'],
+                'labels' => ['Ã€ faire', 'En cours', 'En revue', 'TerminÃ©es'],
                 'data' => array_values($statusCounts),
             ],
         ]);
@@ -370,7 +370,7 @@ class DashboardController extends Controller
             'installed' => $collection->where('state', 'installed')->count(),
             'cards' => $cards,
             'chart' => [
-                'labels' => ['Connectées', 'À reconnecter', 'À configurer'],
+                'labels' => ['ConnectÃ©es', 'Ã€ reconnecter', 'Ã€ configurer'],
                 'data' => [
                     $collection->where('state', 'connected')->count(),
                     $collection->where('state', 'attention')->count(),
@@ -406,7 +406,7 @@ class DashboardController extends Controller
                 'label' => 'Delivery',
                 'icon' => 'fas fa-diagram-project',
                 'value' => $projects['active'],
-                'caption' => $projects['due_soon'] . ' tâches urgentes',
+                'caption' => $projects['due_soon'] . ' tÃ¢ches urgentes',
                 'url' => $projects['route'],
                 'accent' => '#7c3aed',
             ] : null,
@@ -443,7 +443,7 @@ class DashboardController extends Controller
         }
 
         if ($access['settings'] && $this->routeIfExists('settings.global')) {
-            $actions[] = ['label' => 'Paramètres', 'icon' => 'fas fa-sliders', 'url' => $this->routeIfExists('settings.global'), 'variant' => 'ghost'];
+            $actions[] = ['label' => 'ParamÃ¨tres', 'icon' => 'fas fa-sliders', 'url' => $this->routeIfExists('settings.global'), 'variant' => 'ghost'];
         }
 
         return $actions;
@@ -476,16 +476,16 @@ class DashboardController extends Controller
                 'icon' => 'fas fa-users',
             ],
             [
-                'label' => 'Priorités',
+                'label' => 'PrioritÃ©s',
                 'value' => number_format($priorityCount, 0, ',', ' '),
-                'hint' => 'Tâches, stock et factures à traiter',
+                'hint' => 'TÃ¢ches, stock et factures Ã  traiter',
                 'tone' => $priorityCount > 0 ? 'orange' : 'green',
                 'icon' => 'fas fa-bolt',
             ],
             [
-                'label' => 'Intégrations',
+                'label' => 'IntÃ©grations',
                 'value' => number_format((int) $integrations['connected'], 0, ',', ' '),
-                'hint' => $integrations['attention'] . ' à reconnecter',
+                'hint' => $integrations['attention'] . ' Ã  reconnecter',
                 'tone' => $integrations['attention'] > 0 ? 'red' : 'green',
                 'icon' => 'fas fa-plug-circle-check',
             ],
@@ -500,7 +500,7 @@ class DashboardController extends Controller
             $items = $items->merge($clients['recent']->map(fn (Client $client) => [
                 'at' => $client->created_at,
                 'icon' => 'fas fa-user-plus',
-                'title' => 'Client ajouté',
+                'title' => 'Client ajoutÃ©',
                 'description' => $client->company_name ?: ($client->contact_name ?: 'Client sans nom'),
                 'url' => $this->routeIfExists('clients.show', ['client' => $client->id]),
                 'tone' => '#2563eb',
@@ -511,8 +511,8 @@ class DashboardController extends Controller
             $items = $items->merge($finance['recent_invoices']->map(fn (Invoice $invoice) => [
                 'at' => $invoice->created_at,
                 'icon' => 'fas fa-file-invoice-dollar',
-                'title' => 'Facture créée',
-                'description' => trim(($invoice->number ?: 'Facture') . ' · ' . $this->formatMoney((float) $invoice->total, (string) ($invoice->currency ?: $currency))),
+                'title' => 'Facture crÃ©Ã©e',
+                'description' => trim(($invoice->number ?: 'Facture') . ' Â· ' . $this->formatMoney((float) $invoice->total, (string) ($invoice->currency ?: $currency))),
                 'url' => $this->routeIfExists('invoices.show', ['invoice' => $invoice->id]),
                 'tone' => '#0f766e',
             ]));
@@ -528,8 +528,8 @@ class DashboardController extends Controller
                     ->map(fn (ProjectActivity $activity) => [
                         'at' => $activity->created_at,
                         'icon' => 'fas fa-list-check',
-                        'title' => 'Projet mis à jour',
-                        'description' => trim(($activity->description ?: $activity->event ?: 'Mise à jour') . ($activity->project?->name ? ' · ' . $activity->project->name : '')),
+                        'title' => 'Projet mis Ã  jour',
+                        'description' => trim(($activity->description ?: $activity->event ?: 'Mise Ã  jour') . ($activity->project?->name ? ' Â· ' . $activity->project->name : '')),
                         'url' => $activity->project_id ? $this->routeIfExists('projects.show', ['project' => $activity->project_id]) : null,
                         'tone' => '#7c3aed',
                     ])
@@ -548,8 +548,8 @@ class DashboardController extends Controller
                     ->map(fn (Draft $draft) => [
                         'at' => $draft->updated_at,
                         'icon' => 'fas fa-pen-to-square',
-                        'title' => 'Brouillon à reprendre',
-                        'description' => ucfirst((string) $draft->type) . ' non finalisé',
+                        'title' => 'Brouillon Ã  reprendre',
+                        'description' => ucfirst((string) $draft->type) . ' non finalisÃ©',
                         'url' => $draftService->resolveResumeUrl($draft),
                         'tone' => '#ea580c',
                     ])
@@ -579,7 +579,7 @@ class DashboardController extends Controller
         $items = $items->merge($finance['open_invoices']->map(fn (Invoice $invoice) => [
             'kind' => 'Facture ouverte',
             'title' => $invoice->number ?: 'Facture',
-            'description' => $invoice->client?->company_name ?: 'Client non renseigné',
+            'description' => $invoice->client?->company_name ?: 'Client non renseignÃ©',
             'meta' => $this->formatMoney((float) ($invoice->amount_due ?? $invoice->total ?? 0), (string) ($invoice->currency ?: $currency)),
             'date' => $invoice->due_date,
             'url' => $this->routeIfExists('invoices.show', ['invoice' => $invoice->id]),
@@ -588,9 +588,9 @@ class DashboardController extends Controller
         ]));
 
         $items = $items->merge($projects['upcoming_tasks']->map(fn (ProjectTask $task) => [
-            'kind' => 'Tâche proche',
+            'kind' => 'TÃ¢che proche',
             'title' => $task->title,
-            'description' => $task->project?->name ?: 'Projet non défini',
+            'description' => $task->project?->name ?: 'Projet non dÃ©fini',
             'meta' => (string) ($task->priority ?: $task->status),
             'date' => $task->due_date,
             'url' => $task->project_id ? $this->routeIfExists('projects.show', ['project' => $task->project_id]) : null,
@@ -615,17 +615,17 @@ class DashboardController extends Controller
     private function buildIntegrationCards(Collection $apps, int $tenantId): array
     {
         $definitions = [
-            'notion-workspace' => ['name' => 'Notion', 'icon' => 'fas fa-book-open', 'color' => '#111827', 'token' => NotionWorkspaceToken::class, 'resource' => NotionPageLink::class, 'label' => 'pages', 'account' => 'notion_user_email', 'context' => 'notion_workspace_name', 'sync' => 'last_synced_at', 'url' => '/extensions/notion-workspace'],
-            'trello-integration' => ['name' => 'Trello', 'icon' => 'fab fa-trello', 'color' => '#026aa7', 'token' => TrelloToken::class, 'resource' => TrelloBoard::class, 'label' => 'boards', 'account' => 'trello_username', 'context' => 'trello_full_name', 'sync' => 'last_synced_at', 'url' => '/extensions/trello-integration'],
-            'google-drive' => ['name' => 'Drive', 'icon' => 'fab fa-google-drive', 'color' => '#4285f4', 'token' => GoogleDriveToken::class, 'resource' => GoogleDriveFile::class, 'label' => 'fichiers', 'account' => 'google_email', 'context' => 'quota_formatted', 'sync' => 'last_sync_at', 'url' => '/extensions/google-drive'],
-            'dropbox' => ['name' => 'Dropbox', 'icon' => 'fab fa-dropbox', 'color' => '#0061ff', 'token' => DropboxToken::class, 'resource' => DropboxFile::class, 'label' => 'fichiers', 'account' => 'dropbox_email', 'context' => null, 'sync' => 'last_sync_at', 'url' => '/extensions/dropbox'],
-            'google-calendar' => ['name' => 'Calendar', 'icon' => 'fas fa-calendar-days', 'color' => '#4285f4', 'token' => GoogleCalendarToken::class, 'resource' => GoogleCalendarEvent::class, 'label' => 'événements', 'account' => 'google_email', 'context' => 'selected_calendar_summary', 'sync' => 'last_sync_at', 'url' => '/extensions/google-calendar'],
-            'google-sheets' => ['name' => 'Sheets', 'icon' => 'fas fa-file-excel', 'color' => '#0f9d58', 'token' => GoogleSheetsToken::class, 'resource' => GoogleSheetsSpreadsheet::class, 'label' => 'tableurs', 'account' => 'google_email', 'context' => 'google_name', 'sync' => 'last_sync_at', 'url' => '/extensions/google-sheets'],
-            'google-docx' => ['name' => 'Docs', 'icon' => 'fas fa-file-word', 'color' => '#1a73e8', 'token' => GoogleDocxToken::class, 'resource' => GoogleDocxDocument::class, 'label' => 'documents', 'account' => 'google_email', 'context' => 'google_name', 'sync' => 'last_sync_at', 'url' => '/extensions/google-docx'],
-            'google-gmail' => ['name' => 'Gmail', 'icon' => 'fas fa-envelope-open-text', 'color' => '#ea4335', 'token' => GoogleGmailToken::class, 'resource' => GoogleGmailMessage::class, 'label' => 'messages', 'account' => 'google_email', 'context' => 'google_name', 'sync' => 'last_sync_at', 'url' => '/extensions/google-gmail'],
-            'google-meet' => ['name' => 'Meet', 'icon' => 'fas fa-video', 'color' => '#34a853', 'token' => GoogleMeetToken::class, 'resource' => GoogleMeetMeeting::class, 'label' => 'réunions', 'account' => 'google_email', 'context' => 'selected_calendar_summary', 'sync' => 'last_sync_at', 'url' => '/extensions/google-meet'],
-            'slack' => ['name' => 'Slack', 'icon' => 'fab fa-slack', 'color' => '#4a154b', 'token' => SlackToken::class, 'resource' => SlackMessage::class, 'label' => 'messages', 'account' => 'team_name', 'context' => 'selected_channel_name', 'sync' => 'last_sync_at', 'url' => '/extensions/slack'],
-            'chatbot' => ['name' => 'Chatbot', 'icon' => 'fas fa-comments', 'color' => '#0ea5e9', 'token' => null, 'resource' => ChatbotMessage::class, 'label' => 'messages', 'account' => null, 'context' => null, 'sync' => null, 'url' => '/extensions/chatbot'],
+            'notion-workspace' => ['name' => 'Notion', 'icon' => 'fas fa-book-open', 'color' => '#111827', 'token' => NotionWorkspaceToken::class, 'resource' => NotionPageLink::class, 'label' => 'pages', 'account' => 'notion_user_email', 'context' => 'notion_workspace_name', 'sync' => 'last_synced_at', 'route' => 'notion-workspace.index'],
+            'trello-integration' => ['name' => 'Trello', 'icon' => 'fab fa-trello', 'color' => '#026aa7', 'token' => TrelloToken::class, 'resource' => TrelloBoard::class, 'label' => 'boards', 'account' => 'trello_username', 'context' => 'trello_full_name', 'sync' => 'last_synced_at', 'route' => 'trello-integration.index'],
+            'google-drive' => ['name' => 'Drive', 'icon' => 'fab fa-google-drive', 'color' => '#4285f4', 'token' => GoogleDriveToken::class, 'resource' => GoogleDriveFile::class, 'label' => 'fichiers', 'account' => 'google_email', 'context' => 'quota_formatted', 'sync' => 'last_sync_at', 'route' => 'google-drive.index'],
+            'dropbox' => ['name' => 'Dropbox', 'icon' => 'fab fa-dropbox', 'color' => '#0061ff', 'token' => DropboxToken::class, 'resource' => DropboxFile::class, 'label' => 'fichiers', 'account' => 'dropbox_email', 'context' => null, 'sync' => 'last_sync_at', 'route' => 'dropbox.index'],
+            'google-calendar' => ['name' => 'Calendar', 'icon' => 'fas fa-calendar-days', 'color' => '#4285f4', 'token' => GoogleCalendarToken::class, 'resource' => GoogleCalendarEvent::class, 'label' => 'Ã©vÃ©nements', 'account' => 'google_email', 'context' => 'selected_calendar_summary', 'sync' => 'last_sync_at', 'route' => 'google-calendar.index'],
+            'google-sheets' => ['name' => 'Sheets', 'icon' => 'fas fa-file-excel', 'color' => '#0f9d58', 'token' => GoogleSheetsToken::class, 'resource' => GoogleSheetsSpreadsheet::class, 'label' => 'tableurs', 'account' => 'google_email', 'context' => 'google_name', 'sync' => 'last_sync_at', 'route' => 'google-sheets.index'],
+            'google-docx' => ['name' => 'Docs', 'icon' => 'fas fa-file-word', 'color' => '#1a73e8', 'token' => GoogleDocxToken::class, 'resource' => GoogleDocxDocument::class, 'label' => 'documents', 'account' => 'google_email', 'context' => 'google_name', 'sync' => 'last_sync_at', 'route' => 'google-docx.index'],
+            'google-gmail' => ['name' => 'Gmail', 'icon' => 'fas fa-envelope-open-text', 'color' => '#ea4335', 'token' => GoogleGmailToken::class, 'resource' => GoogleGmailMessage::class, 'label' => 'messages', 'account' => 'google_email', 'context' => 'google_name', 'sync' => 'last_sync_at', 'route' => 'google-gmail.index'],
+            'google-meet' => ['name' => 'Meet', 'icon' => 'fas fa-video', 'color' => '#34a853', 'token' => GoogleMeetToken::class, 'resource' => GoogleMeetMeeting::class, 'label' => 'rÃ©unions', 'account' => 'google_email', 'context' => 'selected_calendar_summary', 'sync' => 'last_sync_at', 'route' => 'google-meet.index'],
+            'slack' => ['name' => 'Slack', 'icon' => 'fab fa-slack', 'color' => '#4a154b', 'token' => SlackToken::class, 'resource' => SlackMessage::class, 'label' => 'messages', 'account' => 'team_name', 'context' => 'selected_channel_name', 'sync' => 'last_sync_at', 'route' => 'slack.index'],
+            'chatbot' => ['name' => 'Chatbot', 'icon' => 'fas fa-comments', 'color' => '#0ea5e9', 'token' => null, 'resource' => ChatbotMessage::class, 'label' => 'messages', 'account' => null, 'context' => null, 'sync' => null, 'route' => 'chatbot.index'],
         ];
 
         return $apps->map(function (TenantExtension $activation) use ($definitions, $tenantId) {
@@ -646,7 +646,7 @@ class DashboardController extends Controller
             }
 
             $state = 'installed';
-            $stateLabel = 'À configurer';
+            $stateLabel = 'Ã€ configurer';
             if ($slug === 'chatbot') {
                 $state = 'connected';
                 $stateLabel = 'Interne';
@@ -654,7 +654,7 @@ class DashboardController extends Controller
                 $isActive = isset($token->is_active) ? (bool) $token->is_active : true;
                 $isExpired = method_exists($token, 'isExpired') ? (bool) $token->isExpired() : (bool) data_get($token, 'is_expired', false);
                 $state = $isActive && ! $isExpired ? 'connected' : 'attention';
-                $stateLabel = $state === 'connected' ? 'Connectée' : 'À reconnecter';
+                $stateLabel = $state === 'connected' ? 'ConnectÃ©e' : 'Ã€ reconnecter';
             }
 
             $account = $token && $definition['account'] ? (string) data_get($token, $definition['account']) : null;

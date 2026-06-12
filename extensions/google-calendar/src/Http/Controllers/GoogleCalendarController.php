@@ -398,7 +398,7 @@ class GoogleCalendarController extends Controller
             return route('marketplace.index');
         }
 
-        return url('/applications');
+        return Route::has('applications') ? route('applications') : url('/');
     }
 
     private function ensureExtensionActivated(int $tenantId): void

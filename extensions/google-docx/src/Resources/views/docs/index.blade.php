@@ -198,7 +198,7 @@ window.GDOCX_ROUTES = {
   documentsData: '{{ route('google-docx.documents.data') }}',
   createDocument: '{{ route('google-docx.documents.store') }}',
   stats: '{{ route('google-docx.stats') }}',
-  documentBase: '{{ url('/extensions/google-docx/documents') }}',
+  documentBase: @json(rtrim(route('google-docx.index'), '/') . '/documents'),
 };
 
 window.GDOCX_BOOTSTRAP = {

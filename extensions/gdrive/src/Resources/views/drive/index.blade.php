@@ -186,7 +186,7 @@ window.GDRIVE_ROUTES = {
   trashData: '{{ route('google-drive.trash.data') }}',
   emptyTrash: '{{ route('google-drive.trash.empty') }}',
   search: '{{ route('google-drive.search') }}',
-  fileBase: '{{ url('/extensions/google-drive/files') }}',
+  fileBase: @json(rtrim(route('google-drive.index'), '/') . '/files'),
 };
 
 window.GDRIVE_BOOTSTRAP = {

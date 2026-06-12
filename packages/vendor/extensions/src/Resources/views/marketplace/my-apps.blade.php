@@ -186,6 +186,15 @@
 
 @push('scripts')
 <script>
+const MY_APPS_ROUTES = {
+  activate: @json(route('marketplace.activate', ['slug' => '__SLUG__'])),
+  deactivate: @json(route('marketplace.deactivate', ['slug' => '__SLUG__'])),
+};
+
+function marketplaceRoute(template, slug) {
+  return String(template).replace('__SLUG__', encodeURIComponent(String(slug)));
+}
+
 function filterByStatus(status, btn) {
   document.querySelectorAll('.mkt-cat-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -215,7 +224,7 @@ async function deactivateMyApp(slug, name, iconUrl = '', iconClass = 'fas fa-puz
     iconVariant: 'app',
     iconColor: color,
     onConfirm: async () => {
-      const { ok, data } = await Http.post(`/marketplace/${slug}/deactivate`, {});
+      const { ok, data } = await Http.post(marketplaceRoute(MY_APPS_ROUTES.deactivate, slug), {});
       if (ok) { Toast.success(@json(__('extensions::extensions.marketplace.my_apps.deactivate_success')), data.message); setTimeout(() => location.reload(), 900); }
       else Toast.error(@json(__('extensions::extensions.common.error')), data.message);
     }
@@ -223,7 +232,7 @@ async function deactivateMyApp(slug, name, iconUrl = '', iconClass = 'fas fa-puz
 }
 
 async function reactivateMyApp(slug, name, iconUrl = '', iconClass = 'fas fa-puzzle-piece', color = '#2563eb') {
-  const { ok, data } = await Http.post(`/marketplace/${slug}/activate`, {});
+  const { ok, data } = await Http.post(marketplaceRoute(MY_APPS_ROUTES.activate, slug), {});
   if (ok) {
     Toast.success(@json(__('extensions::extensions.marketplace.my_apps.reactivate_success')), data.message);
     if (data.redirect) {

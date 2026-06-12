@@ -278,10 +278,10 @@
 @push('scripts')
 <script>
 window.PROJECTS_ROUTES = {
-  data: '{{ route('projects.data') }}',
-  stats: '{{ route('projects.stats') }}',
-  store: '{{ route('projects.store') }}',
-  base: '{{ url('/extensions/projects') }}',
+  data: @json(route('projects.data')),
+  stats: @json(route('projects.stats')),
+  store: @json(route('projects.store')),
+  base: @json(route('projects.index')),
 };
 
 window.PROJECTS_BOOTSTRAP = {

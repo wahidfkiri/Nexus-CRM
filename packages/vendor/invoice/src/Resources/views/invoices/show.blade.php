@@ -543,16 +543,24 @@ const invoiceShowLang = {
   invoiceDeleteTitle: @json(__('invoice::invoices.js.invoice_delete_title', ['number' => $invoice->number])),
   paymentDeleteTitle: @json(__('invoice::invoices.js.payment_delete_title')),
 };
+const invoiceShowRoutes = {
+  send: @json(route('invoices.send', $invoice)),
+  duplicate: @json(route('invoices.duplicate', $invoice)),
+  destroy: @json(route('invoices.destroy', $invoice)),
+  index: @json(route('invoices.index')),
+  paymentDestroy: @json(route('invoices.payments.destroy', ['payment' => '__PAYMENT__'])),
+};
+const invoiceShowRoute = (template, id) => String(template).replace('__PAYMENT__', encodeURIComponent(String(id)));
 
 async function sendInvoice(id) {
   if (!confirm(invoiceShowLang.sendConfirm)) return;
-  const { ok, data } = await Http.post(`/invoices/${id}/send`, {});
+  const { ok, data } = await Http.post(invoiceShowRoutes.send, {});
   if (ok) { Toast.success(invoiceShowLang.invoiceSentTitle, data.message); setTimeout(() => location.reload(), 1000); }
   else Toast.error(invoiceShowLang.errorTitle, data.message);
 }
 
 async function duplicateInvoice(id) {
-  const { ok, data } = await Http.post(`/invoices/${id}/duplicate`, {});
+  const { ok, data } = await Http.post(invoiceShowRoutes.duplicate, {});
   if (ok) { Toast.success(invoiceShowLang.invoiceDuplicatedTitle, data.message); setTimeout(() => window.location.href = data.redirect, 1000); }
   else Toast.error(invoiceShowLang.errorTitle, data.message);
 }
@@ -564,8 +572,8 @@ async function deleteInvoice(id) {
     confirmText: invoiceShowLang.deleteLabel,
     type: 'danger',
     onConfirm: async () => {
-      const { ok, data } = await Http.delete(`/invoices/${id}`);
-      if (ok) { Toast.success(invoiceShowLang.invoiceDeletedTitle, data.message); setTimeout(() => window.location.href = '{{ route("invoices.index") }}', 1000); }
+      const { ok, data } = await Http.delete(invoiceShowRoutes.destroy);
+      if (ok) { Toast.success(invoiceShowLang.invoiceDeletedTitle, data.message); setTimeout(() => window.location.href = invoiceShowRoutes.index, 1000); }
       else Toast.error(invoiceShowLang.errorTitle, data.message);
     }
   });
@@ -578,7 +586,7 @@ async function deletePayment(id) {
     confirmText: invoiceShowLang.deleteLabel,
     type: 'danger',
     onConfirm: async () => {
-      const { ok, data } = await Http.delete(`/invoices/payments/${id}`);
+      const { ok, data } = await Http.delete(invoiceShowRoute(invoiceShowRoutes.paymentDestroy, id));
       if (ok) { Toast.success(invoiceShowLang.paymentDeletedTitle, data.message); setTimeout(() => location.reload(), 1000); }
       else Toast.error(invoiceShowLang.errorTitle, data.message);
     }

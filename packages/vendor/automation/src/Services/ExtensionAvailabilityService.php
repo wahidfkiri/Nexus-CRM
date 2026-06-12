@@ -61,7 +61,7 @@ class ExtensionAvailabilityService
             return route('marketplace.show', $slug);
         }
 
-        return url('/marketplace/' . ltrim($slug, '/'));
+        return Route::has('applications') ? route('applications') : url('/');
     }
 
     protected function extensionId(string $slug): ?int
