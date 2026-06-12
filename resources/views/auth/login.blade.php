@@ -154,6 +154,6 @@
     </script>
     @include('layouts.partials.tauri-bridge')
     <script src="{{ asset('vendor/client/js/secure-form.js') }}"></script>
-    
+    <script src="{{ asset('js/login.js') }}"></script>
 </body>
 </html>
