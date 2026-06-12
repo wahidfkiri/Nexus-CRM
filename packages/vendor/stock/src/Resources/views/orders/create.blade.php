@@ -47,7 +47,7 @@
               <td><select name="items[0][article_id]" class="form-control" onchange="Stock.fillOrderLineFromArticle(this)">{!! $articleOptionsHtml !!}</select></td>
               <td><input name="items[0][name]" class="form-control" required></td>
               <td><input type="number" name="items[0][quantity]" class="form-control" min="0.0001" step="any" value="1" required></td>
-              <td><input name="items[0][unit]" class="form-control" value="{{ __('stock::stock.common.default_unit') }}"></td>
+              <td><input name="items[0][unit]" class="form-control" value="{{ __('stock::stock.common.unit_piece') }}"></td>
               <td><input type="number" name="items[0][unit_price]" class="form-control" min="0" step="any" value="0" required></td>
               <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button></td>
             </tr>

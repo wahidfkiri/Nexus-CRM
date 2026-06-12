@@ -25,7 +25,7 @@
         <div class="col-4"><div class="form-group"><label class="form-label">{{ __('stock::stock.common.sku') }}</label><input name="sku" class="form-control" placeholder="ART-001"></div></div>
         <div class="col-8"><div class="form-group"><label class="form-label">{{ __('stock::stock.common.name') }} <span class="required">*</span></label><input name="name" class="form-control" placeholder="{{ __('stock::stock.pages.articles.create.placeholder_name') }}" required></div></div>
         <div class="col-6"><div class="form-group"><label class="form-label">{{ __('stock::stock.common.supplier') }}</label><select name="supplier_id" class="form-control"><option value="">{{ __('stock::stock.common.select') }}</option>@foreach($suppliers as $supplier)<option value="{{ $supplier->id }}">{{ $supplier->name }}</option>@endforeach</select></div></div>
-        <div class="col-6"><div class="form-group"><label class="form-label">{{ __('stock::stock.common.unit') }}</label><input name="unit" class="form-control" value="{{ __('stock::stock.common.default_unit') }}"></div></div>
+        <div class="col-6"><div class="form-group"><label class="form-label">{{ __('stock::stock.common.unit') }}</label><input name="unit" class="form-control" value="{{ __('stock::stock.common.unit_piece') }}"></div></div>
       </div>
     </div>
 

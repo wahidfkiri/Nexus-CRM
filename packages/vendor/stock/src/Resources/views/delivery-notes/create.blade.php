@@ -49,7 +49,7 @@
               <td><input type="text" name="items[0][sku]" class="form-control" placeholder="SKU"></td>
               <td><input type="text" name="items[0][name]" class="form-control" required></td>
               <td><input type="number" name="items[0][quantity]" class="form-control" min="0.0001" step="any" value="1" required></td>
-              <td><input type="text" name="items[0][unit]" class="form-control" value="{{ __('stock::stock.common.default_unit') }}"></td>
+              <td><input type="text" name="items[0][unit]" class="form-control" value="{{ __('stock::stock.common.unit_piece') }}"></td>
               <td><button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button></td>
             </tr>
           </tbody>
