@@ -13,15 +13,37 @@
 </head>
 <body class="login-page">
     <div class="login-shell">
+        <div class="login-backdrop" aria-hidden="true">
+            <div class="login-glow login-glow-a"></div>
+            <div class="login-glow login-glow-b"></div>
+            <div class="login-grid"></div>
+            <div class="login-app-cloud">
+                @foreach(($loginApps ?? []) as $app)
+                    <span
+                        class="login-app-mark"
+                        style="--x: {{ $app['x'] }}%; --y: {{ $app['y'] }}%; --size: {{ $app['size'] }}px; --delay: {{ $app['delay'] }}s; --drift: {{ $app['drift'] }}s; --accent: {{ $app['color'] }};"
+                        title="{{ $app['name'] }}"
+                    >
+                        <span class="login-app-mark-core">
+                            @if(!empty($app['icon_url']))
+                                <img src="{{ $app['icon_url'] }}" alt="{{ $app['name'] }}">
+                            @else
+                                <i class="{{ $app['icon_class'] }}"></i>
+                            @endif
+                        </span>
+                    </span>
+                @endforeach
+            </div>
+        </div>
 
         <main class="login-stage">
             <section class="login-card" aria-labelledby="loginTitle">
-                <div class="login-brand-row">
+                <!-- <div class="login-brand-row">
                     <div class="login-brand-badge">
                         <span class="login-brand-icon"><i class="fas fa-chart-line"></i></span>
                         <span class="login-brand-name">{{ __('auth-ui.brand') }}</span>
                     </div>
-                </div>
+                </div> -->
 
                 <div class="login-copy">
                     <p class="login-eyebrow">{{ __('auth-ui.login.eyebrow') }}</p>
