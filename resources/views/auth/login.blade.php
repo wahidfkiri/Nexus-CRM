@@ -13,28 +13,6 @@
 </head>
 <body class="login-page">
     <div class="login-shell">
-        <div class="login-backdrop" aria-hidden="true">
-            <div class="login-glow login-glow-a"></div>
-            <div class="login-glow login-glow-b"></div>
-            <div class="login-grid"></div>
-            <div class="login-app-cloud">
-                @foreach(($loginApps ?? []) as $app)
-                    <span
-                        class="login-app-mark"
-                        style="--x: {{ $app['x'] }}%; --y: {{ $app['y'] }}%; --size: {{ $app['size'] }}px; --delay: {{ $app['delay'] }}s; --drift: {{ $app['drift'] }}s; --accent: {{ $app['color'] }};"
-                        title="{{ $app['name'] }}"
-                    >
-                        <span class="login-app-mark-core">
-                            @if(!empty($app['icon_url']))
-                                <img src="{{ $app['icon_url'] }}" alt="{{ $app['name'] }}">
-                            @else
-                                <i class="{{ $app['icon_class'] }}"></i>
-                            @endif
-                        </span>
-                    </span>
-                @endforeach
-            </div>
-        </div>
 
         <main class="login-stage">
             <section class="login-card" aria-labelledby="loginTitle">
@@ -131,7 +109,7 @@
                     </button>
                 </form>
 
-                <div class="login-divider"><span>{{ __('auth-ui.login.divider') }}</span></div>
+                <!-- <div class="login-divider"><span>{{ __('auth-ui.login.divider') }}</span></div>
 
                 <a href="{{ route('auth.google.redirect') }}" class="login-google-btn">
                     <i class="fab fa-google"></i>
@@ -141,7 +119,7 @@
                 <div class="login-footer">
                     <span>{{ __('auth-ui.login.no_account') }}</span>
                     <a href="{{ route('register') }}">{{ __('auth-ui.login.create_account') }}</a>
-                </div>
+                </div> -->
             </section>
         </main>
     </div>

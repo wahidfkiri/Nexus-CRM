@@ -15,6 +15,13 @@ class ClientRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('revenue') && blank($this->input('revenue'))) {
+            $this->merge(['revenue' => 0]);
+        }
+    }
+
     public function rules(): array
     {
         $routeClient = $this->route('client');
@@ -50,7 +57,7 @@ class ClientRequest extends FormRequest
             'source' => 'nullable|in:direct,site_web,reference,reseau_social,autre',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
-            'revenue' => 'required|numeric|min:0',
+            'revenue' => 'nullable|numeric|min:0',
             'potential_value' => 'nullable|numeric|min:0',
             'payment_term' => 'nullable|in:immediate,15j,30j,45j,60j',
             'industry' => 'nullable|string|max:100',
