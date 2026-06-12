@@ -105,15 +105,15 @@ class DashboardController extends Controller
 
         $dashboard = [
             'meta' => [
-                'title' => 'Tableau de bord',
+                'title' => __('dashboard.meta.title'),
                 'eyebrow' => null,
                 'subtitle' => 'Une vue exÃ©cutive, rapide et actionnable sur votre activitÃ©, vos modules et vos intÃ©grations.',
-                'tenant' => $tenant?->name ?: 'Espace CRM',
+                'tenant' => $tenant?->name ?: __('dashboard.meta.tenant_fallback'),
                 'currency' => $currency,
                 'date' => now()->translatedFormat('l d F Y'),
                 'user' => [
                     'name' => $user->name ?: $user->email,
-                    'role' => $user->role_in_tenant_label ?? $user->role_in_tenant ?? 'Membre',
+                    'role' => $user->role_in_tenant_label ?? $user->role_in_tenant ?? __('dashboard.meta.member'),
                     'initials' => $user->initials ?? strtoupper(substr((string) ($user->name ?: $user->email ?: 'U'), 0, 2)),
                 ],
             ],

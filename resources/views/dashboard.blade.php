@@ -1,11 +1,11 @@
 @extends('layouts.global')
 
-@section('title', data_get($dashboard, 'meta.title', 'Dashboard'))
+@section('title', data_get($dashboard, 'meta.title', __('dashboard.page_title')))
 @section('body_class', 'nexus-dashboard-shell')
 @section('content_class', 'nexus-dashboard-content')
 
 @section('breadcrumb')
-  <span>{{ data_get($dashboard, 'meta.title', 'Dashboard') }}</span>
+  <span>{{ data_get($dashboard, 'meta.title', __('dashboard.page_title')) }}</span>
 @endsection
 
 @php
@@ -58,10 +58,10 @@
           @continue(empty($action['url']))
           <a href="{{ $action['url'] }}" class="nd-action nd-action-{{ $action['variant'] ?? 'secondary' }}">
             <span>{!! $iconMarkup($action['icon'] ?? 'fas fa-arrow-right') !!}</span>
-            {{ $action['label'] ?? 'Action' }}
+            {{ $action['label'] ?? __('dashboard.actions.fallback') }}
           </a>
         @empty
-          <a href="{{ route('marketplace.index') }}" class="nd-action nd-action-primary"><span><i class="fas fa-store"></i></span>Applications</a>
+          <a href="{{ route('marketplace.index') }}" class="nd-action nd-action-primary"><span><i class="fas fa-store"></i></span>{{ __('dashboard.actions.applications') }}</a>
         @endforelse
       </div>
     </div>
@@ -76,20 +76,20 @@
       </div>
 
       <div class="nd-command-grid">
-        <div><span>Modules</span><strong>{{ count(data_get($dashboard, 'modules', [])) }} actifs</strong></div>
-        <div><span>Devise</span><strong>{{ data_get($dashboard, 'meta.currency') }}</strong></div>
-        <div><span>Intégrations</span><strong>{{ data_get($dashboard, 'integrations.connected', 0) }}/{{ data_get($dashboard, 'integrations.total', 0) }}</strong></div>
-        <div><span>Date</span><strong>{{ data_get($dashboard, 'meta.date') }}</strong></div>
+        <div><span>{{ __('dashboard.command.modules') }}</span><strong>{{ __('dashboard.command.modules_active', ['count' => count(data_get($dashboard, 'modules', []))]) }}</strong></div>
+        <div><span>{{ __('dashboard.command.currency') }}</span><strong>{{ data_get($dashboard, 'meta.currency') }}</strong></div>
+        <div><span>{{ __('dashboard.command.integrations') }}</span><strong>{{ data_get($dashboard, 'integrations.connected', 0) }}/{{ data_get($dashboard, 'integrations.total', 0) }}</strong></div>
+        <div><span>{{ __('dashboard.command.date') }}</span><strong>{{ data_get($dashboard, 'meta.date') }}</strong></div>
       </div>
     </aside>
   </section>
 
-  <section class="nd-signal-rail" aria-label="Indicateurs clés">
+  <section class="nd-signal-rail" aria-label="{{ __('dashboard.signals.aria_label') }}">
     @foreach(data_get($dashboard, 'signals', []) as $signal)
       <article class="nd-signal nd-tone-{{ $signal['tone'] ?? 'blue' }}">
         <div class="nd-signal-icon">{!! $iconMarkup($signal['icon'] ?? 'fas fa-chart-simple') !!}</div>
         <div class="nd-signal-copy">
-          <span>{{ $signal['label'] ?? 'Indicateur' }}</span>
+          <span>{{ $signal['label'] ?? __('dashboard.signals.fallback_label') }}</span>
           <strong>{{ $signal['value'] ?? '0' }}</strong>
           <small>{{ $signal['hint'] ?? '' }}</small>
         </div>
@@ -101,19 +101,19 @@
     <article class="nd-panel nd-panel-wide nd-finance-panel">
       <div class="nd-panel-head">
         <div>
-          <span class="nd-panel-kicker">Performance</span>
-          <h2>Finance du mois</h2>
+          <span class="nd-panel-kicker">{{ __('dashboard.finance.kicker') }}</span>
+          <h2>{{ __('dashboard.finance.title') }}</h2>
         </div>
         @if(data_get($dashboard, 'finance.route'))
-          <a href="{{ data_get($dashboard, 'finance.route') }}" class="nd-link">Voir factures <i class="fas fa-arrow-right"></i></a>
+          <a href="{{ data_get($dashboard, 'finance.route') }}" class="nd-link">{{ __('dashboard.finance.view_invoices') }} <i class="fas fa-arrow-right"></i></a>
         @endif
       </div>
       <div class="nd-finance-layout">
         <div class="nd-chart-wrap"><canvas id="ndFinanceChart"></canvas></div>
         <div class="nd-finance-stack">
-          <div class="nd-mini-stat"><span>CA émis</span><strong>{{ $formatMoney(data_get($dashboard, 'finance.revenue_month', 0)) }}</strong></div>
-          <div class="nd-mini-stat"><span>Encaissé</span><strong>{{ $formatMoney(data_get($dashboard, 'finance.payments_month', 0)) }}</strong></div>
-          <div class="nd-mini-stat nd-mini-alert"><span>Reste dû</span><strong>{{ $formatMoney(data_get($dashboard, 'finance.pending_amount', 0)) }}</strong></div>
+          <div class="nd-mini-stat"><span>{{ __('dashboard.finance.issued_revenue') }}</span><strong>{{ $formatMoney(data_get($dashboard, 'finance.revenue_month', 0)) }}</strong></div>
+          <div class="nd-mini-stat"><span>{{ __('dashboard.finance.collected') }}</span><strong>{{ $formatMoney(data_get($dashboard, 'finance.payments_month', 0)) }}</strong></div>
+          <div class="nd-mini-stat nd-mini-alert"><span>{{ __('dashboard.finance.pending') }}</span><strong>{{ $formatMoney(data_get($dashboard, 'finance.pending_amount', 0)) }}</strong></div>
         </div>
       </div>
     </article>
@@ -121,8 +121,8 @@
     <article class="nd-panel nd-modules-panel">
       <div class="nd-panel-head">
         <div>
-          <span class="nd-panel-kicker">Workspace</span>
-          <h2>Modules actifs</h2>
+          <span class="nd-panel-kicker">{{ __('dashboard.modules.kicker') }}</span>
+          <h2>{{ __('dashboard.modules.title') }}</h2>
         </div>
       </div>
       <div class="nd-module-grid">
@@ -133,7 +133,7 @@
             <div class="nd-module-card" style="--module-accent:{{ $module['accent'] ?? '#2563eb' }}">
           @endif
               <span class="nd-module-icon">{!! $iconMarkup($module['icon'] ?? 'fas fa-cube') !!}</span>
-              <span class="nd-module-label">{{ $module['label'] ?? 'Module' }}</span>
+              <span class="nd-module-label">{{ $module['label'] ?? __('dashboard.modules.fallback_label') }}</span>
               <strong>{{ $module['value'] ?? 0 }}</strong>
               <small>{{ $module['caption'] ?? '' }}</small>
           @if(!empty($module['url']))
@@ -142,7 +142,7 @@
             </div>
           @endif
         @empty
-          <div class="nd-empty"><i class="fas fa-puzzle-piece"></i><strong>Aucun module visible</strong><span>Activez des applications ou vérifiez les permissions du rôle.</span></div>
+          <div class="nd-empty"><i class="fas fa-puzzle-piece"></i><strong>{{ __('dashboard.modules.empty_title') }}</strong><span>{{ __('dashboard.modules.empty_description') }}</span></div>
         @endforelse
       </div>
     </article>
@@ -151,8 +151,8 @@
     <article class="nd-panel nd-focus-panel">
       <div class="nd-panel-head">
         <div>
-          <span class="nd-panel-kicker">À traiter</span>
-          <h2>Priorités opérationnelles</h2>
+          <span class="nd-panel-kicker">{{ __('dashboard.focus.kicker') }}</span>
+          <h2>{{ __('dashboard.focus.title') }}</h2>
         </div>
       </div>
       <div class="nd-focus-list">
@@ -164,8 +164,8 @@
           @endif
               <span class="nd-focus-icon">{!! $iconMarkup($item['icon'] ?? 'fas fa-bolt') !!}</span>
               <span class="nd-focus-body">
-                <small>{{ $item['kind'] ?? 'Priorité' }}</small>
-                <strong>{{ $item['title'] ?? 'Action' }}</strong>
+                <small>{{ $item['kind'] ?? __('dashboard.focus.fallback_kind') }}</small>
+                <strong>{{ $item['title'] ?? __('dashboard.focus.fallback_title') }}</strong>
                 <em>{{ $item['description'] ?? '' }}</em>
               </span>
               <span class="nd-focus-meta">
@@ -178,7 +178,7 @@
             </div>
           @endif
         @empty
-          <div class="nd-empty"><i class="fas fa-circle-check"></i><strong>Tout est calme</strong><span>Aucune priorité critique pour le moment.</span></div>
+          <div class="nd-empty"><i class="fas fa-circle-check"></i><strong>{{ __('dashboard.focus.empty_title') }}</strong><span>{{ __('dashboard.focus.empty_description') }}</span></div>
         @endforelse
       </div>
     </article>
@@ -186,8 +186,8 @@
     <article class="nd-panel nd-activity-panel">
       <div class="nd-panel-head">
         <div>
-          <span class="nd-panel-kicker">Timeline</span>
-          <h2>Activité récente</h2>
+          <span class="nd-panel-kicker">{{ __('dashboard.activity.kicker') }}</span>
+          <h2>{{ __('dashboard.activity.title') }}</h2>
         </div>
       </div>
       <div class="nd-timeline">
@@ -199,7 +199,7 @@
           @endif
               <span class="nd-event-icon">{!! $iconMarkup($event['icon'] ?? 'fas fa-circle') !!}</span>
               <span>
-                <strong>{{ $event['title'] ?? 'Événement' }}</strong>
+                <strong>{{ $event['title'] ?? __('dashboard.activity.fallback_event') }}</strong>
                 <small>{{ $event['description'] ?? '' }}</small>
               </span>
               <time>{{ $formatDate($event['at'] ?? null, 'd/m H:i') }}</time>
@@ -209,7 +209,7 @@
             </div>
           @endif
         @empty
-          <div class="nd-empty"><i class="fas fa-clock"></i><strong>Aucune activité</strong><span>Les événements du tenant seront listés ici.</span></div>
+          <div class="nd-empty"><i class="fas fa-clock"></i><strong>{{ __('dashboard.activity.empty_title') }}</strong><span>{{ __('dashboard.activity.empty_description') }}</span></div>
         @endforelse
       </div>
     </article>
@@ -247,8 +247,8 @@
       data: {
         labels: charts.finance.labels || [],
         datasets: [
-          { label: 'Factures', data: charts.finance.invoices || [], borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.12)', fill: true, tension: .42, pointRadius: 3, pointHoverRadius: 6 },
-          { label: 'Encaissements', data: charts.finance.payments || [], borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,.10)', fill: true, tension: .42, pointRadius: 3, pointHoverRadius: 6 }
+          { label: @json(__('dashboard.charts.finance.invoices')), data: charts.finance.invoices || [], borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.12)', fill: true, tension: .42, pointRadius: 3, pointHoverRadius: 6 },
+          { label: @json(__('dashboard.charts.finance.payments')), data: charts.finance.payments || [], borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,.10)', fill: true, tension: .42, pointRadius: 3, pointHoverRadius: 6 }
         ]
       },
       options: {
