@@ -113,6 +113,12 @@ class AutomationSuggestionPresenter
     public function presentCollection(Collection $suggestions): array
     {
         return $suggestions
+            ->filter(function (AutomationSuggestion $suggestion) {
+                $meta = (array) ($suggestion->meta ?? []);
+                $installed = !array_key_exists('installed', $meta) || (bool) $meta['installed'];
+                
+                return $installed || $suggestion->type === 'install_extension';
+            })
             ->map(fn (AutomationSuggestion $suggestion) => $this->present($suggestion))
             ->values()
             ->all();
