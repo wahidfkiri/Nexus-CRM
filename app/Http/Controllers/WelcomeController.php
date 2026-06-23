@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
-use Vendor\Extensions\Models\Extension;
+use App\Models\Extension;
 
 class WelcomeController extends Controller
 {
@@ -18,7 +18,7 @@ class WelcomeController extends Controller
         $pillars = $this->buildPillars();
 
         return view('welcome', [
-            'appName' => config('app.name', 'Nexus CRM'),
+            'appName' => config('app.name', 'Nexiste Business'),
             'heroApps' => $this->buildHeroApps($extensions),
             'pillars' => $pillars,
             'workflowSteps' => $this->buildWorkflowSteps(),
