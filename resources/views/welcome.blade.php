@@ -63,7 +63,7 @@
                         {{ $appName }} réunit CRM, facturation, stock et automatisations dans un seul espace — fluide, lisible, et taillé pour votre équipe.
                     </p>
                     <div class="hero-btns">
-                        <a href="{{ route('register') }}" class="btn-fill btn-lg">Créer mon espace</a>
+                        <a href="https://app.nexiste.com/register" class="btn-fill btn-lg">Créer mon espace</a>
                         <a href="#modules" class="btn-line btn-lg">Voir les modules</a>
                     </div>
                     <ul class="proof-list">
@@ -260,8 +260,8 @@
                     </div>
 
                     <div class="pricing-actions">
-                        <a href="{{ route('register') }}" class="btn-fill btn-lg">Choisir mon abonnement</a>
-                        <a href="{{ route('login') }}" class="btn-line btn-lg">J'ai déjà un espace</a>
+                        <a href="https://app.nexiste.com/register" class="btn-fill btn-lg">Choisir mon abonnement</a>
+                        <a href="https://app.nexiste.com" class="btn-line btn-lg">J'ai déjà un espace</a>
                     </div>
                 </div>
             </div>
@@ -298,8 +298,8 @@
                 <h2>Votre CRM opérationnel<br>en moins de 5 minutes.</h2>
                 <p>Créez votre espace, invitez votre équipe et connectez vos outils — dès aujourd'hui.</p>
                 <div class="cta-btns">
-                    <a href="{{ route('register') }}" class="btn-fill btn-lg">Créer un compte gratuit</a>
-                    <a href="{{ route('login') }}" class="btn-outline-light btn-lg">Accéder à mon espace</a>
+                    <a href="https://app.nexiste.com/register" class="btn-fill btn-lg">Créer un compte gratuit</a>
+                    <a href="https://app.nexiste.com" class="btn-outline-light btn-lg">Accéder à mon espace</a>
                 </div>
             </div>
         </section>
@@ -330,9 +330,8 @@
 
             <nav class="footer-nav">
                 <h4>Accès</h4>
-                <a href="{{ route('login') }}">Se connecter</a>
-                <a href="{{ route('register') }}">Créer un compte</a>
-                <a href="{{ route('password.request') }}">Mot de passe oublié</a>
+                <a href="https://app.nexiste.com/login">Se connecter</a>
+                <a href="https://app.nexiste.com/register">Créer un compte</a>
             </nav>
 
             <div class="footer-integrations">
