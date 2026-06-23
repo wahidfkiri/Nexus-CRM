@@ -186,26 +186,6 @@ return [
          * Package Service Providers...
          */
 
-        Vendor\CrmCore\CrmCoreServiceProvider::class,
-        Vendor\Client\ClientServiceProvider::class,
-        Vendor\Invoice\InvoiceServiceProvider::class,
-        Vendor\Stock\StockServiceProvider::class,
-        Vendor\User\UserServiceProvider::class,
-        Vendor\Rbac\RbacServiceProvider::class,
-        Vendor\Extensions\ExtensionsServiceProvider::class,
-        Vendor\Automation\AutomationServiceProvider::class,
-        Vendor\GoogleCalendar\GoogleCalendarServiceProvider::class,
-        NexusExtensions\Projects\ProjectsServiceProvider::class,
-        NexusExtensions\NotionWorkspace\NotionWorkspaceServiceProvider::class,
-        NexusExtensions\GoogleDrive\GoogleDriveServiceProvider::class,
-        NexusExtensions\Dropbox\DropboxServiceProvider::class,
-        NexusExtensions\GoogleSheets\GoogleSheetsServiceProvider::class,
-        NexusExtensions\GoogleDocx\GoogleDocxServiceProvider::class,
-        NexusExtensions\GoogleGmail\GoogleGmailServiceProvider::class,
-        NexusExtensions\GoogleMeet\GoogleMeetServiceProvider::class,
-        NexusExtensions\Slack\SlackServiceProvider::class,
-        NexusExtensions\Chatbot\ChatbotServiceProvider::class,
-        Modules\TrelloIntegration\TrelloIntegrationServiceProvider::class,
 
         /*
          * Application Service Providers...
