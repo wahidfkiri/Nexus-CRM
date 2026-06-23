@@ -32,8 +32,8 @@
             </nav>
 
             <div class="header-cta">
-                <a href="{{ route('login') }}" class="btn-outline">Connexion</a>
-                <a href="{{ route('register') }}" class="btn-fill">Commencer</a>
+                <a href="https://app.nexiste.com" class="btn-outline">Connexion</a>
+                <a href="https://app.nexiste.com/register" class="btn-fill">Commencer</a>
             </div>
         </div>
     </header>
